@@ -1,0 +1,48 @@
+project_name: my-next-fastapi-app
+short_description: >
+  Full-stack app: Next.js + TypeScript frontend talking to a FastAPI API,
+  using SQLite in dev and SQLModel for Postgres-friendly ORM.
+
+tech_stack:
+  frontend:
+    framework: nextjs
+    language: typescript
+    routing: app_router
+    directory: frontend
+  backend:
+    framework: fastapi
+    language: python
+    server: uvicorn
+    directory: backend
+  persistence:
+    db_engine: sqlite
+    orm: sqlmodel
+    migration_tool: alembic
+    dev_url: "sqlite+aiosqlite:///./dev.db"
+    prod_url_example: "postgresql+psycopg2://user:password@host:5432/dbname"
+  tooling:
+    node_package_manager: pnpm
+    python_env: uv
+    api_style: rest
+
+non_goals:
+  - no authentication in v0
+  - no deployment pipeline
+  - no multi-tenant logic
+
+initial_features:
+  - CRUD "items" API
+  - items have: title, description, created_at, updated_at
+  - Next.js pages to list/create/edit items
+
+constraints:
+  - commands:
+      backend: "uv run uvicorn app.main:app --reload"
+      frontend: "pnpm dev"
+
+preflight_preferences:
+  ask_before_starting:
+    - confirm project_name
+    - confirm backend/frontend directory names
+    - confirm API base route
+    - confirm if Docker scaffolding should be included
