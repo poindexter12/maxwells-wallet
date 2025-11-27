@@ -8,6 +8,8 @@ Built with:
 - **Database**: SQLite (dev) with SQLModel ORM
 - **Charts**: Recharts
 
+📋 **[Full Requirements & Specifications →](docs/requirements/)**
+
 ## Features
 
 - **CSV Import**: Import transactions from Bank of America and American Express
