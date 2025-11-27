@@ -1,7 +1,5 @@
-project_name: my-next-fastapi-app
-short_description: >
-  Full-stack app: Next.js + TypeScript frontend talking to a FastAPI API,
-  using SQLite in dev and SQLModel for Postgres-friendly ORM.
+project_name: finances
+short_description: Personal finance tracker with CSV import, smart categorization, and spending trend analysis.
 
 tech_stack:
   frontend:
@@ -18,31 +16,146 @@ tech_stack:
     db_engine: sqlite
     orm: sqlmodel
     migration_tool: alembic
-    dev_url: "sqlite+aiosqlite:///./dev.db"
-    prod_url_example: "postgresql+psycopg2://user:password@host:5432/dbname"
+    dev_url: sqlite:///./finances.db
+    prod_url_example: postgresql://user:password@localhost/finances
   tooling:
     node_package_manager: pnpm
     python_env: uv
     api_style: rest
 
 non_goals:
-  - no authentication in v0
-  - no deployment pipeline
-  - no multi-tenant logic
+  - Multi-user/multi-tenant support (single user prototype)
+  - Authentication/authorization (local-only for v0)
+  - Mobile apps (web-only)
+  - Real-time bank sync/Plaid integration
+  - Budget enforcement/alerts
+  - Investment tracking
+  - Bill pay integration
+  - Tax reporting
 
 initial_features:
-  - CRUD "items" API
-  - items have: title, description, created_at, updated_at
-  - Next.js pages to list/create/edit items
+  - name: Transaction Management
+    description: |
+      Core transaction model with fields:
+      - date (transaction date)
+      - amount (decimal, positive=income, negative=expense)
+      - description (raw description from bank)
+      - merchant (extracted/cleaned merchant name)
+      - account_source (e.g., "BOFA-Checking", "AMEX-53004", "AMEX-53012")
+      - card_member (e.g., "JOSEPH W SEYMOUR", "JILL SEYMOUR")
+      - category (user-assigned or auto-inferred)
+      - reconciliation_status (enum: unreconciled, matched, manually_entered, ignored)
+      - notes (optional user notes)
+      - reference_id (original bank reference/transaction ID)
+      - created_at, updated_at timestamps
+
+      CRUD endpoints for manual transaction entry/editing.
+
+  - name: CSV Import System
+    description: |
+      Backend file upload endpoint accepting CSV files.
+      Parser should handle multiple bank formats:
+
+      1. BOFA format:
+         - Skip header rows (summary section before "Date,Description,Amount,Running Bal.")
+         - Parse messy descriptions (extract merchant from "VENMO DES:PAYMENT..." patterns)
+         - Detect account source from file metadata or user selection
+         - Amount is signed (negative=debit, positive=credit)
+
+      2. AMEX format:
+         - Clean CSV with columns: Date, Description, Card Member, Account #, Amount, Category, etc.
+         - Extract merchant from Description field
+         - Map Card Member to card_member field
+         - Extract account from "Account #" column (e.g., -53004)
+         - Use existing Category field as initial category suggestion
+         - Amount needs sign adjustment (credits are negative)
+
+      Import workflow:
+      - Upload CSV
+      - Auto-detect format (BOFA vs AMEX vs unknown)
+      - Parse and normalize transactions
+      - Mark as "unreconciled" by default
+      - Return preview of parsed transactions
+      - User confirms import
+      - Deduplicate based on (date + amount + reference_id)
+
+      Store sample files location: /samples/bofa.csv and /samples/amex.csv
+
+  - name: Smart Category Inference
+    description: |
+      Auto-categorize transactions using:
+      1. AMEX categories as seed data (map their category strings to simplified categories)
+      2. Merchant name pattern matching (e.g., "STARBUCKS" → "Dining/Coffee")
+      3. Description keyword matching
+      4. Learn from user's past categorizations
+
+      Suggested categories (simple, no subcategories for v0):
+      - Income (payroll, deposits, refunds)
+      - Groceries
+      - Dining & Coffee
+      - Shopping
+      - Utilities (gas, electric, water, internet, phone)
+      - Transportation (tolls, gas, rideshare)
+      - Entertainment
+      - Healthcare
+      - Education
+      - Housing (rent, mortgage, HOA)
+      - Subscriptions
+      - Other
+
+      Backend endpoint: POST /api/v1/transactions/{id}/suggest-category
+      Returns top 3 category suggestions with confidence scores.
+
+      UI allows manual override and "remember this merchant" option.
+
+  - name: Reconciliation Interface
+    description: |
+      Frontend view showing unreconciled transactions.
+      Features:
+      - Filter by account_source, date range, reconciliation_status
+      - Bulk edit categories
+      - Mark as reconciled
+      - Merge duplicates
+      - Ignore transactions (e.g., internal transfers between accounts)
+      - Quick-assign categories with keyboard shortcuts
+
+  - name: Monthly Spending Analysis
+    description: |
+      Dashboard showing:
+      - Current month spending by category (pie/bar chart)
+      - Month-over-month trend (line chart showing total spending + income over last 6-12 months)
+      - Category breakdown table with monthly comparison
+      - Top merchants by spending
+      - Income vs expenses summary
+
+      Backend endpoints:
+      - GET /api/v1/reports/monthly-summary?year=2025&month=11
+      - GET /api/v1/reports/trends?start_date=2025-01&end_date=2025-11&group_by=category
+      - GET /api/v1/reports/top-merchants?limit=10&period=current_month
+
+      Frontend uses charts library (recharts or similar).
+
+  - name: Transaction List & Search
+    description: |
+      Paginated transaction list with:
+      - Search by merchant, description, category
+      - Filter by date range, account, category, reconciliation status
+      - Sort by date, amount
+      - Export filtered results to CSV
 
 constraints:
-  - commands:
-      backend: "uv run uvicorn app.main:app --reload"
-      frontend: "pnpm dev"
+  commands:
+    backend: cd backend && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    frontend: cd frontend && pnpm dev
+  api_base_route: /api/v1
+  docker: false
+  cors_allowed_origins:
+    - http://localhost:3000
 
 preflight_preferences:
   ask_before_starting:
-    - confirm project_name
-    - confirm backend/frontend directory names
-    - confirm API base route
-    - confirm if Docker scaffolding should be included
+    - "Confirm transaction model fields are complete for your needs"
+    - "Verify category list covers your spending patterns (can add more categories later)"
+    - "Confirm CSV parser should auto-detect format vs requiring user to specify"
+    - "Should we implement duplicate detection during import or allow duplicates?"
+    - "Do you want to start with all features or prioritize certain ones first?"
