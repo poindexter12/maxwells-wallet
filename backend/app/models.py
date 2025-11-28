@@ -1,8 +1,11 @@
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime
 from datetime import date as date_type
-from typing import Optional
+from typing import Optional, List, TYPE_CHECKING
 from enum import Enum
+
+if TYPE_CHECKING:
+    from typing import List
 
 class ReconciliationStatus(str, Enum):
     unreconciled = "unreconciled"
@@ -23,7 +26,7 @@ class BaseModel(SQLModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Category(BaseModel, table=True):
-    """Category for transaction classification"""
+    """Category for transaction classification - DEPRECATED, use Tag instead"""
     __tablename__ = "categories"
 
     name: str = Field(index=True, unique=True)
@@ -37,6 +40,39 @@ class CategoryUpdate(SQLModel):
     name: Optional[str] = None
     description: Optional[str] = None
 
+
+class TransactionTag(SQLModel, table=True):
+    """Junction table linking transactions to tags"""
+    __tablename__ = "transaction_tags"
+
+    transaction_id: int = Field(foreign_key="transactions.id", primary_key=True)
+    tag_id: int = Field(foreign_key="tags.id", primary_key=True)
+
+
+class Tag(BaseModel, table=True):
+    """Namespaced tag for flexible transaction classification"""
+    __tablename__ = "tags"
+    __table_args__ = {"extend_existing": True}
+
+    namespace: str = Field(index=True)  # "bucket", "occasion", "merchant"
+    value: str = Field(index=True)       # "groceries", "vacation", "amazon"
+    description: Optional[str] = None
+
+    # Note: Unique constraint on (namespace, value) added via migration
+
+    # Relationships
+    transactions: List["Transaction"] = Relationship(back_populates="tags", link_model=TransactionTag)
+
+
+class TagCreate(SQLModel):
+    namespace: str
+    value: str
+    description: Optional[str] = None
+
+
+class TagUpdate(SQLModel):
+    description: Optional[str] = None  # namespace and value are immutable
+
 class Transaction(BaseModel, table=True):
     """Transaction model"""
     __tablename__ = "transactions"
@@ -47,7 +83,7 @@ class Transaction(BaseModel, table=True):
     merchant: Optional[str] = Field(default=None, index=True)  # extracted/cleaned merchant name
     account_source: str = Field(index=True)  # e.g., "BOFA-Checking", "AMEX-53004"
     card_member: Optional[str] = None  # e.g., "JOSEPH W SEYMOUR"
-    category: Optional[str] = Field(default=None, index=True)  # user-assigned or auto-inferred
+    category: Optional[str] = Field(default=None, index=True)  # DEPRECATED: use tags instead
     reconciliation_status: ReconciliationStatus = Field(
         default=ReconciliationStatus.unreconciled,
         index=True
@@ -55,6 +91,9 @@ class Transaction(BaseModel, table=True):
     notes: Optional[str] = None
     reference_id: Optional[str] = Field(default=None, index=True)  # original bank reference/transaction ID
     import_session_id: Optional[int] = Field(default=None, foreign_key="import_sessions.id", index=True)
+
+    # Relationships
+    tags: List["Tag"] = Relationship(back_populates="transactions", link_model=TransactionTag)
 
 class TransactionCreate(SQLModel):
     date: date_type
