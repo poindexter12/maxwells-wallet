@@ -11,21 +11,27 @@
   - Show upload progress if needed
 
 ### FR-001.2: Format Detection
-- **Requirement**: System auto-detects CSV format (BOFA vs AMEX)
+- **Requirement**: System auto-detects CSV format (BofA bank, BofA CC, Amex CC)
 - **Acceptance Criteria**:
-  - Detect BOFA format by presence of summary header rows
-  - Detect AMEX format by "Card Member" and "Account #" columns
+  - Detect `bofa_bank` by "Running Bal." column
+  - Detect `bofa_cc` by "Posted Date" and "Reference Number" columns
+  - Detect `amex_cc` by "Card Member" and "Account #" columns
   - Handle unknown formats gracefully
   - Allow manual format override
 
 ### FR-001.3: Data Parsing
 - **Requirement**: Parse CSV and extract transaction data
-- **BOFA Parsing**:
+- **BofA Bank Parsing** (`bofa_bank`):
   - Skip summary header rows
   - Extract: Date, Description, Amount, Running Balance
   - Derive merchant from description
   - Require user to specify account source
-- **AMEX Parsing**:
+- **BofA Credit Card Parsing** (`bofa_cc`):
+  - Extract: Posted Date, Reference Number, Payee, Address, Amount
+  - Use Payee as merchant
+  - Use Reference Number as reference_id
+  - Require user to specify account source
+- **Amex CC Parsing** (`amex_cc`):
   - Extract: Date, Description, Card Member, Account #, Amount, Category, Reference
   - Use merchant from Description field
   - Auto-detect account from Account # column
@@ -465,7 +471,96 @@
   - Next expected date display
 - **Status**: ✅ Implemented (2025-11-28)
 
-## Non-Goals (Out of Scope for v0.3)
+## FR-011: Admin & Data Management (v0.4)
+
+### FR-011.1: Import Session Tracking
+- **Requirement**: Track import batches for audit and rollback capability
+- **Purpose**: Allow users to review import history and undo bad imports
+- **Acceptance Criteria**:
+  - Create ImportSession record on each CSV import
+  - Track: filename, format, account, transaction count, duplicates, total amount
+  - Store date range of imported transactions
+  - Link transactions to their import session (import_session_id)
+  - Status: completed, rolled_back
+- **Status**: ✅ Implemented (2025-11-28)
+
+### FR-011.2: Import Session Management
+- **Requirement**: View and manage import session history
+- **Acceptance Criteria**:
+  - List all import sessions ordered by date
+  - Show session details: filename, format, counts, date range
+  - Get transactions for specific session
+  - Visual status indicators
+- **API**: `GET /api/v1/admin/import-sessions`, `GET /api/v1/admin/import-sessions/{id}`
+- **Status**: ✅ Implemented (2025-11-28)
+
+### FR-011.3: Import Session Rollback
+- **Requirement**: Delete all transactions from a specific import
+- **Purpose**: Undo bad imports without affecting other data
+- **Acceptance Criteria**:
+  - Require explicit confirmation (confirm='DELETE')
+  - Delete all transactions linked to session
+  - Mark session as "rolled_back" (keep for audit)
+  - Report count of deleted transactions
+  - Cannot roll back already rolled-back sessions
+- **API**: `DELETE /api/v1/admin/import-sessions/{id}?confirm=DELETE`
+- **Status**: ✅ Implemented (2025-11-28)
+
+### FR-011.4: Purge All Transactions
+- **Requirement**: Delete all transactions from database
+- **Purpose**: Reset database for testing or fresh start
+- **Acceptance Criteria**:
+  - Require explicit confirmation (confirm='PURGE_ALL')
+  - Delete ALL transactions
+  - Mark all import sessions as "rolled_back"
+  - Report count of deleted transactions
+  - Show clear warning in UI
+- **API**: `DELETE /api/v1/admin/transactions/purge-all?confirm=PURGE_ALL`
+- **Status**: ✅ Implemented (2025-11-28)
+
+### FR-011.5: Admin Statistics
+- **Requirement**: Dashboard stats for database health
+- **Acceptance Criteria**:
+  - Total transaction count
+  - Transactions by account (count and total amount)
+  - Import session counts by status
+- **API**: `GET /api/v1/admin/stats`
+- **Status**: ✅ Implemented (2025-11-28)
+
+### FR-011.6: Admin UI
+- **Requirement**: Administrative interface for data management
+- **Features**:
+  - Stats overview cards
+  - Account breakdown table
+  - Import sessions table with filters
+  - Roll back individual sessions
+  - Purge all transactions (danger zone)
+  - Confirmation dialogs for destructive actions
+- **Status**: ✅ Implemented (2025-11-28)
+
+## FR-012: CSV Format Support (v0.4)
+
+### FR-012.1: BofA Credit Card Format
+- **Requirement**: Support Bank of America credit card CSV exports
+- **Format**: Posted Date, Reference Number, Payee, Address, Amount
+- **Acceptance Criteria**:
+  - Auto-detect by "Posted Date" and "Reference Number" headers
+  - Parse date as MM/DD/YYYY
+  - Use Reference Number as reference_id
+  - Extract merchant from Payee field
+  - Handle amounts: negative = charge, positive = credit/payment
+- **Status**: ✅ Implemented (2025-11-28)
+
+### FR-012.2: Unified Format Naming
+- **Requirement**: Consistent naming for import format types
+- **Format Types**:
+  - `bofa_bank`: BofA checking/savings (Date, Description, Amount, Running Bal.)
+  - `bofa_cc`: BofA credit card (Posted Date, Reference Number, Payee, Address, Amount)
+  - `amex_cc`: American Express (Date, Description, Card Member, Account #, Amount, ...)
+  - `unknown`: Unrecognized format
+- **Status**: ✅ Implemented (2025-11-28)
+
+## Non-Goals (Out of Scope for v0.4)
 - ❌ Multi-user / multi-tenant
 - ❌ User authentication / login
 - ❌ Bill payment

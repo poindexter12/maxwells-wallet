@@ -26,7 +26,7 @@ class TestCSVImport:
         data = response.json()
 
         # FR-001.2: Format Detection
-        assert data["detected_format"] == "amex"
+        assert data["detected_format"] == "amex_cc"
 
         # FR-001.4: Preview requirements
         assert "transactions" in data
@@ -63,11 +63,45 @@ Date,Description,Amount,Running Bal.
         data = response.json()
 
         # FR-001.2: Format Detection
-        assert data["detected_format"] == "bofa"
+        assert data["detected_format"] == "bofa_bank"
 
         # FR-001.3: BOFA requires account source
         assert "transactions" in data
         assert len(data["transactions"]) == 3
+
+    @pytest.mark.asyncio
+    async def test_preview_bofa_cc_csv(self, client: AsyncClient, seed_categories):
+        """FR-001.4: Import Preview - BOFA Credit Card format"""
+        csv_content = """Posted Date,Reference Number,Payee,Address,Amount
+11/26/2025,74863985329012411622105,"Mantarraya Cafe Puntarenas,Co","",-85.78
+11/25/2025,24138935328002638002967,"THE ROASTERY PUNTARENAS","",-70.18
+11/21/2025,32583204320112100065939,"PAYMENT - THANK YOU","",3846.96
+"""
+
+        files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
+        data_payload = {"account_source": "BOFA-CC-1234"}
+
+        response = await client.post(
+            "/api/v1/import/preview",
+            files=files,
+            data=data_payload
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # FR-001.2: Format Detection
+        assert data["detected_format"] == "bofa_cc"
+
+        # Verify transactions parsed correctly
+        assert "transactions" in data
+        assert len(data["transactions"]) == 3
+        assert data["transaction_count"] == 3
+
+        # Verify amounts (negative for charges, positive for payments)
+        amounts = [t["amount"] for t in data["transactions"]]
+        assert -85.78 in amounts
+        assert 3846.96 in amounts  # Payment should be positive
 
     @pytest.mark.asyncio
     async def test_confirm_import(self, client: AsyncClient, seed_categories):
@@ -79,7 +113,7 @@ Date,Description,Amount,Running Bal.
 
         # First import
         files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
-        data_payload = {"format_type": "amex"}
+        data_payload = {"format_type": "amex_cc"}
 
         confirm_response = await client.post(
             "/api/v1/import/confirm",
@@ -94,7 +128,7 @@ Date,Description,Amount,Running Bal.
 
         # Second import (should detect duplicates)
         files2 = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
-        data_payload2 = {"format_type": "amex"}
+        data_payload2 = {"format_type": "amex_cc"}
 
         confirm_response2 = await client.post(
             "/api/v1/import/confirm",

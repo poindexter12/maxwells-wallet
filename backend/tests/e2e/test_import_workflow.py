@@ -101,7 +101,7 @@ class TestImportWorkflow:
         # Select AMEX format hint if available
         format_select = page.locator("select[name='format_hint'], #format-hint")
         if format_select.count() > 0:
-            format_select.select_option(value="amex")
+            format_select.select_option(value="amex_cc")
 
         # Click preview button
         page.locator("button:has-text('Preview'), button:has-text('Upload')").click()

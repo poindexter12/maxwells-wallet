@@ -1,9 +1,24 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db
-from app.routers import transactions, categories, import_router, reports, budgets, category_rules, recurring
+from app.routers import transactions, categories, import_router, reports, budgets, category_rules, recurring, admin
 
-app = FastAPI(title="Finances API", description="Personal finance tracker API", version="0.3.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await init_db()
+    yield
+    # Shutdown (nothing needed for now)
+
+
+app = FastAPI(
+    title="Finances API",
+    description="Personal finance tracker API",
+    version="0.3.0",
+    lifespan=lifespan
+)
 
 # CORS configuration
 app.add_middleware(
@@ -22,10 +37,7 @@ app.include_router(reports.router)
 app.include_router(budgets.router)
 app.include_router(category_rules.router)
 app.include_router(recurring.router)
-
-@app.on_event("startup")
-async def on_startup():
-    await init_db()
+app.include_router(admin.router)
 
 @app.get("/")
 async def root():
