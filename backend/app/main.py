@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db
-from app.routers import transactions, categories, import_router, reports, budgets, category_rules, recurring, admin, tags
+from app.routers import transactions, categories, import_router, reports, budgets, category_rules, tag_rules, recurring, admin, tags
 
 
 @asynccontextmanager
@@ -35,7 +35,8 @@ app.include_router(categories.router)
 app.include_router(import_router.router)
 app.include_router(reports.router)
 app.include_router(budgets.router)
-app.include_router(category_rules.router)
+app.include_router(category_rules.router)  # Legacy, will be removed
+app.include_router(tag_rules.router)
 app.include_router(recurring.router)
 app.include_router(admin.router)
 app.include_router(tags.router)
