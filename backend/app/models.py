@@ -11,8 +11,9 @@ class ReconciliationStatus(str, Enum):
     ignored = "ignored"
 
 class ImportFormatType(str, Enum):
-    bofa = "bofa"
-    amex = "amex"
+    bofa_bank = "bofa_bank"   # BofA Checking (Date,Description,Amount,Running Bal.)
+    bofa_cc = "bofa_cc"       # BofA Credit Card (Posted Date,Reference Number,Payee,Address,Amount)
+    amex_cc = "amex_cc"       # Amex Credit Card (Date,Description,Amount,Card Member,Account #)
     unknown = "unknown"
 
 class BaseModel(SQLModel):
@@ -53,6 +54,7 @@ class Transaction(BaseModel, table=True):
     )
     notes: Optional[str] = None
     reference_id: Optional[str] = Field(default=None, index=True)  # original bank reference/transaction ID
+    import_session_id: Optional[int] = Field(default=None, foreign_key="import_sessions.id", index=True)
 
 class TransactionCreate(SQLModel):
     date: date_type
@@ -94,6 +96,20 @@ class ImportFormatCreate(SQLModel):
 class ImportFormatUpdate(SQLModel):
     format_type: Optional[ImportFormatType] = None
     custom_mappings: Optional[str] = None
+
+class ImportSession(BaseModel, table=True):
+    """Tracks import batches for audit and rollback"""
+    __tablename__ = "import_sessions"
+
+    filename: str  # Original filename
+    format_type: ImportFormatType
+    account_source: Optional[str] = None
+    transaction_count: int = 0
+    duplicate_count: int = 0
+    total_amount: float = 0.0  # Sum of imported transaction amounts
+    date_range_start: Optional[date_type] = None
+    date_range_end: Optional[date_type] = None
+    status: str = Field(default="completed")  # completed, rolled_back
 
 class BudgetPeriod(str, Enum):
     monthly = "monthly"

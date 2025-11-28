@@ -84,7 +84,7 @@ async def monthly_summary(
 async def spending_trends(
     start_date: date = Query(...),
     end_date: date = Query(...),
-    group_by: str = Query("month", regex="^(month|category|account)$"),
+    group_by: str = Query("month", pattern="^(month|category|account)$"),
     session: AsyncSession = Depends(get_session)
 ):
     """Get spending trends over time"""
@@ -161,7 +161,7 @@ async def spending_trends(
 @router.get("/top-merchants")
 async def top_merchants(
     limit: int = Query(10, ge=1, le=100),
-    period: str = Query("current_month", regex="^(current_month|last_month|last_3_months|last_6_months|all_time)$"),
+    period: str = Query("current_month", pattern="^(current_month|last_month|last_3_months|last_6_months|all_time)$"),
     session: AsyncSession = Depends(get_session)
 ):
     """Get top merchants by spending"""

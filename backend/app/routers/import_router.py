@@ -7,7 +7,7 @@ from datetime import datetime
 from app.database import get_session
 from app.models import (
     Transaction, ImportFormat, ImportFormatCreate,
-    ImportFormatType, ReconciliationStatus
+    ImportFormatType, ReconciliationStatus, ImportSession
 )
 from app.csv_parser import parse_csv, detect_format
 from app.category_inference import infer_category, build_user_history
@@ -110,10 +110,25 @@ async def confirm_import(
     all_txns = all_txns_result.scalars().all()
     user_history = build_user_history(all_txns)
 
+    # Create import session to track this batch
+    import_session = ImportSession(
+        filename=file.filename,
+        format_type=format_type,
+        account_source=account_source,
+        transaction_count=0,
+        duplicate_count=0,
+        total_amount=0.0,
+        status="in_progress"
+    )
+    session.add(import_session)
+    await session.flush()  # Get the ID
+
     # Check for duplicates and save
     imported_count = 0
     duplicate_count = 0
     skipped_count = 0
+    total_amount = 0.0
+    dates = []
 
     for txn_data in transactions:
         # Check for duplicate (date + amount + reference_id)
@@ -145,7 +160,7 @@ async def confirm_import(
         else:
             category = None
 
-        # Create transaction
+        # Create transaction linked to import session
         db_transaction = Transaction(
             date=txn_data['date'],
             amount=txn_data['amount'],
@@ -155,11 +170,23 @@ async def confirm_import(
             card_member=txn_data.get('card_member'),
             category=category,
             reconciliation_status=ReconciliationStatus.unreconciled,
-            reference_id=txn_data.get('reference_id')
+            reference_id=txn_data.get('reference_id'),
+            import_session_id=import_session.id
         )
 
         session.add(db_transaction)
         imported_count += 1
+        total_amount += txn_data['amount']
+        dates.append(txn_data['date'])
+
+    # Update import session with final stats
+    import_session.transaction_count = imported_count
+    import_session.duplicate_count = duplicate_count
+    import_session.total_amount = total_amount
+    import_session.status = "completed"
+    if dates:
+        import_session.date_range_start = min(dates)
+        import_session.date_range_end = max(dates)
 
     # Save import format preference if requested
     if save_format and account_source:
@@ -185,7 +212,8 @@ async def confirm_import(
         "imported": imported_count,
         "duplicates": duplicate_count,
         "skipped": skipped_count,
-        "format_saved": save_format
+        "format_saved": save_format,
+        "import_session_id": import_session.id
     }
 
 @router.get("/formats")
