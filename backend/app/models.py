@@ -181,12 +181,12 @@ class BudgetUpdate(SQLModel):
     end_date: Optional[date_type] = None
     rollover_enabled: Optional[bool] = None
 
-class CategoryRule(BaseModel, table=True):
-    """Category auto-categorization rules"""
-    __tablename__ = "category_rules"
+class TagRule(BaseModel, table=True):
+    """Tag auto-assignment rules (applies tags to transactions based on patterns)"""
+    __tablename__ = "tag_rules"
 
     name: str  # User-friendly rule name
-    category: str = Field(index=True)  # Target category
+    tag: str = Field(index=True)  # Target tag in namespace:value format (e.g., "bucket:groceries")
     priority: int = Field(default=0, index=True)  # Higher = applied first
     enabled: bool = Field(default=True)
 
@@ -204,9 +204,10 @@ class CategoryRule(BaseModel, table=True):
     match_count: int = Field(default=0)
     last_matched_date: Optional[datetime] = None
 
-class CategoryRuleCreate(SQLModel):
+
+class TagRuleCreate(SQLModel):
     name: str
-    category: str
+    tag: str  # namespace:value format
     priority: int = 0
     enabled: bool = True
     merchant_pattern: Optional[str] = None
@@ -216,9 +217,10 @@ class CategoryRuleCreate(SQLModel):
     account_source: Optional[str] = None
     match_all: bool = False
 
-class CategoryRuleUpdate(SQLModel):
+
+class TagRuleUpdate(SQLModel):
     name: Optional[str] = None
-    category: Optional[str] = None
+    tag: Optional[str] = None
     priority: Optional[int] = None
     enabled: Optional[bool] = None
     merchant_pattern: Optional[str] = None
@@ -227,6 +229,12 @@ class CategoryRuleUpdate(SQLModel):
     amount_max: Optional[float] = None
     account_source: Optional[str] = None
     match_all: Optional[bool] = None
+
+
+# Keep old names as aliases for backwards compatibility during migration
+CategoryRule = TagRule
+CategoryRuleCreate = TagRuleCreate
+CategoryRuleUpdate = TagRuleUpdate
 
 class RecurringFrequency(str, Enum):
     weekly = "weekly"
