@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Full-stack financial application prototype built with FORGE Kit:
+**Maxwell's Wallet** - Full-stack personal finance tracker built with FORGE Kit:
 - **Frontend**: Next.js 14 + TypeScript (App Router)
 - **Backend**: FastAPI + Python (async)
 - **Database**: SQLite (dev) with SQLModel ORM (Postgres-ready for prod)
