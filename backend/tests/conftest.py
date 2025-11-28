@@ -10,7 +10,7 @@ import os
 
 from app.main import app
 from app.database import get_session
-from app.models import Category, Transaction, ImportFormat
+from app.models import Category, Transaction, ImportFormat, Tag, TransactionTag
 
 
 # Use in-memory SQLite for tests
@@ -74,8 +74,38 @@ async def client(async_session: AsyncSession) -> AsyncGenerator[AsyncClient, Non
 
 
 @pytest.fixture(scope="function")
-async def seed_categories(async_session: AsyncSession):
-    """Seed default categories"""
+async def seed_tags(async_session: AsyncSession):
+    """Seed default bucket tags"""
+    default_bucket_tags = [
+        ("bucket", "none", "Uncategorized"),
+        ("bucket", "income", "Income and earnings"),
+        ("bucket", "groceries", "Grocery shopping"),
+        ("bucket", "dining", "Restaurants and food"),
+        ("bucket", "shopping", "General shopping"),
+        ("bucket", "utilities", "Bills and utilities"),
+        ("bucket", "transportation", "Gas, transit, rideshare"),
+        ("bucket", "entertainment", "Entertainment"),
+        ("bucket", "healthcare", "Medical expenses"),
+        ("bucket", "education", "Education"),
+        ("bucket", "housing", "Rent, mortgage"),
+        ("bucket", "subscriptions", "Subscriptions"),
+        ("bucket", "other", "Other expenses"),
+        ("bucket", "savings", "Savings"),
+    ]
+
+    tags = []
+    for namespace, value, description in default_bucket_tags:
+        tag = Tag(namespace=namespace, value=value, description=description)
+        async_session.add(tag)
+        tags.append(tag)
+
+    await async_session.commit()
+    return tags
+
+
+@pytest.fixture(scope="function")
+async def seed_categories(async_session: AsyncSession, seed_tags):
+    """Seed default categories (legacy) - also seeds tags"""
     default_categories = [
         "Income",
         "Groceries",
@@ -101,78 +131,100 @@ async def seed_categories(async_session: AsyncSession):
 
 @pytest.fixture(scope="function")
 async def seed_transactions(async_session: AsyncSession, seed_categories):
-    """Seed sample transactions"""
+    """Seed sample transactions with tags"""
     from datetime import date
+    from sqlmodel import select
 
-    transactions = [
-        Transaction(
-            date=date(2025, 11, 1),
-            amount=3500.00,
-            description="Paycheck Deposit",
-            merchant="Employer",
-            account_source="BOFA-1234",
-            category="Income",
-            reconciliation_status="matched",
-            reference_id="tx_income_1"
-        ),
-        Transaction(
-            date=date(2025, 11, 5),
-            amount=-45.50,
-            description="Whole Foods Market",
-            merchant="Whole Foods",
-            account_source="AMEX-5678",
-            card_member="JOHN DOE",
-            category="Groceries",
-            reconciliation_status="matched",
-            reference_id="tx_grocery_1"
-        ),
-        Transaction(
-            date=date(2025, 11, 10),
-            amount=-12.50,
-            description="Starbucks",
-            merchant="Starbucks",
-            account_source="AMEX-5678",
-            card_member="JOHN DOE",
-            category="Dining & Coffee",
-            reconciliation_status="unreconciled",
-            reference_id="tx_coffee_1"
-        ),
-        Transaction(
-            date=date(2025, 11, 15),
-            amount=-199.99,
-            description="Amazon.com",
-            merchant="Amazon",
-            account_source="AMEX-5678",
-            card_member="JANE DOE",
-            category="Shopping",
-            reconciliation_status="unreconciled",
-            reference_id="tx_shopping_1"
-        ),
-        Transaction(
-            date=date(2025, 10, 1),
-            amount=3500.00,
-            description="Paycheck Deposit",
-            merchant="Employer",
-            account_source="BOFA-1234",
-            category="Income",
-            reconciliation_status="matched",
-            reference_id="tx_income_2"
-        ),
-        Transaction(
-            date=date(2025, 10, 10),
-            amount=-35.00,
-            description="Target",
-            merchant="Target",
-            account_source="AMEX-5678",
-            card_member="JOHN DOE",
-            category="Shopping",
-            reconciliation_status="matched",
-            reference_id="tx_shopping_2"
-        ),
+    # Get tag IDs for linking
+    tags_result = await async_session.execute(select(Tag))
+    tags = {f"{t.namespace}:{t.value}": t for t in tags_result.scalars().all()}
+
+    transactions_data = [
+        {
+            "date": date(2025, 11, 1),
+            "amount": 3500.00,
+            "description": "Paycheck Deposit",
+            "merchant": "Employer",
+            "account_source": "BOFA-1234",
+            "category": "Income",
+            "reconciliation_status": "matched",
+            "reference_id": "tx_income_1",
+            "bucket_tag": "bucket:income"
+        },
+        {
+            "date": date(2025, 11, 5),
+            "amount": -45.50,
+            "description": "Whole Foods Market",
+            "merchant": "Whole Foods",
+            "account_source": "AMEX-5678",
+            "card_member": "JOHN DOE",
+            "category": "Groceries",
+            "reconciliation_status": "matched",
+            "reference_id": "tx_grocery_1",
+            "bucket_tag": "bucket:groceries"
+        },
+        {
+            "date": date(2025, 11, 10),
+            "amount": -12.50,
+            "description": "Starbucks",
+            "merchant": "Starbucks",
+            "account_source": "AMEX-5678",
+            "card_member": "JOHN DOE",
+            "category": "Dining & Coffee",
+            "reconciliation_status": "unreconciled",
+            "reference_id": "tx_coffee_1",
+            "bucket_tag": "bucket:dining"
+        },
+        {
+            "date": date(2025, 11, 15),
+            "amount": -199.99,
+            "description": "Amazon.com",
+            "merchant": "Amazon",
+            "account_source": "AMEX-5678",
+            "card_member": "JANE DOE",
+            "category": "Shopping",
+            "reconciliation_status": "unreconciled",
+            "reference_id": "tx_shopping_1",
+            "bucket_tag": "bucket:shopping"
+        },
+        {
+            "date": date(2025, 10, 1),
+            "amount": 3500.00,
+            "description": "Paycheck Deposit",
+            "merchant": "Employer",
+            "account_source": "BOFA-1234",
+            "category": "Income",
+            "reconciliation_status": "matched",
+            "reference_id": "tx_income_2",
+            "bucket_tag": "bucket:income"
+        },
+        {
+            "date": date(2025, 10, 10),
+            "amount": -35.00,
+            "description": "Target",
+            "merchant": "Target",
+            "account_source": "AMEX-5678",
+            "card_member": "JOHN DOE",
+            "category": "Shopping",
+            "reconciliation_status": "matched",
+            "reference_id": "tx_shopping_2",
+            "bucket_tag": "bucket:shopping"
+        },
     ]
 
-    for txn in transactions:
+    created_transactions = []
+    for txn_data in transactions_data:
+        bucket_tag_key = txn_data.pop("bucket_tag")
+        txn = Transaction(**txn_data)
         async_session.add(txn)
+        await async_session.flush()
+
+        # Link to bucket tag
+        if bucket_tag_key in tags:
+            txn_tag = TransactionTag(transaction_id=txn.id, tag_id=tags[bucket_tag_key].id)
+            async_session.add(txn_tag)
+
+        created_transactions.append(txn)
 
     await async_session.commit()
-    return transactions
+    return created_transactions

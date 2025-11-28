@@ -7,9 +7,15 @@ from datetime import date, datetime
 from app.database import get_session
 from app.models import (
     Transaction, TransactionCreate, TransactionUpdate,
-    ReconciliationStatus
+    ReconciliationStatus, Tag, TransactionTag
 )
 from app.category_inference import infer_category, build_user_history
+from sqlmodel import and_
+from pydantic import BaseModel
+
+
+class AddTagRequest(BaseModel):
+    tag: str  # namespace:value format
 
 router = APIRouter(prefix="/api/v1/transactions", tags=["transactions"])
 
@@ -179,3 +185,154 @@ async def bulk_update_transactions(
     await session.commit()
 
     return {"updated": len(transactions)}
+
+
+def parse_tag_string(tag_str: str) -> tuple:
+    """Parse a tag string like 'bucket:groceries' into (namespace, value)"""
+    if ":" not in tag_str:
+        raise ValueError(f"Invalid tag format: '{tag_str}'. Expected 'namespace:value'")
+    namespace, value = tag_str.split(":", 1)
+    return namespace, value
+
+
+@router.post("/{transaction_id}/tags")
+async def add_tag_to_transaction(
+    transaction_id: int,
+    request: AddTagRequest,
+    session: AsyncSession = Depends(get_session)
+):
+    """Add a tag to a transaction"""
+    # Validate transaction exists
+    txn_result = await session.execute(
+        select(Transaction).where(Transaction.id == transaction_id)
+    )
+    transaction = txn_result.scalar_one_or_none()
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    # Parse and validate tag
+    try:
+        namespace, value = parse_tag_string(request.tag)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Get the tag
+    tag_result = await session.execute(
+        select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
+    )
+    tag = tag_result.scalar_one_or_none()
+    if not tag:
+        raise HTTPException(status_code=400, detail=f"Tag '{request.tag}' does not exist")
+
+    # For bucket namespace, remove existing bucket tag first (only one allowed)
+    if namespace == "bucket":
+        existing_bucket_result = await session.execute(
+            select(TransactionTag)
+            .join(Tag)
+            .where(
+                and_(
+                    TransactionTag.transaction_id == transaction_id,
+                    Tag.namespace == "bucket"
+                )
+            )
+        )
+        for existing in existing_bucket_result.scalars().all():
+            await session.delete(existing)
+
+    # Check if this exact tag is already applied
+    existing_result = await session.execute(
+        select(TransactionTag).where(
+            and_(
+                TransactionTag.transaction_id == transaction_id,
+                TransactionTag.tag_id == tag.id
+            )
+        )
+    )
+    if existing_result.scalar_one_or_none():
+        return {"message": "Tag already applied", "transaction_id": transaction_id, "tag": request.tag}
+
+    # Add the tag
+    txn_tag = TransactionTag(transaction_id=transaction_id, tag_id=tag.id)
+    session.add(txn_tag)
+    await session.commit()
+
+    return {"message": "Tag added", "transaction_id": transaction_id, "tag": request.tag}
+
+
+@router.delete("/{transaction_id}/tags/{tag}")
+async def remove_tag_from_transaction(
+    transaction_id: int,
+    tag: str,
+    session: AsyncSession = Depends(get_session)
+):
+    """Remove a tag from a transaction"""
+    # Validate transaction exists
+    txn_result = await session.execute(
+        select(Transaction).where(Transaction.id == transaction_id)
+    )
+    transaction = txn_result.scalar_one_or_none()
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    # Parse tag
+    try:
+        namespace, value = parse_tag_string(tag)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Get the tag
+    tag_result = await session.execute(
+        select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
+    )
+    tag_obj = tag_result.scalar_one_or_none()
+    if not tag_obj:
+        raise HTTPException(status_code=400, detail=f"Tag '{tag}' does not exist")
+
+    # Find and remove the link
+    link_result = await session.execute(
+        select(TransactionTag).where(
+            and_(
+                TransactionTag.transaction_id == transaction_id,
+                TransactionTag.tag_id == tag_obj.id
+            )
+        )
+    )
+    link = link_result.scalar_one_or_none()
+    if not link:
+        raise HTTPException(status_code=404, detail="Tag not applied to this transaction")
+
+    await session.delete(link)
+    await session.commit()
+
+    return {"message": "Tag removed", "transaction_id": transaction_id, "tag": tag}
+
+
+@router.get("/{transaction_id}/tags")
+async def get_transaction_tags(
+    transaction_id: int,
+    session: AsyncSession = Depends(get_session)
+):
+    """Get all tags for a transaction"""
+    # Validate transaction exists
+    txn_result = await session.execute(
+        select(Transaction).where(Transaction.id == transaction_id)
+    )
+    transaction = txn_result.scalar_one_or_none()
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    # Get tags
+    result = await session.execute(
+        select(Tag)
+        .join(TransactionTag)
+        .where(TransactionTag.transaction_id == transaction_id)
+    )
+    tags = result.scalars().all()
+
+    return {
+        "transaction_id": transaction_id,
+        "tags": [
+            {"namespace": t.namespace, "value": t.value, "full": f"{t.namespace}:{t.value}"}
+            for t in tags
+        ]
+    }

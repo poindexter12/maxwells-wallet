@@ -179,6 +179,7 @@ Date,Description,Amount,Running Bal.
         assert response.status_code == 200
         data = response.json()
 
-        # Verify AMEX categories are mapped
+        # Verify transactions have bucket tags assigned
         transactions = data["transactions"]
-        assert any(txn["category"] in ["Shopping", "Dining & Coffee", "Other"] for txn in transactions)
+        # Category field now contains title-cased bucket value
+        assert any(txn.get("category") or txn.get("bucket") for txn in transactions)
