@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from sqlmodel import select
+from sqlmodel import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
 from datetime import datetime
@@ -7,12 +7,51 @@ from datetime import datetime
 from app.database import get_session
 from app.models import (
     Transaction, ImportFormat, ImportFormatCreate,
-    ImportFormatType, ReconciliationStatus, ImportSession
+    ImportFormatType, ReconciliationStatus, ImportSession,
+    Tag, TransactionTag
 )
 from app.csv_parser import parse_csv, detect_format
-from app.category_inference import infer_category, build_user_history
+from app.tag_inference import infer_bucket_tag, build_user_history
 
 router = APIRouter(prefix="/api/v1/import", tags=["import"])
+
+
+async def get_or_create_bucket_tag(session: AsyncSession, bucket_value: str) -> Tag:
+    """Get bucket tag by value, creating if needed"""
+    result = await session.execute(
+        select(Tag).where(and_(Tag.namespace == "bucket", Tag.value == bucket_value))
+    )
+    tag = result.scalar_one_or_none()
+    if not tag:
+        # Create the bucket tag
+        tag = Tag(namespace="bucket", value=bucket_value)
+        session.add(tag)
+        await session.flush()
+    return tag
+
+
+async def apply_bucket_tag(session: AsyncSession, transaction_id: int, bucket_value: str):
+    """Apply a bucket tag to a transaction"""
+    tag = await get_or_create_bucket_tag(session, bucket_value)
+
+    # Remove any existing bucket tags first
+    existing_result = await session.execute(
+        select(TransactionTag)
+        .join(Tag)
+        .where(
+            and_(
+                TransactionTag.transaction_id == transaction_id,
+                Tag.namespace == "bucket"
+            )
+        )
+    )
+    for existing in existing_result.scalars().all():
+        await session.delete(existing)
+
+    # Add the new bucket tag
+    txn_tag = TransactionTag(transaction_id=transaction_id, tag_id=tag.id)
+    session.add(txn_tag)
+
 
 @router.post("/preview")
 async def preview_import(
@@ -45,26 +84,36 @@ async def preview_import(
     # Parse CSV
     transactions, detected_format = parse_csv(csv_content, account_source, format_hint)
 
-    # Build user history for category suggestions
+    # Build user history for bucket tag suggestions
+    # Note: This uses the old category field for now during transition
     all_txns_result = await session.execute(
         select(Transaction).where(Transaction.category.isnot(None))
     )
     all_txns = all_txns_result.scalars().all()
-    user_history = build_user_history(all_txns)
+    # Convert old category format to bucket tag format for user history
+    user_history = {}
+    for txn in all_txns:
+        if txn.merchant and txn.category:
+            merchant = txn.merchant.lower()
+            bucket_value = txn.category.lower().replace(' ', '-').replace('&', 'and')
+            user_history[merchant] = f"bucket:{bucket_value}"
 
-    # Add category suggestions to each transaction
+    # Add bucket tag suggestions to each transaction
     for txn in transactions:
-        suggestions = infer_category(
+        suggestions = infer_bucket_tag(
             txn.get('merchant', ''),
             txn.get('description', ''),
             txn.get('amount', 0),
             user_history
         )
-        # Use suggested category from AMEX if available, or top inference
-        if txn.get('suggested_category'):
-            txn['category'] = txn['suggested_category']
-        elif suggestions:
-            txn['category'] = suggestions[0][0]
+        # Get bucket value from tag
+        if suggestions:
+            tag = suggestions[0][0]  # e.g., "bucket:groceries"
+            bucket_value = tag.split(':', 1)[1] if ':' in tag else tag
+            txn['bucket'] = bucket_value
+            txn['bucket_tag'] = tag
+            # Keep category for backwards compatibility
+            txn['category'] = bucket_value.replace('-', ' ').title()
 
     return {
         "detected_format": detected_format,
@@ -72,6 +121,7 @@ async def preview_import(
         "transactions": transactions[:100],  # Limit preview to 100 transactions
         "total_amount": sum(txn['amount'] for txn in transactions)
     }
+
 
 @router.post("/confirm")
 async def confirm_import(
@@ -103,12 +153,17 @@ async def confirm_import(
     if not transactions:
         raise HTTPException(status_code=400, detail="No transactions found in CSV")
 
-    # Build user history for category suggestions
+    # Build user history for bucket tag suggestions
     all_txns_result = await session.execute(
         select(Transaction).where(Transaction.category.isnot(None))
     )
     all_txns = all_txns_result.scalars().all()
-    user_history = build_user_history(all_txns)
+    user_history = {}
+    for txn in all_txns:
+        if txn.merchant and txn.category:
+            merchant = txn.merchant.lower()
+            bucket_value = txn.category.lower().replace(' ', '-').replace('&', 'and')
+            user_history[merchant] = f"bucket:{bucket_value}"
 
     # Create import session to track this batch
     import_session = ImportSession(
@@ -144,23 +199,25 @@ async def confirm_import(
             duplicate_count += 1
             continue
 
-        # Infer category
-        suggestions = infer_category(
+        # Infer bucket tag
+        suggestions = infer_bucket_tag(
             txn_data.get('merchant', ''),
             txn_data.get('description', ''),
             txn_data.get('amount', 0),
             user_history
         )
 
-        # Use suggested category from AMEX if available, or top inference
-        if txn_data.get('suggested_category'):
-            category = txn_data['suggested_category']
-        elif suggestions:
-            category = suggestions[0][0]
+        # Determine bucket value
+        if suggestions:
+            bucket_tag = suggestions[0][0]  # e.g., "bucket:groceries"
+            bucket_value = bucket_tag.split(':', 1)[1] if ':' in bucket_tag else 'none'
         else:
-            category = None
+            bucket_value = 'none'
 
         # Create transaction linked to import session
+        # Keep category field for backwards compatibility during migration
+        category_display = bucket_value.replace('-', ' ').title() if bucket_value != 'none' else None
+
         db_transaction = Transaction(
             date=txn_data['date'],
             amount=txn_data['amount'],
@@ -168,13 +225,18 @@ async def confirm_import(
             merchant=txn_data.get('merchant'),
             account_source=txn_data['account_source'],
             card_member=txn_data.get('card_member'),
-            category=category,
+            category=category_display,  # Legacy field
             reconciliation_status=ReconciliationStatus.unreconciled,
             reference_id=txn_data.get('reference_id'),
             import_session_id=import_session.id
         )
 
         session.add(db_transaction)
+        await session.flush()  # Get the transaction ID
+
+        # Apply bucket tag via junction table
+        await apply_bucket_tag(session, db_transaction.id, bucket_value)
+
         imported_count += 1
         total_amount += txn_data['amount']
         dates.append(txn_data['date'])
@@ -216,6 +278,7 @@ async def confirm_import(
         "import_session_id": import_session.id
     }
 
+
 @router.get("/formats")
 async def list_saved_formats(
     session: AsyncSession = Depends(get_session)
@@ -224,6 +287,7 @@ async def list_saved_formats(
     result = await session.execute(select(ImportFormat))
     formats = result.scalars().all()
     return formats
+
 
 @router.delete("/formats/{format_id}")
 async def delete_saved_format(

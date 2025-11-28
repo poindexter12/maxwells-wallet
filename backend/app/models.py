@@ -158,23 +158,25 @@ class Budget(BaseModel, table=True):
     """Budget tracking model"""
     __tablename__ = "budgets"
 
-    category: str = Field(index=True)  # Category name
+    tag: str = Field(index=True)  # Tag in namespace:value format (e.g., "bucket:groceries")
     amount: float  # Budget limit
     period: BudgetPeriod = Field(default=BudgetPeriod.monthly)
     start_date: Optional[date_type] = None  # Optional: specific start date
     end_date: Optional[date_type] = None    # Optional: specific end date
     rollover_enabled: bool = Field(default=False)
 
+
 class BudgetCreate(SQLModel):
-    category: str
+    tag: str  # namespace:value format
     amount: float
     period: BudgetPeriod = BudgetPeriod.monthly
     start_date: Optional[date_type] = None
     end_date: Optional[date_type] = None
     rollover_enabled: bool = False
 
+
 class BudgetUpdate(SQLModel):
-    category: Optional[str] = None
+    tag: Optional[str] = None
     amount: Optional[float] = None
     period: Optional[BudgetPeriod] = None
     start_date: Optional[date_type] = None
