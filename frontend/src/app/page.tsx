@@ -10,6 +10,9 @@ export default function Dashboard() {
   const [monthlySummary, setMonthlySummary] = useState<any>(null)
   const [trends, setTrends] = useState<any>(null)
   const [topMerchants, setTopMerchants] = useState<any>(null)
+  const [monthOverMonth, setMonthOverMonth] = useState<any>(null)
+  const [spendingVelocity, setSpendingVelocity] = useState<any>(null)
+  const [anomalies, setAnomalies] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   const now = new Date()
@@ -36,6 +39,21 @@ export default function Dashboard() {
         const merchantsRes = await fetch('/api/v1/reports/top-merchants?limit=10&period=current_month')
         const merchantsData = await merchantsRes.json()
         setTopMerchants(merchantsData)
+
+        // Fetch month-over-month comparison
+        const momRes = await fetch(`/api/v1/reports/month-over-month?current_year=${currentYear}&current_month=${currentMonth}`)
+        const momData = await momRes.json()
+        setMonthOverMonth(momData)
+
+        // Fetch spending velocity
+        const velocityRes = await fetch(`/api/v1/reports/spending-velocity?year=${currentYear}&month=${currentMonth}`)
+        const velocityData = await velocityRes.json()
+        setSpendingVelocity(velocityData)
+
+        // Fetch anomalies
+        const anomaliesRes = await fetch(`/api/v1/reports/anomalies?year=${currentYear}&month=${currentMonth}&threshold=2.0`)
+        const anomaliesData = await anomaliesRes.json()
+        setAnomalies(anomaliesData)
 
         setLoading(false)
       } catch (error) {
@@ -78,19 +96,139 @@ export default function Dashboard() {
           <p className="mt-2 text-3xl font-bold text-green-600">
             ${monthlySummary.total_income.toFixed(2)}
           </p>
+          {monthOverMonth && (
+            <p className={`mt-2 text-sm ${monthOverMonth.changes.income.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {monthOverMonth.changes.income.amount >= 0 ? '+' : ''}{monthOverMonth.changes.income.percent.toFixed(1)}% vs last month
+            </p>
+          )}
         </div>
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-sm font-medium text-gray-600">Total Expenses</p>
           <p className="mt-2 text-3xl font-bold text-red-600">
             ${monthlySummary.total_expenses.toFixed(2)}
           </p>
+          {monthOverMonth && (
+            <p className={`mt-2 text-sm ${monthOverMonth.changes.expenses.amount < 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {monthOverMonth.changes.expenses.amount >= 0 ? '+' : ''}{monthOverMonth.changes.expenses.percent.toFixed(1)}% vs last month
+            </p>
+          )}
         </div>
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-sm font-medium text-gray-600">Net</p>
           <p className={`mt-2 text-3xl font-bold ${monthlySummary.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             ${monthlySummary.net.toFixed(2)}
           </p>
+          {monthOverMonth && (
+            <p className={`mt-2 text-sm ${monthOverMonth.changes.net.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {monthOverMonth.changes.net.amount >= 0 ? '+' : ''}{monthOverMonth.changes.net.percent.toFixed(1)}% vs last month
+            </p>
+          )}
         </div>
+      </div>
+
+      {/* Spending Velocity & Anomalies */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Spending Velocity */}
+        {spendingVelocity && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-4">Daily Burn Rate</h2>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600">Daily Spending Rate</p>
+                <p className="text-2xl font-bold text-gray-900">{spendingVelocity.insights.daily_burn_rate}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Days Elapsed</p>
+                  <p className="text-lg font-semibold">{spendingVelocity.days_elapsed} / {spendingVelocity.days_in_month}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Days Remaining</p>
+                  <p className="text-lg font-semibold">{spendingVelocity.insights.days_remaining}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Projected Month Total</p>
+                <p className="text-xl font-bold text-gray-900">${spendingVelocity.projected_monthly.expenses.toFixed(2)}</p>
+                <div className="mt-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                      <div
+                        className={`h-2 rounded-full ${
+                          spendingVelocity.pace === 'over_budget' ? 'bg-red-600' :
+                          spendingVelocity.pace === 'under_budget' ? 'bg-green-600' :
+                          'bg-blue-600'
+                        }`}
+                        style={{ width: `${(spendingVelocity.days_elapsed / spendingVelocity.days_in_month) * 100}%` }}
+                      />
+                    </div>
+                    <span className={`text-sm font-medium ${
+                      spendingVelocity.pace === 'over_budget' ? 'text-red-600' :
+                      spendingVelocity.pace === 'under_budget' ? 'text-green-600' :
+                      'text-blue-600'
+                    }`}>
+                      {spendingVelocity.pace === 'over_budget' ? 'Over Budget' :
+                       spendingVelocity.pace === 'under_budget' ? 'Under Budget' :
+                       'On Track'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="text-xs text-gray-500">
+                <p>Projected remaining: ${spendingVelocity.insights.projected_remaining_spending.toFixed(2)}</p>
+                <p>Previous month: ${spendingVelocity.previous_month.expenses.toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Anomalies */}
+        {anomalies && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-4">Unusual Activity</h2>
+            {anomalies.summary.total_anomalies === 0 ? (
+              <p className="text-gray-500 text-center py-8">No unusual activity detected</p>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-red-50 rounded p-2">
+                    <p className="text-2xl font-bold text-red-600">{anomalies.summary.large_transaction_count}</p>
+                    <p className="text-xs text-gray-600">Large</p>
+                  </div>
+                  <div className="bg-blue-50 rounded p-2">
+                    <p className="text-2xl font-bold text-blue-600">{anomalies.summary.new_merchant_count}</p>
+                    <p className="text-xs text-gray-600">New</p>
+                  </div>
+                  <div className="bg-orange-50 rounded p-2">
+                    <p className="text-2xl font-bold text-orange-600">{anomalies.summary.unusual_category_count}</p>
+                    <p className="text-xs text-gray-600">Category</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {anomalies.anomalies.large_transactions.slice(0, 3).map((txn: any, idx: number) => (
+                    <div key={`large-${idx}`} className="border-l-4 border-red-500 pl-3 py-1">
+                      <p className="text-sm font-medium">${txn.amount.toFixed(2)} - {txn.merchant}</p>
+                      <p className="text-xs text-gray-600">{txn.reason}</p>
+                    </div>
+                  ))}
+                  {anomalies.anomalies.new_merchants.slice(0, 3).map((txn: any, idx: number) => (
+                    <div key={`new-${idx}`} className="border-l-4 border-blue-500 pl-3 py-1">
+                      <p className="text-sm font-medium">${txn.amount.toFixed(2)} - {txn.merchant}</p>
+                      <p className="text-xs text-gray-600">{txn.reason}</p>
+                    </div>
+                  ))}
+                  {anomalies.anomalies.unusual_categories.slice(0, 2).map((cat: any, idx: number) => (
+                    <div key={`cat-${idx}`} className="border-l-4 border-orange-500 pl-3 py-1">
+                      <p className="text-sm font-medium">{cat.category}</p>
+                      <p className="text-xs text-gray-600">{cat.reason}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Charts */}

@@ -12,6 +12,7 @@ Built with:
 
 ## Features
 
+### Core Features (v0.1)
 - **CSV Import**: Import transactions from Bank of America and American Express
   - Auto-detects format
   - Deduplicates transactions
@@ -20,6 +21,28 @@ Built with:
 - **Dashboard**: Monthly spending analysis with charts and trends
 - **Reconciliation**: Bulk reconcile unreconciled transactions
 - **Transaction Management**: Search, filter, and categorize transactions
+
+### Advanced Analytics (v0.2)
+- **Month-over-Month Comparison**: Track spending changes with % increases/decreases per category
+- **Daily Burn Rate**: See if you're on track to overspend with projected monthly totals
+- **Anomaly Detection**: Automatically flag unusual purchases, new merchants, and budget leaks
+- **Enhanced Dashboard**: Real-time insights with color-coded indicators
+
+### Smart Budgeting & Automation (v0.3) - NEW! 🎉
+- **Budget Tracking**: Set spending limits by category with real-time status monitoring
+  - Monthly and yearly budgets
+  - Progress indicators: on-track, warning, exceeded
+  - Automatic alerts at 80% and 100% thresholds
+- **Category Rules Engine**: Automate transaction categorization with pattern-based rules
+  - Match by merchant, description, amount, or account
+  - Priority-based rule execution
+  - Test rules before applying
+  - Bulk categorization
+- **Recurring Transaction Detection**: Identify subscriptions and recurring bills automatically
+  - Statistical pattern detection (weekly, monthly, quarterly, yearly)
+  - Confidence scoring
+  - Upcoming payment predictions
+  - Missing payment alerts
 
 ## Quick Start
 
@@ -191,11 +214,16 @@ finances/
 - `POST /api/v1/import/confirm` - Confirm and import CSV
 - `GET /api/v1/import/formats` - List saved import formats
 
-### Reports
+### Reports (Basic)
 - `GET /api/v1/reports/monthly-summary` - Monthly spending summary
 - `GET /api/v1/reports/trends` - Spending trends over time
 - `GET /api/v1/reports/top-merchants` - Top merchants by spending
 - `GET /api/v1/reports/account-summary` - Summary by account
+
+### Reports (Advanced Analytics) - NEW!
+- `GET /api/v1/reports/month-over-month` - Compare current vs previous month
+- `GET /api/v1/reports/spending-velocity` - Daily burn rate and projections
+- `GET /api/v1/reports/anomalies` - Detect unusual transactions
 
 ## Default Categories
 
