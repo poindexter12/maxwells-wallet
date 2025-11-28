@@ -1,23 +1,33 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlmodel import select, func
+from sqlmodel import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from datetime import datetime, date
 from calendar import monthrange
 
 from app.database import get_session
-from app.models import Budget, BudgetCreate, BudgetUpdate, BudgetPeriod, Transaction
+from app.models import Budget, BudgetCreate, BudgetUpdate, BudgetPeriod, Transaction, Tag, TransactionTag
 
 router = APIRouter(prefix="/api/v1/budgets", tags=["budgets"])
+
+
+def parse_tag_string(tag_str: str) -> tuple[str, str]:
+    """Parse a tag string like 'bucket:groceries' into (namespace, value)"""
+    if ":" not in tag_str:
+        raise ValueError(f"Invalid tag format: '{tag_str}'. Expected 'namespace:value'")
+    namespace, value = tag_str.split(":", 1)
+    return namespace, value
+
 
 @router.get("/", response_model=List[Budget])
 async def list_budgets(
     session: AsyncSession = Depends(get_session)
 ):
     """List all budgets"""
-    result = await session.execute(select(Budget).order_by(Budget.category))
+    result = await session.execute(select(Budget).order_by(Budget.tag))
     budgets = result.scalars().all()
     return budgets
+
 
 @router.get("/{budget_id}", response_model=Budget)
 async def get_budget(
@@ -33,16 +43,33 @@ async def get_budget(
         raise HTTPException(status_code=404, detail="Budget not found")
     return budget
 
+
 @router.post("/", response_model=Budget, status_code=201)
 async def create_budget(
     budget: BudgetCreate,
     session: AsyncSession = Depends(get_session)
 ):
     """Create a new budget"""
-    # Check if budget already exists for this category and period
+    # Validate tag format
+    try:
+        namespace, value = parse_tag_string(budget.tag)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Validate that the tag exists
+    tag_result = await session.execute(
+        select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
+    )
+    if not tag_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=400,
+            detail=f"Tag '{budget.tag}' does not exist. Create it first."
+        )
+
+    # Check if budget already exists for this tag and period
     result = await session.execute(
         select(Budget).where(
-            Budget.category == budget.category,
+            Budget.tag == budget.tag,
             Budget.period == budget.period
         )
     )
@@ -50,7 +77,7 @@ async def create_budget(
     if existing:
         raise HTTPException(
             status_code=400,
-            detail=f"Budget already exists for {budget.category} ({budget.period})"
+            detail=f"Budget already exists for {budget.tag} ({budget.period})"
         )
 
     db_budget = Budget(**budget.model_dump())
@@ -58,6 +85,7 @@ async def create_budget(
     await session.commit()
     await session.refresh(db_budget)
     return db_budget
+
 
 @router.patch("/{budget_id}", response_model=Budget)
 async def update_budget(
@@ -73,6 +101,23 @@ async def update_budget(
     if not db_budget:
         raise HTTPException(status_code=404, detail="Budget not found")
 
+    # Validate tag format if being updated
+    if budget.tag is not None:
+        try:
+            namespace, value = parse_tag_string(budget.tag)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+        # Validate that the tag exists
+        tag_result = await session.execute(
+            select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
+        )
+        if not tag_result.scalar_one_or_none():
+            raise HTTPException(
+                status_code=400,
+                detail=f"Tag '{budget.tag}' does not exist. Create it first."
+            )
+
     # Update fields
     for key, value in budget.model_dump(exclude_unset=True).items():
         setattr(db_budget, key, value)
@@ -82,6 +127,7 @@ async def update_budget(
     await session.commit()
     await session.refresh(db_budget)
     return db_budget
+
 
 @router.delete("/{budget_id}", status_code=204)
 async def delete_budget(
@@ -99,6 +145,39 @@ async def delete_budget(
     await session.delete(budget)
     await session.commit()
 
+
+async def get_spending_for_tag(
+    session: AsyncSession,
+    tag_str: str,
+    start_date: date,
+    end_date: date
+) -> float:
+    """Get total spending for transactions with a specific tag in date range"""
+    namespace, value = parse_tag_string(tag_str)
+
+    # Get the tag
+    tag_result = await session.execute(
+        select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
+    )
+    tag = tag_result.scalar_one_or_none()
+    if not tag:
+        return 0.0
+
+    # Sum transactions with this tag
+    spending_result = await session.execute(
+        select(func.sum(Transaction.amount))
+        .join(TransactionTag, Transaction.id == TransactionTag.transaction_id)
+        .where(
+            TransactionTag.tag_id == tag.id,
+            Transaction.date >= start_date,
+            Transaction.date <= end_date,
+            Transaction.amount < 0  # Only expenses
+        )
+    )
+    spent_raw = spending_result.scalar()
+    return abs(spent_raw) if spent_raw else 0.0
+
+
 @router.get("/status/current")
 async def get_budget_status(
     year: Optional[int] = Query(None),
@@ -108,7 +187,7 @@ async def get_budget_status(
     """
     Get budget status for specified or current month
 
-    Returns budget vs actual spending for each category
+    Returns budget vs actual spending for each tag
     """
     # Use current month if not specified
     now = datetime.utcnow()
@@ -133,21 +212,14 @@ async def get_budget_status(
     else:
         days_elapsed = days_in_month  # Full month for past months
 
-    # Get spending by category for this month
+    # Get spending by tag for this month
     status_list = []
 
     for budget_item in budgets:
-        # Get spending for this category
-        spending_result = await session.execute(
-            select(func.sum(Transaction.amount)).where(
-                Transaction.category == budget_item.category,
-                Transaction.date >= start_date,
-                Transaction.date <= end_date,
-                Transaction.amount < 0  # Only expenses
-            )
+        # Get spending for this tag
+        spent_amount = await get_spending_for_tag(
+            session, budget_item.tag, start_date, end_date
         )
-        spent_raw = spending_result.scalar()
-        spent_amount = abs(spent_raw) if spent_raw else 0.0
 
         # Calculate metrics
         budget_amount = budget_item.amount
@@ -169,8 +241,13 @@ async def get_budget_status(
         else:
             projected_monthly = spent_amount  # Full month data
 
+        # Parse tag for display
+        namespace, value = parse_tag_string(budget_item.tag)
+
         status_list.append({
-            "category": budget_item.category,
+            "tag": budget_item.tag,
+            "tag_namespace": namespace,
+            "tag_value": value,
             "budget_id": budget_item.id,
             "budget_amount": budget_amount,
             "spent_amount": spent_amount,
@@ -191,6 +268,7 @@ async def get_budget_status(
                          "on_track"
     }
 
+
 @router.get("/alerts/active")
 async def get_budget_alerts(
     session: AsyncSession = Depends(get_session)
@@ -198,7 +276,7 @@ async def get_budget_alerts(
     """
     Get active budget alerts (warning or exceeded)
 
-    Returns categories that are approaching or exceeding budget
+    Returns tags that are approaching or exceeding budget
     """
     # Get current budget status (pass None for year/month to use current)
     status_response = await get_budget_status(year=None, month=None, session=session)
@@ -207,7 +285,8 @@ async def get_budget_alerts(
     # Filter to warning and exceeded only
     alerts = [
         {
-            "category": b["category"],
+            "tag": b["tag"],
+            "tag_value": b["tag_value"],
             "budget_amount": b["budget_amount"],
             "spent_amount": b["spent_amount"],
             "percentage_used": b["percentage_used"],
