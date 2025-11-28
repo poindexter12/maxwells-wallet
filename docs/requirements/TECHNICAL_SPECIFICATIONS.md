@@ -130,14 +130,35 @@ CREATE TABLE import_formats (
 - `GET /api/v1/import/formats` - List saved import formats
 - `DELETE /api/v1/import/formats/{id}` - Delete saved format
 
-### Reports
+### Reports (Basic)
 - `GET /api/v1/reports/monthly-summary` - Monthly summary
   - Query params: year, month
+  - Returns: income, expenses, net, category_breakdown, top_merchants
 - `GET /api/v1/reports/trends` - Spending trends
   - Query params: start_date, end_date, group_by (month|category|account)
+  - Returns: time-series data grouped by specified dimension
 - `GET /api/v1/reports/top-merchants` - Top merchants
   - Query params: limit, period (current_month|last_month|last_3_months|all_time)
+  - Returns: merchants sorted by spending amount
 - `GET /api/v1/reports/account-summary` - Summary by account
+  - Returns: income, expenses, net per account
+
+### Reports (Advanced Analytics) - v0.2
+- `GET /api/v1/reports/month-over-month` - Month-over-month comparison
+  - Query params: current_year, current_month
+  - Returns: current/previous month data, changes ($ and %), category changes, insights
+  - Purpose: Identify spending trends and savings opportunities
+
+- `GET /api/v1/reports/spending-velocity` - Daily burn rate projection
+  - Query params: year, month
+  - Returns: daily_rates, projected_monthly, pace, days_elapsed, insights
+  - Purpose: Know early if on track to overspend
+
+- `GET /api/v1/reports/anomalies` - Anomaly detection
+  - Query params: year, month, threshold (default: 2.0)
+  - Returns: large_transactions, new_merchants, unusual_categories, summary
+  - Purpose: Catch unexpected charges and budget leaks
+  - Algorithm: Statistical analysis using 6-month baseline, z-scores
 
 ## Data Models
 

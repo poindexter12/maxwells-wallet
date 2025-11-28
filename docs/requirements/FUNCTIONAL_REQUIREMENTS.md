@@ -235,10 +235,239 @@
   - Standard CSV format
   - Download as file
 
-## Non-Goals (Out of Scope for V0)
+## FR-007: Advanced Analytics (v0.2)
+
+### FR-007.1: Month-over-Month Comparison
+- **Requirement**: Compare current month spending to previous month
+- **Purpose**: Identify spending trends and changes to find savings opportunities
+- **Acceptance Criteria**:
+  - Calculate income, expense, and net changes ($ and %)
+  - Category-level breakdown showing increases/decreases
+  - Identify biggest category changes
+  - Display spending trend indicator (increasing/decreasing)
+  - Show insights: biggest increase, biggest decrease
+- **API**: `GET /api/v1/reports/month-over-month`
+- **Status**: ✅ Implemented (2025-11-27)
+
+### FR-007.2: Spending Velocity (Daily Burn Rate)
+- **Requirement**: Calculate daily spending rate and project monthly total
+- **Purpose**: Know early in the month if on track to overspend
+- **Acceptance Criteria**:
+  - Calculate daily spending rate (total expenses / days elapsed)
+  - Project monthly total based on current pace
+  - Compare projection to previous month
+  - Determine pace: over_budget, under_budget, on_track
+  - Show days remaining and projected remaining spending
+  - Handle both current and past months correctly
+- **API**: `GET /api/v1/reports/spending-velocity`
+- **Status**: ✅ Implemented (2025-11-27)
+
+### FR-007.3: Anomaly Detection
+- **Requirement**: Detect unusual transactions that may indicate waste or errors
+- **Purpose**: Catch unexpected charges, forgotten subscriptions, budget leaks
+- **Acceptance Criteria**:
+  - **Large Transactions**: Detect purchases > threshold std deviations from mean
+  - **New Merchants**: Flag first-time purchases at new stores
+  - **Unusual Categories**: Detect category spending significantly above average
+  - Use 6-month baseline for statistical analysis
+  - Configurable threshold (default: 2.0 standard deviations)
+  - Sort anomalies by severity (z-score)
+  - Provide clear explanations for each anomaly
+- **API**: `GET /api/v1/reports/anomalies`
+- **Status**: ✅ Implemented (2025-11-27)
+
+### FR-007.4: Dashboard Integration
+- **Requirement**: Display advanced analytics on main dashboard
+- **Acceptance Criteria**:
+  - Show month-over-month % changes on summary cards
+  - Daily burn rate card with progress bar and pace indicator
+  - Unusual activity card showing anomaly counts and top items
+  - Color-coded indicators (green=good, red=bad)
+  - Auto-refresh on page load
+- **Status**: ✅ Implemented (2025-11-27)
+
+## FR-008: Budget Tracking (v0.3)
+
+### FR-008.1: Budget Creation
+- **Requirement**: Create and manage spending budgets by category
+- **Purpose**: Set limits and track spending against budget goals
+- **Acceptance Criteria**:
+  - Create budget with category, amount, period (monthly/yearly)
+  - Optional rollover (unused budget carries to next period)
+  - Support specific date ranges (start_date, end_date)
+  - Full CRUD operations (create, read, update, delete)
+  - Prevent duplicate budgets for same category/period
+- **API**: `POST /api/v1/budgets`, `GET /api/v1/budgets`, `PATCH /api/v1/budgets/{id}`, `DELETE /api/v1/budgets/{id}`
+- **Status**: ✅ Implemented (2025-11-28)
+
+### FR-008.2: Budget Status Tracking
+- **Requirement**: Monitor actual spending against budget limits
+- **Purpose**: Know in real-time if on track, approaching limit, or over budget
+- **Acceptance Criteria**:
+  - Calculate actual spending vs budget for specified period
+  - Status indicators: on_track (<80%), warning (80-100%), exceeded (>100%)
+  - Show remaining budget amount and percentage used
+  - Support monthly and yearly periods
+  - Query by specific year/month or current period
+- **API**: `GET /api/v1/budgets/status/current`
+- **Status**: ✅ Implemented (2025-11-28)
+
+### FR-008.3: Budget Alerts
+- **Requirement**: Identify budgets in warning or exceeded status
+- **Purpose**: Proactively notify of budget issues
+- **Acceptance Criteria**:
+  - Return only budgets at 80%+ usage (warning or exceeded)
+  - Sort by severity (exceeded first)
+  - Include all budget status details
+  - Filter by period (current month/year by default)
+- **API**: `GET /api/v1/budgets/alerts/active`
+- **Status**: ✅ Implemented (2025-11-28)
+
+### FR-008.4: Budget Dashboard UI
+- **Requirement**: Visual budget tracking interface
+- **Features**:
+  - Alert cards for warning/exceeded budgets
+  - Grid view of all budget statuses with progress bars
+  - Color-coded status indicators
+  - Modal form for create/edit
+  - Real-time updates
+- **Status**: ✅ Implemented (2025-11-28)
+
+## FR-009: Category Rules Engine (v0.3)
+
+### FR-009.1: Rule Creation
+- **Requirement**: Define automated category assignment rules
+- **Purpose**: Automatically categorize transactions based on patterns
+- **Acceptance Criteria**:
+  - Rule conditions: merchant pattern, description pattern, amount range, account source
+  - Match logic: ANY (OR) or ALL (AND)
+  - Priority-based execution (higher priority = applied first)
+  - Enable/disable rules
+  - Full CRUD operations
+  - Require at least one matching condition
+- **API**: `POST /api/v1/category-rules`, `GET /api/v1/category-rules`, `PATCH /api/v1/category-rules/{id}`, `DELETE /api/v1/category-rules/{id}`
+- **Status**: ✅ Implemented (2025-11-28)
+
+### FR-009.2: Pattern Matching
+- **Requirement**: Match transactions against rule conditions
+- **Matching Logic**:
+  - Merchant pattern: case-insensitive substring match
+  - Description pattern: case-insensitive substring match
+  - Amount range: min <= amount <= max (optional bounds)
+  - Account source: exact match
+  - Combine conditions with AND/OR logic
+- **Acceptance Criteria**:
+  - Apply highest priority matching rule first
+  - Skip disabled rules
+  - Track match count and last match date
+  - Only match uncategorized transactions
+- **Status**: ✅ Implemented (2025-11-28)
+
+### FR-009.3: Rule Testing
+- **Requirement**: Preview rule matches before applying
+- **Purpose**: Validate rule effectiveness without modifying data
+- **Acceptance Criteria**:
+  - Show count of matching transactions
+  - Preview sample matches (up to 5)
+  - Test against current transaction database
+  - No side effects (read-only)
+- **API**: `POST /api/v1/category-rules/{id}/test`
+- **Status**: ✅ Implemented (2025-11-28)
+
+### FR-009.4: Bulk Rule Application
+- **Requirement**: Apply all active rules to transactions
+- **Purpose**: Batch categorize uncategorized transactions
+- **Acceptance Criteria**:
+  - Apply rules in priority order
+  - Only update uncategorized transactions (category = null)
+  - Return count of matched transactions
+  - Update rule statistics (match_count, last_matched_date)
+- **API**: `POST /api/v1/category-rules/apply`
+- **Status**: ✅ Implemented (2025-11-28)
+
+### FR-009.5: Rules Management UI
+- **Requirement**: Interactive rules management interface
+- **Features**:
+  - List all rules with conditions and stats
+  - Create/edit modal with all condition fields
+  - Toggle enabled/disabled
+  - Test rule preview
+  - Apply all rules button
+  - Visual match logic indicator (AND/OR)
+- **Status**: ✅ Implemented (2025-11-28)
+
+## FR-010: Recurring Transaction Detection (v0.3)
+
+### FR-010.1: Pattern Detection
+- **Requirement**: Automatically detect recurring transaction patterns
+- **Purpose**: Identify subscriptions, bills, and recurring payments
+- **Acceptance Criteria**:
+  - Group transactions by merchant
+  - Calculate intervals between transactions
+  - Detect frequency: weekly, biweekly, monthly, quarterly, yearly
+  - Confidence scoring based on consistency (0-1 scale)
+  - Require minimum occurrences (configurable, default 3)
+  - Require minimum confidence (configurable, default 0.7)
+  - Calculate amount range (10% variance allowed)
+  - Assign most common category
+  - Predict next expected date
+  - Skip duplicate patterns
+- **API**: `POST /api/v1/recurring/detect`
+- **Status**: ✅ Implemented (2025-11-28)
+
+### FR-010.2: Pattern Management
+- **Requirement**: CRUD operations for recurring patterns
+- **Acceptance Criteria**:
+  - List patterns with filtering by status
+  - Get individual pattern details
+  - Manually create patterns
+  - Update pattern attributes (category, status, dates, amounts)
+  - Delete patterns
+  - Status transitions: active, paused, ended
+- **API**: `GET /api/v1/recurring`, `GET /api/v1/recurring/{id}`, `POST /api/v1/recurring`, `PATCH /api/v1/recurring/{id}`, `DELETE /api/v1/recurring/{id}`
+- **Status**: ✅ Implemented (2025-11-28)
+
+### FR-010.3: Upcoming Predictions
+- **Requirement**: Predict upcoming recurring transactions
+- **Purpose**: Forecast future expenses for budgeting
+- **Acceptance Criteria**:
+  - Show transactions expected in next N days (configurable, default 30)
+  - Only include active patterns
+  - Calculate days until expected
+  - Estimate amount (average of min/max)
+  - Sort by expected date
+  - Include confidence score
+- **API**: `GET /api/v1/recurring/predictions/upcoming`
+- **Status**: ✅ Implemented (2025-11-28)
+
+### FR-010.4: Missing Transaction Detection
+- **Requirement**: Identify expected transactions that haven't appeared
+- **Purpose**: Catch cancelled subscriptions, billing issues, payment failures
+- **Acceptance Criteria**:
+  - Find patterns where next_expected_date has passed
+  - Configurable overdue threshold (default 7 days)
+  - Calculate days overdue
+  - Sort by most overdue first
+  - Only check active patterns
+- **API**: `GET /api/v1/recurring/missing`
+- **Status**: ✅ Implemented (2025-11-28)
+
+### FR-010.5: Recurring Transactions UI
+- **Requirement**: Interactive recurring transactions dashboard
+- **Features**:
+  - Stats cards: active patterns, upcoming count, missing count
+  - Tabbed interface: All Patterns, Upcoming, Missing
+  - Pattern cards with frequency badges
+  - Confidence indicators
+  - Detect patterns button
+  - Toggle active/paused status
+  - Color-coded by frequency
+  - Next expected date display
+- **Status**: ✅ Implemented (2025-11-28)
+
+## Non-Goals (Out of Scope for v0.3)
 - ❌ Multi-user / multi-tenant
 - ❌ User authentication / login
-- ❌ Budget creation and tracking
 - ❌ Bill payment
 - ❌ Investment tracking
 - ❌ Tax reporting / 1099 generation
@@ -247,3 +476,6 @@
 - ❌ Email notifications
 - ❌ Scheduled imports
 - ❌ OCR receipt scanning
+- ❌ AI/ML-based predictions (beyond statistical analysis)
+- ❌ Custom budget rollover logic
+- ❌ Advanced rules engine (regex, fuzzy matching)

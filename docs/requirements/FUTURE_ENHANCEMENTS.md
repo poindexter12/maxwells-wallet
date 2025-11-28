@@ -51,18 +51,25 @@ Ideas for future versions beyond v0.
 - Push notifications
 
 ### Improved Analytics
+- ✅ ~~Compare time periods (this month vs last month)~~ - Implemented v0.2
+- ✅ ~~Spending velocity (daily average)~~ - Implemented v0.2
+- ✅ ~~Anomaly detection (unusual spending)~~ - Implemented v0.2
 - Customizable date ranges
-- Compare time periods (this month vs last month)
 - Year-over-year comparison
-- Spending velocity (daily average)
 - Forecast future spending based on trends
-- Anomaly detection (unusual spending)
+- Advanced statistical analysis (regression, predictions)
 
 ### Categories Improvements
 - Subcategories (nested categories)
 - Multiple categories per transaction (split transactions)
-- Category rules engine (if merchant contains X, then category Y)
-- Category budgets
+- ✅ ~~Category rules engine (basic)~~ - Implemented v0.3
+- **Advanced Rules Engine Enhancements** (future):
+  - Switch to python-business-rules for more powerful declarative rules
+  - Fuzzy merchant matching with rapidfuzz (handles typos/variations)
+  - Regex pattern support for complex matching
+  - Time-based rules (weekday, time of day)
+  - Composite conditions (nested AND/OR logic)
+- Category budgets (see Budget Tracking - implemented v0.3)
 - Category goals
 
 ### Bank Integration
@@ -228,29 +235,36 @@ Before implementing features, validate with users:
 - [ ] Analytics on feature usage
 - [ ] Beta testing program
 
-## Version Roadmap (Proposed)
+## Version Roadmap
 
-### v0.1 (Current)
-- Basic transaction import
+### v0.1 ✅ (Completed)
+- Basic transaction import (BOFA, AMEX)
 - Manual categorization
 - Simple reporting
+- Reconciliation workflow
 
-### v0.2
+### v0.2 ✅ (Completed - 2025-11-27)
+- ✅ Advanced analytics (month-over-month, spending velocity, anomaly detection)
+- ✅ Enhanced dashboard with insights
+- ✅ Comprehensive test suite (24/26 tests passing)
+
+### v0.3 (Planned - Next)
 - Budget tracking
-- Recurring transactions
-- Better category inference
+- Recurring transaction detection
+- Better category inference (ML-based)
+- Category rules engine
 
-### v0.3
+### v0.4 (Planned)
 - Multi-user support
 - Authentication
 - Cloud deployment
 
-### v1.0
+### v1.0 (Planned)
 - Mobile app
 - Bank integration (Plaid)
-- Advanced analytics
+- Receipt management
 
-### v2.0
+### v2.0 (Future)
 - Investment tracking
 - Tax features
 - API for third-party apps

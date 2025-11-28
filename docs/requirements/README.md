@@ -84,22 +84,28 @@ When requirements change:
 
 **Last Updated**: 2025-11-27
 
-**Version**: 0.1 (v0)
+**Version**: 0.2 (v0.2)
 
 **Implemented**:
 - ✅ All FR-001 (CSV Import)
 - ✅ All FR-002 (Transaction Management)
 - ✅ All FR-003 (Category Inference)
 - ✅ All FR-004 (Reconciliation)
-- ✅ All FR-005 (Reports & Analytics)
+- ✅ All FR-005 (Reports & Analytics - Basic)
 - ✅ FR-006 (Export) - partial
+- ✅ **All FR-007 (Advanced Analytics)** - NEW!
+  - Month-over-month comparison
+  - Spending velocity (daily burn rate)
+  - Anomaly detection
+  - Dashboard integration
 
 **Not Implemented** (future):
-- Everything in FUTURE_ENHANCEMENTS.md
-- Authentication/multi-user
-- Bank integrations
-- Mobile apps
-- Advanced analytics
+- Budget tracking (planned for v0.3)
+- Recurring transaction detection (planned for v0.3)
+- Authentication/multi-user (planned for v0.4)
+- Bank integrations (planned for v1.0)
+- Mobile apps (planned for v1.0)
+- Everything else in FUTURE_ENHANCEMENTS.md
 
 ## Related Documentation
 
