@@ -1,4 +1,4 @@
-project_name: finances
+project_name: maxwells-wallet
 short_description: Personal finance tracker with CSV import, smart categorization, and spending trend analysis.
 
 tech_stack:
@@ -16,8 +16,8 @@ tech_stack:
     db_engine: sqlite
     orm: sqlmodel
     migration_tool: alembic
-    dev_url: sqlite:///./finances.db
-    prod_url_example: postgresql://user:password@localhost/finances
+    dev_url: sqlite:///./wallet.db
+    prod_url_example: postgresql://user:password@localhost/maxwells_wallet
   tooling:
     node_package_manager: pnpm
     python_env: uv

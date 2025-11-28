@@ -271,7 +271,7 @@ async rewrites() {
 
 ### Backend (.env)
 ```
-DATABASE_URL=sqlite+aiosqlite:///./finances.db
+DATABASE_URL=sqlite+aiosqlite:///./wallet.db
 ```
 
 ### Frontend

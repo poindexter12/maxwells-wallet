@@ -15,14 +15,14 @@ BACKEND_DIR := backend
 FRONTEND_DIR := frontend
 
 help: ## Show this help message
-	@echo "$(BLUE)Finances - Personal Finance Tracker$(NC)"
+	@echo "$(BLUE)Maxwell's Wallet - Personal Finance Tracker$(NC)"
 	@echo ""
 	@echo "$(GREEN)Available targets:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(YELLOW)%-20s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 
 setup: ## First-time setup (install dependencies + seed database)
-	@echo "$(BLUE)Setting up Finances app...$(NC)"
+	@echo "$(BLUE)Setting up Maxwell's Wallet...$(NC)"
 	@$(MAKE) install
 	@$(MAKE) db-init
 	@$(MAKE) db-seed
@@ -61,7 +61,7 @@ db-seed: ## Seed database with sample data and default categories
 
 db-reset: ## Reset database (delete and recreate)
 	@echo "$(RED)Resetting database...$(NC)"
-	@rm -f $(BACKEND_DIR)/finances.db
+	@rm -f $(BACKEND_DIR)/wallet.db
 	@$(MAKE) db-init
 	@$(MAKE) db-seed
 	@echo "$(GREEN)✓ Database reset complete$(NC)"
@@ -199,7 +199,7 @@ clean-all: clean ## Clean everything including dependencies and database
 	@echo "$(RED)Cleaning all dependencies and database...$(NC)"
 	@rm -rf $(BACKEND_DIR)/.venv
 	@rm -rf $(FRONTEND_DIR)/node_modules
-	@rm -f $(BACKEND_DIR)/finances.db
+	@rm -f $(BACKEND_DIR)/wallet.db
 	@echo "$(GREEN)✓ All cleaned$(NC)"
 
 status: ## Check status of services
@@ -213,9 +213,9 @@ status: ## Check status of services
 	@echo ""
 
 info: ## Show project information
-	@echo "$(BLUE)Finances - Personal Finance Tracker$(NC)"
+	@echo "$(BLUE)Maxwell's Wallet - Personal Finance Tracker$(NC)"
 	@echo ""
-	@echo "Project: finances"
+	@echo "Project: maxwells-wallet"
 	@echo "Backend:  FastAPI + Python + SQLModel"
 	@echo "Frontend: Next.js + TypeScript + Tailwind CSS"
 	@echo ""

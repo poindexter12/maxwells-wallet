@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./finances.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./wallet.db")
 
 engine = create_async_engine(DATABASE_URL, echo=True)
 

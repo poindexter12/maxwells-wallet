@@ -1,4 +1,4 @@
-# Finances - Personal Finance Tracker
+# Maxwell's Wallet
 
 Personal finance tracker with CSV import, smart categorization, and spending trend analysis.
 
@@ -163,7 +163,7 @@ The dashboard shows:
 ## Project Structure
 
 ```
-finances/
+maxwells-wallet/
 ├── backend/                 # FastAPI backend
 │   ├── app/
 │   │   ├── main.py         # FastAPI app entry point
@@ -304,7 +304,7 @@ uv run alembic upgrade head
 
 ```bash
 cd backend
-rm finances.db
+rm wallet.db
 uv run python -m app.seed
 ```
 
