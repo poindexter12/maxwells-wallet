@@ -179,7 +179,7 @@ wheels = [
 ]
 
 [[package]]
-name = "finances-backend"
+name = "maxwells-wallet-backend"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

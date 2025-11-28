@@ -1,5 +1,5 @@
 [project]
-name = "finances-backend"
+name = "maxwells-wallet-backend"
 version = "0.1.0"
 description = "Personal finance tracker with CSV import, smart categorization, and spending trend analysis."
 requires-python = ">=3.11"
