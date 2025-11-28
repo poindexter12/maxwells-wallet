@@ -36,6 +36,24 @@ export default function RootLayout({
                     Transactions
                   </Link>
                   <Link
+                    href="/budgets"
+                    className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-900"
+                  >
+                    Budgets
+                  </Link>
+                  <Link
+                    href="/recurring"
+                    className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-900"
+                  >
+                    Recurring
+                  </Link>
+                  <Link
+                    href="/rules"
+                    className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-900"
+                  >
+                    Rules
+                  </Link>
+                  <Link
                     href="/import"
                     className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-900"
                   >
