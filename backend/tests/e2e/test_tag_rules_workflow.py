@@ -1,9 +1,9 @@
 """
-E2E tests for category rules workflow.
+E2E tests for tag rules workflow.
 
 Tests:
 1. Rules page loads
-2. Create a category rule
+2. Create a tag rule
 3. Test rule matching
 4. Apply rules to transactions
 5. Rule priority handling
@@ -16,11 +16,11 @@ from .conftest import E2EHelpers
 
 
 @pytest.mark.e2e
-class TestCategoryRulesPage:
-    """End-to-end tests for the category rules page."""
+class TestTagRulesPage:
+    """End-to-end tests for the tag rules page."""
 
     def test_rules_page_loads(self, page: Page, helpers: E2EHelpers):
-        """Test that category rules page loads correctly."""
+        """Test that tag rules page loads correctly."""
         page.goto("/rules")
         page.wait_for_load_state("networkidle")
 
@@ -56,20 +56,20 @@ class TestCategoryRulesPage:
         if merchant_input.count() > 0:
             merchant_input.fill("COFFEE")
 
-        # Select target category
-        category_select = page.locator("select[name='category'], #category, select:near(:text('Category'))")
-        if category_select.count() > 0:
-            # Try to select "Dining & Coffee" or similar
-            options = category_select.locator("option")
+        # Select target bucket/tag
+        tag_select = page.locator("select[name='tag'], #tag, select:near(:text('Bucket'))")
+        if tag_select.count() > 0:
+            # Try to select a dining-related bucket
+            options = tag_select.locator("option")
             for i in range(options.count()):
                 option_text = options.nth(i).text_content()
                 if option_text and ("coffee" in option_text.lower() or "dining" in option_text.lower()):
-                    category_select.select_option(index=i)
+                    tag_select.select_option(index=i)
                     break
             else:
                 # Just select first non-empty option
                 if options.count() > 1:
-                    category_select.select_option(index=1)
+                    tag_select.select_option(index=1)
 
         # Set priority
         priority_input = page.locator("input[name='priority'], #priority, input[type='number']:near(:text('Priority'))")
@@ -105,10 +105,10 @@ class TestCategoryRulesPage:
         if max_input.count() > 0:
             max_input.fill("10")
 
-        # Select category
-        category_select = page.locator("select[name='category'], #category")
-        if category_select.count() > 0:
-            category_select.select_option(index=1)
+        # Select tag/bucket
+        tag_select = page.locator("select[name='tag'], #tag")
+        if tag_select.count() > 0:
+            tag_select.select_option(index=1)
 
         # Submit
         page.locator("button[type='submit'], button:has-text('Save')").click()
@@ -155,7 +155,7 @@ class TestCategoryRulesPage:
 
 @pytest.mark.e2e
 class TestApplyRules:
-    """Tests for applying category rules to transactions."""
+    """Tests for applying tag rules to transactions."""
 
     def test_apply_all_rules_button(self, page: Page, helpers: E2EHelpers):
         """Test the 'Apply All Rules' functionality."""
@@ -175,7 +175,7 @@ class TestApplyRules:
         page.wait_for_load_state("networkidle")
 
         # Should show results (matched count or success message)
-        expect(page.locator("text=/matched|applied|categori|success/i")).to_be_visible(timeout=10000)
+        expect(page.locator("text=/matched|applied|tagged|success/i")).to_be_visible(timeout=10000)
 
     def test_rules_applied_to_transactions(
         self,
@@ -183,7 +183,7 @@ class TestApplyRules:
         helpers: E2EHelpers,
         test_data_files: dict,
     ):
-        """Test that applying rules actually categorizes transactions."""
+        """Test that applying rules actually tags transactions."""
         from pathlib import Path
 
         if not test_data_files:
@@ -205,9 +205,9 @@ class TestApplyRules:
         if merchant_input.count() > 0:
             merchant_input.fill("LLC")
 
-        category_select = page.locator("select[name='category'], #category")
-        if category_select.count() > 0:
-            category_select.select_option(index=2)  # Pick some category
+        tag_select = page.locator("select[name='tag'], #tag")
+        if tag_select.count() > 0:
+            tag_select.select_option(index=2)  # Pick some bucket
 
         page.locator("button[type='submit'], button:has-text('Save')").click()
         page.wait_for_load_state("networkidle")

@@ -39,14 +39,27 @@
 
 ### Tables
 
-#### categories
+#### tags
 ```sql
-CREATE TABLE categories (
+CREATE TABLE tags (
     id INTEGER PRIMARY KEY,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
-    name VARCHAR UNIQUE NOT NULL,
-    description VARCHAR
+    namespace VARCHAR NOT NULL,
+    value VARCHAR NOT NULL,
+    description VARCHAR,
+    UNIQUE(namespace, value)
+);
+```
+
+#### transaction_tags
+```sql
+CREATE TABLE transaction_tags (
+    id INTEGER PRIMARY KEY,
+    transaction_id INTEGER NOT NULL REFERENCES transactions(id),
+    tag_id INTEGER NOT NULL REFERENCES tags(id),
+    created_at TIMESTAMP NOT NULL,
+    UNIQUE(transaction_id, tag_id)
 );
 ```
 
@@ -62,7 +75,6 @@ CREATE TABLE transactions (
     merchant VARCHAR,
     account_source VARCHAR NOT NULL,
     card_member VARCHAR,
-    category VARCHAR,
     reconciliation_status VARCHAR NOT NULL,
     notes VARCHAR,
     reference_id VARCHAR,
@@ -70,7 +82,6 @@ CREATE TABLE transactions (
     INDEX idx_date (date),
     INDEX idx_merchant (merchant),
     INDEX idx_account_source (account_source),
-    INDEX idx_category (category),
     INDEX idx_reconciliation_status (reconciliation_status),
     INDEX idx_reference_id (reference_id)
 );
@@ -113,12 +124,25 @@ CREATE TABLE import_formats (
 - `POST /api/v1/transactions/{id}/suggest-category` - Get category suggestions
 - `POST /api/v1/transactions/bulk-update` - Bulk update transactions
 
-### Categories
-- `GET /api/v1/categories` - List all categories
-- `GET /api/v1/categories/{id}` - Get single category
-- `POST /api/v1/categories` - Create category
-- `PATCH /api/v1/categories/{id}` - Update category
-- `DELETE /api/v1/categories/{id}` - Delete category
+### Tags
+- `GET /api/v1/tags` - List all tags (filterable by namespace)
+- `GET /api/v1/tags/buckets` - List bucket tags only
+- `GET /api/v1/tags/{id}` - Get single tag
+- `POST /api/v1/tags` - Create tag
+- `PATCH /api/v1/tags/{id}` - Update tag
+- `DELETE /api/v1/tags/{id}` - Delete tag
+- `GET /api/v1/transactions/{id}/tags` - Get tags for a transaction
+- `POST /api/v1/transactions/{id}/tags` - Add tag to transaction
+- `DELETE /api/v1/transactions/{id}/tags/{tag}` - Remove tag from transaction
+
+### Tag Rules
+- `GET /api/v1/tag-rules` - List all tag rules
+- `GET /api/v1/tag-rules/{id}` - Get single rule
+- `POST /api/v1/tag-rules` - Create rule
+- `PATCH /api/v1/tag-rules/{id}` - Update rule
+- `DELETE /api/v1/tag-rules/{id}` - Delete rule
+- `POST /api/v1/tag-rules/apply` - Apply all rules to untagged transactions
+- `POST /api/v1/tag-rules/{id}/test` - Test rule against transactions
 
 ### Import
 - `POST /api/v1/import/preview` - Preview CSV import
@@ -133,7 +157,7 @@ CREATE TABLE import_formats (
 ### Reports (Basic)
 - `GET /api/v1/reports/monthly-summary` - Monthly summary
   - Query params: year, month
-  - Returns: income, expenses, net, category_breakdown, top_merchants
+  - Returns: income, expenses, net, bucket_breakdown, top_merchants
 - `GET /api/v1/reports/trends` - Spending trends
   - Query params: start_date, end_date, group_by (month|category|account)
   - Returns: time-series data grouped by specified dimension
@@ -156,7 +180,7 @@ CREATE TABLE import_formats (
 
 - `GET /api/v1/reports/anomalies` - Anomaly detection
   - Query params: year, month, threshold (default: 2.0)
-  - Returns: large_transactions, new_merchants, unusual_categories, summary
+  - Returns: large_transactions, new_merchants, unusual_buckets, summary
   - Purpose: Catch unexpected charges and budget leaks
   - Algorithm: Statistical analysis using 6-month baseline, z-scores
 
@@ -171,17 +195,27 @@ class Transaction(BaseModel, table=True):
     merchant: Optional[str]
     account_source: str
     card_member: Optional[str]
-    category: Optional[str]
     reconciliation_status: ReconciliationStatus
     notes: Optional[str]
     reference_id: Optional[str]
+    # Tags are managed via TransactionTag junction table
 ```
 
-### Category (SQLModel)
+### Tag (SQLModel)
 ```python
-class Category(BaseModel, table=True):
-    name: str  # unique
+class Tag(BaseModel, table=True):
+    namespace: str  # e.g., "bucket", "expense", "occasion"
+    value: str      # e.g., "groceries", "vacation"
     description: Optional[str]
+    # Unique constraint on (namespace, value)
+```
+
+### TransactionTag (SQLModel)
+```python
+class TransactionTag(BaseModel, table=True):
+    transaction_id: int  # FK to Transaction
+    tag_id: int          # FK to Tag
+    # Unique constraint on (transaction_id, tag_id)
 ```
 
 ### ImportFormat (SQLModel)
@@ -219,38 +253,50 @@ class ImportFormat(BaseModel, table=True):
 - Use Reference column as reference_id
 - Map Category field to simplified categories
 
-### Category Mapping (AMEX → Simplified)
-- "Restaurant", "Bar & Café" → Dining & Coffee
-- "Merchandise", "Retail" → Shopping
-- "Entertainment" → Entertainment
-- "Health Care" → Healthcare
-- "Education" → Education
-- "Government", "Toll" → Transportation
-- "Computer", "Internet" → Subscriptions
-- "Telecom", "Communications" → Utilities
+### Bucket Mapping (AMEX → Simplified)
+- "Restaurant", "Bar & Café" → bucket:dining
+- "Merchandise", "Retail" → bucket:shopping
+- "Entertainment" → bucket:entertainment
+- "Health Care" → bucket:healthcare
+- "Education" → bucket:education
+- "Government", "Toll" → bucket:transportation
+- "Computer", "Internet" → bucket:subscriptions
+- "Telecom", "Communications" → bucket:utilities
 
-## Category Inference Algorithm
+## Tag Inference Algorithm
 
 ### Priority Order
-1. **User History**: Check if merchant has been categorized before
-2. **AMEX Category**: Use mapped AMEX category if available
-3. **Keyword Matching**: Match merchant/description against keyword rules
-4. **Default**: "Other"
+1. **Tag Rules**: Apply matching TagRule by priority
+2. **User History**: Check if merchant has been tagged before
+3. **AMEX Category**: Use mapped AMEX category if available
+4. **Keyword Matching**: Match merchant/description against keyword rules
+5. **Default**: No bucket tag applied
 
 ### Keyword Rules
-Defined in `backend/app/category_inference.py`:
-- Keywords per category stored in dictionary
+Defined in `backend/app/tag_inference.py`:
+- Keywords per bucket stored in dictionary
 - Normalize text (lowercase, remove punctuation)
 - Check if any keyword appears in merchant or description
 - Weight matches (exact merchant match > description match)
-- Return top 3 with confidence scores
+- Return top 3 suggestions with confidence scores
 
 ## Frontend Routes
 
 - `/` - Dashboard (monthly summary + charts)
-- `/transactions` - Transaction list with search/filter
+- `/transactions` - Transaction list with search/filter, inline bucket editing, tag management
+- `/budgets` - Budget management with progress tracking
+- `/recurring` - Recurring transaction patterns
+- `/rules` - Tag rules for auto-tagging
+- `/tags` - Tag management with namespace/value organization
 - `/import` - CSV import interface
 - `/reconcile` - Reconciliation interface for unreconciled transactions
+- `/admin` - Admin panel with tabs:
+  - Overview: Stats, account breakdown, danger zone
+  - Imports: Import session history and rollback
+  - All Tags: View all tags with namespace:value format
+  - Accounts: Account tag management (display names)
+  - Occasions: Occasion tag management
+  - Expense Types: Expense type tag management
 
 ## API Proxy Configuration
 
