@@ -2,6 +2,14 @@
 
 import { useState } from 'react'
 import { format } from 'date-fns'
+import { formatCurrency } from '@/lib/format'
+
+const FORMAT_NAMES: Record<string, string> = {
+  'bofa_bank': 'Bank of America (Checking/Savings)',
+  'bofa_cc': 'Bank of America (Credit Card)',
+  'amex_cc': 'American Express',
+  'unknown': 'Unknown'
+}
 
 export default function ImportPage() {
   const [file, setFile] = useState<File | null>(null)
@@ -107,8 +115,9 @@ export default function ImportPage() {
               className="w-full px-4 py-2 border rounded-md"
             >
               <option value="">Auto-detect</option>
-              <option value="bofa">Bank of America</option>
-              <option value="amex">American Express</option>
+              <option value="bofa_bank">Bank of America (Checking/Savings)</option>
+              <option value="bofa_cc">Bank of America (Credit Card)</option>
+              <option value="amex_cc">American Express</option>
             </select>
           </div>
         </div>
@@ -128,7 +137,7 @@ export default function ImportPage() {
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Preview</h2>
             <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-              {preview.detected_format.toUpperCase()} format detected
+              {FORMAT_NAMES[preview.detected_format] || preview.detected_format} format detected
             </span>
           </div>
 
@@ -140,7 +149,7 @@ export default function ImportPage() {
             <div>
               <p className="text-sm text-gray-600">Total Amount</p>
               <p className={`text-2xl font-bold ${preview.total_amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                ${preview.total_amount.toFixed(2)}
+                {formatCurrency(preview.total_amount)}
               </p>
             </div>
           </div>
@@ -164,7 +173,7 @@ export default function ImportPage() {
                       <span className="px-2 py-1 bg-gray-100 rounded text-xs">{txn.category || 'Uncategorized'}</span>
                     </td>
                     <td className={`px-4 py-2 text-sm text-right ${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {txn.amount >= 0 ? '+' : ''}{txn.amount.toFixed(2)}
+                      {formatCurrency(txn.amount, true)}
                     </td>
                   </tr>
                 ))}
