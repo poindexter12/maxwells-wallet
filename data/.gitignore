@@ -1,0 +1,2 @@
+# Ignore raw (real) data - contains sensitive financial info
+raw/

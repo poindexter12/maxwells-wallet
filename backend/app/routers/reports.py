@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query
-from sqlmodel import select, func
+from sqlmodel import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
 from datetime import date, datetime, timedelta
@@ -8,9 +8,29 @@ import calendar
 import statistics
 
 from app.database import get_session
-from app.models import Transaction
+from app.models import Transaction, Tag, TransactionTag
 
 router = APIRouter(prefix="/api/v1/reports", tags=["reports"])
+
+
+async def get_transaction_tags(session: AsyncSession, transaction_ids: List[int]) -> dict:
+    """Helper to get bucket tags for a list of transaction IDs.
+    Returns a dict mapping transaction_id -> bucket tag value (or None)
+    """
+    if not transaction_ids:
+        return {}
+
+    result = await session.execute(
+        select(TransactionTag.transaction_id, Tag.value)
+        .join(Tag)
+        .where(
+            and_(
+                TransactionTag.transaction_id.in_(transaction_ids),
+                Tag.namespace == "bucket"
+            )
+        )
+    )
+    return {row[0]: row[1] for row in result.all()}
 
 @router.get("/monthly-summary")
 async def monthly_summary(
@@ -40,7 +60,7 @@ async def monthly_summary(
     total_expenses = abs(sum(txn.amount for txn in transactions if txn.amount < 0))
     net = total_income - total_expenses
 
-    # Group by category
+    # Group by legacy category
     category_breakdown = defaultdict(lambda: {'amount': 0, 'count': 0})
     for txn in transactions:
         cat = txn.category or 'Uncategorized'
@@ -50,6 +70,23 @@ async def monthly_summary(
     # Sort by amount
     category_breakdown = dict(sorted(
         category_breakdown.items(),
+        key=lambda x: x[1]['amount'],
+        reverse=True
+    ))
+
+    # Group by bucket tag (new tag system)
+    txn_ids = [txn.id for txn in transactions]
+    txn_tags = await get_transaction_tags(session, txn_ids)
+
+    bucket_breakdown = defaultdict(lambda: {'amount': 0, 'count': 0})
+    for txn in transactions:
+        bucket = txn_tags.get(txn.id, 'Untagged')
+        bucket_breakdown[bucket]['amount'] += abs(txn.amount) if txn.amount < 0 else 0
+        bucket_breakdown[bucket]['count'] += 1
+
+    # Sort by amount
+    bucket_breakdown = dict(sorted(
+        bucket_breakdown.items(),
         key=lambda x: x[1]['amount'],
         reverse=True
     ))
@@ -74,6 +111,7 @@ async def monthly_summary(
         "net": net,
         "transaction_count": len(transactions),
         "category_breakdown": category_breakdown,
+        "bucket_breakdown": bucket_breakdown,
         "top_merchants": [
             {"merchant": m, "amount": a}
             for m, a in top_merchants
@@ -84,7 +122,7 @@ async def monthly_summary(
 async def spending_trends(
     start_date: date = Query(...),
     end_date: date = Query(...),
-    group_by: str = Query("month", pattern="^(month|category|account)$"),
+    group_by: str = Query("month", pattern="^(month|category|account|tag)$"),
     session: AsyncSession = Depends(get_session)
 ):
     """Get spending trends over time"""
@@ -155,6 +193,28 @@ async def spending_trends(
             "data": {
                 acc: sorted([{"period": k, **v} for k, v in months.items()], key=lambda x: x['period'])
                 for acc, months in account_monthly.items()
+            }
+        }
+
+    elif group_by == "tag":
+        # Group by bucket tag over time
+        txn_ids = [txn.id for txn in transactions]
+        txn_tags = await get_transaction_tags(session, txn_ids)
+
+        tag_monthly = defaultdict(lambda: defaultdict(float))
+
+        for txn in transactions:
+            if txn.amount < 0:  # Only expenses
+                month_key = f"{txn.date.year}-{txn.date.month:02d}"
+                bucket = txn_tags.get(txn.id, 'Untagged')
+                tag_monthly[bucket][month_key] += abs(txn.amount)
+
+        return {
+            "group_by": "tag",
+            "buckets": list(tag_monthly.keys()),
+            "data": {
+                bucket: sorted([{"period": k, "amount": v} for k, v in months.items()], key=lambda x: x['period'])
+                for bucket, months in tag_monthly.items()
             }
         }
 
@@ -241,6 +301,61 @@ async def account_summary(
     }
 
 
+@router.get("/bucket-summary")
+async def bucket_summary(
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    session: AsyncSession = Depends(get_session)
+):
+    """Get spending summary by bucket tag"""
+    query = select(Transaction)
+
+    if start_date:
+        query = query.where(Transaction.date >= start_date)
+    if end_date:
+        query = query.where(Transaction.date <= end_date)
+
+    result = await session.execute(query)
+    transactions = result.scalars().all()
+
+    # Get bucket tags for all transactions
+    txn_ids = [txn.id for txn in transactions]
+    txn_tags = await get_transaction_tags(session, txn_ids)
+
+    bucket_data = defaultdict(lambda: {'income': 0, 'expenses': 0, 'net': 0, 'count': 0})
+
+    for txn in transactions:
+        bucket = txn_tags.get(txn.id, 'Untagged')
+        if txn.amount > 0:
+            bucket_data[bucket]['income'] += txn.amount
+        else:
+            bucket_data[bucket]['expenses'] += abs(txn.amount)
+
+        bucket_data[bucket]['net'] = (
+            bucket_data[bucket]['income'] -
+            bucket_data[bucket]['expenses']
+        )
+        bucket_data[bucket]['count'] += 1
+
+    # Sort by expenses descending
+    sorted_buckets = sorted(
+        bucket_data.items(),
+        key=lambda x: x[1]['expenses'],
+        reverse=True
+    )
+
+    return {
+        "buckets": [
+            {"bucket": bucket, **data}
+            for bucket, data in sorted_buckets
+        ],
+        "date_range": {
+            "start": str(start_date) if start_date else None,
+            "end": str(end_date) if end_date else None
+        }
+    }
+
+
 @router.get("/month-over-month")
 async def month_over_month_comparison(
     current_year: int = Query(...),
@@ -259,7 +374,7 @@ async def month_over_month_comparison(
         prev_year = current_year
         prev_month = current_month - 1
 
-    async def get_month_data(year: int, month: int):
+    async def get_month_transactions(year: int, month: int):
         start_date = date(year, month, 1)
         if month == 12:
             end_date = date(year + 1, 1, 1)
@@ -272,28 +387,45 @@ async def month_over_month_comparison(
                 Transaction.date < end_date
             )
         )
-        transactions = result.scalars().all()
+        return result.scalars().all()
 
+    def summarize_transactions(transactions, txn_tags):
         total_income = sum(txn.amount for txn in transactions if txn.amount > 0)
         total_expenses = abs(sum(txn.amount for txn in transactions if txn.amount < 0))
 
-        # Category breakdown
+        # Legacy category breakdown
         category_totals = defaultdict(float)
         for txn in transactions:
             if txn.amount < 0 and txn.category:
                 category_totals[txn.category] += abs(txn.amount)
+
+        # Bucket tag breakdown
+        bucket_totals = defaultdict(float)
+        for txn in transactions:
+            if txn.amount < 0:
+                bucket = txn_tags.get(txn.id, 'Untagged')
+                bucket_totals[bucket] += abs(txn.amount)
 
         return {
             "income": total_income,
             "expenses": total_expenses,
             "net": total_income - total_expenses,
             "transaction_count": len(transactions),
-            "categories": dict(category_totals)
+            "categories": dict(category_totals),
+            "buckets": dict(bucket_totals)
         }
 
-    # Get data for both months
-    current = await get_month_data(current_year, current_month)
-    previous = await get_month_data(prev_year, prev_month)
+    # Get transactions for both months
+    current_txns = await get_month_transactions(current_year, current_month)
+    previous_txns = await get_month_transactions(prev_year, prev_month)
+
+    # Get bucket tags for all transactions
+    all_txn_ids = [txn.id for txn in current_txns] + [txn.id for txn in previous_txns]
+    all_txn_tags = await get_transaction_tags(session, all_txn_ids)
+
+    # Summarize
+    current = summarize_transactions(current_txns, all_txn_tags)
+    previous = summarize_transactions(previous_txns, all_txn_tags)
 
     # Calculate changes
     def calc_change(current_val, prev_val):
@@ -322,6 +454,25 @@ async def month_over_month_comparison(
         reverse=True
     ))
 
+    # Bucket-level changes (new tag system)
+    all_buckets = set(current["buckets"].keys()) | set(previous["buckets"].keys())
+    bucket_changes = {}
+    for bucket in all_buckets:
+        curr_amt = current["buckets"].get(bucket, 0)
+        prev_amt = previous["buckets"].get(bucket, 0)
+        bucket_changes[bucket] = {
+            "current": curr_amt,
+            "previous": prev_amt,
+            "change": calc_change(curr_amt, prev_amt)
+        }
+
+    # Sort buckets by absolute change (biggest increases first)
+    bucket_changes = dict(sorted(
+        bucket_changes.items(),
+        key=lambda x: abs(x[1]["change"]["amount"]),
+        reverse=True
+    ))
+
     return {
         "current_period": f"{current_year}-{current_month:02d}",
         "previous_period": f"{prev_year}-{prev_month:02d}",
@@ -333,10 +484,13 @@ async def month_over_month_comparison(
             "net": calc_change(current["net"], previous["net"])
         },
         "category_changes": category_changes,
+        "bucket_changes": bucket_changes,
         "insights": {
             "spending_trend": "increasing" if current["expenses"] > previous["expenses"] else "decreasing",
-            "biggest_increase": max(category_changes.items(), key=lambda x: x[1]["change"]["amount"])[0] if category_changes else None,
-            "biggest_decrease": min(category_changes.items(), key=lambda x: x[1]["change"]["amount"])[0] if category_changes else None
+            "biggest_category_increase": max(category_changes.items(), key=lambda x: x[1]["change"]["amount"])[0] if category_changes else None,
+            "biggest_category_decrease": min(category_changes.items(), key=lambda x: x[1]["change"]["amount"])[0] if category_changes else None,
+            "biggest_bucket_increase": max(bucket_changes.items(), key=lambda x: x[1]["change"]["amount"])[0] if bucket_changes else None,
+            "biggest_bucket_decrease": min(bucket_changes.items(), key=lambda x: x[1]["change"]["amount"])[0] if bucket_changes else None
         }
     }
 
@@ -501,8 +655,13 @@ async def detect_anomalies(
     anomalies = {
         "large_transactions": [],
         "new_merchants": [],
-        "unusual_categories": []
+        "unusual_categories": [],
+        "unusual_buckets": []
     }
+
+    # Get bucket tags for all transactions
+    all_txn_ids = [txn.id for txn in current_transactions] + [txn.id for txn in baseline_transactions]
+    all_txn_tags = await get_transaction_tags(session, all_txn_ids)
 
     # 1. Detect large transactions (> threshold std devs from mean)
     expense_amounts = [abs(txn.amount) for txn in baseline_transactions if txn.amount < 0]
@@ -522,6 +681,7 @@ async def detect_anomalies(
                             "merchant": txn.merchant,
                             "amount": amount,
                             "category": txn.category,
+                            "bucket": all_txn_tags.get(txn.id),
                             "z_score": round(z_score, 2),
                             "reason": f"${amount:.2f} is {z_score:.1f}x above average (${mean_expense:.2f})"
                         })
@@ -536,6 +696,7 @@ async def detect_anomalies(
                 "merchant": txn.merchant,
                 "amount": abs(txn.amount),
                 "category": txn.category,
+                "bucket": all_txn_tags.get(txn.id),
                 "reason": "First transaction with this merchant"
             })
 
@@ -578,15 +739,58 @@ async def detect_anomalies(
                         "reason": f"Spending ${current_amount:.2f} vs usual ${avg:.2f} (+{percent_increase:.0f}%)"
                     })
 
+    # 4. Detect unusual bucket spending
+    # Calculate average monthly spending per bucket from baseline
+    baseline_bucket_months = defaultdict(lambda: defaultdict(float))
+    for txn in baseline_transactions:
+        if txn.amount < 0:
+            month_key = f"{txn.date.year}-{txn.date.month:02d}"
+            bucket = all_txn_tags.get(txn.id, 'Untagged')
+            baseline_bucket_months[month_key][bucket] += abs(txn.amount)
+
+    # Calculate average per bucket
+    bucket_averages = defaultdict(list)
+    for month_data in baseline_bucket_months.values():
+        for bucket, amount in month_data.items():
+            bucket_averages[bucket].append(amount)
+
+    # Current month bucket totals
+    current_bucket_totals = defaultdict(float)
+    for txn in current_transactions:
+        if txn.amount < 0:
+            bucket = all_txn_tags.get(txn.id, 'Untagged')
+            current_bucket_totals[bucket] += abs(txn.amount)
+
+    # Compare current to baseline
+    for bucket, current_amount in current_bucket_totals.items():
+        if bucket in bucket_averages and len(bucket_averages[bucket]) >= 2:
+            avg = statistics.mean(bucket_averages[bucket])
+            std = statistics.stdev(bucket_averages[bucket])
+
+            if std > 0:
+                z_score = (current_amount - avg) / std
+                if z_score > threshold:
+                    percent_increase = ((current_amount - avg) / avg) * 100
+                    anomalies["unusual_buckets"].append({
+                        "bucket": bucket,
+                        "current_spending": round(current_amount, 2),
+                        "average_spending": round(avg, 2),
+                        "z_score": round(z_score, 2),
+                        "percent_increase": round(percent_increase, 1),
+                        "reason": f"Spending ${current_amount:.2f} vs usual ${avg:.2f} (+{percent_increase:.0f}%)"
+                    })
+
     # Sort each list by severity
     anomalies["large_transactions"].sort(key=lambda x: x["z_score"], reverse=True)
     anomalies["new_merchants"].sort(key=lambda x: x["amount"], reverse=True)
     anomalies["unusual_categories"].sort(key=lambda x: x["z_score"], reverse=True)
+    anomalies["unusual_buckets"].sort(key=lambda x: x["z_score"], reverse=True)
 
     total_anomalies = (
         len(anomalies["large_transactions"]) +
         len(anomalies["new_merchants"]) +
-        len(anomalies["unusual_categories"])
+        len(anomalies["unusual_categories"]) +
+        len(anomalies["unusual_buckets"])
     )
 
     return {
@@ -597,7 +801,8 @@ async def detect_anomalies(
             "total_anomalies": total_anomalies,
             "large_transaction_count": len(anomalies["large_transactions"]),
             "new_merchant_count": len(anomalies["new_merchants"]),
-            "unusual_category_count": len(anomalies["unusual_categories"])
+            "unusual_category_count": len(anomalies["unusual_categories"]),
+            "unusual_bucket_count": len(anomalies["unusual_buckets"])
         },
         "baseline_period": {
             "start": str(lookback_start),

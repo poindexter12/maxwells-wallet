@@ -30,6 +30,31 @@ async def get_or_create_bucket_tag(session: AsyncSession, bucket_value: str) -> 
     return tag
 
 
+async def get_or_create_account_tag(session: AsyncSession, account_source: str) -> Tag:
+    """Get or create an account tag for the given account_source.
+
+    The tag value is the normalized account_source (lowercase, dashes for spaces).
+    The description defaults to the original account_source as the display name.
+    """
+    # Normalize to tag value format
+    tag_value = account_source.lower().replace(' ', '-')
+
+    result = await session.execute(
+        select(Tag).where(and_(Tag.namespace == "account", Tag.value == tag_value))
+    )
+    tag = result.scalar_one_or_none()
+    if not tag:
+        # Create the account tag with original name as description (display name)
+        tag = Tag(
+            namespace="account",
+            value=tag_value,
+            description=account_source  # Use original as default display name
+        )
+        session.add(tag)
+        await session.flush()
+    return tag
+
+
 async def apply_bucket_tag(session: AsyncSession, transaction_id: int, bucket_value: str):
     """Apply a bucket tag to a transaction"""
     tag = await get_or_create_bucket_tag(session, bucket_value)
@@ -236,6 +261,10 @@ async def confirm_import(
 
         # Apply bucket tag via junction table
         await apply_bucket_tag(session, db_transaction.id, bucket_value)
+
+        # Auto-create account tag if needed
+        if txn_data['account_source']:
+            await get_or_create_account_tag(session, txn_data['account_source'])
 
         imported_count += 1
         total_amount += txn_data['amount']

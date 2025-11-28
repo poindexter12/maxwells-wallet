@@ -4,20 +4,90 @@ import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
 
+interface Tag {
+  id: number
+  namespace: string
+  value: string
+  description?: string
+}
+
+interface TransactionTag {
+  namespace: string
+  value: string
+  full: string
+}
+
+interface Transaction {
+  id: number
+  date: string
+  amount: number
+  description: string
+  merchant: string | null
+  account_source: string
+  category: string | null
+  reconciliation_status: string
+  bucket?: string
+}
+
 export default function ReconcilePage() {
-  const [transactions, setTransactions] = useState<any[]>([])
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [bucketTags, setBucketTags] = useState<Tag[]>([])
+  const [accountTags, setAccountTags] = useState<Tag[]>([])
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    fetchBucketTags()
+    fetchAccountTags()
     fetchUnreconciledTransactions()
   }, [])
+
+  async function fetchBucketTags() {
+    try {
+      const res = await fetch('/api/v1/tags/buckets')
+      const data = await res.json()
+      setBucketTags(data)
+    } catch (error) {
+      console.error('Error fetching bucket tags:', error)
+    }
+  }
+
+  async function fetchAccountTags() {
+    try {
+      const res = await fetch('/api/v1/tags?namespace=account')
+      const data = await res.json()
+      setAccountTags(data)
+    } catch (error) {
+      console.error('Error fetching account tags:', error)
+    }
+  }
+
+  function getAccountDisplayName(accountSource: string): string {
+    const accountTag = accountTags.find(t => t.value === accountSource.toLowerCase().replace(/\s+/g, '-'))
+    return accountTag?.description || accountSource
+  }
 
   async function fetchUnreconciledTransactions() {
     try {
       const res = await fetch('/api/v1/transactions?reconciliation_status=unreconciled&limit=500')
       const data = await res.json()
-      setTransactions(data)
+
+      // Fetch bucket tags for each transaction
+      const transactionsWithBuckets = await Promise.all(
+        data.map(async (txn: Transaction) => {
+          try {
+            const tagsRes = await fetch(`/api/v1/transactions/${txn.id}/tags`)
+            const tagsData = await tagsRes.json()
+            const tags = tagsData.tags || []
+            const bucketTag = tags.find((t: TransactionTag) => t.namespace === 'bucket')
+            return { ...txn, bucket: bucketTag?.value || null }
+          } catch {
+            return { ...txn, bucket: null }
+          }
+        })
+      )
+
+      setTransactions(transactionsWithBuckets)
       setLoading(false)
     } catch (error) {
       console.error('Error fetching transactions:', error)
@@ -62,16 +132,25 @@ export default function ReconcilePage() {
     }
   }
 
-  async function handleCategoryChange(txnId: number, newCategory: string) {
+  async function handleBucketChange(txnId: number, newBucket: string) {
     try {
-      await fetch(`/api/v1/transactions/${txnId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category: newCategory })
-      })
+      if (newBucket) {
+        await fetch(`/api/v1/transactions/${txnId}/tags`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tag: `bucket:${newBucket}` })
+        })
+      } else {
+        const txn = transactions.find(t => t.id === txnId)
+        if (txn?.bucket) {
+          await fetch(`/api/v1/transactions/${txnId}/tags/bucket:${txn.bucket}`, {
+            method: 'DELETE'
+          })
+        }
+      }
       fetchUnreconciledTransactions()
     } catch (error) {
-      console.error('Error updating transaction:', error)
+      console.error('Error updating transaction bucket:', error)
     }
   }
 
@@ -137,94 +216,79 @@ export default function ReconcilePage() {
           <p className="text-gray-500 text-lg">All transactions are reconciled!</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left">
-                  <input
-                    type="checkbox"
-                    checked={selected.size === transactions.length}
-                    onChange={toggleAll}
-                    className="rounded"
-                  />
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Merchant</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Account</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {transactions.map((txn) => (
-                <tr key={txn.id} className={`hover:bg-gray-50 ${selected.has(txn.id) ? 'bg-blue-50' : ''}`}>
-                  <td className="px-6 py-4">
-                    <input
-                      type="checkbox"
-                      checked={selected.has(txn.id)}
-                      onChange={() => toggleSelection(txn.id)}
-                      className="rounded"
-                    />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {format(new Date(txn.date), 'MM/dd/yyyy')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {txn.merchant || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                    {txn.description}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <select
-                      value={txn.category || ''}
-                      onChange={(e) => handleCategoryChange(txn.id, e.target.value)}
-                      className="text-sm border rounded px-2 py-1 w-full"
-                    >
-                      <option value="">Uncategorized</option>
-                      <option value="Income">Income</option>
-                      <option value="Groceries">Groceries</option>
-                      <option value="Dining & Coffee">Dining & Coffee</option>
-                      <option value="Shopping">Shopping</option>
-                      <option value="Utilities">Utilities</option>
-                      <option value="Transportation">Transportation</option>
-                      <option value="Entertainment">Entertainment</option>
-                      <option value="Healthcare">Healthcare</option>
-                      <option value="Education">Education</option>
-                      <option value="Housing">Housing</option>
-                      <option value="Subscriptions">Subscriptions</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {txn.account_source}
-                  </td>
-                  <td className={`px-6 py-4 whitespace-nowrap text-sm text-right font-medium ${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatCurrency(txn.amount, true)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                    <button
-                      onClick={() => markReconciled(txn.id)}
-                      className="text-green-600 hover:text-green-900 mr-2"
-                      title="Mark as reconciled"
-                    >
-                      ✓
-                    </button>
-                    <button
-                      onClick={() => markIgnored(txn.id)}
-                      className="text-gray-600 hover:text-gray-900"
-                      title="Ignore"
-                    >
-                      ✗
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="bg-white rounded-lg shadow divide-y divide-gray-200">
+          {/* Header row */}
+          <div className="px-4 py-3 bg-gray-50 flex items-center gap-4">
+            <input
+              type="checkbox"
+              checked={selected.size === transactions.length}
+              onChange={toggleAll}
+              className="rounded"
+            />
+            <span className="text-xs font-medium text-gray-500 uppercase w-24">Date</span>
+            <span className="text-xs font-medium text-gray-500 uppercase flex-1">Merchant</span>
+            <span className="text-xs font-medium text-gray-500 uppercase w-28 text-right">Amount</span>
+            <span className="text-xs font-medium text-gray-500 uppercase w-16 text-center">Actions</span>
+          </div>
+
+          {transactions.map((txn) => (
+            <div key={txn.id} className={`p-4 hover:bg-gray-50 ${selected.has(txn.id) ? 'bg-blue-50' : ''}`}>
+              {/* Line 1: Checkbox, Date, Merchant, Amount, Actions */}
+              <div className="flex items-center gap-4">
+                <input
+                  type="checkbox"
+                  checked={selected.has(txn.id)}
+                  onChange={() => toggleSelection(txn.id)}
+                  className="rounded"
+                />
+                <span className="text-sm text-gray-500 whitespace-nowrap w-24">
+                  {format(new Date(txn.date), 'MM/dd/yyyy')}
+                </span>
+                <span className="font-medium text-gray-900 truncate flex-1">
+                  {txn.merchant || 'Unknown'}
+                </span>
+                <span className={`font-semibold text-lg whitespace-nowrap w-28 text-right ${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency(txn.amount, true)}
+                </span>
+                <div className="w-16 text-center">
+                  <button
+                    onClick={() => markReconciled(txn.id)}
+                    className="text-green-600 hover:text-green-900 mr-2"
+                    title="Mark as reconciled"
+                  >
+                    ✓
+                  </button>
+                  <button
+                    onClick={() => markIgnored(txn.id)}
+                    className="text-gray-600 hover:text-gray-900"
+                    title="Ignore"
+                  >
+                    ✗
+                  </button>
+                </div>
+              </div>
+
+              {/* Line 2: Description, Bucket, Account */}
+              <div className="flex items-center gap-3 mt-1 pl-10 text-sm">
+                <span className="text-gray-500 truncate max-w-md">
+                  {txn.description}
+                </span>
+                <select
+                  value={txn.bucket || ''}
+                  onChange={(e) => handleBucketChange(txn.id, e.target.value)}
+                  className="text-xs border rounded px-2 py-1 bg-gray-50"
+                >
+                  <option value="">No Bucket</option>
+                  {bucketTags.map((tag) => (
+                    <option key={tag.id} value={tag.value}>
+                      {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-xs text-gray-400">{getAccountDisplayName(txn.account_source)}</span>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

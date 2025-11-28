@@ -5,8 +5,8 @@ These tests validate the complete user journey through the application,
 ensuring all components work together correctly.
 
 Test scenarios:
-1. Fresh start: Import -> View -> Categorize -> Budget -> Analyze
-2. Ongoing use: Add rules -> Re-import -> Verify categorization
+1. Fresh start: Import -> View -> Tag -> Budget -> Analyze
+2. Ongoing use: Add rules -> Re-import -> Verify tagging
 3. Full analytics: All dashboard features after data import
 """
 
@@ -25,9 +25,9 @@ class TestFullUserJourney:
 
     Simulates a new user:
     1. Importing their first bank statement
-    2. Viewing and categorizing transactions
+    2. Viewing and tagging transactions
     3. Setting up budgets
-    4. Creating category rules
+    4. Creating tag rules
     5. Detecting recurring transactions
     6. Viewing analytics dashboard
     """
@@ -77,15 +77,15 @@ class TestFullUserJourney:
         assert transaction_count >= 1, "Should have imported transactions"
 
         # ============================================================
-        # STEP 3: Categorize a transaction
+        # STEP 3: Tag a transaction with a bucket
         # ============================================================
-        # Find category selector in first row
+        # Find bucket selector in first row
         first_row = rows.first
-        category_select = first_row.locator("select")
+        bucket_select = first_row.locator("select")
 
-        if category_select.count() > 0:
-            # Change category
-            category_select.select_option(index=1)
+        if bucket_select.count() > 0:
+            # Change bucket
+            bucket_select.select_option(index=1)
             page.wait_for_load_state("networkidle")
 
         # ============================================================
@@ -98,9 +98,9 @@ class TestFullUserJourney:
         page.wait_for_selector("form, dialog", timeout=5000)
 
         # Fill budget form
-        category_select = page.locator("select[name='category'], #category")
-        if category_select.count() > 0:
-            category_select.select_option(index=1)
+        tag_select = page.locator("select[name='tag'], #tag")
+        if tag_select.count() > 0:
+            tag_select.select_option(index=1)
 
         amount_input = page.locator("input[name='amount'], #amount")
         if amount_input.count() > 0:
@@ -113,7 +113,7 @@ class TestFullUserJourney:
         expect(page.locator("text=/\\$?5000|budget|created/i")).to_be_visible(timeout=10000)
 
         # ============================================================
-        # STEP 5: Create a category rule
+        # STEP 5: Create a tag rule
         # ============================================================
         page.goto("/rules")
         page.wait_for_load_state("networkidle")
@@ -124,15 +124,15 @@ class TestFullUserJourney:
         # Fill rule form
         name_input = page.locator("input[name='name'], #name")
         if name_input.count() > 0:
-            name_input.fill("Auto-categorize Rule")
+            name_input.fill("Auto-tag Rule")
 
         merchant_input = page.locator("input[name='merchant_pattern'], #merchant_pattern")
         if merchant_input.count() > 0:
             merchant_input.fill("LLC")
 
-        category_select = page.locator("select[name='category'], #category")
-        if category_select.count() > 0:
-            category_select.select_option(index=1)
+        tag_select = page.locator("select[name='tag'], #tag")
+        if tag_select.count() > 0:
+            tag_select.select_option(index=1)
 
         page.locator("button[type='submit'], button:has-text('Save')").click()
         page.wait_for_load_state("networkidle")
@@ -243,9 +243,9 @@ class TestDataIntegrity:
         page.locator("button:has-text('Create'), button:has-text('Add')").first.click()
         page.wait_for_selector("form, dialog", timeout=5000)
 
-        category_select = page.locator("select[name='category'], #category")
-        if category_select.count() > 0:
-            category_select.select_option(index=1)
+        tag_select = page.locator("select[name='tag'], #tag")
+        if tag_select.count() > 0:
+            tag_select.select_option(index=1)
 
         amount_input = page.locator("input[name='amount'], #amount")
         if amount_input.count() > 0:

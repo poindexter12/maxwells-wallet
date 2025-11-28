@@ -32,7 +32,6 @@ env/
 *.db
 *.db-shm
 *.db-wal
-data/
 
 # Next.js
 frontend/.next/

@@ -3,10 +3,17 @@
 import { useEffect, useState } from 'react'
 import { formatCurrency } from '@/lib/format'
 
-interface CategoryRule {
+interface Tag {
+  id: number
+  namespace: string
+  value: string
+  description?: string
+}
+
+interface TagRule {
   id: number
   name: string
-  category: string
+  tag: string  // format: namespace:value
   priority: number
   enabled: boolean
   merchant_pattern?: string
@@ -20,15 +27,16 @@ interface CategoryRule {
   created_at: string
 }
 
-export default function CategoryRulesPage() {
-  const [rules, setRules] = useState<CategoryRule[]>([])
+export default function TagRulesPage() {
+  const [rules, setRules] = useState<TagRule[]>([])
+  const [bucketTags, setBucketTags] = useState<Tag[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [editingRule, setEditingRule] = useState<CategoryRule | null>(null)
+  const [editingRule, setEditingRule] = useState<TagRule | null>(null)
   const [testResults, setTestResults] = useState<any>(null)
   const [formData, setFormData] = useState({
     name: '',
-    category: '',
+    tag: '',
     priority: '0',
     enabled: true,
     merchant_pattern: '',
@@ -40,12 +48,23 @@ export default function CategoryRulesPage() {
   })
 
   useEffect(() => {
+    fetchBucketTags()
     fetchRules()
   }, [])
 
+  async function fetchBucketTags() {
+    try {
+      const res = await fetch('/api/v1/tags/buckets')
+      const data = await res.json()
+      setBucketTags(data)
+    } catch (error) {
+      console.error('Error fetching bucket tags:', error)
+    }
+  }
+
   async function fetchRules() {
     try {
-      const res = await fetch('/api/v1/category-rules')
+      const res = await fetch('/api/v1/tag-rules')
       const data = await res.json()
       setRules(data)
       setLoading(false)
@@ -60,7 +79,7 @@ export default function CategoryRulesPage() {
 
     const payload: any = {
       name: formData.name,
-      category: formData.category,
+      tag: formData.tag,
       priority: parseInt(formData.priority),
       enabled: formData.enabled,
       match_all: formData.match_all
@@ -74,13 +93,13 @@ export default function CategoryRulesPage() {
 
     try {
       if (editingRule) {
-        await fetch(`/api/v1/category-rules/${editingRule.id}`, {
+        await fetch(`/api/v1/tag-rules/${editingRule.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         })
       } else {
-        await fetch('/api/v1/category-rules', {
+        await fetch('/api/v1/tag-rules', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -101,16 +120,16 @@ export default function CategoryRulesPage() {
     if (!confirm('Are you sure you want to delete this rule?')) return
 
     try {
-      await fetch(`/api/v1/category-rules/${id}`, { method: 'DELETE' })
+      await fetch(`/api/v1/tag-rules/${id}`, { method: 'DELETE' })
       fetchRules()
     } catch (error) {
       console.error('Error deleting rule:', error)
     }
   }
 
-  async function handleToggleEnabled(rule: CategoryRule) {
+  async function handleToggleEnabled(rule: TagRule) {
     try {
-      await fetch(`/api/v1/category-rules/${rule.id}`, {
+      await fetch(`/api/v1/tag-rules/${rule.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enabled: !rule.enabled })
@@ -123,7 +142,7 @@ export default function CategoryRulesPage() {
 
   async function handleTestRule(ruleId: number) {
     try {
-      const res = await fetch(`/api/v1/category-rules/${ruleId}/test`)
+      const res = await fetch(`/api/v1/tag-rules/${ruleId}/test`, { method: 'POST' })
       const data = await res.json()
       setTestResults({ ruleId, ...data })
     } catch (error) {
@@ -132,23 +151,23 @@ export default function CategoryRulesPage() {
   }
 
   async function handleApplyRules() {
-    if (!confirm('Apply all active rules to uncategorized transactions?')) return
+    if (!confirm('Apply all active rules to untagged transactions?')) return
 
     try {
-      const res = await fetch('/api/v1/category-rules/apply', { method: 'POST' })
+      const res = await fetch('/api/v1/tag-rules/apply', { method: 'POST' })
       const data = await res.json()
-      alert(`Applied rules to ${data.matched_count} transactions`)
+      alert(`Applied rules to ${data.applied_count} transactions`)
       fetchRules()
     } catch (error) {
       console.error('Error applying rules:', error)
     }
   }
 
-  function handleEdit(rule: CategoryRule) {
+  function handleEdit(rule: TagRule) {
     setEditingRule(rule)
     setFormData({
       name: rule.name,
-      category: rule.category,
+      tag: rule.tag,
       priority: rule.priority.toString(),
       enabled: rule.enabled,
       merchant_pattern: rule.merchant_pattern || '',
@@ -164,7 +183,7 @@ export default function CategoryRulesPage() {
   function resetForm() {
     setFormData({
       name: '',
-      category: '',
+      tag: '',
       priority: '0',
       enabled: true,
       merchant_pattern: '',
@@ -176,7 +195,7 @@ export default function CategoryRulesPage() {
     })
   }
 
-  function getRuleConditions(rule: CategoryRule): string[] {
+  function getRuleConditions(rule: TagRule): string[] {
     const conditions = []
     if (rule.merchant_pattern) conditions.push(`Merchant: "${rule.merchant_pattern}"`)
     if (rule.description_pattern) conditions.push(`Description: "${rule.description_pattern}"`)
@@ -189,6 +208,15 @@ export default function CategoryRulesPage() {
     return conditions
   }
 
+  function formatTagDisplay(tag: string): string {
+    // Convert "bucket:groceries" to "Groceries"
+    const parts = tag.split(':')
+    if (parts.length === 2 && parts[0] === 'bucket') {
+      return parts[1].charAt(0).toUpperCase() + parts[1].slice(1)
+    }
+    return tag
+  }
+
   if (loading) {
     return <div className="text-center py-12">Loading...</div>
   }
@@ -197,9 +225,9 @@ export default function CategoryRulesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Category Rules</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Bucket Rules</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Automatically categorize transactions based on patterns
+            Automatically assign buckets to transactions based on patterns
           </p>
         </div>
         <div className="flex gap-3">
@@ -235,7 +263,7 @@ export default function CategoryRulesPage() {
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-semibold text-gray-900">{rule.name}</h3>
                       <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                        {rule.category}
+                        {formatTagDisplay(rule.tag)}
                       </span>
                       <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded">
                         Priority: {rule.priority}
@@ -271,17 +299,17 @@ export default function CategoryRulesPage() {
                     {testResults && testResults.ruleId === rule.id && (
                       <div className="mt-3 p-3 bg-blue-50 rounded border border-blue-200">
                         <p className="text-sm font-medium text-blue-900">
-                          Test Results: {testResults.matched_count} transactions would match this rule
+                          Test Results: {testResults.match_count} transactions would match this rule
                         </p>
-                        {testResults.preview.length > 0 && (
+                        {testResults.matches && testResults.matches.length > 0 && (
                           <div className="mt-2 space-y-1">
-                            {testResults.preview.slice(0, 3).map((txn: any, idx: number) => (
+                            {testResults.matches.slice(0, 3).map((txn: any, idx: number) => (
                               <p key={idx} className="text-xs text-blue-800">
-                                • {txn.date}: {txn.merchant || txn.description} - {formatCurrency(Math.abs(txn.amount))}
+                                {txn.date}: {txn.merchant || txn.description} - {formatCurrency(Math.abs(txn.amount))}
                               </p>
                             ))}
-                            {testResults.preview.length > 3 && (
-                              <p className="text-xs text-blue-600">... and {testResults.preview.length - 3} more</p>
+                            {testResults.matches.length > 3 && (
+                              <p className="text-xs text-blue-600">... and {testResults.matches.length - 3} more</p>
                             )}
                           </div>
                         )}
@@ -349,15 +377,21 @@ export default function CategoryRulesPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Target Category *
+                    Target Bucket *
                   </label>
-                  <input
-                    type="text"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  <select
+                    value={formData.tag}
+                    onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
                     className="w-full px-3 py-2 border rounded-md"
                     required
-                  />
+                  >
+                    <option value="">Select a bucket...</option>
+                    {bucketTags.map((tag) => (
+                      <option key={tag.id} value={`bucket:${tag.value}`}>
+                        {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

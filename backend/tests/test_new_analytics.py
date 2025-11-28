@@ -39,8 +39,10 @@ class TestNewAnalytics:
 
         # Verify insights
         assert data["insights"]["spending_trend"] in ["increasing", "decreasing"]
-        assert "biggest_increase" in data["insights"]
-        assert "biggest_decrease" in data["insights"]
+        assert "biggest_category_increase" in data["insights"]
+        assert "biggest_category_decrease" in data["insights"]
+        assert "biggest_bucket_increase" in data["insights"]
+        assert "biggest_bucket_decrease" in data["insights"]
 
     @pytest.mark.asyncio
     async def test_spending_velocity(self, client: AsyncClient, seed_transactions):

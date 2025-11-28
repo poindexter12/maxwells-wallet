@@ -1,3 +1,500 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ============================================
+   THEME: LEDGER - Editorial Finance
+   Inspired by classic accounting ledgers and
+   high-end financial publications
+   ============================================ */
+[data-theme="ledger"] {
+  /* Typography */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'DM Sans', monospace;
+
+  /* Core colors */
+  --color-bg: #FAF9F6;
+  --color-bg-elevated: #FFFFFF;
+  --color-bg-hover: #F5F4F0;
+  --color-text: #1a1a2e;
+  --color-text-muted: #5a5a6e;
+  --color-border: #e5e4e0;
+  --color-border-strong: #d0cfc8;
+
+  /* Accent colors */
+  --color-positive: #2d6a4f;
+  --color-positive-bg: #d8f3dc;
+  --color-negative: #9d4654;
+  --color-negative-bg: #fce4ec;
+  --color-accent: #c5a572;
+  --color-accent-hover: #b8945f;
+
+  /* Interactive */
+  --color-primary: #1a1a2e;
+  --color-primary-hover: #2a2a3e;
+  --color-primary-text: #FAF9F6;
+
+  /* Cards and surfaces */
+  --shadow-sm: 0 1px 2px rgba(26, 26, 46, 0.04);
+  --shadow-md: 0 4px 12px rgba(26, 26, 46, 0.08);
+  --shadow-lg: 0 8px 24px rgba(26, 26, 46, 0.12);
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* Special effects */
+  --ledger-line: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 31px,
+    #e8e7e3 31px,
+    #e8e7e3 32px
+  );
+}
+
+/* ============================================
+   THEME: NEON - Dark Cyberpunk Dashboard
+   High contrast, glowing accents, data-forward
+   ============================================ */
+[data-theme="neon"] {
+  /* Typography */
+  --font-display: 'Outfit', system-ui, sans-serif;
+  --font-body: 'Outfit', system-ui, sans-serif;
+  --font-mono: 'Space Mono', monospace;
+
+  /* Core colors */
+  --color-bg: #0a0a0f;
+  --color-bg-elevated: #12121a;
+  --color-bg-hover: #1a1a24;
+  --color-text: #e8e8ec;
+  --color-text-muted: #8888a0;
+  --color-border: #2a2a3a;
+  --color-border-strong: #3a3a4a;
+
+  /* Accent colors */
+  --color-positive: #00ffd5;
+  --color-positive-bg: rgba(0, 255, 213, 0.1);
+  --color-negative: #ff2e63;
+  --color-negative-bg: rgba(255, 46, 99, 0.1);
+  --color-accent: #7c3aed;
+  --color-accent-hover: #8b5cf6;
+
+  /* Interactive */
+  --color-primary: #00ffd5;
+  --color-primary-hover: #00e6c0;
+  --color-primary-text: #0a0a0f;
+
+  /* Cards and surfaces */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 213, 0.05);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 255, 213, 0.08);
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Special effects */
+  --glow-positive: 0 0 20px rgba(0, 255, 213, 0.3);
+  --glow-negative: 0 0 20px rgba(255, 46, 99, 0.3);
+  --grid-pattern: linear-gradient(rgba(0, 255, 213, 0.03) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(0, 255, 213, 0.03) 1px, transparent 1px);
+}
+
+/* ============================================
+   THEME: SOFT - Warm Minimalism
+   Calm, approachable, organic feel
+   ============================================ */
+[data-theme="soft"] {
+  /* Typography */
+  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono: 'Plus Jakarta Sans', monospace;
+
+  /* Core colors */
+  --color-bg: #fefcf3;
+  --color-bg-elevated: #ffffff;
+  --color-bg-hover: #faf7ed;
+  --color-text: #2d2d2d;
+  --color-text-muted: #6b6b6b;
+  --color-border: #e8e4d9;
+  --color-border-strong: #d9d4c5;
+
+  /* Accent colors */
+  --color-positive: #5a8f66;
+  --color-positive-bg: #e8f5e9;
+  --color-negative: #c67b5c;
+  --color-negative-bg: #fbe9e7;
+  --color-accent: #7d9f85;
+  --color-accent-hover: #6b8c73;
+
+  /* Interactive */
+  --color-primary: #5a8f66;
+  --color-primary-hover: #4a7f56;
+  --color-primary-text: #ffffff;
+
+  /* Cards and surfaces */
+  --shadow-sm: 0 2px 8px rgba(45, 45, 45, 0.04);
+  --shadow-md: 0 4px 16px rgba(45, 45, 45, 0.06);
+  --shadow-lg: 0 8px 32px rgba(45, 45, 45, 0.08);
+
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+
+  /* Special effects */
+  --grain: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* ============================================
+   BASE STYLES - Applied to all themes
+   ============================================ */
+@layer base {
+  html {
+    font-family: var(--font-body);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  body {
+    background-color: var(--color-bg);
+    min-height: 100vh;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  /* Ledger theme special heading treatment */
+  [data-theme="ledger"] h1 {
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: -0.02em;
+  }
+
+  /* Neon theme heading glow */
+  [data-theme="neon"] h1 {
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  /* Soft theme rounded text */
+  [data-theme="soft"] h1 {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* ============================================
+   COMPONENT STYLES
+   ============================================ */
+@layer components {
+  /* Navigation */
+  .nav-container {
+    background-color: var(--color-bg-elevated);
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .nav-brand {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--color-text);
+    font-size: 1.25rem;
+  }
+
+  [data-theme="ledger"] .nav-brand {
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  .nav-link {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.25rem 0;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .nav-link:hover {
+    color: var(--color-text);
+    border-bottom-color: var(--color-border-strong);
+  }
+
+  .nav-link-active {
+    color: var(--color-text);
+    border-bottom-color: var(--color-accent);
+  }
+
+  /* Cards */
+  .card {
+    background-color: var(--color-bg-elevated);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-border);
+    transition: all 0.2s ease;
+  }
+
+  .card:hover {
+    box-shadow: var(--shadow-lg);
+  }
+
+  [data-theme="neon"] .card {
+    background: linear-gradient(
+      145deg,
+      var(--color-bg-elevated) 0%,
+      rgba(18, 18, 26, 0.8) 100%
+    );
+    backdrop-filter: blur(10px);
+  }
+
+  [data-theme="soft"] .card {
+    border: none;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background-color: var(--color-primary);
+    color: var(--color-primary-text);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-primary-hover);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  [data-theme="neon"] .btn-primary {
+    box-shadow: var(--glow-positive);
+  }
+
+  [data-theme="neon"] .btn-primary:hover {
+    box-shadow: 0 0 30px rgba(0, 255, 213, 0.5);
+  }
+
+  /* Form inputs */
+  .input {
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-text);
+    transition: all 0.2s ease;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(125, 159, 133, 0.1);
+  }
+
+  [data-theme="neon"] .input:focus {
+    box-shadow: 0 0 0 2px var(--color-positive), var(--glow-positive);
+  }
+
+  /* Money values */
+  .money-positive {
+    color: var(--color-positive);
+    font-family: var(--font-mono);
+    font-weight: 600;
+  }
+
+  .money-negative {
+    color: var(--color-negative);
+    font-family: var(--font-mono);
+    font-weight: 600;
+  }
+
+  [data-theme="neon"] .money-positive {
+    text-shadow: var(--glow-positive);
+  }
+
+  [data-theme="neon"] .money-negative {
+    text-shadow: var(--glow-negative);
+  }
+
+  /* Status badges */
+  .badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-positive {
+    background-color: var(--color-positive-bg);
+    color: var(--color-positive);
+  }
+
+  .badge-negative {
+    background-color: var(--color-negative-bg);
+    color: var(--color-negative);
+  }
+
+  /* Progress bars */
+  .progress-bar {
+    background-color: var(--color-border);
+    border-radius: 9999px;
+    height: 0.5rem;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.5s ease;
+  }
+
+  .progress-fill-positive {
+    background-color: var(--color-positive);
+  }
+
+  .progress-fill-negative {
+    background-color: var(--color-negative);
+  }
+
+  [data-theme="neon"] .progress-fill-positive {
+    box-shadow: var(--glow-positive);
+  }
+
+  [data-theme="neon"] .progress-fill-negative {
+    box-shadow: var(--glow-negative);
+  }
+
+  /* Theme switcher */
+  .theme-switcher {
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .theme-switcher:hover {
+    border-color: var(--color-border-strong);
+    color: var(--color-text);
+  }
+
+  .theme-switcher:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+
+  /* Tables */
+  .table-header {
+    background-color: var(--color-bg-hover);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .table-row {
+    border-bottom: 1px solid var(--color-border);
+    transition: background-color 0.15s ease;
+  }
+
+  .table-row:hover {
+    background-color: var(--color-bg-hover);
+  }
+
+  [data-theme="ledger"] .table-row {
+    background-image: var(--ledger-line);
+  }
+}
+
+/* ============================================
+   THEME-SPECIFIC BACKGROUNDS
+   ============================================ */
+
+/* Neon grid background */
+[data-theme="neon"] body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: var(--grid-pattern);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.5;
+}
+
+/* Soft grain overlay */
+[data-theme="soft"] body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: var(--grain);
+  opacity: 0.02;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ============================================
+   UTILITY OVERRIDES FOR TAILWIND
+   These ensure Tailwind classes use theme vars
+   ============================================ */
+@layer utilities {
+  .bg-theme {
+    background-color: var(--color-bg);
+  }
+
+  .bg-theme-elevated {
+    background-color: var(--color-bg-elevated);
+  }
+
+  .text-theme {
+    color: var(--color-text);
+  }
+
+  .text-theme-muted {
+    color: var(--color-text-muted);
+  }
+
+  .border-theme {
+    border-color: var(--color-border);
+  }
+
+  .text-positive {
+    color: var(--color-positive);
+  }
+
+  .text-negative {
+    color: var(--color-negative);
+  }
+
+  .bg-positive {
+    background-color: var(--color-positive-bg);
+  }
+
+  .bg-negative {
+    background-color: var(--color-negative-bg);
+  }
+}
