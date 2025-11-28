@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db
-from app.routers import transactions, categories, import_router, reports, budgets, category_rules, recurring, admin
+from app.routers import transactions, categories, import_router, reports, budgets, category_rules, recurring, admin, tags
 
 
 @asynccontextmanager
@@ -14,9 +14,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Finances API",
+    title="Maxwell's Wallet API",
     description="Personal finance tracker API",
-    version="0.3.0",
+    version="0.4.0",
     lifespan=lifespan
 )
 
@@ -38,10 +38,11 @@ app.include_router(budgets.router)
 app.include_router(category_rules.router)
 app.include_router(recurring.router)
 app.include_router(admin.router)
+app.include_router(tags.router)
 
 @app.get("/")
 async def root():
-    return {"message": "Finances API", "version": "0.3.0"}
+    return {"message": "Maxwell's Wallet API", "version": "0.4.0"}
 
 @app.get("/health")
 async def health():
