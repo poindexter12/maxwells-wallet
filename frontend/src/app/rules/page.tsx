@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { formatCurrency } from '@/lib/format'
 
 interface CategoryRule {
   id: number
@@ -276,7 +277,7 @@ export default function CategoryRulesPage() {
                           <div className="mt-2 space-y-1">
                             {testResults.preview.slice(0, 3).map((txn: any, idx: number) => (
                               <p key={idx} className="text-xs text-blue-800">
-                                • {txn.date}: {txn.merchant || txn.description} - ${Math.abs(txn.amount).toFixed(2)}
+                                • {txn.date}: {txn.merchant || txn.description} - {formatCurrency(Math.abs(txn.amount))}
                               </p>
                             ))}
                             {testResults.preview.length > 3 && (

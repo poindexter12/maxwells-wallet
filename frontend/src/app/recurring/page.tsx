@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
+import { formatCurrency } from '@/lib/format'
 
 interface RecurringPattern {
   id: number
@@ -164,7 +165,7 @@ export default function RecurringPage() {
             {upcoming.length}
           </p>
           <p className="mt-1 text-sm text-gray-600">
-            ~${upcoming.reduce((sum, t) => sum + t.estimated_amount, 0).toFixed(2)} expected
+            ~{formatCurrency(upcoming.reduce((sum, t) => sum + t.estimated_amount, 0))} expected
           </p>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
@@ -260,7 +261,7 @@ export default function RecurringPage() {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
                           <p className="text-gray-600">Amount Range</p>
-                          <p className="font-medium">${pattern.amount_min.toFixed(2)} - ${pattern.amount_max.toFixed(2)}</p>
+                          <p className="font-medium">{formatCurrency(pattern.amount_min)} - {formatCurrency(pattern.amount_max)}</p>
                         </div>
                         <div>
                           <p className="text-gray-600">Confidence</p>
@@ -337,7 +338,7 @@ export default function RecurringPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-semibold text-gray-900">
-                        ${txn.estimated_amount.toFixed(2)}
+                        {formatCurrency(txn.estimated_amount)}
                       </p>
                       <p className={`text-xs ${getConfidenceColor(txn.confidence)}`}>
                         {(txn.confidence * 100).toFixed(0)}% confidence
@@ -382,7 +383,7 @@ export default function RecurringPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-semibold text-gray-900">
-                        ${txn.estimated_amount.toFixed(2)}
+                        {formatCurrency(txn.estimated_amount)}
                       </p>
                     </div>
                   </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
+import { formatCurrency } from '@/lib/format'
 
 interface Budget {
   id: number
@@ -189,7 +190,7 @@ export default function BudgetsPage() {
                   <div>
                     <p className="font-semibold text-gray-900">{alert.category}</p>
                     <p className="text-sm text-gray-600">
-                      ${alert.actual_amount.toFixed(2)} of ${alert.budget_amount.toFixed(2)} ({alert.percentage_used.toFixed(1)}%)
+                      {formatCurrency(alert.actual_amount)} of {formatCurrency(alert.budget_amount)} ({alert.percentage_used.toFixed(1)}%)
                     </p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
@@ -222,16 +223,16 @@ export default function BudgetsPage() {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Spent</span>
-                <span className="font-semibold">${status.actual_amount.toFixed(2)}</span>
+                <span className="font-semibold">{formatCurrency(status.actual_amount)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Budget</span>
-                <span className="font-semibold">${status.budget_amount.toFixed(2)}</span>
+                <span className="font-semibold">{formatCurrency(status.budget_amount)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Remaining</span>
                 <span className={`font-semibold ${status.remaining < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                  ${Math.abs(status.remaining).toFixed(2)}
+                  {formatCurrency(Math.abs(status.remaining))}
                 </span>
               </div>
 
@@ -266,7 +267,7 @@ export default function BudgetsPage() {
                 <div>
                   <p className="font-medium text-gray-900">{budget.category}</p>
                   <p className="text-sm text-gray-600">
-                    ${budget.amount.toFixed(2)} / {budget.period}
+                    {formatCurrency(budget.amount)} / {budget.period}
                     {budget.rollover_enabled && ' • Rollover enabled'}
                   </p>
                 </div>

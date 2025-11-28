@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
+import { formatCurrency } from '@/lib/format'
 
 export default function Transactions() {
   const [transactions, setTransactions] = useState<any[]>([])
@@ -114,66 +115,60 @@ export default function Transactions() {
         </div>
       </div>
 
-      {/* Transactions Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Merchant</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Account</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {transactions.map((txn) => (
-              <tr key={txn.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {format(new Date(txn.date), 'MM/dd/yyyy')}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {txn.merchant || '-'}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                  {txn.description}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <select
-                    value={txn.category || ''}
-                    onChange={(e) => handleCategoryChange(txn.id, e.target.value)}
-                    className="text-sm border rounded px-2 py-1"
-                  >
-                    <option value="">Uncategorized</option>
-                    <option value="Income">Income</option>
-                    <option value="Groceries">Groceries</option>
-                    <option value="Dining & Coffee">Dining & Coffee</option>
-                    <option value="Shopping">Shopping</option>
-                    <option value="Utilities">Utilities</option>
-                    <option value="Transportation">Transportation</option>
-                    <option value="Entertainment">Entertainment</option>
-                    <option value="Healthcare">Healthcare</option>
-                    <option value="Education">Education</option>
-                    <option value="Housing">Housing</option>
-                    <option value="Subscriptions">Subscriptions</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {txn.account_source}
-                </td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm text-right font-medium ${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {txn.amount >= 0 ? '+' : ''}{txn.amount.toFixed(2)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {transactions.length === 0 && (
+      {/* Transactions List */}
+      <div className="bg-white rounded-lg shadow divide-y divide-gray-200">
+        {transactions.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
             No transactions found
           </div>
+        ) : (
+          transactions.map((txn) => (
+            <div key={txn.id} className="p-4 hover:bg-gray-50">
+              <div className="flex justify-between items-start gap-4">
+                {/* Left: Date, Merchant, Description */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-gray-500 whitespace-nowrap">
+                      {format(new Date(txn.date), 'MM/dd/yyyy')}
+                    </span>
+                    <span className="font-medium text-gray-900 truncate">
+                      {txn.merchant || 'Unknown'}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-500 truncate mt-1">
+                    {txn.description}
+                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <select
+                      value={txn.category || ''}
+                      onChange={(e) => handleCategoryChange(txn.id, e.target.value)}
+                      className="text-xs border rounded px-2 py-1 bg-gray-50"
+                    >
+                      <option value="">Uncategorized</option>
+                      <option value="Income">Income</option>
+                      <option value="Groceries">Groceries</option>
+                      <option value="Dining & Coffee">Dining & Coffee</option>
+                      <option value="Shopping">Shopping</option>
+                      <option value="Utilities">Utilities</option>
+                      <option value="Transportation">Transportation</option>
+                      <option value="Entertainment">Entertainment</option>
+                      <option value="Healthcare">Healthcare</option>
+                      <option value="Education">Education</option>
+                      <option value="Housing">Housing</option>
+                      <option value="Subscriptions">Subscriptions</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    <span className="text-xs text-gray-400">{txn.account_source}</span>
+                  </div>
+                </div>
+
+                {/* Right: Amount */}
+                <div className={`text-right font-semibold text-lg whitespace-nowrap ${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency(txn.amount, true)}
+                </div>
+              </div>
+            </div>
+          ))
         )}
       </div>
     </div>

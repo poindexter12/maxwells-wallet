@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
+import { formatCurrency } from '@/lib/format'
 
 export default function ReconcilePage() {
   const [transactions, setTransactions] = useState<any[]>([])
@@ -202,7 +203,7 @@ export default function ReconcilePage() {
                     {txn.account_source}
                   </td>
                   <td className={`px-6 py-4 whitespace-nowrap text-sm text-right font-medium ${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {txn.amount >= 0 ? '+' : ''}{txn.amount.toFixed(2)}
+                    {formatCurrency(txn.amount, true)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                     <button

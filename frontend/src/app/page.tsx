@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts'
+import { formatCurrency } from '@/lib/format'
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D']
 
@@ -94,7 +95,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-sm font-medium text-gray-600">Total Income</p>
           <p className="mt-2 text-3xl font-bold text-green-600">
-            ${monthlySummary.total_income.toFixed(2)}
+            {formatCurrency(monthlySummary.total_income)}
           </p>
           {monthOverMonth && (
             <p className={`mt-2 text-sm ${monthOverMonth.changes.income.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -105,7 +106,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-sm font-medium text-gray-600">Total Expenses</p>
           <p className="mt-2 text-3xl font-bold text-red-600">
-            ${monthlySummary.total_expenses.toFixed(2)}
+            {formatCurrency(monthlySummary.total_expenses)}
           </p>
           {monthOverMonth && (
             <p className={`mt-2 text-sm ${monthOverMonth.changes.expenses.amount < 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -116,7 +117,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-sm font-medium text-gray-600">Net</p>
           <p className={`mt-2 text-3xl font-bold ${monthlySummary.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            ${monthlySummary.net.toFixed(2)}
+            {formatCurrency(monthlySummary.net)}
           </p>
           {monthOverMonth && (
             <p className={`mt-2 text-sm ${monthOverMonth.changes.net.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -149,7 +150,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Projected Month Total</p>
-                <p className="text-xl font-bold text-gray-900">${spendingVelocity.projected_monthly.expenses.toFixed(2)}</p>
+                <p className="text-xl font-bold text-gray-900">{formatCurrency(spendingVelocity.projected_monthly.expenses)}</p>
                 <div className="mt-2">
                   <div className="flex items-center gap-2">
                     <div className="flex-1 bg-gray-200 rounded-full h-2">
@@ -175,8 +176,8 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="text-xs text-gray-500">
-                <p>Projected remaining: ${spendingVelocity.insights.projected_remaining_spending.toFixed(2)}</p>
-                <p>Previous month: ${spendingVelocity.previous_month.expenses.toFixed(2)}</p>
+                <p>Projected remaining: {formatCurrency(spendingVelocity.insights.projected_remaining_spending)}</p>
+                <p>Previous month: {formatCurrency(spendingVelocity.previous_month.expenses)}</p>
               </div>
             </div>
           </div>
@@ -208,13 +209,13 @@ export default function Dashboard() {
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {anomalies.anomalies.large_transactions.slice(0, 3).map((txn: any, idx: number) => (
                     <div key={`large-${idx}`} className="border-l-4 border-red-500 pl-3 py-1">
-                      <p className="text-sm font-medium">${txn.amount.toFixed(2)} - {txn.merchant}</p>
+                      <p className="text-sm font-medium">{formatCurrency(txn.amount)} - {txn.merchant}</p>
                       <p className="text-xs text-gray-600">{txn.reason}</p>
                     </div>
                   ))}
                   {anomalies.anomalies.new_merchants.slice(0, 3).map((txn: any, idx: number) => (
                     <div key={`new-${idx}`} className="border-l-4 border-blue-500 pl-3 py-1">
-                      <p className="text-sm font-medium">${txn.amount.toFixed(2)} - {txn.merchant}</p>
+                      <p className="text-sm font-medium">{formatCurrency(txn.amount)} - {txn.merchant}</p>
                       <p className="text-xs text-gray-600">{txn.reason}</p>
                     </div>
                   ))}
@@ -253,7 +254,7 @@ export default function Dashboard() {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: any) => `$${value.toFixed(2)}`} />
+                <Tooltip formatter={(value: any) => formatCurrency(value)} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
@@ -270,7 +271,7 @@ export default function Dashboard() {
                 <div key={index} className="flex justify-between items-center">
                   <span className="text-sm text-gray-700">{merchant.merchant}</span>
                   <span className="text-sm font-semibold text-gray-900">
-                    ${merchant.amount.toFixed(2)}
+                    {formatCurrency(merchant.amount)}
                   </span>
                 </div>
               ))}
@@ -290,7 +291,7 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="period" />
               <YAxis />
-              <Tooltip formatter={(value: any) => `$${value.toFixed(2)}`} />
+              <Tooltip formatter={(value: any) => formatCurrency(value)} />
               <Legend />
               <Line type="monotone" dataKey="income" stroke="#10b981" name="Income" />
               <Line type="monotone" dataKey="expenses" stroke="#ef4444" name="Expenses" />
