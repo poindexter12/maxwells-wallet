@@ -1,12 +1,18 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
+
+interface Tag {
+  id: number
+  namespace: string
+  value: string
+  description?: string
+}
 
 interface Budget {
   id: number
-  category: string
+  tag: string  // format: namespace:value (e.g., "bucket:groceries")
   amount: number
   period: 'monthly' | 'yearly'
   start_date?: string
@@ -17,7 +23,7 @@ interface Budget {
 
 interface BudgetStatus {
   budget_id: number
-  category: string
+  tag: string
   budget_amount: number
   actual_amount: number
   remaining: number
@@ -28,7 +34,7 @@ interface BudgetStatus {
 
 interface BudgetAlert {
   budget_id: number
-  category: string
+  tag: string
   budget_amount: number
   actual_amount: number
   percentage_used: number
@@ -37,13 +43,14 @@ interface BudgetAlert {
 
 export default function BudgetsPage() {
   const [budgets, setBudgets] = useState<Budget[]>([])
+  const [bucketTags, setBucketTags] = useState<Tag[]>([])
   const [budgetStatuses, setBudgetStatuses] = useState<BudgetStatus[]>([])
   const [alerts, setAlerts] = useState<BudgetAlert[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null)
   const [formData, setFormData] = useState({
-    category: '',
+    tag: '',
     amount: '',
     period: 'monthly' as 'monthly' | 'yearly',
     rollover_enabled: false
@@ -55,19 +62,22 @@ export default function BudgetsPage() {
 
   async function fetchData() {
     try {
-      const [budgetsRes, statusRes, alertsRes] = await Promise.all([
+      const [budgetsRes, statusRes, alertsRes, tagsRes] = await Promise.all([
         fetch('/api/v1/budgets'),
         fetch('/api/v1/budgets/status/current'),
-        fetch('/api/v1/budgets/alerts/active')
+        fetch('/api/v1/budgets/alerts/active'),
+        fetch('/api/v1/tags/buckets')
       ])
 
       const budgetsData = await budgetsRes.json()
       const statusData = await statusRes.json()
       const alertsData = await alertsRes.json()
+      const tagsData = await tagsRes.json()
 
       setBudgets(budgetsData)
       setBudgetStatuses(statusData.budgets || [])
       setAlerts(alertsData.alerts || [])
+      setBucketTags(tagsData)
       setLoading(false)
     } catch (error) {
       console.error('Error fetching budget data:', error)
@@ -79,7 +89,7 @@ export default function BudgetsPage() {
     e.preventDefault()
 
     const payload = {
-      category: formData.category,
+      tag: formData.tag,
       amount: parseFloat(formData.amount),
       period: formData.period,
       rollover_enabled: formData.rollover_enabled
@@ -102,7 +112,7 @@ export default function BudgetsPage() {
 
       setShowForm(false)
       setEditingBudget(null)
-      setFormData({ category: '', amount: '', period: 'monthly', rollover_enabled: false })
+      setFormData({ tag: '', amount: '', period: 'monthly', rollover_enabled: false })
       fetchData()
     } catch (error) {
       console.error('Error saving budget:', error)
@@ -123,12 +133,21 @@ export default function BudgetsPage() {
   function handleEdit(budget: Budget) {
     setEditingBudget(budget)
     setFormData({
-      category: budget.category,
+      tag: budget.tag,
       amount: budget.amount.toString(),
       period: budget.period,
       rollover_enabled: budget.rollover_enabled
     })
     setShowForm(true)
+  }
+
+  function formatTagDisplay(tag: string): string {
+    // Convert "bucket:groceries" to "Groceries"
+    const parts = tag.split(':')
+    if (parts.length === 2 && parts[0] === 'bucket') {
+      return parts[1].charAt(0).toUpperCase() + parts[1].slice(1)
+    }
+    return tag
   }
 
   function getStatusColor(status: string) {
@@ -159,13 +178,13 @@ export default function BudgetsPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Budget Tracking</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Monitor your spending against budget limits
+            Monitor your spending against budget limits by bucket
           </p>
         </div>
         <button
           onClick={() => {
             setEditingBudget(null)
-            setFormData({ category: '', amount: '', period: 'monthly', rollover_enabled: false })
+            setFormData({ tag: '', amount: '', period: 'monthly', rollover_enabled: false })
             setShowForm(true)
           }}
           className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
@@ -177,7 +196,7 @@ export default function BudgetsPage() {
       {/* Alerts */}
       {alerts.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4 text-red-600">⚠️ Budget Alerts</h2>
+          <h2 className="text-lg font-semibold mb-4 text-red-600">Budget Alerts</h2>
           <div className="space-y-3">
             {alerts.map((alert) => (
               <div
@@ -188,7 +207,7 @@ export default function BudgetsPage() {
               >
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="font-semibold text-gray-900">{alert.category}</p>
+                    <p className="font-semibold text-gray-900">{formatTagDisplay(alert.tag)}</p>
                     <p className="text-sm text-gray-600">
                       {formatCurrency(alert.actual_amount)} of {formatCurrency(alert.budget_amount)} ({alert.percentage_used.toFixed(1)}%)
                     </p>
@@ -211,7 +230,7 @@ export default function BudgetsPage() {
           <div key={status.budget_id} className="bg-white rounded-lg shadow p-6">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="font-semibold text-gray-900">{status.category}</h3>
+                <h3 className="font-semibold text-gray-900">{formatTagDisplay(status.tag)}</h3>
                 <p className="text-sm text-gray-600">{status.period}</p>
               </div>
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status.status)}`}>
@@ -265,7 +284,7 @@ export default function BudgetsPage() {
             budgets.map((budget) => (
               <div key={budget.id} className="px-6 py-4 flex justify-between items-center">
                 <div>
-                  <p className="font-medium text-gray-900">{budget.category}</p>
+                  <p className="font-medium text-gray-900">{formatTagDisplay(budget.tag)}</p>
                   <p className="text-sm text-gray-600">
                     {formatCurrency(budget.amount)} / {budget.period}
                     {budget.rollover_enabled && ' • Rollover enabled'}
@@ -301,15 +320,21 @@ export default function BudgetsPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
+                  Bucket
                 </label>
-                <input
-                  type="text"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                <select
+                  value={formData.tag}
+                  onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
                   className="w-full px-3 py-2 border rounded-md"
                   required
-                />
+                >
+                  <option value="">Select a bucket...</option>
+                  {bucketTags.map((tag) => (
+                    <option key={tag.id} value={`bucket:${tag.value}`}>
+                      {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

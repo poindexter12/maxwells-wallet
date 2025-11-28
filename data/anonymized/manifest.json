@@ -1,0 +1,74 @@
+{
+  "files": {
+    "stmt (1).csv": {
+      "input_hash": "2fe67c3db1fb1fab947be67d16808947f944258ee45820b65864486a54a37e77",
+      "output_file": "stmt (1)_anon.csv",
+      "output_hash": "49f1eae0e258dd300fdccc8c1572e12936aeec259abffc4596f1b020fc08ba3c",
+      "format": "bofa",
+      "rows": 26,
+      "processed_at": "2025-11-28T07:37:57.914464"
+    },
+    "stmt (2).csv": {
+      "input_hash": "6e235705d91ad525f7ef2b108889d3bb4f59707ae6feb0d71fc93028d7ab569c",
+      "output_file": "stmt (2)_anon.csv",
+      "output_hash": "439d63de616594bebfe849c806512721f8a5cb535f850d6c5d576b78cc291ba6",
+      "format": "bofa",
+      "rows": 347,
+      "processed_at": "2025-11-28T07:37:57.938848"
+    },
+    "amex.csv": {
+      "input_hash": "577a11adc4bb25412505662b10bda0df3ed4c1c3a69a358626e5c6fab395fc14",
+      "output_file": "amex_anon.csv",
+      "output_hash": "d5ee9a21588b724b1748466789ffeb59fe9a6aeeeb72f933dd6937b4cb11ae2d",
+      "format": "amex",
+      "rows": 36,
+      "processed_at": "2025-11-28T07:52:33.927255"
+    },
+    "bofa.csv": {
+      "input_hash": "6e235705d91ad525f7ef2b108889d3bb4f59707ae6feb0d71fc93028d7ab569c",
+      "output_file": "bofa_anon.csv",
+      "output_hash": "26627d9b216a3ffbdeb64a49b01f6498068024ac9fde906ec4f431b272f57568",
+      "format": "bofa",
+      "rows": 347,
+      "processed_at": "2025-11-28T07:52:33.955324"
+    },
+    "amex_cc.csv": {
+      "input_hash": "577a11adc4bb25412505662b10bda0df3ed4c1c3a69a358626e5c6fab395fc14",
+      "output_file": "amex_cc_anon.csv",
+      "output_hash": "08aaadeaa077a6f23369c58a47786f6188b306340ea249fa92f9f8e62bb64383",
+      "format": "amex",
+      "rows": 36,
+      "processed_at": "2025-11-28T08:00:48.811830"
+    },
+    "bofa_bank.csv": {
+      "input_hash": "6e235705d91ad525f7ef2b108889d3bb4f59707ae6feb0d71fc93028d7ab569c",
+      "output_file": "bofa_bank_anon.csv",
+      "output_hash": "105809d8da932cc2e748460ee9ffc6840064b4b96d582882878b084c0dccc7aa",
+      "format": "bofa",
+      "rows": 347,
+      "processed_at": "2025-11-28T08:00:48.843927"
+    },
+    "bofa_cc.csv": {
+      "input_hash": "0d3a9705dd6c82f5b7cc5afc48e590ed972e1863eeaaf1da81f45e995c00291d",
+      "output_file": "bofa_cc_anon.csv",
+      "output_hash": "920b90e7e141adfeccb0697cf921fc544b5486dc8195a514efa7c90fb64abddb",
+      "format": "bofa_cc",
+      "rows": 82,
+      "processed_at": "2025-11-28T08:00:48.850848"
+    }
+  },
+  "tokenizer_seed": "anonymize",
+  "last_run": "2025-11-28T08:00:48.850854",
+  "tokenizer_stats": {
+    "merchants": 40,
+    "accounts": 0,
+    "persons": 6,
+    "references": 174
+  },
+  "stats": {
+    "merchants": 152,
+    "persons": 3,
+    "ids": 280,
+    "locations": 11
+  }
+}

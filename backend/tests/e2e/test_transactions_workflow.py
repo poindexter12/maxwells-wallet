@@ -4,7 +4,7 @@ E2E tests for transactions viewing and filtering.
 Tests:
 1. Transaction list loads correctly
 2. Search and filtering work
-3. Category editing works
+3. Bucket/tag editing works
 4. Pagination works
 """
 
@@ -97,26 +97,26 @@ class TestTransactionsPage:
         # Just verify the search didn't break the page
         expect(page.locator("table")).to_be_visible()
 
-    def test_filter_by_category(
+    def test_filter_by_bucket(
         self,
         page: Page,
         helpers: E2EHelpers,
     ):
-        """Test filtering transactions by category."""
+        """Test filtering transactions by bucket."""
         page.goto("/transactions")
         page.wait_for_load_state("networkidle")
 
-        # Find category filter dropdown
-        category_filter = page.locator("select[name='category'], #category-filter, select:has-text('Category')")
+        # Find bucket filter dropdown
+        bucket_filter = page.locator("select[name='bucket'], #bucket-filter, select:has-text('Bucket')")
 
-        if category_filter.count() == 0:
-            pytest.skip("Category filter not found on page")
+        if bucket_filter.count() == 0:
+            pytest.skip("Bucket filter not found on page")
 
-        # Select a category if options are available
-        options = category_filter.locator("option")
+        # Select a bucket if options are available
+        options = bucket_filter.locator("option")
         if options.count() > 1:
             # Select second option (first is usually "All" or empty)
-            category_filter.select_option(index=1)
+            bucket_filter.select_option(index=1)
             page.wait_for_load_state("networkidle")
 
             # Verify filter is applied (page should update)
@@ -144,12 +144,12 @@ class TestTransactionsPage:
             page.wait_for_load_state("networkidle")
             expect(page.locator("table")).to_be_visible()
 
-    def test_edit_transaction_category(
+    def test_edit_transaction_bucket(
         self,
         page: Page,
         helpers: E2EHelpers,
     ):
-        """Test inline category editing for a transaction."""
+        """Test inline bucket editing for a transaction."""
         page.goto("/transactions")
         page.wait_for_load_state("networkidle")
 
@@ -158,25 +158,25 @@ class TestTransactionsPage:
         if rows.count() == 0:
             pytest.skip("No transactions to edit")
 
-        # Find category selector in first row
+        # Find bucket selector in first row
         first_row = rows.first
-        category_select = first_row.locator("select")
+        bucket_select = first_row.locator("select")
 
-        if category_select.count() == 0:
-            pytest.skip("Inline category editing not available")
+        if bucket_select.count() == 0:
+            pytest.skip("Inline bucket editing not available")
 
-        # Change category
-        options = category_select.locator("option")
+        # Change bucket
+        options = bucket_select.locator("option")
         if options.count() > 1:
-            # Select a different category
-            category_select.select_option(index=1)
+            # Select a different bucket
+            bucket_select.select_option(index=1)
             page.wait_for_load_state("networkidle")
 
             # Verify the change persisted (refresh and check)
             page.reload()
             page.wait_for_load_state("networkidle")
 
-            # Category should still be set
+            # Bucket should still be set
             updated_row = page.locator("table tbody tr").first
             updated_select = updated_row.locator("select")
             # Just verify page still works after edit
@@ -277,20 +277,20 @@ class TestDashboardIntegration:
         # Just verify the page loads without errors
         expect(page.locator("body")).to_be_visible()
 
-    def test_dashboard_category_breakdown(
+    def test_dashboard_bucket_breakdown(
         self,
         page: Page,
         helpers: E2EHelpers,
     ):
-        """Test that category breakdown is shown on dashboard."""
+        """Test that bucket breakdown is shown on dashboard."""
         page.goto("/")
         page.wait_for_load_state("networkidle")
 
-        # Look for category section
-        category_section = page.locator("text=/categor/i")
+        # Look for bucket section
+        bucket_section = page.locator("text=/bucket|spending by/i")
 
-        if category_section.count() > 0:
-            expect(category_section.first).to_be_visible()
+        if bucket_section.count() > 0:
+            expect(bucket_section.first).to_be_visible()
 
     def test_dashboard_top_merchants(
         self,

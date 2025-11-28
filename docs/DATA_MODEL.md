@@ -5,10 +5,12 @@
 ```mermaid
 erDiagram
     ImportSession ||--o{ Transaction : contains
-    Transaction }o--o| Category : "categorized by"
-    Budget }o--|| Category : "tracks"
-    CategoryRule }o--o| Category : "assigns"
-    RecurringPattern }o--o| Category : "tracks"
+    Transaction }o--o{ Tag : "tagged with"
+    TransactionTag }|--|| Transaction : links
+    TransactionTag }|--|| Tag : links
+    Budget }o--|| Tag : "tracks"
+    TagRule }o--o| Tag : "assigns"
+    RecurringPattern }o--o| Tag : "tracks"
 
     ImportSession {
         int id PK
@@ -35,26 +37,35 @@ erDiagram
         string merchant "cleaned merchant name"
         string account_source "e.g. BOFA-CC AMEX-53004"
         string card_member
-        string category FK
         enum reconciliation_status "unreconciled|matched|manually_entered|ignored"
         string notes
         string reference_id "bank reference ID"
         int import_session_id FK
     }
 
-    Category {
+    Tag {
         int id PK
         datetime created_at
         datetime updated_at
-        string name UK
+        string namespace "e.g. bucket, expense, occasion"
+        string value "e.g. groceries, vacation"
         string description
+        UNIQUE namespace_value "namespace + value"
+    }
+
+    TransactionTag {
+        int id PK
+        int transaction_id FK
+        int tag_id FK
+        datetime created_at
+        UNIQUE transaction_tag "transaction_id + tag_id"
     }
 
     Budget {
         int id PK
         datetime created_at
         datetime updated_at
-        string category
+        string tag "namespace:value format"
         float amount "budget limit"
         enum period "monthly|yearly"
         date start_date
@@ -62,12 +73,12 @@ erDiagram
         bool rollover_enabled
     }
 
-    CategoryRule {
+    TagRule {
         int id PK
         datetime created_at
         datetime updated_at
         string name
-        string category
+        string tag "namespace:value format"
         int priority "higher = applied first"
         bool enabled
         string merchant_pattern "substring or regex"
@@ -85,7 +96,7 @@ erDiagram
         datetime created_at
         datetime updated_at
         string merchant
-        string category
+        string category "legacy field"
         float amount_min
         float amount_max
         enum frequency "weekly|biweekly|monthly|quarterly|yearly"
@@ -116,18 +127,26 @@ Tracks each CSV import batch for auditing and rollback capability. When transact
 Core entity representing financial transactions from bank/credit card statements. Key fields:
 - **amount**: Positive = income, Negative = expense
 - **description**: Raw description from bank CSV
-- **merchant**: Cleaned/extracted merchant name for categorization
+- **merchant**: Cleaned/extracted merchant name for tagging
 - **account_source**: Identifies the source account (e.g., "BOFA-CC", "AMEX-53004")
 - **reference_id**: Bank's unique transaction identifier for duplicate detection
 
-### Category
-Simple category definitions. Transactions reference categories by name (not FK) for flexibility.
+### Tag
+Namespaced tags for flexible transaction classification. Tags use a `namespace:value` format:
+- **bucket**: Spending categories (groceries, dining, entertainment)
+- **expense**: Expense types (recurring, one-time)
+- **occasion**: Special events (vacation, christmas)
+
+Each transaction can have multiple tags, but only one tag per namespace (bucket tags are mutually exclusive).
+
+### TransactionTag
+Junction table linking transactions to tags (many-to-many relationship).
 
 ### Budget
-Monthly or yearly spending limits per category. Supports optional date ranges and rollover.
+Monthly or yearly spending limits per tag. Uses `namespace:value` format (e.g., `bucket:groceries`). Supports optional date ranges and rollover.
 
-### CategoryRule
-Auto-categorization rules applied to new transactions during import. Supports pattern matching on merchant, description, amount ranges, and account source. Rules are applied by priority (highest first).
+### TagRule
+Auto-tagging rules applied to new transactions during import. Supports pattern matching on merchant, description, amount ranges, and account source. Rules are applied by priority (highest first).
 
 ### RecurringPattern
 Detected recurring transactions (subscriptions, bills). Used to predict upcoming transactions and alert on missing expected charges.
@@ -149,3 +168,28 @@ Saved preferences for import sources. Remembers which CSV format to use for each
 - **Negative amounts**: Expenses (purchases, withdrawals, fees)
 
 This convention is applied during import parsing. Source CSVs may use different conventions which are normalized during import.
+
+## Tag Namespaces
+
+| Namespace | Purpose | Example Values | Auto-created |
+|-----------|---------|----------------|--------------|
+| `bucket` | Spending categories | groceries, dining, entertainment, utilities | No |
+| `account` | Bank accounts/cards with display names | bofa-checking, amex-gold | Yes, on import |
+| `expense` | Expense classification | recurring, one-time, refund | No |
+| `occasion` | Special events | vacation, christmas, birthday | No |
+
+Tags are stored in `namespace:value` format throughout the system.
+
+### Built-in Namespaces
+The following namespaces are built-in and cannot be deleted:
+- `bucket`, `account`, `occasion`, `expense`
+
+Custom namespaces can be created through the Tags page.
+
+### Account Tags
+Account tags are automatically created during CSV import based on `account_source`. The tag value is the normalized account source (lowercase, dashes for spaces), and the description field serves as the display name shown in the UI.
+
+Example:
+- Import with `account_source = "BOFA-Checking"`
+- Creates tag: `account:bofa-checking` with description "BOFA-Checking"
+- User can edit description to "Bank of America Checking" in Admin → Accounts

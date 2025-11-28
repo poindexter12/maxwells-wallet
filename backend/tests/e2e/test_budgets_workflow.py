@@ -43,12 +43,12 @@ class TestBudgetsPage:
         page.wait_for_selector("form, dialog, [role='dialog']", timeout=5000)
 
         # Fill in budget details
-        # Category select
-        category_select = page.locator("select[name='category'], #category, select:near(:text('Category'))")
-        if category_select.count() > 0:
-            options = category_select.locator("option")
+        # Tag/bucket select
+        tag_select = page.locator("select[name='tag'], #tag, select:near(:text('Bucket'))")
+        if tag_select.count() > 0:
+            options = tag_select.locator("option")
             if options.count() > 1:
-                category_select.select_option(index=1)
+                tag_select.select_option(index=1)
 
         # Amount input
         amount_input = page.locator("input[name='amount'], #amount, input[type='number']:near(:text('Amount'))")
@@ -225,10 +225,10 @@ class TestBudgetIntegration:
         page.locator("button:has-text('Create'), button:has-text('Add'), button:has-text('New')").first.click()
         page.wait_for_selector("form, dialog", timeout=5000)
 
-        # Create budget for a category
-        category_select = page.locator("select[name='category'], #category")
-        if category_select.count() > 0:
-            category_select.select_option(index=1)
+        # Create budget for a bucket
+        tag_select = page.locator("select[name='tag'], #tag")
+        if tag_select.count() > 0:
+            tag_select.select_option(index=1)
 
         amount_input = page.locator("input[name='amount'], #amount")
         if amount_input.count() > 0:

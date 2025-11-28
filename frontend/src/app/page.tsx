@@ -74,9 +74,9 @@ export default function Dashboard() {
     return <div className="text-center py-12">No data available</div>
   }
 
-  // Prepare category data for pie chart
-  const categoryData = Object.entries(monthlySummary.category_breakdown || {}).map(([name, data]: [string, any]) => ({
-    name,
+  // Prepare bucket data for pie chart
+  const bucketData = Object.entries(monthlySummary.bucket_breakdown || {}).map(([name, data]: [string, any]) => ({
+    name: name.charAt(0).toUpperCase() + name.slice(1),  // Capitalize bucket names
     value: data.amount,
     count: data.count
   }))
@@ -201,8 +201,8 @@ export default function Dashboard() {
                     <p className="text-xs text-gray-600">New</p>
                   </div>
                   <div className="bg-orange-50 rounded p-2">
-                    <p className="text-2xl font-bold text-orange-600">{anomalies.summary.unusual_category_count}</p>
-                    <p className="text-xs text-gray-600">Category</p>
+                    <p className="text-2xl font-bold text-orange-600">{anomalies.summary.unusual_bucket_count}</p>
+                    <p className="text-xs text-gray-600">Bucket</p>
                   </div>
                 </div>
 
@@ -219,10 +219,10 @@ export default function Dashboard() {
                       <p className="text-xs text-gray-600">{txn.reason}</p>
                     </div>
                   ))}
-                  {anomalies.anomalies.unusual_categories.slice(0, 2).map((cat: any, idx: number) => (
-                    <div key={`cat-${idx}`} className="border-l-4 border-orange-500 pl-3 py-1">
-                      <p className="text-sm font-medium">{cat.category}</p>
-                      <p className="text-xs text-gray-600">{cat.reason}</p>
+                  {anomalies.anomalies.unusual_buckets.slice(0, 2).map((bucket: any, idx: number) => (
+                    <div key={`bucket-${idx}`} className="border-l-4 border-orange-500 pl-3 py-1">
+                      <p className="text-sm font-medium">{bucket.bucket}</p>
+                      <p className="text-xs text-gray-600">{bucket.reason}</p>
                     </div>
                   ))}
                 </div>
@@ -234,14 +234,14 @@ export default function Dashboard() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Category Breakdown Pie Chart */}
+        {/* Bucket Breakdown Pie Chart */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">Spending by Category</h2>
-          {categoryData.length > 0 ? (
+          <h2 className="text-lg font-semibold mb-4">Spending by Bucket</h2>
+          {bucketData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={categoryData}
+                  data={bucketData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -250,7 +250,7 @@ export default function Dashboard() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {categoryData.map((entry, index) => (
+                  {bucketData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -258,7 +258,7 @@ export default function Dashboard() {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-gray-500 text-center py-12">No category data available</p>
+            <p className="text-gray-500 text-center py-12">No bucket data available</p>
           )}
         </div>
 

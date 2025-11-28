@@ -160,7 +160,7 @@ export default function ImportPage() {
                 <tr>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Merchant</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Bucket</th>
                   <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
                 </tr>
               </thead>
@@ -170,7 +170,7 @@ export default function ImportPage() {
                     <td className="px-4 py-2 text-sm">{format(new Date(txn.date), 'MM/dd/yyyy')}</td>
                     <td className="px-4 py-2 text-sm">{txn.merchant}</td>
                     <td className="px-4 py-2 text-sm">
-                      <span className="px-2 py-1 bg-gray-100 rounded text-xs">{txn.category || 'Uncategorized'}</span>
+                      <span className="px-2 py-1 bg-gray-100 rounded text-xs">{txn.bucket || 'No Bucket'}</span>
                     </td>
                     <td className={`px-4 py-2 text-sm text-right ${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {formatCurrency(txn.amount, true)}

@@ -133,3 +133,95 @@ class TestReportsAndAnalytics:
             data = response.json()
             assert data["period"] == period
             assert "merchants" in data
+
+    @pytest.mark.asyncio
+    async def test_bucket_breakdown_in_monthly_summary(self, client: AsyncClient, seed_transactions):
+        """Monthly summary includes bucket tag breakdown"""
+        response = await client.get("/api/v1/reports/monthly-summary?year=2025&month=11")
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "bucket_breakdown" in data
+        bucket_breakdown = data["bucket_breakdown"]
+
+        # Verify bucket data structure
+        for bucket, info in bucket_breakdown.items():
+            assert "amount" in info
+            assert "count" in info
+            assert info["amount"] >= 0
+            assert info["count"] > 0
+
+    @pytest.mark.asyncio
+    async def test_spending_trends_by_tag(self, client: AsyncClient, seed_transactions):
+        """Spending trends grouped by bucket tag"""
+        response = await client.get(
+            "/api/v1/reports/trends?start_date=2025-10-01&end_date=2025-11-30&group_by=tag"
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["group_by"] == "tag"
+        assert "buckets" in data
+        assert "data" in data
+
+    @pytest.mark.asyncio
+    async def test_bucket_summary(self, client: AsyncClient, seed_transactions):
+        """Bucket summary endpoint"""
+        response = await client.get("/api/v1/reports/bucket-summary")
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "buckets" in data
+        assert "date_range" in data
+
+        # Verify bucket data structure
+        for bucket_data in data["buckets"]:
+            assert "bucket" in bucket_data
+            assert "income" in bucket_data
+            assert "expenses" in bucket_data
+            assert "net" in bucket_data
+            assert "count" in bucket_data
+
+    @pytest.mark.asyncio
+    async def test_bucket_summary_with_date_range(self, client: AsyncClient, seed_transactions):
+        """Bucket summary with date filtering"""
+        response = await client.get(
+            "/api/v1/reports/bucket-summary?start_date=2025-11-01&end_date=2025-11-30"
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "buckets" in data
+        assert data["date_range"]["start"] == "2025-11-01"
+        assert data["date_range"]["end"] == "2025-11-30"
+
+    @pytest.mark.asyncio
+    async def test_month_over_month_bucket_changes(self, client: AsyncClient, seed_transactions):
+        """Month-over-month includes bucket changes"""
+        response = await client.get(
+            "/api/v1/reports/month-over-month?current_year=2025&current_month=11"
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "bucket_changes" in data
+        assert "current" in data
+        assert "buckets" in data["current"]
+        assert "previous" in data
+        assert "buckets" in data["previous"]
+
+        # Check insights include bucket info
+        assert "biggest_bucket_increase" in data["insights"]
+        assert "biggest_bucket_decrease" in data["insights"]
+
+    @pytest.mark.asyncio
+    async def test_anomalies_include_bucket_info(self, client: AsyncClient, seed_transactions):
+        """Anomaly detection includes bucket tags"""
+        response = await client.get(
+            "/api/v1/reports/anomalies?year=2025&month=11"
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "unusual_buckets" in data["anomalies"]
+        assert "unusual_bucket_count" in data["summary"]
