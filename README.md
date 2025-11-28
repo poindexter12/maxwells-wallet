@@ -60,15 +60,18 @@ make dev
 
 **Common Makefile commands:**
 ```bash
-make help          # Show all available commands
-make setup         # First-time setup
-make dev           # Start both servers
-make backend       # Start backend only
-make frontend      # Start frontend only
-make db-reset      # Reset database
-make db-seed       # Seed sample data
-make clean         # Clean build artifacts
-make status        # Check if services are running
+make help             # Show all available commands
+make setup            # First-time setup
+make dev              # Start both servers
+make backend          # Start backend only
+make frontend         # Start frontend only
+make db-reset         # Reset database
+make db-seed          # Seed sample data
+make test-backend     # Run backend tests
+make anonymize        # Anonymize test data (see below)
+make anonymize-status # Check anonymization status
+make clean            # Clean build artifacts
+make status           # Check if services are running
 ```
 
 ### Using setup.sh (Alternative)
@@ -186,9 +189,14 @@ finances/
 │   │       └── reconcile/  # Reconciliation page
 │   ├── package.json        # Node dependencies
 │   └── next.config.js      # Next.js config (API proxy)
-├── samples/                # Sample CSV files
+├── samples/                # Sample CSV files (seeding)
 │   ├── bofa.csv
 │   └── amex.csv
+├── data/                   # Test data directory
+│   ├── raw/                # Real financial CSVs (gitignored)
+│   └── anonymized/         # Scrubbed test data (safe to commit)
+├── scripts/                # Utility scripts
+│   └── anonymize_import.py # Data anonymization tool
 └── forge.config.yaml       # Project configuration
 ```
 
@@ -242,9 +250,45 @@ finances/
 
 You can add/delete categories via the Categories API.
 
-## Sample Data
+## Test Data
 
-The `/samples/` directory contains real CSV files from Bank of America and American Express. These are automatically imported when running the seeding script.
+### Quick Samples
+
+The `/samples/` directory contains sample CSV files for database seeding. These are imported when running `make db-seed`.
+
+### Anonymizing Real Data
+
+To test with realistic data without exposing sensitive information, use the anonymization tool:
+
+```bash
+# 1. Put your real bank CSVs in data/raw/ (gitignored)
+cp ~/Downloads/amex_statement.csv data/raw/
+cp ~/Downloads/bofa_checking.csv data/raw/
+
+# 2. Check what needs processing
+make anonymize-status
+
+# 3. Anonymize all new/changed files
+make anonymize
+
+# 4. Find scrubbed files in data/anonymized/
+ls data/anonymized/
+```
+
+**How it works:**
+- Merchants are consistently tokenized: "AMAZON" → "Acme Store" (same fake name everywhere)
+- Account numbers, card member names, and reference IDs are replaced
+- Amounts and dates are preserved for realistic testing
+- A manifest tracks file hashes so unchanged files are skipped on re-runs
+
+**Commands:**
+```bash
+make anonymize         # Process new/changed files
+make anonymize-status  # Show pending/processed files
+make anonymize-force   # Reprocess all files
+```
+
+The anonymized files in `data/anonymized/` are safe to commit and share.
 
 ## Development
 
