@@ -2,6 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
+import { formatCurrency } from '@/lib/format'
+
+const FORMAT_NAMES: Record<string, string> = {
+  'bofa_bank': 'BofA Bank',
+  'bofa_cc': 'BofA CC',
+  'amex_cc': 'Amex CC',
+  'unknown': 'Unknown'
+}
 
 interface ImportSession {
   id: number
@@ -165,7 +173,7 @@ export default function AdminPage() {
                     <td className="px-4 py-2 text-sm">{stat.account}</td>
                     <td className="px-4 py-2 text-sm text-right">{stat.count.toLocaleString()}</td>
                     <td className={`px-4 py-2 text-sm text-right font-medium ${stat.total >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      ${stat.total.toFixed(2)}
+                      {formatCurrency(stat.total)}
                     </td>
                   </tr>
                 ))}
@@ -241,7 +249,7 @@ export default function AdminPage() {
                     <td className="px-4 py-3 text-sm font-mono text-xs">{session.filename}</td>
                     <td className="px-4 py-3 text-sm">
                       <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                        {session.format_type}
+                        {FORMAT_NAMES[session.format_type] || session.format_type}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm">{session.account_source || '-'}</td>
