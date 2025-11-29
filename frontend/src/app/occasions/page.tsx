@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/format'
+import { PageHelp } from '@/components/PageHelp'
 
 interface OccasionStats {
   id: number
@@ -44,6 +45,23 @@ export default function OccasionsPage() {
 
   return (
     <div className="space-y-6">
+      <PageHelp
+        pageId="occasions"
+        title="Occasions Help"
+        description="Track spending for special events like vacations, holidays, weddings, or projects. Unlike buckets (one per transaction), you can tag multiple occasions per transaction."
+        steps={[
+          "Create occasions in Admin before a trip or event",
+          "Tag relevant transactions on the Transactions page",
+          "Click any occasion card here to see all its transactions",
+          "Review total spend for each occasion"
+        ]}
+        tips={[
+          "Transactions can have both a bucket AND occasion tags",
+          "Great for tracking 'How much did that vacation really cost?'",
+          "Create occasions for home projects, gifts, or any trackable event"
+        ]}
+      />
+
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-theme">Occasions</h1>

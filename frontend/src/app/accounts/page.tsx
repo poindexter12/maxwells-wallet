@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/format'
+import { PageHelp } from '@/components/PageHelp'
 
 interface AccountStats {
   id: number
@@ -44,6 +45,21 @@ export default function AccountsPage() {
 
   return (
     <div className="space-y-6">
+      <PageHelp
+        pageId="accounts"
+        title="Accounts Help"
+        description="View all your bank accounts and credit cards in one place. Accounts are automatically created when you import transactions from a new source."
+        steps={[
+          "Click any account card to see its transactions",
+          "Use the Admin page to rename accounts or add descriptions",
+          "Filter by account on the Transactions page to focus on one source"
+        ]}
+        tips={[
+          "Accounts are auto-detected from your CSV imports",
+          "Give accounts friendly names in Admin to make them easier to identify"
+        ]}
+      />
+
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-theme">Accounts</h1>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
+import { PageHelp } from '@/components/PageHelp'
 
 interface Tag {
   id: number
@@ -186,10 +187,27 @@ export default function ReconcilePage() {
 
   return (
     <div className="space-y-6">
+      <PageHelp
+        pageId="reconcile"
+        title="Reconcile Help"
+        description="Review and verify imported transactions. Mark them as reconciled once you've confirmed they're correct, or ignore duplicates and internal transfers."
+        steps={[
+          "Review each unreconciled transaction",
+          "Select transactions using the checkboxes",
+          "Click 'Mark as Reconciled' for verified transactions",
+          "Click 'Ignore' for duplicates or internal transfers"
+        ]}
+        tips={[
+          "Reconciled transactions appear normally in reports",
+          "Ignored transactions are hidden from most views",
+          "You can change the status later on the Transactions page"
+        ]}
+      />
+
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Reconcile Transactions</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-3xl font-bold text-theme">Reconcile Transactions</h1>
+          <p className="mt-2 text-sm text-theme-muted">
             {transactions.length} unreconciled transaction{transactions.length !== 1 ? 's' : ''}
           </p>
         </div>
