@@ -75,7 +75,7 @@ async def client(async_session: AsyncSession) -> AsyncGenerator[AsyncClient, Non
 
 @pytest.fixture(scope="function")
 async def seed_tags(async_session: AsyncSession):
-    """Seed default bucket tags"""
+    """Seed default bucket tags and account tags"""
     default_bucket_tags = [
         ("bucket", "none", "Uncategorized"),
         ("bucket", "income", "Income and earnings"),
@@ -93,8 +93,21 @@ async def seed_tags(async_session: AsyncSession):
         ("bucket", "savings", "Savings"),
     ]
 
+    # Account tags for filtering tests
+    account_tags = [
+        ("account", "bofa-1234", "Bank of America Checking"),
+        ("account", "amex-5678", "American Express Card"),
+        ("account", "chase-9999", "Chase Checking"),
+    ]
+
+    # Occasion tags for filtering tests
+    occasion_tags = [
+        ("occasion", "vacation", "Vacation spending"),
+        ("occasion", "holiday", "Holiday spending"),
+    ]
+
     tags = []
-    for namespace, value, description in default_bucket_tags:
+    for namespace, value, description in default_bucket_tags + account_tags + occasion_tags:
         tag = Tag(namespace=namespace, value=value, description=description)
         async_session.add(tag)
         tags.append(tag)
@@ -131,7 +144,7 @@ async def seed_categories(async_session: AsyncSession, seed_tags):
 
 @pytest.fixture(scope="function")
 async def seed_transactions(async_session: AsyncSession, seed_categories):
-    """Seed sample transactions with tags"""
+    """Seed sample transactions with tags and account_tag_id FK"""
     from datetime import date
     from sqlmodel import select
 
@@ -149,7 +162,8 @@ async def seed_transactions(async_session: AsyncSession, seed_categories):
             "category": "Income",
             "reconciliation_status": "matched",
             "reference_id": "tx_income_1",
-            "bucket_tag": "bucket:income"
+            "bucket_tag": "bucket:income",
+            "account_tag": "account:bofa-1234"
         },
         {
             "date": date(2025, 11, 5),
@@ -161,7 +175,8 @@ async def seed_transactions(async_session: AsyncSession, seed_categories):
             "category": "Groceries",
             "reconciliation_status": "matched",
             "reference_id": "tx_grocery_1",
-            "bucket_tag": "bucket:groceries"
+            "bucket_tag": "bucket:groceries",
+            "account_tag": "account:amex-5678"
         },
         {
             "date": date(2025, 11, 10),
@@ -173,7 +188,8 @@ async def seed_transactions(async_session: AsyncSession, seed_categories):
             "category": "Dining & Coffee",
             "reconciliation_status": "unreconciled",
             "reference_id": "tx_coffee_1",
-            "bucket_tag": "bucket:dining"
+            "bucket_tag": "bucket:dining",
+            "account_tag": "account:amex-5678"
         },
         {
             "date": date(2025, 11, 15),
@@ -185,7 +201,8 @@ async def seed_transactions(async_session: AsyncSession, seed_categories):
             "category": "Shopping",
             "reconciliation_status": "unreconciled",
             "reference_id": "tx_shopping_1",
-            "bucket_tag": "bucket:shopping"
+            "bucket_tag": "bucket:shopping",
+            "account_tag": "account:amex-5678"
         },
         {
             "date": date(2025, 10, 1),
@@ -196,7 +213,8 @@ async def seed_transactions(async_session: AsyncSession, seed_categories):
             "category": "Income",
             "reconciliation_status": "matched",
             "reference_id": "tx_income_2",
-            "bucket_tag": "bucket:income"
+            "bucket_tag": "bucket:income",
+            "account_tag": "account:bofa-1234"
         },
         {
             "date": date(2025, 10, 10),
@@ -208,18 +226,25 @@ async def seed_transactions(async_session: AsyncSession, seed_categories):
             "category": "Shopping",
             "reconciliation_status": "matched",
             "reference_id": "tx_shopping_2",
-            "bucket_tag": "bucket:shopping"
+            "bucket_tag": "bucket:shopping",
+            "account_tag": "account:amex-5678"
         },
     ]
 
     created_transactions = []
     for txn_data in transactions_data:
         bucket_tag_key = txn_data.pop("bucket_tag")
+        account_tag_key = txn_data.pop("account_tag")
+
+        # Set account_tag_id FK for proper filtering
+        if account_tag_key in tags:
+            txn_data["account_tag_id"] = tags[account_tag_key].id
+
         txn = Transaction(**txn_data)
         async_session.add(txn)
         await async_session.flush()
 
-        # Link to bucket tag
+        # Link to bucket tag via junction table
         if bucket_tag_key in tags:
             txn_tag = TransactionTag(transaction_id=txn.id, tag_id=tags[bucket_tag_key].id)
             async_session.add(txn_tag)
