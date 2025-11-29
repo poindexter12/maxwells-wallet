@@ -955,134 +955,66 @@ function TransactionsContent() {
               `}
             >
               {/* DESKTOP: Compact table-style grid */}
-              <div
-                className="hidden md:grid px-4 py-3
-                  grid-cols-[auto_5.5rem_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.5fr)_auto]
-                  gap-3 items-center"
-              >
-                {/* Checkbox */}
-                <input
-                  type="checkbox"
-                  checked={selectedIds.has(txn.id)}
-                  onChange={() => toggleSelect(txn.id)}
-                  className="w-4 h-4 rounded"
-                />
+              <div className="hidden md:block px-4 py-2">
+                {/* Top row: checkbox, date, merchant, bucket, account, amount */}
+                <div
+                  className="grid grid-cols-[auto_5.5rem_minmax(0,1fr)_auto_auto_auto] gap-x-3 items-start"
+                >
+                  {/* Checkbox */}
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(txn.id)}
+                    onChange={() => toggleSelect(txn.id)}
+                    className="w-4 h-4 rounded mt-0.5"
+                  />
 
-                {/* Date */}
-                <span className="text-xs text-theme-muted">
-                  {format(new Date(txn.date), 'MM/dd/yyyy')}
-                </span>
+                  {/* Date */}
+                  <span className="text-xs text-theme-muted pt-0.5">
+                    {format(new Date(txn.date), 'MM/dd/yyyy')}
+                  </span>
 
-                {/* Merchant + description */}
-                <div className="min-w-0">
-                  <p className="font-medium text-theme truncate">
-                    {txn.merchant || 'Unknown'}
-                  </p>
-                  {txn.description !== txn.merchant && (
-                    <p className="text-xs text-theme-muted truncate">
-                      {txn.description}
+                  {/* Merchant + description */}
+                  <div className="min-w-0">
+                    <p className="font-medium text-theme truncate">
+                      {txn.merchant || 'Unknown'}
                     </p>
-                  )}
-                </div>
+                    {txn.description !== txn.merchant && (
+                      <p className="text-xs text-theme-muted truncate">
+                        {txn.description}
+                      </p>
+                    )}
+                  </div>
 
-                {/* Bucket */}
-                <select
-                  value={txn.bucket || ''}
-                  onChange={(e) => handleBucketChange(txn.id, e.target.value)}
-                  className="h-7 w-full rounded border border-theme px-2 text-xs bg-theme-elevated"
-                >
-                  <option value="">None</option>
-                  {bucketTags.map((tag) => (
-                    <option key={tag.id} value={tag.value}>
-                      {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
-                    </option>
-                  ))}
-                </select>
+                  {/* Bucket */}
+                  <select
+                    value={txn.bucket || ''}
+                    onChange={(e) => handleBucketChange(txn.id, e.target.value)}
+                    className="h-7 rounded border border-theme px-2 text-xs bg-theme-elevated"
+                  >
+                    <option value="">No Bucket</option>
+                    {bucketTags.map((tag) => (
+                      <option key={tag.id} value={tag.value}>
+                        {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
+                      </option>
+                    ))}
+                  </select>
 
-                {/* Account */}
-                <select
-                  value={txn.account || ''}
-                  onChange={(e) => handleAccountChange(txn.id, e.target.value)}
-                  className="h-7 w-full rounded border border-theme px-2 text-xs bg-theme-elevated"
-                >
-                  <option value="">None</option>
-                  {accountTags.map((tag) => (
-                    <option key={tag.id} value={tag.value}>
-                      {tag.description || tag.value}
-                    </option>
-                  ))}
-                </select>
+                  {/* Account */}
+                  <select
+                    value={txn.account || ''}
+                    onChange={(e) => handleAccountChange(txn.id, e.target.value)}
+                    className="h-7 rounded border border-theme px-2 text-xs bg-theme-elevated"
+                  >
+                    <option value="">No Account</option>
+                    {accountTags.map((tag) => (
+                      <option key={tag.id} value={tag.value}>
+                        {tag.description || tag.value}
+                      </option>
+                    ))}
+                  </select>
 
-                {/* Tags */}
-                <div className="flex flex-wrap items-center gap-1 min-w-0">
-                  {/* Notes indicator */}
-                  {txn.notes && !expandedIds.has(txn.id) && (
-                    <span className="inline-flex items-center gap-0.5 text-[11px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full" title={txn.notes}>
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                  )}
-
-                  {/* Non-bucket, non-account tags as chips */}
-                  {txn.tags?.filter(t => t.namespace !== 'bucket' && t.namespace !== 'account').map((tag) => (
-                    <span
-                      key={tag.full}
-                      className="inline-flex items-center gap-0.5 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] text-purple-700 truncate max-w-[8rem]"
-                      title={`${tag.namespace}:${tag.value}`}
-                    >
-                      {tag.value}
-                      <button
-                        onClick={() => handleRemoveTag(txn.id, tag.full)}
-                        className="hover:text-purple-900 ml-0.5"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-
-                  {/* Add tag button */}
-                  {addingTagTo === txn.id ? (
-                    <div className="inline-flex items-center gap-1">
-                      <select
-                        value=""
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            handleAddTag(txn.id, e.target.value)
-                          }
-                        }}
-                        className="text-xs border rounded px-1 py-0.5 bg-theme-elevated"
-                        autoFocus
-                        onBlur={() => { setAddingTagTo(null); setNewTagValue('') }}
-                      >
-                        <option value="">Select...</option>
-                        {getAvailableTagsForTransaction(txn).map((tag) => (
-                          <option key={tag.id} value={`${tag.namespace}:${tag.value}`}>
-                            {tag.namespace}:{tag.value}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        onClick={() => { setAddingTagTo(null); setNewTagValue('') }}
-                        className="text-xs text-theme-muted hover:text-theme"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setAddingTagTo(txn.id)}
-                      className="text-xs text-blue-500 hover:text-blue-700 whitespace-nowrap"
-                      title="Add tag"
-                    >
-                      + tag
-                    </button>
-                  )}
-                </div>
-
-                {/* Amount + expand caret */}
-                <div className="text-right">
-                  <div className="flex items-center justify-end gap-1">
+                  {/* Amount + expand caret */}
+                  <div className="flex items-center gap-1">
                     <span className={`font-semibold text-sm ${txn.amount >= 0 ? 'text-positive' : 'text-negative'}`}>
                       {formatCurrency(txn.amount, true)}
                     </span>
@@ -1100,6 +1032,83 @@ function TransactionsContent() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
+                  </div>
+                </div>
+
+                {/* Tags row: aligned under bucket column, expands to the right */}
+                <div
+                  className="grid grid-cols-[auto_5.5rem_minmax(0,1fr)_1fr] gap-x-3 mt-1"
+                >
+                  {/* Empty spacers for checkbox and date columns */}
+                  <div></div>
+                  <div></div>
+                  <div></div>
+
+                  {/* Tags - aligned under bucket, expands right */}
+                  <div className="flex flex-wrap items-center gap-1">
+                    {/* Notes indicator */}
+                    {txn.notes && !expandedIds.has(txn.id) && (
+                      <span className="inline-flex items-center gap-0.5 text-[11px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full" title={txn.notes}>
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
+                        </svg>
+                      </span>
+                    )}
+
+                    {/* Non-bucket, non-account tags as chips */}
+                    {txn.tags?.filter(t => t.namespace !== 'bucket' && t.namespace !== 'account').map((tag) => (
+                      <span
+                        key={tag.full}
+                        className="inline-flex items-center gap-0.5 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] text-purple-700"
+                        title={`${tag.namespace}:${tag.value}`}
+                      >
+                        {tag.value}
+                        <button
+                          onClick={() => handleRemoveTag(txn.id, tag.full)}
+                          className="hover:text-purple-900 ml-0.5"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+
+                    {/* Add tag button */}
+                    {addingTagTo === txn.id ? (
+                      <div className="inline-flex items-center gap-1">
+                        <select
+                          value=""
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              handleAddTag(txn.id, e.target.value)
+                            }
+                          }}
+                          className="text-xs border rounded px-1 py-0.5 bg-theme-elevated"
+                          autoFocus
+                          onBlur={() => { setAddingTagTo(null); setNewTagValue('') }}
+                        >
+                          <option value="">Select...</option>
+                          {getAvailableTagsForTransaction(txn).map((tag) => (
+                            <option key={tag.id} value={`${tag.namespace}:${tag.value}`}>
+                              {tag.namespace}:{tag.value}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => { setAddingTagTo(null); setNewTagValue('') }}
+                          className="text-xs text-theme-muted hover:text-theme"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setAddingTagTo(txn.id)}
+                        className="text-xs text-blue-500 hover:text-blue-700 whitespace-nowrap"
+                        title="Add tag"
+                      >
+                        + tag
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
