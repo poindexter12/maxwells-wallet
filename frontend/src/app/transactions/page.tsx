@@ -26,11 +26,13 @@ interface Transaction {
   description: string
   merchant: string | null
   account_source: string
+  account_tag_id: number | null  // FK to account tag
   category: string | null  // Legacy field
   reconciliation_status: string
   notes?: string | null
   tags?: TransactionTag[]
   bucket?: string  // Convenience field we'll compute
+  account?: string  // Convenience field we'll compute from account tag
 }
 
 const PAGE_SIZE = 50
@@ -246,13 +248,15 @@ function TransactionsContent() {
           const tagsData = await tagsRes.json()
           const tags = tagsData.tags || []
           const bucketTag = tags.find((t: TransactionTag) => t.namespace === 'bucket')
+          const accountTag = tags.find((t: TransactionTag) => t.namespace === 'account')
           return {
             ...txn,
             tags,
-            bucket: bucketTag?.value || null
+            bucket: bucketTag?.value || null,
+            account: accountTag?.value || null
           }
         } catch {
-          return { ...txn, tags: [], bucket: null }
+          return { ...txn, tags: [], bucket: null, account: null }
         }
       })
     )
@@ -359,6 +363,42 @@ function TransactionsContent() {
     }
   }
 
+  async function handleAccountChange(txnId: number, newAccountValue: string) {
+    try {
+      // Find the account tag ID from the account tags
+      const accountTag = accountTags.find(t => t.value === newAccountValue)
+      const newAccountTagId = accountTag?.id || null
+
+      // Update using PATCH endpoint
+      await fetch(`/api/v1/transactions/${txnId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ account_tag_id: newAccountTagId })
+      })
+
+      // Also update the account tag through the tags system for consistency
+      const txn = transactions.find(t => t.id === txnId)
+      // Remove existing account tag if any
+      if (txn?.account) {
+        await fetch(`/api/v1/transactions/${txnId}/tags/account:${txn.account}`, {
+          method: 'DELETE'
+        }).catch(() => {}) // Ignore errors if tag doesn't exist
+      }
+      // Add new account tag if specified
+      if (newAccountValue) {
+        await fetch(`/api/v1/transactions/${txnId}/tags`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tag: `account:${newAccountValue}` })
+        }).catch(() => {}) // Ignore errors if tag already exists
+      }
+
+      fetchTransactions()
+    } catch (error) {
+      console.error('Error updating transaction account:', error)
+    }
+  }
+
   async function handleRemoveTag(txnId: number, tagFull: string) {
     try {
       await fetch(`/api/v1/transactions/${txnId}/tags/${tagFull}`, {
@@ -386,11 +426,12 @@ function TransactionsContent() {
     }
   }
 
-  // Get tags that aren't already on this transaction (excluding bucket namespace)
+  // Get tags that aren't already on this transaction (excluding bucket and account namespaces)
   function getAvailableTagsForTransaction(txn: Transaction): Tag[] {
     const existingTags = new Set(txn.tags?.map(t => t.full) || [])
     return allTags.filter(t =>
       t.namespace !== 'bucket' &&
+      t.namespace !== 'account' &&
       !existingTags.has(`${t.namespace}:${t.value}`)
     )
   }
@@ -976,7 +1017,18 @@ function TransactionsContent() {
                     ))}
                   </select>
 
-                  <span className="text-xs text-gray-400">{getAccountDisplayName(txn.account_source)}</span>
+                  <select
+                    value={txn.account || ''}
+                    onChange={(e) => handleAccountChange(txn.id, e.target.value)}
+                    className="text-xs border rounded px-2 py-1 bg-gray-50 hover:bg-gray-100 transition-colors"
+                  >
+                    <option value="">No Account</option>
+                    {accountTags.map((tag) => (
+                      <option key={tag.id} value={tag.value}>
+                        {tag.description || tag.value}
+                      </option>
+                    ))}
+                  </select>
 
                   {/* Notes indicator */}
                   {txn.notes && !expandedIds.has(txn.id) && (
@@ -988,8 +1040,8 @@ function TransactionsContent() {
                     </span>
                   )}
 
-                  {/* Non-bucket tags as chips */}
-                  {txn.tags?.filter(t => t.namespace !== 'bucket').map((tag) => (
+                  {/* Non-bucket, non-account tags as chips */}
+                  {txn.tags?.filter(t => t.namespace !== 'bucket' && t.namespace !== 'account').map((tag) => (
                     <span
                       key={tag.full}
                       className="inline-flex items-center gap-1 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full"
@@ -1062,8 +1114,19 @@ function TransactionsContent() {
                       </div>
                       <div className="flex gap-2">
                         <span className="text-gray-500 w-24">Account:</span>
-                        <span className="text-gray-900">{getAccountDisplayName(txn.account_source)}</span>
+                        <span className="text-gray-900">
+                          {txn.account
+                            ? (accountTags.find(t => t.value === txn.account)?.description || txn.account)
+                            : <span className="text-gray-400 italic">None</span>
+                          }
+                        </span>
                       </div>
+                      {txn.account_source && txn.account_source !== txn.account && (
+                        <div className="flex gap-2">
+                          <span className="text-gray-500 w-24">Source:</span>
+                          <span className="text-gray-600 italic text-xs">{txn.account_source}</span>
+                        </div>
+                      )}
                       {txn.category && (
                         <div className="flex gap-2">
                           <span className="text-gray-500 w-24">Legacy cat:</span>

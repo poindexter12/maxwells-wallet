@@ -122,6 +122,7 @@ class TransactionUpdate(SQLModel):
     description: Optional[str] = None
     merchant: Optional[str] = None
     account_source: Optional[str] = None
+    account_tag_id: Optional[int] = None  # FK to account tag (can be set to clear account)
     card_member: Optional[str] = None
     category: Optional[str] = None
     reconciliation_status: Optional[ReconciliationStatus] = None
