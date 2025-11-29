@@ -75,8 +75,8 @@ class TestTags:
         """Create a new tag"""
         tag_data = {
             "namespace": "occasion",
-            "value": "vacation",
-            "description": "Vacation-related expenses"
+            "value": "birthday",  # Use unique value not in seed_tags
+            "description": "Birthday-related expenses"
         }
 
         response = await client.post("/api/v1/tags/", json=tag_data)
@@ -84,8 +84,8 @@ class TestTags:
         data = response.json()
 
         assert data["namespace"] == "occasion"
-        assert data["value"] == "vacation"
-        assert data["description"] == "Vacation-related expenses"
+        assert data["value"] == "birthday"
+        assert data["description"] == "Birthday-related expenses"
 
     @pytest.mark.asyncio
     async def test_create_duplicate_tag(self, client: AsyncClient, seed_tags):
@@ -100,7 +100,7 @@ class TestTags:
         assert "already exists" in response.json()["detail"].lower()
 
     @pytest.mark.asyncio
-    async def test_update_tag(self, client: AsyncClient, seed_tags):
+    async def test_update_tag_description(self, client: AsyncClient, seed_tags):
         """Update tag description"""
         # Get a tag ID
         list_response = await client.get("/api/v1/tags/by-name/bucket/groceries")
@@ -112,6 +112,46 @@ class TestTags:
         data = response.json()
 
         assert data["description"] == "Updated description"
+
+    @pytest.mark.asyncio
+    async def test_update_tag_value(self, client: AsyncClient, seed_tags):
+        """Update tag value (rename)"""
+        # Create a new tag to rename
+        create_response = await client.post("/api/v1/tags/", json={
+            "namespace": "test",
+            "value": "old-name",
+            "description": "Test tag"
+        })
+        tag_id = create_response.json()["id"]
+
+        # Rename it
+        update_data = {"value": "new-name"}
+        response = await client.patch(f"/api/v1/tags/{tag_id}", json=update_data)
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["value"] == "new-name"
+        assert data["description"] == "Test tag"  # Description preserved
+
+    @pytest.mark.asyncio
+    async def test_update_tag_value_duplicate_fails(self, client: AsyncClient, seed_tags):
+        """Cannot rename tag to existing value in same namespace"""
+        # Create two tags in same namespace
+        await client.post("/api/v1/tags/", json={
+            "namespace": "test",
+            "value": "first-tag"
+        })
+        create_response = await client.post("/api/v1/tags/", json={
+            "namespace": "test",
+            "value": "second-tag"
+        })
+        tag_id = create_response.json()["id"]
+
+        # Try to rename second to first
+        update_data = {"value": "first-tag"}
+        response = await client.patch(f"/api/v1/tags/{tag_id}", json=update_data)
+        assert response.status_code == 400
+        assert "already exists" in response.json()["detail"].lower()
 
     @pytest.mark.asyncio
     async def test_delete_unused_tag(self, client: AsyncClient, seed_tags):
