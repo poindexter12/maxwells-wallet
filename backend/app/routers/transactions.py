@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
+from typing import List, Optional, Annotated
 from datetime import date, datetime
 
 from app.database import get_session
@@ -24,16 +24,50 @@ async def list_transactions(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     account_source: Optional[str] = None,
+    account: Optional[List[str]] = Query(None, description="Filter by account tag values (can specify multiple, OR logic)"),
+    account_exclude: Optional[List[str]] = Query(None, description="Exclude account tag values (can specify multiple)"),
     category: Optional[str] = None,
     reconciliation_status: Optional[ReconciliationStatus] = None,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
     search: Optional[str] = None,
+    amount_min: Optional[float] = None,
+    amount_max: Optional[float] = None,
+    tag: Optional[List[str]] = Query(None, description="Filter by tags in namespace:value format (can specify multiple)"),
+    tag_exclude: Optional[List[str]] = Query(None, description="Exclude tags in namespace:value format (can specify multiple)"),
     session: AsyncSession = Depends(get_session)
 ):
-    """List transactions with filtering and pagination"""
+    """List transactions with filtering and pagination
+
+    Supports:
+    - account: Include transactions from specific accounts (OR logic)
+    - account_exclude: Exclude transactions from specific accounts
+    - tag: Include transactions with specific tags (AND logic)
+    - tag_exclude: Exclude transactions with specific tags
+    """
     query = select(Transaction)
 
+    # Account filtering via account_tag_id FK (preferred method)
+    if account:
+        # Get tag IDs for the specified account values
+        account_tag_subquery = (
+            select(Tag.id)
+            .where(and_(Tag.namespace == "account", Tag.value.in_(account)))
+        )
+        query = query.where(Transaction.account_tag_id.in_(account_tag_subquery))
+
+    if account_exclude:
+        # Exclude transactions with these account tags
+        exclude_tag_subquery = (
+            select(Tag.id)
+            .where(and_(Tag.namespace == "account", Tag.value.in_(account_exclude)))
+        )
+        query = query.where(
+            (Transaction.account_tag_id.notin_(exclude_tag_subquery)) |
+            (Transaction.account_tag_id.is_(None))
+        )
+
+    # Legacy account_source filter (for backward compatibility)
     if account_source:
         query = query.where(Transaction.account_source == account_source)
     if category:
@@ -50,6 +84,38 @@ async def list_transactions(
             (Transaction.merchant.ilike(search_pattern)) |
             (Transaction.description.ilike(search_pattern))
         )
+    if amount_min is not None:
+        query = query.where(Transaction.amount >= amount_min)
+    if amount_max is not None:
+        query = query.where(Transaction.amount <= amount_max)
+
+    # Filter by tags (requires join) - all specified tags must match (AND logic)
+    if tag:
+        for tag_str in tag:
+            parts = tag_str.split(':', 1)
+            if len(parts) == 2:
+                namespace, value = parts
+                # Subquery to find transaction IDs with this tag
+                tag_subquery = (
+                    select(TransactionTag.transaction_id)
+                    .join(Tag, TransactionTag.tag_id == Tag.id)
+                    .where(and_(Tag.namespace == namespace, Tag.value == value))
+                )
+                query = query.where(Transaction.id.in_(tag_subquery))
+
+    # Exclude tags
+    if tag_exclude:
+        for tag_str in tag_exclude:
+            parts = tag_str.split(':', 1)
+            if len(parts) == 2:
+                namespace, value = parts
+                # Subquery to find transaction IDs with this tag
+                exclude_subquery = (
+                    select(TransactionTag.transaction_id)
+                    .join(Tag, TransactionTag.tag_id == Tag.id)
+                    .where(and_(Tag.namespace == namespace, Tag.value == value))
+                )
+                query = query.where(Transaction.id.notin_(exclude_subquery))
 
     query = query.order_by(Transaction.date.desc()).offset(skip).limit(limit)
 

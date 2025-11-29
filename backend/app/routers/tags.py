@@ -4,11 +4,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func
 from typing import List, Optional
 from datetime import datetime
+from pydantic import BaseModel
 
 from app.database import get_session
-from app.models import Tag, TagCreate, TagUpdate, TransactionTag
+from app.models import Tag, TagCreate, TagUpdate, TransactionTag, Transaction
 
 router = APIRouter(prefix="/api/v1/tags", tags=["tags"])
+
+
+class TagOrderItem(BaseModel):
+    id: int
+    sort_order: int
+
+
+class TagOrderUpdate(BaseModel):
+    tags: List[TagOrderItem]
 
 
 @router.get("/", response_model=List[Tag])
@@ -20,7 +30,7 @@ async def list_tags(
     query = select(Tag)
     if namespace:
         query = query.where(Tag.namespace == namespace)
-    query = query.order_by(Tag.namespace, Tag.value)
+    query = query.order_by(Tag.namespace, Tag.sort_order, Tag.value)
 
     result = await session.execute(query)
     tags = result.scalars().all()
@@ -35,7 +45,7 @@ async def list_buckets(
     result = await session.execute(
         select(Tag)
         .where(Tag.namespace == "bucket")
-        .order_by(Tag.value)
+        .order_by(Tag.sort_order, Tag.value)
     )
     return result.scalars().all()
 
@@ -105,13 +115,26 @@ async def update_tag(
     tag: TagUpdate,
     session: AsyncSession = Depends(get_session)
 ):
-    """Update a tag (only description can be changed)"""
+    """Update a tag's value and/or description"""
     result = await session.execute(
         select(Tag).where(Tag.id == tag_id)
     )
     db_tag = result.scalar_one_or_none()
     if not db_tag:
         raise HTTPException(status_code=404, detail="Tag not found")
+
+    # If changing value, check for uniqueness within namespace
+    if tag.value is not None and tag.value != db_tag.value:
+        existing = await session.execute(
+            select(Tag).where(
+                and_(Tag.namespace == db_tag.namespace, Tag.value == tag.value)
+            )
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(
+                status_code=400,
+                detail=f"Tag '{db_tag.namespace}:{tag.value}' already exists"
+            )
 
     # Update fields
     for key, value in tag.model_dump(exclude_unset=True).items():
@@ -176,3 +199,144 @@ async def get_tag_usage_count(
     count = usage_result.scalar()
 
     return {"tag_id": tag_id, "usage_count": count}
+
+
+@router.post("/reorder")
+async def reorder_tags(
+    order: TagOrderUpdate,
+    session: AsyncSession = Depends(get_session)
+):
+    """Update sort_order for multiple tags at once (for drag-and-drop)"""
+    for item in order.tags:
+        result = await session.execute(
+            select(Tag).where(Tag.id == item.id)
+        )
+        tag = result.scalar_one_or_none()
+        if tag:
+            tag.sort_order = item.sort_order
+            tag.updated_at = datetime.utcnow()
+
+    await session.commit()
+    return {"success": True, "updated": len(order.tags)}
+
+
+@router.get("/accounts/stats")
+async def get_account_stats(
+    session: AsyncSession = Depends(get_session)
+):
+    """Get account statistics using account_tag_id foreign key for reliable counts"""
+    # Get account tags with aggregated transaction stats via account_tag_id FK
+    result = await session.execute(
+        select(
+            Tag,
+            func.count(Transaction.id).label('count'),
+            func.coalesce(func.sum(Transaction.amount), 0).label('total')
+        )
+        .outerjoin(Transaction, Transaction.account_tag_id == Tag.id)
+        .where(Tag.namespace == "account")
+        .group_by(Tag.id)
+        .order_by(Tag.sort_order, Tag.value)
+    )
+
+    accounts = []
+    for row in result.fetchall():
+        tag = row[0]
+        accounts.append({
+            "id": tag.id,
+            "value": tag.value,
+            "description": tag.description,
+            "color": tag.color,
+            "sort_order": tag.sort_order,
+            "transaction_count": row[1],
+            "total_amount": float(row[2])
+        })
+
+    return {"accounts": accounts}
+
+
+@router.get("/buckets/stats")
+async def get_bucket_stats(
+    session: AsyncSession = Depends(get_session)
+):
+    """Get bucket statistics including transaction counts and totals"""
+    # Get bucket tags
+    tags_result = await session.execute(
+        select(Tag)
+        .where(Tag.namespace == "bucket")
+        .order_by(Tag.sort_order, Tag.value)
+    )
+    bucket_tags = tags_result.scalars().all()
+
+    # Get usage counts for each bucket via transaction_tags
+    buckets = []
+    for tag in bucket_tags:
+        # Count transactions with this tag
+        count_result = await session.execute(
+            select(func.count()).select_from(TransactionTag).where(TransactionTag.tag_id == tag.id)
+        )
+        txn_count = count_result.scalar() or 0
+
+        # Get total amount for transactions with this tag
+        amount_result = await session.execute(
+            select(func.sum(Transaction.amount))
+            .select_from(Transaction)
+            .join(TransactionTag, Transaction.id == TransactionTag.transaction_id)
+            .where(TransactionTag.tag_id == tag.id)
+        )
+        total_amount = amount_result.scalar() or 0
+
+        buckets.append({
+            "id": tag.id,
+            "value": tag.value,
+            "description": tag.description,
+            "color": tag.color,
+            "sort_order": tag.sort_order,
+            "transaction_count": txn_count,
+            "total_amount": total_amount
+        })
+
+    return {"buckets": buckets}
+
+
+@router.get("/occasions/stats")
+async def get_occasion_stats(
+    session: AsyncSession = Depends(get_session)
+):
+    """Get occasion statistics including transaction counts and totals"""
+    # Get occasion tags
+    tags_result = await session.execute(
+        select(Tag)
+        .where(Tag.namespace == "occasion")
+        .order_by(Tag.sort_order, Tag.value)
+    )
+    occasion_tags = tags_result.scalars().all()
+
+    # Get usage counts for each occasion via transaction_tags
+    occasions = []
+    for tag in occasion_tags:
+        # Count transactions with this tag
+        count_result = await session.execute(
+            select(func.count()).select_from(TransactionTag).where(TransactionTag.tag_id == tag.id)
+        )
+        txn_count = count_result.scalar() or 0
+
+        # Get total amount for transactions with this tag
+        amount_result = await session.execute(
+            select(func.sum(Transaction.amount))
+            .select_from(Transaction)
+            .join(TransactionTag, Transaction.id == TransactionTag.transaction_id)
+            .where(TransactionTag.tag_id == tag.id)
+        )
+        total_amount = amount_result.scalar() or 0
+
+        occasions.append({
+            "id": tag.id,
+            "value": tag.value,
+            "description": tag.description,
+            "color": tag.color,
+            "sort_order": tag.sort_order,
+            "transaction_count": txn_count,
+            "total_amount": total_amount
+        })
+
+    return {"occasions": occasions}
