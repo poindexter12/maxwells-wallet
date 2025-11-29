@@ -947,96 +947,80 @@ function TransactionsContent() {
                 border-l-4 ${getBucketBorderColor(txn.bucket)}
                 border-b border-theme
                 transition-all duration-150 ease-in-out
+                text-sm
                 ${selectedIds.has(txn.id)
-                  ? 'bg-[var(--color-accent)]/10 shadow-sm'
+                  ? 'bg-[var(--color-accent)]/10'
                   : 'hover:bg-[var(--color-bg-hover)]'
                 }
               `}
             >
-              <div className="p-4">
-                <div className="flex items-start justify-between gap-4">
+              {/* DESKTOP: Compact table-style grid */}
+              <div
+                className="hidden md:grid px-4 py-3
+                  grid-cols-[auto_5.5rem_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.5fr)_auto]
+                  gap-3 items-center"
+              >
+                {/* Checkbox */}
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(txn.id)}
+                  onChange={() => toggleSelect(txn.id)}
+                  className="w-4 h-4 rounded"
+                />
 
-                  {/* LEFT SIDE: checkbox + date + merchant */}
-                  <div className="flex items-start gap-3 flex-1">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(txn.id)}
-                      onChange={() => toggleSelect(txn.id)}
-                      className="w-4 h-4 mt-1 rounded transition-colors"
-                    />
+                {/* Date */}
+                <span className="text-xs text-theme-muted">
+                  {format(new Date(txn.date), 'MM/dd/yyyy')}
+                </span>
 
-                    <div className="w-24 text-sm text-theme-muted pt-0.5">
-                      {format(new Date(txn.date), 'MM/dd/yyyy')}
-                    </div>
-
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <span className="font-medium text-theme truncate">
-                        {txn.merchant || 'Unknown'}
-                      </span>
-                      <span className="text-sm text-theme-muted truncate">
-                        {txn.description}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* RIGHT SIDE: amount + expand button */}
-                  <div className="flex items-center gap-2">
-                    <span className={`font-semibold text-lg ${txn.amount >= 0 ? 'text-positive' : 'text-negative'}`}>
-                      {formatCurrency(txn.amount, true)}
-                    </span>
-                    <button
-                      onClick={() => toggleExpand(txn.id)}
-                      className="p-1 text-theme-muted hover:text-theme transition-colors"
-                      title={expandedIds.has(txn.id) ? 'Collapse details' : 'Expand details'}
-                    >
-                      <svg
-                        className={`w-4 h-4 transition-transform duration-200 ${expandedIds.has(txn.id) ? 'rotate-180' : ''}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  </div>
-
+                {/* Merchant + description */}
+                <div className="min-w-0">
+                  <p className="font-medium text-theme truncate">
+                    {txn.merchant || 'Unknown'}
+                  </p>
+                  {txn.description !== txn.merchant && (
+                    <p className="text-xs text-theme-muted truncate">
+                      {txn.description}
+                    </p>
+                  )}
                 </div>
 
-                {/* FOOTER ROW */}
-                <div className="flex items-center gap-3 mt-2 pl-10 flex-wrap">
-                  <select
-                    value={txn.bucket || ''}
-                    onChange={(e) => handleBucketChange(txn.id, e.target.value)}
-                    className="text-xs border rounded px-2 py-1 bg-gray-50 hover:bg-gray-100 transition-colors"
-                  >
-                    <option value="">No Bucket</option>
-                    {bucketTags.map((tag) => (
-                      <option key={tag.id} value={tag.value}>
-                        {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
-                      </option>
-                    ))}
-                  </select>
+                {/* Bucket */}
+                <select
+                  value={txn.bucket || ''}
+                  onChange={(e) => handleBucketChange(txn.id, e.target.value)}
+                  className="h-7 w-full rounded border border-theme px-2 text-xs bg-theme-elevated"
+                >
+                  <option value="">None</option>
+                  {bucketTags.map((tag) => (
+                    <option key={tag.id} value={tag.value}>
+                      {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
+                    </option>
+                  ))}
+                </select>
 
-                  <select
-                    value={txn.account || ''}
-                    onChange={(e) => handleAccountChange(txn.id, e.target.value)}
-                    className="text-xs border rounded px-2 py-1 bg-gray-50 hover:bg-gray-100 transition-colors"
-                  >
-                    <option value="">No Account</option>
-                    {accountTags.map((tag) => (
-                      <option key={tag.id} value={tag.value}>
-                        {tag.description || tag.value}
-                      </option>
-                    ))}
-                  </select>
+                {/* Account */}
+                <select
+                  value={txn.account || ''}
+                  onChange={(e) => handleAccountChange(txn.id, e.target.value)}
+                  className="h-7 w-full rounded border border-theme px-2 text-xs bg-theme-elevated"
+                >
+                  <option value="">None</option>
+                  {accountTags.map((tag) => (
+                    <option key={tag.id} value={tag.value}>
+                      {tag.description || tag.value}
+                    </option>
+                  ))}
+                </select>
 
+                {/* Tags */}
+                <div className="flex flex-wrap items-center gap-1 min-w-0">
                   {/* Notes indicator */}
                   {txn.notes && !expandedIds.has(txn.id) && (
-                    <span className="inline-flex items-center gap-1 text-xs text-amber-600" title={txn.notes}>
+                    <span className="inline-flex items-center gap-0.5 text-[11px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full" title={txn.notes}>
                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
                       </svg>
-                      note
                     </span>
                   )}
 
@@ -1044,12 +1028,13 @@ function TransactionsContent() {
                   {txn.tags?.filter(t => t.namespace !== 'bucket' && t.namespace !== 'account').map((tag) => (
                     <span
                       key={tag.full}
-                      className="inline-flex items-center gap-1 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full"
+                      className="inline-flex items-center gap-0.5 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] text-purple-700 truncate max-w-[8rem]"
+                      title={`${tag.namespace}:${tag.value}`}
                     >
-                      {tag.namespace}:{tag.value}
+                      {tag.value}
                       <button
                         onClick={() => handleRemoveTag(txn.id, tag.full)}
-                        className="hover:text-purple-900"
+                        className="hover:text-purple-900 ml-0.5"
                       >
                         ×
                       </button>
@@ -1066,11 +1051,11 @@ function TransactionsContent() {
                             handleAddTag(txn.id, e.target.value)
                           }
                         }}
-                        className="text-xs border rounded px-1 py-0.5"
+                        className="text-xs border rounded px-1 py-0.5 bg-theme-elevated"
                         autoFocus
                         onBlur={() => { setAddingTagTo(null); setNewTagValue('') }}
                       >
-                        <option value="">Select tag...</option>
+                        <option value="">Select...</option>
                         {getAvailableTagsForTransaction(txn).map((tag) => (
                           <option key={tag.id} value={`${tag.namespace}:${tag.value}`}>
                             {tag.namespace}:{tag.value}
@@ -1079,31 +1064,144 @@ function TransactionsContent() {
                       </select>
                       <button
                         onClick={() => { setAddingTagTo(null); setNewTagValue('') }}
-                        className="text-xs text-gray-500 hover:text-gray-700"
+                        className="text-xs text-theme-muted hover:text-theme"
                       >
-                        ✕
+                        ×
                       </button>
                     </div>
                   ) : (
                     <button
                       onClick={() => setAddingTagTo(txn.id)}
-                      className="text-xs text-blue-500 hover:text-blue-700"
+                      className="text-xs text-blue-500 hover:text-blue-700 whitespace-nowrap"
                       title="Add tag"
                     >
                       + tag
                     </button>
                   )}
                 </div>
+
+                {/* Amount + expand caret */}
+                <div className="text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <span className={`font-semibold text-sm ${txn.amount >= 0 ? 'text-positive' : 'text-negative'}`}>
+                      {formatCurrency(txn.amount, true)}
+                    </span>
+                    <button
+                      onClick={() => toggleExpand(txn.id)}
+                      className="text-theme-muted hover:text-theme p-0.5"
+                      title={expandedIds.has(txn.id) ? 'Collapse' : 'Expand'}
+                    >
+                      <svg
+                        className={`w-4 h-4 transition-transform duration-200 ${expandedIds.has(txn.id) ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* MOBILE: Card-style layout */}
+              <div className="md:hidden px-4 py-3">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(txn.id)}
+                    onChange={() => toggleSelect(txn.id)}
+                    className="w-4 h-4 mt-1 rounded"
+                  />
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-theme truncate">
+                          {txn.merchant || 'Unknown'}
+                        </p>
+                        <p className="text-xs text-theme-muted">
+                          {format(new Date(txn.date), 'MM/dd/yyyy')}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className={`font-semibold ${txn.amount >= 0 ? 'text-positive' : 'text-negative'}`}>
+                          {formatCurrency(txn.amount, true)}
+                        </span>
+                        <button
+                          onClick={() => toggleExpand(txn.id)}
+                          className="text-theme-muted hover:text-theme p-0.5"
+                        >
+                          <svg
+                            className={`w-4 h-4 transition-transform duration-200 ${expandedIds.has(txn.id) ? 'rotate-180' : ''}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Mobile controls row */}
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <select
+                        value={txn.bucket || ''}
+                        onChange={(e) => handleBucketChange(txn.id, e.target.value)}
+                        className="h-7 rounded border border-theme px-2 text-xs bg-theme-elevated"
+                      >
+                        <option value="">Bucket</option>
+                        {bucketTags.map((tag) => (
+                          <option key={tag.id} value={tag.value}>
+                            {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+
+                      <select
+                        value={txn.account || ''}
+                        onChange={(e) => handleAccountChange(txn.id, e.target.value)}
+                        className="h-7 rounded border border-theme px-2 text-xs bg-theme-elevated"
+                      >
+                        <option value="">Account</option>
+                        {accountTags.map((tag) => (
+                          <option key={tag.id} value={tag.value}>
+                            {tag.description || tag.value}
+                          </option>
+                        ))}
+                      </select>
+
+                      {/* Tags */}
+                      {txn.tags?.filter(t => t.namespace !== 'bucket' && t.namespace !== 'account').map((tag) => (
+                        <span
+                          key={tag.full}
+                          className="inline-flex items-center gap-0.5 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] text-purple-700"
+                        >
+                          {tag.value}
+                          <button onClick={() => handleRemoveTag(txn.id, tag.full)} className="hover:text-purple-900">×</button>
+                        </span>
+                      ))}
+
+                      <button
+                        onClick={() => setAddingTagTo(txn.id)}
+                        className="text-xs text-blue-500 hover:text-blue-700"
+                      >
+                        + tag
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* EXPANDED METADATA SECTION */}
               {expandedIds.has(txn.id) && (
-                <div className="px-4 pb-4 pt-0 pl-14 border-t border-gray-100 bg-gray-50/50">
+                <div className="px-4 pb-4 pt-2 md:pl-12 border-t border-theme bg-[var(--color-bg-hover)]">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     {/* Left column: metadata */}
                     <div className="space-y-2">
                       <div className="flex gap-2">
-                        <span className="text-gray-500 w-24">Status:</span>
+                        <span className="text-theme-muted w-24">Status:</span>
                         <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                           txn.reconciliation_status === 'matched' ? 'bg-green-100 text-green-800' :
                           txn.reconciliation_status === 'ignored' ? 'bg-gray-100 text-gray-600' :
@@ -1113,36 +1211,31 @@ function TransactionsContent() {
                         </span>
                       </div>
                       <div className="flex gap-2">
-                        <span className="text-gray-500 w-24">Account:</span>
-                        <span className="text-gray-900">
-                          {txn.account
-                            ? (accountTags.find(t => t.value === txn.account)?.description || txn.account)
-                            : <span className="text-gray-400 italic">None</span>
-                          }
-                        </span>
+                        <span className="text-theme-muted w-24">Description:</span>
+                        <span className="text-theme">{txn.description}</span>
                       </div>
-                      {txn.account_source && txn.account_source !== txn.account && (
+                      {txn.account_source && (
                         <div className="flex gap-2">
-                          <span className="text-gray-500 w-24">Source:</span>
-                          <span className="text-gray-600 italic text-xs">{txn.account_source}</span>
+                          <span className="text-theme-muted w-24">Source:</span>
+                          <span className="text-theme-muted text-xs">{txn.account_source}</span>
                         </div>
                       )}
                       {txn.category && (
                         <div className="flex gap-2">
-                          <span className="text-gray-500 w-24">Legacy cat:</span>
-                          <span className="text-gray-600 italic">{txn.category}</span>
+                          <span className="text-theme-muted w-24">Legacy cat:</span>
+                          <span className="text-theme-muted italic">{txn.category}</span>
                         </div>
                       )}
                       <div className="flex gap-2">
-                        <span className="text-gray-500 w-24">ID:</span>
-                        <span className="text-gray-400 font-mono text-xs">{txn.id}</span>
+                        <span className="text-theme-muted w-24">ID:</span>
+                        <span className="text-theme-muted font-mono text-xs">{txn.id}</span>
                       </div>
                     </div>
 
                     {/* Right column: notes */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-gray-500">Notes:</span>
+                        <span className="text-theme-muted">Notes:</span>
                         {editingNoteId !== txn.id && (
                           <button
                             onClick={() => startEditNote(txn)}
@@ -1157,7 +1250,7 @@ function TransactionsContent() {
                           <textarea
                             value={noteValue}
                             onChange={(e) => setNoteValue(e.target.value)}
-                            className="w-full px-2 py-1 text-sm border rounded resize-none"
+                            className="w-full px-2 py-1 text-sm border border-theme rounded resize-none bg-theme-elevated"
                             rows={2}
                             placeholder="Add a note..."
                             autoFocus
@@ -1171,14 +1264,14 @@ function TransactionsContent() {
                             </button>
                             <button
                               onClick={() => { setEditingNoteId(null); setNoteValue('') }}
-                              className="px-2 py-1 text-xs text-gray-600 hover:text-gray-800"
+                              className="px-2 py-1 text-xs text-theme-muted hover:text-theme"
                             >
                               Cancel
                             </button>
                           </div>
                         </div>
                       ) : (
-                        <p className={`text-sm ${txn.notes ? 'text-gray-900' : 'text-gray-400 italic'}`}>
+                        <p className={`text-sm ${txn.notes ? 'text-theme' : 'text-theme-muted italic'}`}>
                           {txn.notes || 'No notes'}
                         </p>
                       )}
