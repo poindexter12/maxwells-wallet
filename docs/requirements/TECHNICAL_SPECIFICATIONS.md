@@ -48,6 +48,8 @@ CREATE TABLE tags (
     namespace VARCHAR NOT NULL,
     value VARCHAR NOT NULL,
     description VARCHAR,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    color VARCHAR,
     UNIQUE(namespace, value)
 );
 ```
@@ -116,7 +118,7 @@ CREATE TABLE import_formats (
 
 ### Transactions
 - `GET /api/v1/transactions` - List transactions with filters
-  - Query params: skip, limit, account_source, category, reconciliation_status, start_date, end_date, search
+  - Query params: skip, limit, account_source, category, reconciliation_status, start_date, end_date, search, amount_min, amount_max, tag (multiple allowed, AND logic)
 - `GET /api/v1/transactions/{id}` - Get single transaction
 - `POST /api/v1/transactions` - Create transaction
 - `PATCH /api/v1/transactions/{id}` - Update transaction
@@ -125,12 +127,18 @@ CREATE TABLE import_formats (
 - `POST /api/v1/transactions/bulk-update` - Bulk update transactions
 
 ### Tags
-- `GET /api/v1/tags` - List all tags (filterable by namespace)
-- `GET /api/v1/tags/buckets` - List bucket tags only
+- `GET /api/v1/tags` - List all tags (filterable by namespace query param)
+- `GET /api/v1/tags/buckets` - List bucket tags only (convenience endpoint)
+- `GET /api/v1/tags/buckets/stats` - Get bucket statistics (transaction count, total amount per bucket)
+- `GET /api/v1/tags/accounts/stats` - Get account statistics (transaction count, total amount per account via account_source)
+- `GET /api/v1/tags/occasions/stats` - Get occasion statistics (transaction count, total amount per occasion)
 - `GET /api/v1/tags/{id}` - Get single tag
+- `GET /api/v1/tags/by-name/{namespace}/{value}` - Get tag by namespace and value
 - `POST /api/v1/tags` - Create tag
-- `PATCH /api/v1/tags/{id}` - Update tag
-- `DELETE /api/v1/tags/{id}` - Delete tag
+- `PATCH /api/v1/tags/{id}` - Update tag (value, description, sort_order, color)
+- `DELETE /api/v1/tags/{id}` - Delete tag (fails if in use)
+- `POST /api/v1/tags/reorder` - Bulk update sort_order for multiple tags (for drag-and-drop)
+- `GET /api/v1/tags/{id}/usage-count` - Get transaction count using this tag
 - `GET /api/v1/transactions/{id}/tags` - Get tags for a transaction
 - `POST /api/v1/transactions/{id}/tags` - Add tag to transaction
 - `DELETE /api/v1/transactions/{id}/tags/{tag}` - Remove tag from transaction
@@ -166,6 +174,15 @@ CREATE TABLE import_formats (
   - Returns: merchants sorted by spending amount
 - `GET /api/v1/reports/account-summary` - Summary by account
   - Returns: income, expenses, net per account
+
+### Admin
+- `GET /api/v1/admin/stats` - Database statistics (transaction count, account breakdown, session counts)
+- `GET /api/v1/admin/import-sessions` - List all import sessions
+- `GET /api/v1/admin/import-sessions/{id}` - Get import session with transactions
+- `DELETE /api/v1/admin/import-sessions/{id}` - Roll back import (delete transactions, mark session rolled_back)
+  - Query param: confirm=DELETE required
+- `DELETE /api/v1/admin/transactions/purge-all` - Delete ALL transactions and import sessions
+  - Query param: confirm=PURGE_ALL required
 
 ### Reports (Advanced Analytics) - v0.2
 - `GET /api/v1/reports/month-over-month` - Month-over-month comparison
@@ -207,6 +224,8 @@ class Tag(BaseModel, table=True):
     namespace: str  # e.g., "bucket", "expense", "occasion"
     value: str      # e.g., "groceries", "vacation"
     description: Optional[str]
+    sort_order: int = 0  # For custom ordering (drag-and-drop)
+    color: Optional[str]  # Hex color for UI display
     # Unique constraint on (namespace, value)
 ```
 
@@ -282,21 +301,64 @@ Defined in `backend/app/tag_inference.py`:
 
 ## Frontend Routes
 
+### Main Navigation
 - `/` - Dashboard (monthly summary + charts)
-- `/transactions` - Transaction list with search/filter, inline bucket editing, tag management
+- `/transactions` - Transaction list with search/filter, inline bucket editing, tag management, "Import CSV" button
+  - Supports URL params: bucket, occasion, account, search, status, amount_min, amount_max, start_date, end_date
+  - Clickable cards from summary pages link here with pre-applied filters
+- `/buckets` - Summary dashboard showing all buckets with transaction counts and totals (links to admin for editing)
+- `/occasions` - Summary dashboard for special events with spending totals (links to admin for editing)
+- `/accounts` - Summary dashboard showing accounts with transaction counts (links to admin for editing)
 - `/budgets` - Budget management with progress tracking
-- `/recurring` - Recurring transaction patterns
 - `/rules` - Tag rules for auto-tagging
-- `/tags` - Tag management with namespace/value organization
-- `/import` - CSV import interface
+- `/admin` - Admin panel (see below)
+
+### Secondary Routes (not in main nav)
+- `/import` - CSV import interface (accessed from Transactions page)
 - `/reconcile` - Reconciliation interface for unreconciled transactions
-- `/admin` - Admin panel with tabs:
-  - Overview: Stats, account breakdown, danger zone
-  - Imports: Import session history and rollback
-  - All Tags: View all tags with namespace:value format
-  - Accounts: Account tag management (display names)
-  - Occasions: Occasion tag management
-  - Expense Types: Expense type tag management
+- `/recurring` - Recurring transaction patterns
+- `/tags` - Advanced tag management with namespace/value organization
+
+### Admin Panel Tabs
+- Overview: Stats, account breakdown, danger zone (purge all)
+- Imports: Import session history and rollback
+- All Tags: View all tags with namespace:value format
+- Buckets: Bucket tag management (colors, descriptions, ordering)
+- Accounts: Account tag management (display names, colors)
+- Occasions: Occasion tag management (colors, descriptions)
+- Expense Types: Expense type tag management
+
+## Theme System
+
+### Available Themes
+- **Ledger**: Editorial finance theme with serif headings, cream backgrounds, warm gold accents
+- **Dark**: Clean dark mode with high contrast, easy on the eyes
+- **Cyberpunk**: Neon glows, hot pink/cyan accents, pure black background with grid pattern
+- **Soft**: Warm minimalism with organic feel, rounded corners, subtle grain texture
+
+### Theme CSS Variables
+All themes define consistent CSS variables:
+- `--color-bg`, `--color-bg-elevated`, `--color-bg-hover`: Background colors
+- `--color-text`, `--color-text-muted`: Text colors
+- `--color-border`, `--color-border-strong`: Border colors
+- `--color-positive`, `--color-negative`: Money/status colors (green/red)
+- `--color-accent`, `--color-primary`: Interactive element colors
+- `--font-display`, `--font-body`, `--font-mono`: Typography
+- `--shadow-sm`, `--shadow-md`, `--shadow-lg`: Elevation shadows
+- `--radius-sm`, `--radius-md`, `--radius-lg`: Border radius
+
+### Theme-Aware Utility Classes
+- `.text-theme`, `.text-theme-muted`: Text colors that adapt to theme
+- `.bg-theme`, `.bg-theme-elevated`: Background colors
+- `.border-theme`: Border color
+- `.text-positive`, `.text-negative`: Money colors
+- `.card`: Themed card component with background, border, shadow
+- `.progress-bar`: Themed progress bar background
+
+### Implementation
+- Theme stored in localStorage, applied via `data-theme` attribute on `<html>`
+- Theme switcher in navigation header
+- Components use theme-aware classes instead of hardcoded Tailwind colors
 
 ## API Proxy Configuration
 
