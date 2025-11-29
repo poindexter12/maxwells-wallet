@@ -20,6 +20,7 @@
   --color-bg: #FAF9F6;
   --color-bg-elevated: #FFFFFF;
   --color-bg-hover: #F5F4F0;
+  --color-bg-subtle: rgba(0, 0, 0, 0.04);
   --color-text: #1a1a2e;
   --color-text-muted: #5a5a6e;
   --color-border: #e5e4e0;
@@ -71,6 +72,7 @@
   --color-bg: #121212;
   --color-bg-elevated: #1e1e1e;
   --color-bg-hover: #2a2a2a;
+  --color-bg-subtle: rgba(255, 255, 255, 0.05);
   --color-text: #ffffff;
   --color-text-muted: #b0b0b0;
   --color-border: #333333;
@@ -117,6 +119,7 @@
   --color-bg: #000000;
   --color-bg-elevated: #0d0d0d;
   --color-bg-hover: #1a1a1a;
+  --color-bg-subtle: rgba(255, 0, 255, 0.08);
   --color-text: #ffffff;
   --color-text-muted: #c0c0c0;
   --color-border: #ff00ff40;
@@ -166,6 +169,7 @@
   --color-bg: #fefcf3;
   --color-bg-elevated: #ffffff;
   --color-bg-hover: #faf7ed;
+  --color-bg-subtle: rgba(0, 0, 0, 0.03);
   --color-text: #2d2d2d;
   --color-text-muted: #6b6b6b;
   --color-border: #e8e4d9;
@@ -526,6 +530,10 @@
 
 @utility bg-theme-elevated {
   background-color: var(--color-bg-elevated);
+}
+
+@utility bg-theme-subtle {
+  background-color: var(--color-bg-subtle);
 }
 
 @utility text-theme {

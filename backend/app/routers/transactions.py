@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func
 from typing import List, Optional, Annotated
 from datetime import date, datetime
 
@@ -19,13 +20,12 @@ class AddTagRequest(BaseModel):
 
 router = APIRouter(prefix="/api/v1/transactions", tags=["transactions"])
 
-@router.get("/", response_model=List[Transaction])
-async def list_transactions(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=500),
+
+def build_transaction_filter_query(
+    base_query,
+    account: Optional[List[str]] = None,
+    account_exclude: Optional[List[str]] = None,
     account_source: Optional[str] = None,
-    account: Optional[List[str]] = Query(None, description="Filter by account tag values (can specify multiple, OR logic)"),
-    account_exclude: Optional[List[str]] = Query(None, description="Exclude account tag values (can specify multiple)"),
     category: Optional[str] = None,
     reconciliation_status: Optional[ReconciliationStatus] = None,
     start_date: Optional[date] = None,
@@ -33,23 +33,14 @@ async def list_transactions(
     search: Optional[str] = None,
     amount_min: Optional[float] = None,
     amount_max: Optional[float] = None,
-    tag: Optional[List[str]] = Query(None, description="Filter by tags in namespace:value format (can specify multiple)"),
-    tag_exclude: Optional[List[str]] = Query(None, description="Exclude tags in namespace:value format (can specify multiple)"),
-    session: AsyncSession = Depends(get_session)
+    tag: Optional[List[str]] = None,
+    tag_exclude: Optional[List[str]] = None,
 ):
-    """List transactions with filtering and pagination
-
-    Supports:
-    - account: Include transactions from specific accounts (OR logic)
-    - account_exclude: Exclude transactions from specific accounts
-    - tag: Include transactions with specific tags (AND logic)
-    - tag_exclude: Exclude transactions with specific tags
-    """
-    query = select(Transaction)
+    """Build query with filters - shared between list and count endpoints"""
+    query = base_query
 
     # Account filtering via account_tag_id FK (preferred method)
     if account:
-        # Get tag IDs for the specified account values
         account_tag_subquery = (
             select(Tag.id)
             .where(and_(Tag.namespace == "account", Tag.value.in_(account)))
@@ -57,7 +48,6 @@ async def list_transactions(
         query = query.where(Transaction.account_tag_id.in_(account_tag_subquery))
 
     if account_exclude:
-        # Exclude transactions with these account tags
         exclude_tag_subquery = (
             select(Tag.id)
             .where(and_(Tag.namespace == "account", Tag.value.in_(account_exclude)))
@@ -95,7 +85,6 @@ async def list_transactions(
             parts = tag_str.split(':', 1)
             if len(parts) == 2:
                 namespace, value = parts
-                # Subquery to find transaction IDs with this tag
                 tag_subquery = (
                     select(TransactionTag.transaction_id)
                     .join(Tag, TransactionTag.tag_id == Tag.id)
@@ -109,13 +98,96 @@ async def list_transactions(
             parts = tag_str.split(':', 1)
             if len(parts) == 2:
                 namespace, value = parts
-                # Subquery to find transaction IDs with this tag
                 exclude_subquery = (
                     select(TransactionTag.transaction_id)
                     .join(Tag, TransactionTag.tag_id == Tag.id)
                     .where(and_(Tag.namespace == namespace, Tag.value == value))
                 )
                 query = query.where(Transaction.id.notin_(exclude_subquery))
+
+    return query
+
+@router.get("/count")
+async def count_transactions(
+    account_source: Optional[str] = None,
+    account: Optional[List[str]] = Query(None, description="Filter by account tag values (can specify multiple, OR logic)"),
+    account_exclude: Optional[List[str]] = Query(None, description="Exclude account tag values (can specify multiple)"),
+    category: Optional[str] = None,
+    reconciliation_status: Optional[ReconciliationStatus] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    search: Optional[str] = None,
+    amount_min: Optional[float] = None,
+    amount_max: Optional[float] = None,
+    tag: Optional[List[str]] = Query(None, description="Filter by tags in namespace:value format (can specify multiple)"),
+    tag_exclude: Optional[List[str]] = Query(None, description="Exclude tags in namespace:value format (can specify multiple)"),
+    session: AsyncSession = Depends(get_session)
+):
+    """Get total count of transactions matching filters"""
+    base_query = select(func.count(Transaction.id))
+    query = build_transaction_filter_query(
+        base_query,
+        account=account,
+        account_exclude=account_exclude,
+        account_source=account_source,
+        category=category,
+        reconciliation_status=reconciliation_status,
+        start_date=start_date,
+        end_date=end_date,
+        search=search,
+        amount_min=amount_min,
+        amount_max=amount_max,
+        tag=tag,
+        tag_exclude=tag_exclude,
+    )
+
+    result = await session.execute(query)
+    count = result.scalar()
+    return {"count": count}
+
+
+@router.get("/", response_model=List[Transaction])
+async def list_transactions(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    account_source: Optional[str] = None,
+    account: Optional[List[str]] = Query(None, description="Filter by account tag values (can specify multiple, OR logic)"),
+    account_exclude: Optional[List[str]] = Query(None, description="Exclude account tag values (can specify multiple)"),
+    category: Optional[str] = None,
+    reconciliation_status: Optional[ReconciliationStatus] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    search: Optional[str] = None,
+    amount_min: Optional[float] = None,
+    amount_max: Optional[float] = None,
+    tag: Optional[List[str]] = Query(None, description="Filter by tags in namespace:value format (can specify multiple)"),
+    tag_exclude: Optional[List[str]] = Query(None, description="Exclude tags in namespace:value format (can specify multiple)"),
+    session: AsyncSession = Depends(get_session)
+):
+    """List transactions with filtering and pagination
+
+    Supports:
+    - account: Include transactions from specific accounts (OR logic)
+    - account_exclude: Exclude transactions from specific accounts
+    - tag: Include transactions with specific tags (AND logic)
+    - tag_exclude: Exclude transactions with specific tags
+    """
+    base_query = select(Transaction)
+    query = build_transaction_filter_query(
+        base_query,
+        account=account,
+        account_exclude=account_exclude,
+        account_source=account_source,
+        category=category,
+        reconciliation_status=reconciliation_status,
+        start_date=start_date,
+        end_date=end_date,
+        search=search,
+        amount_min=amount_min,
+        amount_max=amount_max,
+        tag=tag,
+        tag_exclude=tag_exclude,
+    )
 
     query = query.order_by(Transaction.date.desc()).offset(skip).limit(limit)
 
