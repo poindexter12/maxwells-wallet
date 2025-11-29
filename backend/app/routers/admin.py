@@ -129,18 +129,19 @@ async def purge_all_transactions(
     for txn in transactions:
         await session.delete(txn)
 
-    # Mark all import sessions as rolled back
+    # Count and delete all import sessions
     sessions_result = await session.execute(select(ImportSession))
     import_sessions = sessions_result.scalars().all()
+    session_count = len(import_sessions)
     for imp_session in import_sessions:
-        imp_session.status = "rolled_back"
-        imp_session.updated_at = datetime.utcnow()
+        await session.delete(imp_session)
 
     await session.commit()
 
     return {
         "deleted_transactions": total_count,
-        "message": "All transactions have been purged"
+        "deleted_sessions": session_count,
+        "message": "All transactions and import sessions have been purged"
     }
 
 

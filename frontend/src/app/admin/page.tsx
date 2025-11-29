@@ -45,10 +45,11 @@ interface TagWithUsage extends Tag {
   usage_count?: number
 }
 
-type AdminTab = 'overview' | 'imports' | 'all-tags' | 'accounts' | 'occasions' | 'expense-types'
+type AdminTab = 'overview' | 'imports' | 'all-tags' | 'buckets' | 'accounts' | 'occasions' | 'expense-types'
 
 const TAG_TABS: { id: AdminTab; namespace: string | null; label: string; description: string; showNamespace: boolean }[] = [
   { id: 'all-tags', namespace: null, label: 'All Tags', description: 'View all tags across all namespaces', showNamespace: true },
+  { id: 'buckets', namespace: 'bucket', label: 'Buckets', description: 'Spending categories like groceries, dining, entertainment', showNamespace: false },
   { id: 'accounts', namespace: 'account', label: 'Accounts', description: 'Bank accounts and credit cards with display names', showNamespace: false },
   { id: 'occasions', namespace: 'occasion', label: 'Occasions', description: 'Special events like vacation, holidays, birthdays', showNamespace: false },
   { id: 'expense-types', namespace: 'expense', label: 'Expense Types', description: 'Recurring, one-time, refund classifications', showNamespace: false },
