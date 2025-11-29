@@ -139,6 +139,8 @@ Namespaced tags for flexible transaction classification. Tags use a `namespace:v
 
 Each transaction can have multiple tags, but only one tag per namespace (bucket tags are mutually exclusive).
 
+Tag values can be renamed via the PATCH endpoint; the namespace is immutable after creation. Value uniqueness is enforced within each namespace.
+
 ### TransactionTag
 Junction table linking transactions to tags (many-to-many relationship).
 
