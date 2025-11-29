@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, useRef, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
 import Link from 'next/link'
@@ -33,6 +33,8 @@ interface Transaction {
   bucket?: string  // Convenience field we'll compute
 }
 
+const PAGE_SIZE = 50
+
 // Bucket color mapping for left border
 const BUCKET_COLORS: Record<string, string> = {
   'groceries': 'border-l-green-500',
@@ -63,11 +65,14 @@ function TransactionsContent() {
   const searchParams = useSearchParams()
 
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [totalCount, setTotalCount] = useState<number>(0)
   const [bucketTags, setBucketTags] = useState<Tag[]>([])
   const [allTags, setAllTags] = useState<Tag[]>([])
   const [accountTags, setAccountTags] = useState<Tag[]>([])
   const [occasionTags, setOccasionTags] = useState<Tag[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
   const [filtersInitialized, setFiltersInitialized] = useState(false)
   const [filters, setFilters] = useState({
     search: '',
@@ -98,6 +103,10 @@ function TransactionsContent() {
   // Inline notes editing
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null)
   const [noteValue, setNoteValue] = useState('')
+
+  // Infinite scroll refs
+  const observerRef = useRef<IntersectionObserver | null>(null)
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
   // Initialize filters from URL params on mount
   useEffect(() => {
@@ -200,50 +209,131 @@ function TransactionsContent() {
     return accountTag?.description || accountSource
   }
 
-  async function fetchTransactions() {
-    try {
-      const params = new URLSearchParams()
-      if (filters.search) params.append('search', filters.search)
-      if (filters.bucket) params.append('tag', `bucket:${filters.bucket}`)
-      if (filters.occasion) params.append('tag', `occasion:${filters.occasion}`)
-      // Use new account filtering via tag FK
-      filters.accounts.forEach(acc => params.append('account', acc))
-      filters.accountsExclude.forEach(acc => params.append('account_exclude', acc))
-      if (filters.status) params.append('reconciliation_status', filters.status)
-      if (filters.amountMin) params.append('amount_min', filters.amountMin)
-      if (filters.amountMax) params.append('amount_max', filters.amountMax)
-      if (filters.startDate) params.append('start_date', filters.startDate)
-      if (filters.endDate) params.append('end_date', filters.endDate)
+  // Build URL params from filters
+  function buildFilterParams(): URLSearchParams {
+    const params = new URLSearchParams()
+    if (filters.search) params.append('search', filters.search)
+    if (filters.bucket) params.append('tag', `bucket:${filters.bucket}`)
+    if (filters.occasion) params.append('tag', `occasion:${filters.occasion}`)
+    filters.accounts.forEach(acc => params.append('account', acc))
+    filters.accountsExclude.forEach(acc => params.append('account_exclude', acc))
+    if (filters.status) params.append('reconciliation_status', filters.status)
+    if (filters.amountMin) params.append('amount_min', filters.amountMin)
+    if (filters.amountMax) params.append('amount_max', filters.amountMax)
+    if (filters.startDate) params.append('start_date', filters.startDate)
+    if (filters.endDate) params.append('end_date', filters.endDate)
+    return params
+  }
 
-      const res = await fetch(`/api/v1/transactions?${params.toString()}&limit=100`)
+  // Fetch total count
+  async function fetchTotalCount() {
+    try {
+      const params = buildFilterParams()
+      const res = await fetch(`/api/v1/transactions/count?${params.toString()}`)
+      const data = await res.json()
+      setTotalCount(data.count)
+    } catch (error) {
+      console.error('Error fetching count:', error)
+    }
+  }
+
+  // Fetch transactions with tags
+  async function fetchTransactionsWithTags(txns: Transaction[]): Promise<Transaction[]> {
+    return await Promise.all(
+      txns.map(async (txn: Transaction) => {
+        try {
+          const tagsRes = await fetch(`/api/v1/transactions/${txn.id}/tags`)
+          const tagsData = await tagsRes.json()
+          const tags = tagsData.tags || []
+          const bucketTag = tags.find((t: TransactionTag) => t.namespace === 'bucket')
+          return {
+            ...txn,
+            tags,
+            bucket: bucketTag?.value || null
+          }
+        } catch {
+          return { ...txn, tags: [], bucket: null }
+        }
+      })
+    )
+  }
+
+  // Initial fetch (resets list)
+  async function fetchTransactions() {
+    setLoading(true)
+    try {
+      const params = buildFilterParams()
+      params.append('limit', PAGE_SIZE.toString())
+      params.append('skip', '0')
+
+      const res = await fetch(`/api/v1/transactions?${params.toString()}`)
       const data = await res.json()
 
-      // Fetch tags for each transaction
-      const transactionsWithTags = await Promise.all(
-        data.map(async (txn: Transaction) => {
-          try {
-            const tagsRes = await fetch(`/api/v1/transactions/${txn.id}/tags`)
-            const tagsData = await tagsRes.json()
-            const tags = tagsData.tags || []
-            const bucketTag = tags.find((t: TransactionTag) => t.namespace === 'bucket')
-            return {
-              ...txn,
-              tags,
-              bucket: bucketTag?.value || null
-            }
-          } catch {
-            return { ...txn, tags: [], bucket: null }
-          }
-        })
-      )
+      const transactionsWithTags = await fetchTransactionsWithTags(data)
 
       setTransactions(transactionsWithTags)
+      setHasMore(data.length === PAGE_SIZE)
       setLoading(false)
+
+      // Also fetch total count
+      fetchTotalCount()
     } catch (error) {
       console.error('Error fetching transactions:', error)
       setLoading(false)
     }
   }
+
+  // Load more transactions (append to list)
+  const loadMoreTransactions = useCallback(async () => {
+    if (loadingMore || !hasMore) return
+
+    setLoadingMore(true)
+    try {
+      const params = buildFilterParams()
+      params.append('limit', PAGE_SIZE.toString())
+      params.append('skip', transactions.length.toString())
+
+      const res = await fetch(`/api/v1/transactions?${params.toString()}`)
+      const data = await res.json()
+
+      if (data.length > 0) {
+        const transactionsWithTags = await fetchTransactionsWithTags(data)
+        setTransactions(prev => [...prev, ...transactionsWithTags])
+      }
+
+      setHasMore(data.length === PAGE_SIZE)
+    } catch (error) {
+      console.error('Error loading more transactions:', error)
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [loadingMore, hasMore, transactions.length, filters])
+
+  // Set up intersection observer for infinite scroll
+  useEffect(() => {
+    if (observerRef.current) {
+      observerRef.current.disconnect()
+    }
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          loadMoreTransactions()
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    if (loadMoreRef.current) {
+      observerRef.current.observe(loadMoreRef.current)
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect()
+      }
+    }
+  }, [hasMore, loadingMore, loading, loadMoreTransactions])
 
   async function handleBucketChange(txnId: number, newBucket: string) {
     try {
@@ -395,29 +485,36 @@ function TransactionsContent() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Transactions</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-theme">Transactions</h1>
+          {totalCount > 0 && (
+            <p className="text-sm text-theme-muted mt-1">
+              Showing {transactions.length.toLocaleString()} of {totalCount.toLocaleString()} transactions
+            </p>
+          )}
+        </div>
         <Link
           href="/import"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          className="btn-primary"
         >
           Import CSV
         </Link>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4 space-y-4">
+      <div className="card p-4 space-y-4">
         {/* Primary filters row */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <input
             type="text"
             placeholder="Search merchant or description..."
-            className="px-4 py-2 border rounded-md"
+            className="input"
             value={filters.search}
             onChange={(e) => setFilters({ ...filters, search: e.target.value })}
             onKeyDown={(e) => e.key === 'Enter' && fetchTransactions()}
           />
           <select
-            className="px-4 py-2 border rounded-md"
+            className="input"
             value={filters.bucket}
             onChange={(e) => setFilters({ ...filters, bucket: e.target.value })}
           >
@@ -429,7 +526,7 @@ function TransactionsContent() {
             ))}
           </select>
           <select
-            className="px-4 py-2 border rounded-md"
+            className="input"
             value={filters.occasion}
             onChange={(e) => setFilters({ ...filters, occasion: e.target.value })}
           >
@@ -444,9 +541,9 @@ function TransactionsContent() {
             <button
               type="button"
               onClick={() => setShowAccountDropdown(!showAccountDropdown)}
-              className="w-full px-4 py-2 border rounded-md text-left flex justify-between items-center bg-white"
+              className="w-full px-4 py-2 border border-theme rounded-md text-left flex justify-between items-center bg-theme-elevated"
             >
-              <span className={filters.accounts.length > 0 || filters.accountsExclude.length > 0 ? 'text-gray-900' : 'text-gray-500'}>
+              <span className={filters.accounts.length > 0 || filters.accountsExclude.length > 0 ? 'text-theme' : 'text-theme-muted'}>
                 {filters.accounts.length > 0
                   ? `${filters.accounts.length} selected`
                   : filters.accountsExclude.length > 0
@@ -458,8 +555,8 @@ function TransactionsContent() {
               </svg>
             </button>
             {showAccountDropdown && (
-              <div className="absolute z-20 mt-1 w-72 bg-white border rounded-md shadow-lg max-h-64 overflow-y-auto">
-                <div className="p-2 border-b text-xs text-gray-500">
+              <div className="absolute z-20 mt-1 w-72 bg-theme-elevated border border-theme rounded-md shadow-lg max-h-64 overflow-y-auto">
+                <div className="p-2 border-b border-theme text-xs text-theme-muted">
                   Click to include, Shift+Click to exclude
                 </div>
                 {accountTags.map((tag) => {
@@ -500,15 +597,15 @@ function TransactionsContent() {
                         }
                       }}
                       className={`px-3 py-2 cursor-pointer flex items-center gap-2 text-sm ${
-                        isIncluded ? 'bg-blue-50 text-blue-800' :
-                        isExcluded ? 'bg-red-50 text-red-800' :
-                        'hover:bg-gray-50'
+                        isIncluded ? 'bg-[var(--color-accent)]/10 text-[var(--color-accent)]' :
+                        isExcluded ? 'bg-negative text-negative' :
+                        'hover:bg-[var(--color-bg-hover)]'
                       }`}
                     >
                       <span className={`w-4 h-4 border rounded flex items-center justify-center text-xs ${
-                        isIncluded ? 'bg-blue-500 border-blue-500 text-white' :
-                        isExcluded ? 'bg-red-500 border-red-500 text-white' :
-                        'border-gray-300'
+                        isIncluded ? 'bg-[var(--color-accent)] border-[var(--color-accent)] text-white' :
+                        isExcluded ? 'bg-[var(--color-negative)] border-[var(--color-negative)] text-white' :
+                        'border-theme'
                       }`}>
                         {isIncluded && '✓'}
                         {isExcluded && '−'}
@@ -518,10 +615,10 @@ function TransactionsContent() {
                   )
                 })}
                 {(filters.accounts.length > 0 || filters.accountsExclude.length > 0) && (
-                  <div className="p-2 border-t">
+                  <div className="p-2 border-t border-theme">
                     <button
                       onClick={() => setFilters({ ...filters, accounts: [], accountsExclude: [] })}
-                      className="text-xs text-gray-500 hover:text-gray-700"
+                      className="text-xs text-theme-muted hover:text-theme"
                     >
                       Clear selection
                     </button>
@@ -533,13 +630,13 @@ function TransactionsContent() {
           <div className="flex gap-2">
             <button
               onClick={fetchTransactions}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="flex-1 btn-primary"
             >
               Search
             </button>
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className={`px-3 py-2 border rounded-md ${showAdvancedFilters ? 'bg-gray-100' : ''}`}
+              className={`px-3 py-2 border border-theme rounded-md ${showAdvancedFilters ? 'bg-[var(--color-bg-hover)]' : ''}`}
               title="Advanced filters"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -551,10 +648,10 @@ function TransactionsContent() {
 
         {/* Advanced filters (collapsible) */}
         {showAdvancedFilters && (
-          <div className="pt-4 border-t">
+          <div className="pt-4 border-t border-theme">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <select
-                className="px-4 py-2 border rounded-md"
+                className="input"
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
               >
@@ -568,29 +665,29 @@ function TransactionsContent() {
                 <input
                   type="number"
                   placeholder="Min $"
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="input w-full"
                   value={filters.amountMin}
                   onChange={(e) => setFilters({ ...filters, amountMin: e.target.value })}
                 />
-                <span className="text-gray-400">–</span>
+                <span className="text-theme-muted">–</span>
                 <input
                   type="number"
                   placeholder="Max $"
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="input w-full"
                   value={filters.amountMax}
                   onChange={(e) => setFilters({ ...filters, amountMax: e.target.value })}
                 />
               </div>
               <input
                 type="date"
-                className="px-4 py-2 border rounded-md"
+                className="input"
                 value={filters.startDate}
                 onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
                 title="Start date"
               />
               <input
                 type="date"
-                className="px-4 py-2 border rounded-md"
+                className="input"
                 value={filters.endDate}
                 onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
                 title="End date"
@@ -611,7 +708,7 @@ function TransactionsContent() {
                   })
                   setShowAccountDropdown(false)
                 }}
-                className="px-4 py-2 text-gray-600 border rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-theme-muted border border-theme rounded-md hover:bg-[var(--color-bg-hover)]"
               >
                 Clear All
               </button>
@@ -671,8 +768,8 @@ function TransactionsContent() {
       {/* Bulk Actions Bar - Sticky when items selected */}
       <div className={`rounded-lg shadow p-4 transition-all duration-200 ${
         selectedIds.size > 0
-          ? 'bg-blue-50 border-2 border-blue-200 sticky top-0 z-10'
-          : 'bg-white'
+          ? 'bg-[var(--color-accent)]/10 border-2 border-[var(--color-accent)]/30 sticky top-0 z-10'
+          : 'card'
       }`}>
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
@@ -687,26 +784,26 @@ function TransactionsContent() {
               onChange={toggleSelectAll}
               className="w-4 h-4 rounded"
             />
-            <span className={`text-sm font-medium ${selectedIds.size > 0 ? 'text-blue-700' : 'text-gray-600'}`}>
+            <span className={`text-sm font-medium ${selectedIds.size > 0 ? 'text-[var(--color-accent)]' : 'text-theme-muted'}`}>
               {selectedIds.size > 0
-                ? `${selectedIds.size} of ${transactions.length} selected`
-                : `Select all (${transactions.length})`}
+                ? `${selectedIds.size} of ${totalCount.toLocaleString()} selected`
+                : `Select all (${transactions.length} loaded)`}
             </span>
           </div>
 
           {selectedIds.size > 0 && (
             <>
-              <div className="h-6 w-px bg-blue-200" />
+              <div className="h-6 w-px bg-[var(--color-accent)]/30" />
 
               <div className="flex items-center gap-2">
-                <span className="text-sm text-blue-600">Assign:</span>
+                <span className="text-sm text-[var(--color-accent)]">Assign:</span>
                 <select
                   value={bulkAction}
                   onChange={(e) => {
                     setBulkAction(e.target.value)
                     setBulkValue('')
                   }}
-                  className="px-3 py-1.5 border border-blue-200 rounded-md text-sm bg-white focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-1.5 border border-[var(--color-accent)]/30 rounded-md text-sm bg-theme-elevated focus:ring-2 focus:ring-[var(--color-accent)]"
                 >
                   <option value="">Choose type...</option>
                   <option value="bucket">Bucket</option>
@@ -718,7 +815,7 @@ function TransactionsContent() {
                   <select
                     value={bulkValue}
                     onChange={(e) => setBulkValue(e.target.value)}
-                    className="px-3 py-1.5 border border-blue-200 rounded-md text-sm bg-white focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-1.5 border border-[var(--color-accent)]/30 rounded-md text-sm bg-theme-elevated focus:ring-2 focus:ring-[var(--color-accent)]"
                   >
                     <option value="">Select bucket...</option>
                     {bucketTags.map((tag) => (
@@ -733,7 +830,7 @@ function TransactionsContent() {
                   <select
                     value={bulkValue}
                     onChange={(e) => setBulkValue(e.target.value)}
-                    className="px-3 py-1.5 border border-blue-200 rounded-md text-sm bg-white focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-1.5 border border-[var(--color-accent)]/30 rounded-md text-sm bg-theme-elevated focus:ring-2 focus:ring-[var(--color-accent)]"
                   >
                     <option value="">Select occasion...</option>
                     {occasionTags.map((tag) => (
@@ -748,7 +845,7 @@ function TransactionsContent() {
                   <select
                     value={bulkValue}
                     onChange={(e) => setBulkValue(e.target.value)}
-                    className="px-3 py-1.5 border border-blue-200 rounded-md text-sm bg-white focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-1.5 border border-[var(--color-accent)]/30 rounded-md text-sm bg-theme-elevated focus:ring-2 focus:ring-[var(--color-accent)]"
                   >
                     <option value="">Select account...</option>
                     {accountTags.map((tag) => (
@@ -764,7 +861,7 @@ function TransactionsContent() {
                 <button
                   onClick={handleBulkApply}
                   disabled={bulkLoading}
-                  className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  className="btn-primary text-sm disabled:opacity-50"
                 >
                   {bulkLoading ? (
                     <span className="flex items-center gap-2">
@@ -786,7 +883,7 @@ function TransactionsContent() {
                   setBulkAction('')
                   setBulkValue('')
                 }}
-                className="ml-auto text-sm text-blue-600 hover:text-blue-800 font-medium"
+                className="ml-auto text-sm text-[var(--color-accent)] hover:opacity-80 font-medium"
               >
                 Clear selection
               </button>
@@ -796,9 +893,9 @@ function TransactionsContent() {
       </div>
 
       {/* Transactions List */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="card">
         {transactions.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-theme-muted">
             No transactions found
           </div>
         ) : (
@@ -807,11 +904,11 @@ function TransactionsContent() {
               key={txn.id}
               className={`
                 border-l-4 ${getBucketBorderColor(txn.bucket)}
-                border-b border-gray-100
+                border-b border-theme
                 transition-all duration-150 ease-in-out
                 ${selectedIds.has(txn.id)
-                  ? 'bg-blue-50 shadow-sm'
-                  : 'hover:bg-gray-50'
+                  ? 'bg-[var(--color-accent)]/10 shadow-sm'
+                  : 'hover:bg-[var(--color-bg-hover)]'
                 }
               `}
             >
@@ -827,15 +924,15 @@ function TransactionsContent() {
                       className="w-4 h-4 mt-1 rounded transition-colors"
                     />
 
-                    <div className="w-24 text-sm text-gray-500 pt-0.5">
+                    <div className="w-24 text-sm text-theme-muted pt-0.5">
                       {format(new Date(txn.date), 'MM/dd/yyyy')}
                     </div>
 
                     <div className="flex flex-col flex-1 min-w-0">
-                      <span className="font-medium text-gray-900 truncate">
+                      <span className="font-medium text-theme truncate">
                         {txn.merchant || 'Unknown'}
                       </span>
-                      <span className="text-sm text-gray-500 truncate">
+                      <span className="text-sm text-theme-muted truncate">
                         {txn.description}
                       </span>
                     </div>
@@ -843,12 +940,12 @@ function TransactionsContent() {
 
                   {/* RIGHT SIDE: amount + expand button */}
                   <div className="flex items-center gap-2">
-                    <span className={`font-semibold text-lg ${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`font-semibold text-lg ${txn.amount >= 0 ? 'text-positive' : 'text-negative'}`}>
                       {formatCurrency(txn.amount, true)}
                     </span>
                     <button
                       onClick={() => toggleExpand(txn.id)}
-                      className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="p-1 text-theme-muted hover:text-theme transition-colors"
                       title={expandedIds.has(txn.id) ? 'Collapse details' : 'Expand details'}
                     >
                       <svg
@@ -1029,6 +1126,24 @@ function TransactionsContent() {
             </div>
           ))
         )}
+
+        {/* Infinite scroll trigger */}
+        <div ref={loadMoreRef} className="py-4">
+          {loadingMore && (
+            <div className="flex items-center justify-center gap-2 text-theme-muted">
+              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Loading more...
+            </div>
+          )}
+          {!hasMore && transactions.length > 0 && (
+            <div className="text-center text-theme-muted text-sm">
+              All {totalCount.toLocaleString()} transactions loaded
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
