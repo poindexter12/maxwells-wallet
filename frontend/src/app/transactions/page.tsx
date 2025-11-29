@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
+import Link from 'next/link'
 import { formatCurrency } from '@/lib/format'
 
 interface Tag {
@@ -35,6 +36,7 @@ export default function Transactions() {
   const [bucketTags, setBucketTags] = useState<Tag[]>([])
   const [allTags, setAllTags] = useState<Tag[]>([])
   const [accountTags, setAccountTags] = useState<Tag[]>([])
+  const [occasionTags, setOccasionTags] = useState<Tag[]>([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState({
     search: '',
@@ -45,12 +47,29 @@ export default function Transactions() {
   const [addingTagTo, setAddingTagTo] = useState<number | null>(null)
   const [newTagValue, setNewTagValue] = useState('')
 
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [bulkAction, setBulkAction] = useState('')
+  const [bulkValue, setBulkValue] = useState('')
+  const [bulkLoading, setBulkLoading] = useState(false)
+
   useEffect(() => {
     fetchBucketTags()
     fetchAllTags()
     fetchAccountTags()
+    fetchOccasionTags()
     fetchTransactions()
   }, [])
+
+  async function fetchOccasionTags() {
+    try {
+      const res = await fetch('/api/v1/tags?namespace=occasion')
+      const data = await res.json()
+      setOccasionTags(data)
+    } catch (error) {
+      console.error('Error fetching occasion tags:', error)
+    }
+  }
 
   async function fetchBucketTags() {
     try {
@@ -186,6 +205,50 @@ export default function Transactions() {
     )
   }
 
+  // Bulk selection helpers
+  function toggleSelect(id: number) {
+    const newSet = new Set(selectedIds)
+    if (newSet.has(id)) {
+      newSet.delete(id)
+    } else {
+      newSet.add(id)
+    }
+    setSelectedIds(newSet)
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === transactions.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(transactions.map(t => t.id)))
+    }
+  }
+
+  async function handleBulkApply() {
+    if (!bulkAction || !bulkValue || selectedIds.size === 0) return
+
+    setBulkLoading(true)
+    try {
+      const promises = Array.from(selectedIds).map(async (txnId) => {
+        await fetch(`/api/v1/transactions/${txnId}/tags`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tag: bulkValue })
+        })
+      })
+
+      await Promise.all(promises)
+      setSelectedIds(new Set())
+      setBulkAction('')
+      setBulkValue('')
+      fetchTransactions()
+    } catch (error) {
+      console.error('Error applying bulk action:', error)
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
   if (loading) {
     return <div className="text-center py-12">Loading...</div>
   }
@@ -194,6 +257,12 @@ export default function Transactions() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Transactions</h1>
+        <Link
+          href="/import"
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          Import CSV
+        </Link>
       </div>
 
       {/* Filters */}
@@ -245,6 +314,92 @@ export default function Transactions() {
         </div>
       </div>
 
+      {/* Bulk Actions Bar */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={selectedIds.size === transactions.length && transactions.length > 0}
+              onChange={toggleSelectAll}
+              className="w-4 h-4"
+            />
+            <span className="text-sm text-gray-600">
+              {selectedIds.size > 0 ? `${selectedIds.size} selected` : 'Select all'}
+            </span>
+          </div>
+
+          {selectedIds.size > 0 && (
+            <>
+              <span className="text-gray-300">|</span>
+              <select
+                value={bulkAction}
+                onChange={(e) => {
+                  setBulkAction(e.target.value)
+                  setBulkValue('')
+                }}
+                className="px-3 py-1.5 border rounded-md text-sm"
+              >
+                <option value="">Assign to...</option>
+                <option value="bucket">Bucket</option>
+                <option value="occasion">Occasion</option>
+              </select>
+
+              {bulkAction === 'bucket' && (
+                <select
+                  value={bulkValue}
+                  onChange={(e) => setBulkValue(e.target.value)}
+                  className="px-3 py-1.5 border rounded-md text-sm"
+                >
+                  <option value="">Select bucket...</option>
+                  {bucketTags.map((tag) => (
+                    <option key={tag.id} value={`bucket:${tag.value}`}>
+                      {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {bulkAction === 'occasion' && (
+                <select
+                  value={bulkValue}
+                  onChange={(e) => setBulkValue(e.target.value)}
+                  className="px-3 py-1.5 border rounded-md text-sm"
+                >
+                  <option value="">Select occasion...</option>
+                  {occasionTags.map((tag) => (
+                    <option key={tag.id} value={`occasion:${tag.value}`}>
+                      {tag.value.charAt(0).toUpperCase() + tag.value.slice(1).replace(/-/g, ' ')}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {bulkValue && (
+                <button
+                  onClick={handleBulkApply}
+                  disabled={bulkLoading}
+                  className="px-4 py-1.5 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 disabled:opacity-50"
+                >
+                  {bulkLoading ? 'Applying...' : `Apply to ${selectedIds.size}`}
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  setSelectedIds(new Set())
+                  setBulkAction('')
+                  setBulkValue('')
+                }}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                Clear
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Transactions List */}
       <div className="bg-white rounded-lg shadow divide-y divide-gray-200">
         {transactions.length === 0 ? (
@@ -253,26 +408,43 @@ export default function Transactions() {
           </div>
         ) : (
           transactions.map((txn) => (
-            <div key={txn.id} className="p-4 hover:bg-gray-50">
-              {/* Line 1: Date, Merchant, Amount */}
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-500 whitespace-nowrap w-24">
-                  {format(new Date(txn.date), 'MM/dd/yyyy')}
-                </span>
-                <span className="font-medium text-gray-900 truncate flex-1">
-                  {txn.merchant || 'Unknown'}
-                </span>
-                <span className={`font-semibold text-lg whitespace-nowrap ${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(txn.amount, true)}
-                </span>
+            <div key={txn.id} className={`p-4 hover:bg-gray-50 border-b ${selectedIds.has(txn.id) ? 'bg-blue-50' : ''}`}>
+              <div className="flex items-start justify-between gap-4">
+
+                {/* LEFT SIDE: checkbox + date + merchant */}
+                <div className="flex items-start gap-3 flex-1">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(txn.id)}
+                    onChange={() => toggleSelect(txn.id)}
+                    className="w-4 h-4 mt-1"
+                  />
+
+                  <div className="w-24 text-sm text-gray-500 pt-0.5">
+                    {format(new Date(txn.date), 'MM/dd/yyyy')}
+                  </div>
+
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <span className="font-medium text-gray-900 truncate">
+                      {txn.merchant || 'Unknown'}
+                    </span>
+                    <span className="text-sm text-gray-500 truncate">
+                      {txn.description}
+                    </span>
+                  </div>
+                </div>
+
+                {/* RIGHT SIDE: amount */}
+                <div className="text-right">
+                  <span className={`font-semibold text-lg ${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(txn.amount, true)}
+                  </span>
+                </div>
+
               </div>
 
-              {/* Line 2: Description (indented to align with merchant), Bucket, Account, Tags */}
-              <div className="flex items-center gap-3 mt-1 flex-wrap pl-28">
-                <p className="text-sm text-gray-500 truncate max-w-md">
-                  {txn.description}
-                </p>
-                <span className="text-gray-300">|</span>
+              {/* FOOTER ROW */}
+              <div className="flex items-center gap-3 mt-2 pl-10 flex-wrap">
                 <select
                   value={txn.bucket || ''}
                   onChange={(e) => handleBucketChange(txn.id, e.target.value)}
@@ -285,6 +457,7 @@ export default function Transactions() {
                     </option>
                   ))}
                 </select>
+
                 <span className="text-xs text-gray-400">{getAccountDisplayName(txn.account_source)}</span>
 
                 {/* Non-bucket tags as chips */}
@@ -307,10 +480,15 @@ export default function Transactions() {
                 {addingTagTo === txn.id ? (
                   <div className="inline-flex items-center gap-1">
                     <select
-                      value={newTagValue}
-                      onChange={(e) => setNewTagValue(e.target.value)}
+                      value=""
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          handleAddTag(txn.id, e.target.value)
+                        }
+                      }}
                       className="text-xs border rounded px-1 py-0.5"
                       autoFocus
+                      onBlur={() => { setAddingTagTo(null); setNewTagValue('') }}
                     >
                       <option value="">Select tag...</option>
                       {getAvailableTagsForTransaction(txn).map((tag) => (
@@ -319,13 +497,6 @@ export default function Transactions() {
                         </option>
                       ))}
                     </select>
-                    <button
-                      onClick={() => handleAddTag(txn.id, newTagValue)}
-                      disabled={!newTagValue}
-                      className="text-xs text-green-600 hover:text-green-800 disabled:text-gray-300"
-                    >
-                      ✓
-                    </button>
                     <button
                       onClick={() => { setAddingTagTo(null); setNewTagValue('') }}
                       className="text-xs text-gray-500 hover:text-gray-700"
