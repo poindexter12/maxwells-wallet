@@ -270,21 +270,21 @@ export default function AdminPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Admin</h1>
-        <p className="mt-2 text-sm text-gray-600">
+        <h1 className="text-3xl font-bold text-theme">Admin</h1>
+        <p className="mt-2 text-sm text-theme-muted">
           Database management, imports, and tag configuration
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-theme">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('overview')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'overview'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
+                : 'border-transparent text-theme-muted hover:text-theme hover:border-[var(--color-border-strong)]'
             }`}
           >
             Overview
@@ -293,8 +293,8 @@ export default function AdminPage() {
             onClick={() => setActiveTab('imports')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'imports'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
+                : 'border-transparent text-theme-muted hover:text-theme hover:border-[var(--color-border-strong)]'
             }`}
           >
             Imports
@@ -305,8 +305,8 @@ export default function AdminPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
+                  : 'border-transparent text-theme-muted hover:text-theme hover:border-[var(--color-border-strong)]'
               }`}
             >
               {tab.label}
@@ -321,23 +321,23 @@ export default function AdminPage() {
           {/* Stats Overview */}
           {stats && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Total Transactions</p>
-                <p className="text-2xl font-bold">{stats.total_transactions.toLocaleString()}</p>
+              <div className="card p-4">
+                <p className="text-sm text-theme-muted">Total Transactions</p>
+                <p className="text-2xl font-bold text-theme">{stats.total_transactions.toLocaleString()}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Import Sessions</p>
-                <p className="text-2xl font-bold">{stats.total_import_sessions}</p>
+              <div className="card p-4">
+                <p className="text-sm text-theme-muted">Import Sessions</p>
+                <p className="text-2xl font-bold text-theme">{stats.total_import_sessions}</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Completed Imports</p>
-                <p className="text-2xl font-bold text-green-600">
+              <div className="card p-4">
+                <p className="text-sm text-theme-muted">Completed Imports</p>
+                <p className="text-2xl font-bold text-positive">
                   {stats.import_session_status.completed || 0}
                 </p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-sm text-gray-600">Rolled Back</p>
-                <p className="text-2xl font-bold text-red-600">
+              <div className="card p-4">
+                <p className="text-sm text-theme-muted">Rolled Back</p>
+                <p className="text-2xl font-bold text-negative">
                   {stats.import_session_status.rolled_back || 0}
                 </p>
               </div>
@@ -346,23 +346,23 @@ export default function AdminPage() {
 
           {/* Account Stats */}
           {stats && stats.account_stats.length > 0 && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Transactions by Account</h2>
+            <div className="card p-6">
+              <h2 className="text-lg font-semibold text-theme mb-4">Transactions by Account</h2>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="min-w-full divide-y divide-[var(--color-border)]">
                   <thead>
                     <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Account</th>
-                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Count</th>
-                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-theme-muted uppercase">Account</th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-theme-muted uppercase">Count</th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-theme-muted uppercase">Total</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-[var(--color-border)]">
                     {stats.account_stats.map((stat, idx) => (
                       <tr key={idx}>
-                        <td className="px-4 py-2 text-sm">{stat.account}</td>
-                        <td className="px-4 py-2 text-sm text-right">{stat.count.toLocaleString()}</td>
-                        <td className={`px-4 py-2 text-sm text-right font-medium ${stat.total >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <td className="px-4 py-2 text-sm text-theme">{stat.account}</td>
+                        <td className="px-4 py-2 text-sm text-right text-theme">{stat.count.toLocaleString()}</td>
+                        <td className={`px-4 py-2 text-sm text-right font-medium ${stat.total >= 0 ? 'text-positive' : 'text-negative'}`}>
                           {formatCurrency(stat.total)}
                         </td>
                       </tr>
@@ -374,9 +374,9 @@ export default function AdminPage() {
           )}
 
           {/* Danger Zone */}
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-red-800 mb-4">Danger Zone</h2>
-            <p className="text-sm text-red-700 mb-4">
+          <div className="bg-negative border border-[var(--color-negative)] rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-negative mb-4">Danger Zone</h2>
+            <p className="text-sm text-negative mb-4">
               These actions are destructive and cannot be undone. Use with extreme caution.
             </p>
             <button
@@ -384,8 +384,8 @@ export default function AdminPage() {
               disabled={actionInProgress}
               className={`px-4 py-2 rounded font-medium ${
                 confirmPurgeAll
-                  ? 'bg-red-600 text-white hover:bg-red-700'
-                  : 'bg-red-100 text-red-800 hover:bg-red-200'
+                  ? 'bg-[var(--color-negative)] text-white hover:opacity-90'
+                  : 'bg-negative text-negative hover:opacity-80'
               } disabled:opacity-50`}
             >
               {actionInProgress ? 'Processing...' : confirmPurgeAll ? 'Click again to confirm PURGE ALL' : 'Purge All Transactions'}
@@ -393,7 +393,7 @@ export default function AdminPage() {
             {confirmPurgeAll && (
               <button
                 onClick={() => setConfirmPurgeAll(false)}
-                className="ml-2 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                className="ml-2 px-4 py-2 bg-theme-elevated text-theme rounded hover:opacity-80 border border-theme"
               >
                 Cancel
               </button>
@@ -404,64 +404,64 @@ export default function AdminPage() {
 
       {/* Imports Tab */}
       {activeTab === 'imports' && (
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b">
-            <h2 className="text-lg font-semibold">Import Sessions</h2>
-            <p className="text-sm text-gray-600">
+        <div className="card">
+          <div className="px-6 py-4 border-b border-theme">
+            <h2 className="text-lg font-semibold text-theme">Import Sessions</h2>
+            <p className="text-sm text-theme-muted">
               History of all CSV imports. You can roll back individual imports by deleting their sessions.
             </p>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-[var(--color-border)]">
+              <thead className="table-header">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">File</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Format</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Account</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Imported</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Duplicates</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date Range</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">File</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">Format</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">Account</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-theme-muted uppercase">Imported</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-theme-muted uppercase">Duplicates</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">Date Range</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-theme-muted uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-[var(--color-border)]">
                 {sessions.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={9} className="px-4 py-8 text-center text-theme-muted">
                       No import sessions found
                     </td>
                   </tr>
                 ) : (
                   sessions.map((session) => (
-                    <tr key={session.id} className={session.status === 'rolled_back' ? 'bg-red-50' : ''}>
-                      <td className="px-4 py-3 text-sm">
+                    <tr key={session.id} className={session.status === 'rolled_back' ? 'bg-negative' : ''}>
+                      <td className="px-4 py-3 text-sm text-theme">
                         {format(new Date(session.created_at), 'MMM d, yyyy HH:mm')}
                       </td>
-                      <td className="px-4 py-3 text-sm font-mono text-xs">{session.filename}</td>
+                      <td className="px-4 py-3 text-sm font-mono text-xs text-theme">{session.filename}</td>
                       <td className="px-4 py-3 text-sm">
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                        <span className="px-2 py-1 bg-[var(--color-accent)]/20 text-[var(--color-accent)] rounded text-xs">
                           {FORMAT_NAMES[session.format_type] || session.format_type}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm">{session.account_source || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-right font-medium">
+                      <td className="px-4 py-3 text-sm text-theme">{session.account_source || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-right font-medium text-theme">
                         {session.transaction_count}
                       </td>
-                      <td className="px-4 py-3 text-sm text-right text-gray-500">
+                      <td className="px-4 py-3 text-sm text-right text-theme-muted">
                         {session.duplicate_count}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-theme-muted">
                         {session.date_range_start && session.date_range_end
                           ? `${format(new Date(session.date_range_start), 'MMM d')} - ${format(new Date(session.date_range_end), 'MMM d, yyyy')}`
                           : '-'}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          session.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          session.status === 'rolled_back' ? 'bg-red-100 text-red-800' :
-                          'bg-yellow-100 text-yellow-800'
+                          session.status === 'completed' ? 'bg-positive text-positive' :
+                          session.status === 'rolled_back' ? 'bg-negative text-negative' :
+                          'bg-[var(--color-accent)]/20 text-[var(--color-accent)]'
                         }`}>
                           {session.status}
                         </span>
@@ -474,8 +474,8 @@ export default function AdminPage() {
                               disabled={actionInProgress}
                               className={`px-2 py-1 rounded text-xs font-medium ${
                                 confirmDelete === session.id
-                                  ? 'bg-red-600 text-white'
-                                  : 'bg-red-100 text-red-800 hover:bg-red-200'
+                                  ? 'bg-[var(--color-negative)] text-white'
+                                  : 'bg-negative text-negative hover:opacity-80'
                               } disabled:opacity-50`}
                             >
                               {confirmDelete === session.id ? 'Confirm Delete' : 'Roll Back'}
@@ -483,7 +483,7 @@ export default function AdminPage() {
                             {confirmDelete === session.id && (
                               <button
                                 onClick={() => setConfirmDelete(null)}
-                                className="ml-1 px-2 py-1 bg-gray-200 text-gray-800 rounded text-xs hover:bg-gray-300"
+                                className="ml-1 px-2 py-1 bg-theme-elevated text-theme rounded text-xs hover:opacity-80 border border-theme"
                               >
                                 Cancel
                               </button>
@@ -504,7 +504,7 @@ export default function AdminPage() {
       {currentTagTab && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <p className="text-sm text-gray-600">{currentTagTab.description}</p>
+            <p className="text-sm text-theme-muted">{currentTagTab.description}</p>
             {currentTagTab.namespace && (
               <button
                 onClick={() => {
@@ -512,7 +512,7 @@ export default function AdminPage() {
                   setTagError(null)
                   setShowCreateModal(true)
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="btn-primary"
               >
                 Add {currentTagTab.label.replace(/s$/, '')}
               </button>
@@ -520,47 +520,47 @@ export default function AdminPage() {
           </div>
 
           {tagsLoading ? (
-            <div className="text-center py-12 text-gray-500">Loading...</div>
+            <div className="text-center py-12 text-theme-muted">Loading...</div>
           ) : tags.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-12 text-center">
-              <p className="text-gray-500 mb-4">No {currentTagTab.label.toLowerCase()} configured yet.</p>
+            <div className="card p-12 text-center">
+              <p className="text-theme-muted mb-4">No {currentTagTab.label.toLowerCase()} configured yet.</p>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="card overflow-hidden">
+              <table className="min-w-full divide-y divide-[var(--color-border)]">
+                <thead className="table-header">
                   <tr>
                     {currentTagTab.showNamespace && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Namespace</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-theme-muted uppercase">Namespace</th>
                     )}
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Value (ID)</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description / Display Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usage</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-theme-muted uppercase">Value (ID)</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-theme-muted uppercase">Description / Display Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-theme-muted uppercase">Usage</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-theme-muted uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-[var(--color-border)]">
                   {tags.map((tag) => (
                     <tr key={tag.id}>
                       {currentTagTab.showNamespace && (
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-[var(--color-accent)]/20 text-[var(--color-accent)]">
                             {tag.namespace}
                           </span>
                         </td>
                       )}
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="font-mono text-sm text-gray-800">
+                        <span className="font-mono text-sm text-theme">
                           {tag.value}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-gray-900">
-                          {tag.description || <span className="text-gray-400 italic">Not set</span>}
+                        <span className="text-sm text-theme">
+                          {tag.description || <span className="text-theme-muted italic">Not set</span>}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-theme-muted">
                           {tag.usage_count ?? 0} transaction{(tag.usage_count ?? 0) !== 1 ? 's' : ''}
                         </span>
                       </td>
@@ -570,13 +570,13 @@ export default function AdminPage() {
                             setEditingTag(tag)
                             setTagError(null)
                           }}
-                          className="text-blue-600 hover:text-blue-800"
+                          className="text-[var(--color-accent)] hover:opacity-80"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDeleteTag(tag)}
-                          className="text-red-600 hover:text-red-800 disabled:text-gray-300"
+                          className="text-negative hover:opacity-80 disabled:opacity-30"
                           disabled={(tag.usage_count ?? 0) > 0}
                           title={(tag.usage_count ?? 0) > 0 ? 'Cannot delete: tag is in use' : 'Delete tag'}
                         >
@@ -594,21 +594,21 @@ export default function AdminPage() {
 
       {/* Create Tag Modal */}
       {showCreateModal && currentTagTab && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="card p-6 max-w-md w-full mx-4">
+            <h2 className="text-xl font-semibold text-theme mb-4">
               Add {currentTagTab.label.replace(/s$/, '')}
             </h2>
 
             {tagError && (
-              <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
+              <div className="mb-4 p-3 bg-negative text-negative rounded-md text-sm">
                 {tagError}
               </div>
             )}
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-theme mb-1">
                   Value
                 </label>
                 <input
@@ -616,15 +616,15 @@ export default function AdminPage() {
                   value={newTag.value}
                   onChange={(e) => setNewTag({ ...newTag, value: e.target.value })}
                   placeholder={currentTagTab.namespace === 'account' ? 'e.g., chase-checking' : 'e.g., vacation'}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="input w-full"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-theme-muted">
                   Will be normalized to: {newTag.value.trim().toLowerCase().replace(/\s+/g, '-') || '...'}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-theme mb-1">
                   {currentTagTab.namespace === 'account' ? 'Display Name' : 'Description'} (optional)
                 </label>
                 <input
@@ -632,7 +632,7 @@ export default function AdminPage() {
                   value={newTag.description}
                   onChange={(e) => setNewTag({ ...newTag, description: e.target.value })}
                   placeholder={currentTagTab.namespace === 'account' ? 'e.g., Chase Checking Account' : 'Brief description'}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="input w-full"
                 />
               </div>
             </div>
@@ -640,14 +640,14 @@ export default function AdminPage() {
             <div className="flex justify-end space-x-3 mt-6">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                className="px-4 py-2 text-theme hover:bg-[var(--color-bg-hover)] rounded-md"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateTag}
                 disabled={saving || !newTag.value.trim()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                className="btn-primary disabled:opacity-50"
               >
                 {saving ? 'Creating...' : 'Create'}
               </button>
@@ -658,47 +658,47 @@ export default function AdminPage() {
 
       {/* Edit Tag Modal */}
       {editingTag && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="card p-6 max-w-md w-full mx-4">
+            <h2 className="text-xl font-semibold text-theme mb-4">
               Edit Tag
             </h2>
 
             {tagError && (
-              <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
+              <div className="mb-4 p-3 bg-negative text-negative rounded-md text-sm">
                 {tagError}
               </div>
             )}
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-theme mb-1">
                   Namespace
                 </label>
                 <input
                   type="text"
                   value={editingTag.namespace}
                   disabled
-                  className="w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-500 font-mono"
+                  className="input w-full bg-[var(--color-bg-hover)] text-theme-muted font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-theme mb-1">
                   Value (ID)
                 </label>
                 <input
                   type="text"
                   value={editingTag.value}
                   onChange={(e) => setEditingTag({ ...editingTag, value: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
-                  className="w-full px-3 py-2 border rounded-md font-mono"
+                  className="input w-full font-mono"
                   placeholder="e.g., groceries, vacation"
                 />
-                <p className="mt-1 text-xs text-gray-500">Unique identifier within the namespace</p>
+                <p className="mt-1 text-xs text-theme-muted">Unique identifier within the namespace</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-theme mb-1">
                   {editingTag.namespace === 'account' ? 'Display Name' : 'Description'}
                 </label>
                 <input
@@ -706,7 +706,7 @@ export default function AdminPage() {
                   value={editingTag.description || ''}
                   onChange={(e) => setEditingTag({ ...editingTag, description: e.target.value })}
                   placeholder={editingTag.namespace === 'account' ? 'Display name for this account' : 'Brief description'}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="input w-full"
                 />
               </div>
             </div>
@@ -714,14 +714,14 @@ export default function AdminPage() {
             <div className="flex justify-end space-x-3 mt-6">
               <button
                 onClick={() => setEditingTag(null)}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                className="px-4 py-2 text-theme hover:bg-[var(--color-bg-hover)] rounded-md"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateTag}
                 disabled={saving || !editingTag.value.trim()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                className="btn-primary disabled:opacity-50"
               >
                 {saving ? 'Saving...' : 'Save'}
               </button>
