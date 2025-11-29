@@ -238,10 +238,12 @@ export default function TagsPage() {
     setTagError(null)
 
     try {
+      const newValue = editingTag.value.trim().toLowerCase().replace(/\s+/g, '-')
       const res = await fetch(`/api/v1/tags/${editingTag.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          value: newValue,
           description: editingTag.description?.trim() || null
         })
       })
@@ -253,6 +255,7 @@ export default function TagsPage() {
 
       setEditingTag(null)
       fetchTagsForNamespace(selectedNamespace)
+      fetchAllTags() // Update counts in case value changed
     } catch (err) {
       setTagError(err instanceof Error ? err.message : 'Failed to update tag')
     } finally {
@@ -391,7 +394,8 @@ export default function TagsPage() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Namespace</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Value (ID)</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usage</th>
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -401,7 +405,10 @@ export default function TagsPage() {
                     {tags.map((tag) => (
                       <tr key={tag.id}>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <span className="inline-flex items-center px-2 py-1 rounded text-sm font-medium bg-gray-100 text-gray-800">
+                          <span className="text-sm text-gray-500">{tag.namespace}</span>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2 py-1 rounded text-sm font-medium bg-gray-100 text-gray-800 font-mono">
                             {tag.value}
                           </span>
                         </td>
@@ -564,7 +571,7 @@ export default function TagsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Edit: {editingTag.namespace}:{editingTag.value}
+              Edit Tag
             </h2>
 
             {tagError && (
@@ -575,13 +582,26 @@ export default function TagsPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Value</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Namespace</label>
                 <input
                   type="text"
-                  value={editingTag.value}
+                  value={editingTag.namespace}
                   disabled
                   className="w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-500"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Value (ID)</label>
+                <input
+                  type="text"
+                  value={editingTag.value}
+                  onChange={(e) => setEditingTag({ ...editingTag, value: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-md font-mono"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Unique identifier within namespace. Will be normalized to: {editingTag.value.trim().toLowerCase().replace(/\s+/g, '-')}
+                </p>
               </div>
 
               <div>
@@ -605,7 +625,7 @@ export default function TagsPage() {
               </button>
               <button
                 onClick={handleUpdateTag}
-                disabled={tagSaving}
+                disabled={tagSaving || !editingTag.value.trim()}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
               >
                 {tagSaving ? 'Saving...' : 'Save'}
