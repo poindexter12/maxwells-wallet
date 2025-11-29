@@ -167,7 +167,7 @@ export default function AdminPage() {
       })
       if (res.ok) {
         const result = await res.json()
-        alert(`Purged ${result.deleted_transactions} transactions`)
+        alert(`Purged ${result.deleted_transactions} transactions and ${result.deleted_sessions} import sessions`)
         await fetchData()
       } else {
         const error = await res.json()
@@ -215,7 +215,7 @@ export default function AdminPage() {
   }
 
   async function handleUpdateTag() {
-    if (!editingTag || !currentTagTab) return
+    if (!editingTag || !currentTagTab || !editingTag.value.trim()) return
 
     setSaving(true)
     setTagError(null)
@@ -225,6 +225,7 @@ export default function AdminPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          value: editingTag.value.trim(),
           description: editingTag.description?.trim() || null
         })
       })
@@ -528,9 +529,10 @@ export default function AdminPage() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      {currentTagTab.showNamespace ? 'Tag' : 'Value'}
-                    </th>
+                    {currentTagTab.showNamespace && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Namespace</th>
+                    )}
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Value (ID)</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description / Display Name</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usage</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -539,9 +541,16 @@ export default function AdminPage() {
                 <tbody className="divide-y divide-gray-200">
                   {tags.map((tag) => (
                     <tr key={tag.id}>
+                      {currentTagTab.showNamespace && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            {tag.namespace}
+                          </span>
+                        </td>
+                      )}
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                          {currentTagTab.showNamespace ? `${tag.namespace}:${tag.value}` : tag.value}
+                        <span className="font-mono text-sm text-gray-800">
+                          {tag.value}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -651,7 +660,7 @@ export default function AdminPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Edit: {editingTag.value}
+              Edit Tag
             </h2>
 
             {tagError && (
@@ -663,14 +672,28 @@ export default function AdminPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Value
+                  Namespace
+                </label>
+                <input
+                  type="text"
+                  value={editingTag.namespace}
+                  disabled
+                  className="w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-500 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Value (ID)
                 </label>
                 <input
                   type="text"
                   value={editingTag.value}
-                  disabled
-                  className="w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-500"
+                  onChange={(e) => setEditingTag({ ...editingTag, value: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+                  className="w-full px-3 py-2 border rounded-md font-mono"
+                  placeholder="e.g., groceries, vacation"
                 />
+                <p className="mt-1 text-xs text-gray-500">Unique identifier within the namespace</p>
               </div>
 
               <div>
@@ -696,7 +719,7 @@ export default function AdminPage() {
               </button>
               <button
                 onClick={handleUpdateTag}
-                disabled={saving}
+                disabled={saving || !editingTag.value.trim()}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
               >
                 {saving ? 'Saving...' : 'Save'}
