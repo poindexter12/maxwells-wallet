@@ -11,10 +11,16 @@ export function ThemeSwitcher() {
 
   useEffect(() => {
     // Load saved theme from localStorage
-    const saved = localStorage.getItem(STORAGE_KEY) as ThemeName | null
-    if (saved && ['ledger', 'neon', 'soft'].includes(saved)) {
-      setThemeState(saved)
+    const saved = localStorage.getItem(STORAGE_KEY)
+    const validThemes: ThemeName[] = ['ledger', 'dark', 'cyberpunk', 'soft']
+    if (saved && validThemes.includes(saved as ThemeName)) {
+      setThemeState(saved as ThemeName)
       document.documentElement.setAttribute('data-theme', saved)
+    } else if (saved === 'neon') {
+      // Migrate old 'neon' theme to 'cyberpunk'
+      setThemeState('cyberpunk')
+      document.documentElement.setAttribute('data-theme', 'cyberpunk')
+      localStorage.setItem(STORAGE_KEY, 'cyberpunk')
     } else {
       document.documentElement.setAttribute('data-theme', defaultTheme)
     }
