@@ -42,6 +42,7 @@ install-backend: ## Install backend dependencies
 install-frontend: ## Install frontend dependencies
 	@echo "$(BLUE)Installing frontend dependencies...$(NC)"
 	@cd $(FRONTEND_DIR) && npm install
+	@cd $(FRONTEND_DIR) && npm install baseline-browser-mapping@latest -D 2>/dev/null || true
 	@echo "$(GREEN)✓ Frontend dependencies installed$(NC)"
 
 db-init: ## Initialize database (create tables)
