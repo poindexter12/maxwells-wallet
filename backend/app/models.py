@@ -57,6 +57,8 @@ class Tag(BaseModel, table=True):
     namespace: str = Field(index=True)  # "bucket", "occasion", "merchant"
     value: str = Field(index=True)       # "groceries", "vacation", "amazon"
     description: Optional[str] = None
+    sort_order: int = Field(default=0)   # For drag-and-drop ordering within namespace
+    color: Optional[str] = None          # Hex color code (e.g., "#22c55e") for UI display
 
     # Note: Unique constraint on (namespace, value) added via migration
 
@@ -71,7 +73,10 @@ class TagCreate(SQLModel):
 
 
 class TagUpdate(SQLModel):
-    description: Optional[str] = None  # namespace and value are immutable
+    value: Optional[str] = None
+    description: Optional[str] = None
+    sort_order: Optional[int] = None
+    color: Optional[str] = None
 
 class Transaction(BaseModel, table=True):
     """Transaction model"""
@@ -81,7 +86,8 @@ class Transaction(BaseModel, table=True):
     amount: float  # positive=income, negative=expense
     description: str  # raw description from bank
     merchant: Optional[str] = Field(default=None, index=True)  # extracted/cleaned merchant name
-    account_source: str = Field(index=True)  # e.g., "BOFA-Checking", "AMEX-53004"
+    account_source: str = Field(index=True)  # e.g., "BOFA-Checking", "AMEX-53004" (kept for display)
+    account_tag_id: Optional[int] = Field(default=None, foreign_key="tags.id", index=True)  # FK to account tag
     card_member: Optional[str] = None  # e.g., "JOSEPH W SEYMOUR"
     category: Optional[str] = Field(default=None, index=True)  # DEPRECATED: use tags instead
     reconciliation_status: ReconciliationStatus = Field(
@@ -94,6 +100,9 @@ class Transaction(BaseModel, table=True):
 
     # Relationships
     tags: List["Tag"] = Relationship(back_populates="transactions", link_model=TransactionTag)
+    account_tag: Optional["Tag"] = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[Transaction.account_tag_id]"}
+    )
 
 class TransactionCreate(SQLModel):
     date: date_type

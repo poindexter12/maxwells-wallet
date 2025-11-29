@@ -256,15 +256,16 @@ async def confirm_import(
             import_session_id=import_session.id
         )
 
+        # Set account_tag_id foreign key for data integrity
+        if txn_data['account_source']:
+            account_tag = await get_or_create_account_tag(session, txn_data['account_source'])
+            db_transaction.account_tag_id = account_tag.id
+
         session.add(db_transaction)
         await session.flush()  # Get the transaction ID
 
         # Apply bucket tag via junction table
         await apply_bucket_tag(session, db_transaction.id, bucket_value)
-
-        # Auto-create account tag if needed
-        if txn_data['account_source']:
-            await get_or_create_account_tag(session, txn_data['account_source'])
 
         imported_count += 1
         total_amount += txn_data['amount']
