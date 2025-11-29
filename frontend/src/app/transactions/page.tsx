@@ -959,7 +959,7 @@ function TransactionsContent() {
                 {/* Top row: checkbox, date, merchant, bucket, account, amount */}
                 {/* Using 50% split - left half for checkbox/date/merchant, right half for dropdowns/amount */}
                 <div className="flex items-start gap-3">
-                  {/* Left side: checkbox, date, merchant (about 50%) */}
+                  {/* Left side: checkbox, date, merchant (about 45%) */}
                   <div className="flex items-start gap-3 w-[45%] min-w-0">
                     <input
                       type="checkbox"
@@ -975,8 +975,8 @@ function TransactionsContent() {
                     </p>
                   </div>
 
-                  {/* Right side: bucket, account, amount (about 50%) */}
-                  <div className="flex items-start gap-3 flex-1 justify-end">
+                  {/* Right side: bucket, account, amount (about 55%) - aligned with tags below */}
+                  <div className="flex items-start gap-3 flex-1">
                     <select
                       value={txn.bucket || ''}
                       onChange={(e) => handleBucketChange(txn.id, e.target.value)}
@@ -1003,7 +1003,7 @@ function TransactionsContent() {
                       ))}
                     </select>
 
-                    <div className="flex items-center gap-1 w-24 justify-end flex-shrink-0">
+                    <div className="flex items-center gap-1 ml-auto flex-shrink-0">
                       <span className={`font-semibold text-sm ${txn.amount >= 0 ? 'text-positive' : 'text-negative'}`}>
                         {formatCurrency(txn.amount, true)}
                       </span>
@@ -1025,51 +1025,18 @@ function TransactionsContent() {
                   </div>
                 </div>
 
-                {/* Second row: description (under merchant) + tags (aligned with dropdowns) */}
+                {/* Second row: description + add tag button | tags container */}
                 <div className="flex items-center gap-3 mt-1">
-                  {/* Left side spacer + description */}
+                  {/* Left side: spacer + description + add tag button (right-justified) */}
                   <div className="flex items-center gap-3 w-[45%] min-w-0">
                     <div className="w-4 flex-shrink-0"></div>
                     <div className="w-20 flex-shrink-0"></div>
-                    <p className="text-xs text-theme-muted truncate min-w-0">
+                    <p className="text-xs text-theme-muted truncate min-w-0 flex-1">
                       {txn.description !== txn.merchant ? txn.description : ''}
                     </p>
-                  </div>
-
-                  {/* Right side: tags container (aligned with dropdowns) */}
-                  <div className="flex items-center gap-1.5 px-2 py-1 rounded border border-theme/50 bg-theme-elevated/50 min-h-[1.75rem] flex-1">
-                    {/* Notes indicator */}
-                    {txn.notes && !expandedIds.has(txn.id) && (
-                      <span className="inline-flex items-center gap-0.5 text-[11px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full" title={txn.notes}>
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
-                        </svg>
-                      </span>
-                    )}
-
-                    {/* Non-bucket, non-account tags as chips */}
-                    {txn.tags?.filter(t => t.namespace !== 'bucket' && t.namespace !== 'account').map((tag) => (
-                      <span
-                        key={tag.full}
-                        className="inline-flex items-center gap-0.5 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] text-purple-700"
-                        title={`${tag.namespace}:${tag.value}`}
-                      >
-                        {tag.value}
-                        <button
-                          onClick={() => handleRemoveTag(txn.id, tag.full)}
-                          className="hover:text-purple-900 ml-0.5"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-
-                    {/* Spacer to push + tag to the right */}
-                    <div className="flex-1"></div>
-
-                    {/* Add tag button - right justified */}
+                    {/* Add tag button - right justified in left column */}
                     {addingTagTo === txn.id ? (
-                      <div className="inline-flex items-center gap-1">
+                      <div className="inline-flex items-center gap-1 flex-shrink-0">
                         <select
                           value=""
                           onChange={(e) => {
@@ -1098,11 +1065,45 @@ function TransactionsContent() {
                     ) : (
                       <button
                         onClick={() => setAddingTagTo(txn.id)}
-                        className="text-xs text-blue-500 hover:text-blue-700 whitespace-nowrap"
+                        className="text-xs text-blue-500 hover:text-blue-700 whitespace-nowrap flex-shrink-0"
                         title="Add tag"
                       >
                         + tag
                       </button>
+                    )}
+                  </div>
+
+                  {/* Right side: tags container (aligned with dropdowns) */}
+                  <div className="flex items-center flex-wrap gap-1.5 px-2 py-1 rounded border border-theme/30 min-h-[1.75rem] flex-1">
+                    {/* Notes indicator */}
+                    {txn.notes && !expandedIds.has(txn.id) && (
+                      <span className="inline-flex items-center gap-0.5 text-[11px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full" title={txn.notes}>
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
+                        </svg>
+                      </span>
+                    )}
+
+                    {/* Non-bucket, non-account tags as chips */}
+                    {txn.tags?.filter(t => t.namespace !== 'bucket' && t.namespace !== 'account').map((tag) => (
+                      <span
+                        key={tag.full}
+                        className="inline-flex items-center gap-0.5 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] text-purple-700"
+                        title={`${tag.namespace}:${tag.value}`}
+                      >
+                        {tag.value}
+                        <button
+                          onClick={() => handleRemoveTag(txn.id, tag.full)}
+                          className="hover:text-purple-900 ml-0.5"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+
+                    {/* Empty state when no tags */}
+                    {(!txn.tags || txn.tags.filter(t => t.namespace !== 'bucket' && t.namespace !== 'account').length === 0) && !txn.notes && (
+                      <span className="text-[11px] text-theme-muted/50 italic">no tags</span>
                     )}
                   </div>
                 </div>
