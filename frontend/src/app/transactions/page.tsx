@@ -958,7 +958,7 @@ function TransactionsContent() {
               <div className="hidden md:block px-4 py-2">
                 {/* Top row: checkbox, date, merchant, bucket, account, amount */}
                 <div
-                  className="grid grid-cols-[auto_5.5rem_minmax(0,1fr)_auto_auto_auto] gap-x-3 items-start"
+                  className="grid grid-cols-[auto_5.5rem_1fr_8rem_10rem_6.5rem] gap-x-4 items-start"
                 >
                   {/* Checkbox */}
                   <input
@@ -973,23 +973,16 @@ function TransactionsContent() {
                     {format(new Date(txn.date), 'MM/dd/yyyy')}
                   </span>
 
-                  {/* Merchant + description */}
-                  <div className="min-w-0">
-                    <p className="font-medium text-theme truncate">
-                      {txn.merchant || 'Unknown'}
-                    </p>
-                    {txn.description !== txn.merchant && (
-                      <p className="text-xs text-theme-muted truncate">
-                        {txn.description}
-                      </p>
-                    )}
-                  </div>
+                  {/* Merchant only */}
+                  <p className="font-medium text-theme truncate">
+                    {txn.merchant || 'Unknown'}
+                  </p>
 
                   {/* Bucket */}
                   <select
                     value={txn.bucket || ''}
                     onChange={(e) => handleBucketChange(txn.id, e.target.value)}
-                    className="h-7 rounded border border-theme px-2 text-xs bg-theme-elevated"
+                    className="h-7 w-full rounded border border-theme px-2 text-xs bg-theme-elevated"
                   >
                     <option value="">No Bucket</option>
                     {bucketTags.map((tag) => (
@@ -1003,7 +996,7 @@ function TransactionsContent() {
                   <select
                     value={txn.account || ''}
                     onChange={(e) => handleAccountChange(txn.id, e.target.value)}
-                    className="h-7 rounded border border-theme px-2 text-xs bg-theme-elevated"
+                    className="h-7 w-full rounded border border-theme px-2 text-xs bg-theme-elevated"
                   >
                     <option value="">No Account</option>
                     {accountTags.map((tag) => (
@@ -1014,7 +1007,7 @@ function TransactionsContent() {
                   </select>
 
                   {/* Amount + expand caret */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center justify-end gap-1">
                     <span className={`font-semibold text-sm ${txn.amount >= 0 ? 'text-positive' : 'text-negative'}`}>
                       {formatCurrency(txn.amount, true)}
                     </span>
@@ -1035,17 +1028,21 @@ function TransactionsContent() {
                   </div>
                 </div>
 
-                {/* Tags row: aligned under bucket column, expands to the right */}
+                {/* Second row: description (under merchant) + tags (under bucket, in bordered container) */}
                 <div
-                  className="grid grid-cols-[auto_5.5rem_minmax(0,1fr)_1fr] gap-x-3 mt-1"
+                  className="grid grid-cols-[auto_5.5rem_1fr_calc(8rem+10rem+6.5rem+2rem)] gap-x-4 mt-1 items-center"
                 >
                   {/* Empty spacers for checkbox and date columns */}
-                  <div></div>
-                  <div></div>
+                  <div className="w-4"></div>
                   <div></div>
 
-                  {/* Tags - aligned under bucket, expands right */}
-                  <div className="flex flex-wrap items-center gap-1">
+                  {/* Description - under merchant, truncated */}
+                  <p className="text-xs text-theme-muted truncate pr-2">
+                    {txn.description !== txn.merchant ? txn.description : ''}
+                  </p>
+
+                  {/* Tags container - bordered, with + tag right-justified */}
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded border border-theme/50 bg-theme-elevated/50 min-h-[1.75rem]">
                     {/* Notes indicator */}
                     {txn.notes && !expandedIds.has(txn.id) && (
                       <span className="inline-flex items-center gap-0.5 text-[11px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full" title={txn.notes}>
@@ -1072,7 +1069,10 @@ function TransactionsContent() {
                       </span>
                     ))}
 
-                    {/* Add tag button */}
+                    {/* Spacer to push + tag to the right */}
+                    <div className="flex-1"></div>
+
+                    {/* Add tag button - right justified */}
                     {addingTagTo === txn.id ? (
                       <div className="inline-flex items-center gap-1">
                         <select
