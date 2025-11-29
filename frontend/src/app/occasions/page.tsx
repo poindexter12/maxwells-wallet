@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/format'
 
-interface AccountStats {
+interface OccasionStats {
   id: number
   value: string
   description: string | null
@@ -14,29 +14,29 @@ interface AccountStats {
   total_amount: number
 }
 
-export default function AccountsPage() {
-  const [accounts, setAccounts] = useState<AccountStats[]>([])
+export default function OccasionsPage() {
+  const [occasions, setOccasions] = useState<OccasionStats[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchAccounts()
+    fetchOccasions()
   }, [])
 
-  async function fetchAccounts() {
+  async function fetchOccasions() {
     try {
-      const res = await fetch('/api/v1/tags/accounts/stats')
+      const res = await fetch('/api/v1/tags/occasions/stats')
       const data = await res.json()
-      setAccounts(data.accounts || [])
+      setOccasions(data.occasions || [])
     } catch (err) {
-      console.error('Error fetching accounts:', err)
+      console.error('Error fetching occasions:', err)
     } finally {
       setLoading(false)
     }
   }
 
   // Calculate totals
-  const totalTransactions = accounts.reduce((sum, a) => sum + a.transaction_count, 0)
-  const totalNet = accounts.reduce((sum, a) => sum + a.total_amount, 0)
+  const totalTransactions = occasions.reduce((sum, o) => sum + o.transaction_count, 0)
+  const totalSpending = occasions.reduce((sum, o) => sum + Math.abs(o.total_amount), 0)
 
   if (loading) {
     return <div className="text-center py-12 text-theme-muted">Loading...</div>
@@ -46,9 +46,9 @@ export default function AccountsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-theme">Accounts</h1>
+          <h1 className="text-3xl font-bold text-theme">Occasions</h1>
           <p className="mt-1 text-sm text-theme-muted">
-            Bank accounts and credit cards. Accounts are auto-created when you import transactions.
+            Special events and occasions like vacations, holidays, and celebrations
           </p>
         </div>
         <Link
@@ -62,69 +62,69 @@ export default function AccountsPage() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card p-6">
-          <div className="text-sm text-theme-muted">Total Accounts</div>
-          <div className="text-3xl font-bold text-theme">{accounts.length}</div>
+          <div className="text-sm text-theme-muted">Total Occasions</div>
+          <div className="text-3xl font-bold text-theme">{occasions.length}</div>
         </div>
         <div className="card p-6">
-          <div className="text-sm text-theme-muted">Total Transactions</div>
+          <div className="text-sm text-theme-muted">Tagged Transactions</div>
           <div className="text-3xl font-bold text-theme">{totalTransactions.toLocaleString()}</div>
         </div>
         <div className="card p-6">
-          <div className="text-sm text-theme-muted">Net Flow</div>
-          <div className={`text-3xl font-bold ${totalNet >= 0 ? 'text-positive' : 'text-negative'}`}>
-            {formatCurrency(totalNet)}
-          </div>
+          <div className="text-sm text-theme-muted">Total Occasion Spending</div>
+          <div className="text-3xl font-bold text-negative">{formatCurrency(-totalSpending)}</div>
         </div>
       </div>
 
-      {/* Accounts Grid */}
-      {accounts.length === 0 ? (
+      {/* Occasions Grid */}
+      {occasions.length === 0 ? (
         <div className="card p-12 text-center">
-          <p className="text-theme-muted mb-4">No accounts yet. Import some transactions to create accounts automatically!</p>
-          <Link href="/import" className="text-blue-500 hover:text-blue-400">
-            Import transactions →
+          <p className="text-theme-muted mb-4">No occasions yet.</p>
+          <Link href="/admin" className="text-blue-500 hover:text-blue-400">
+            Create occasions in Admin →
           </Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {accounts.map((account) => (
+          {occasions.map((occasion) => (
             <Link
-              key={account.id}
-              href={`/transactions?accounts=${account.value}`}
+              key={occasion.id}
+              href={`/transactions?occasion=${occasion.value}`}
               className="block card p-5 hover:shadow-lg transition-shadow border-l-4"
-              style={{ borderLeftColor: account.color || '#3b82f6' }}
+              style={{ borderLeftColor: occasion.color || '#8b5cf6' }}
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="font-semibold text-theme text-lg">
-                    {account.description || account.value}
+                  <h3 className="font-semibold text-theme capitalize text-lg">
+                    {occasion.value.replace(/-/g, ' ')}
                   </h3>
-                  <p className="text-xs text-theme-muted font-mono mt-1">{account.value}</p>
+                  {occasion.description && (
+                    <p className="text-sm text-theme-muted mt-1">{occasion.description}</p>
+                  )}
                 </div>
                 <div className="text-right">
-                  <div className={`text-lg font-semibold ${account.total_amount >= 0 ? 'text-positive' : 'text-negative'}`}>
-                    {formatCurrency(account.total_amount)}
+                  <div className="text-lg font-semibold text-negative">
+                    {formatCurrency(occasion.total_amount)}
                   </div>
                   <div className="text-xs text-theme-muted">
-                    {account.transaction_count} txn{account.transaction_count !== 1 ? 's' : ''}
+                    {occasion.transaction_count} txn{occasion.transaction_count !== 1 ? 's' : ''}
                   </div>
                 </div>
               </div>
 
-              {/* Activity bar showing relative transaction count */}
-              {totalTransactions > 0 && (
+              {/* Progress bar showing % of total spending */}
+              {totalSpending > 0 && (
                 <div className="mt-4">
                   <div className="h-2 progress-bar rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full"
                       style={{
-                        width: `${Math.min(100, (account.transaction_count / totalTransactions) * 100)}%`,
-                        backgroundColor: account.color || '#3b82f6'
+                        width: `${Math.min(100, (Math.abs(occasion.total_amount) / totalSpending) * 100)}%`,
+                        backgroundColor: occasion.color || '#8b5cf6'
                       }}
                     />
                   </div>
                   <div className="text-xs text-theme-muted mt-1 text-right">
-                    {((account.transaction_count / totalTransactions) * 100).toFixed(1)}% of transactions
+                    {((Math.abs(occasion.total_amount) / totalSpending) * 100).toFixed(1)}% of occasion spending
                   </div>
                 </div>
               )}
