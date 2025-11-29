@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/format'
+import { PageHelp } from '@/components/PageHelp'
+import { HelpTip } from '@/components/Tooltip'
 
 interface Tag {
   id: number
@@ -525,6 +527,24 @@ function TransactionsContent() {
 
   return (
     <div className="space-y-6">
+      <PageHelp
+        pageId="transactions"
+        title="Transactions Help"
+        description="View, filter, and categorize all your imported transactions. Use buckets for spending categories and tags for special tracking like trips or projects."
+        steps={[
+          "Use the Bucket dropdown to categorize each transaction (groceries, dining, etc.)",
+          "Add occasion tags for trips, events, or projects you want to track separately",
+          "Select multiple transactions with checkboxes for bulk categorization",
+          "Click the expand arrow (▼) to see full details, add notes, or edit metadata",
+          "Use filters to find specific transactions by date, amount, account, or text search"
+        ]}
+        tips={[
+          "Set up Rules to automatically categorize recurring merchants",
+          "Shift+click accounts in the filter to exclude them instead of include",
+          "The colored left border shows the bucket category at a glance"
+        ]}
+      />
+
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-theme">Transactions</h1>

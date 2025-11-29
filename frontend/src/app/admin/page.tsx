@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
+import { PageHelp } from '@/components/PageHelp'
 
 const FORMAT_NAMES: Record<string, string> = {
   'bofa_bank': 'BofA Bank',
@@ -269,6 +270,22 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-6">
+      <PageHelp
+        pageId="admin"
+        title="Admin Help"
+        description="Manage your data, import history, and tag configuration. Use the tabs to navigate between different admin sections."
+        steps={[
+          "Overview: See database stats and account summaries",
+          "Imports: View import history and roll back imports if needed",
+          "Tags: Manage buckets, accounts, occasions, and expense types"
+        ]}
+        tips={[
+          "Rolling back an import deletes all transactions from that import",
+          "Tags are organized by namespace (bucket, account, occasion, expense)",
+          "You can edit tag descriptions to give them friendly display names"
+        ]}
+      />
+
       <div>
         <h1 className="text-3xl font-bold text-theme">Admin</h1>
         <p className="mt-2 text-sm text-theme-muted">

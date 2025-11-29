@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { formatCurrency } from '@/lib/format'
+import { PageHelp } from '@/components/PageHelp'
 
 interface Tag {
   id: number
@@ -174,10 +175,27 @@ export default function BudgetsPage() {
 
   return (
     <div className="space-y-6">
+      <PageHelp
+        pageId="budgets"
+        title="Budgets Help"
+        description="Set spending limits for your buckets and track your progress throughout the month. Get alerts when you're approaching or exceeding your limits."
+        steps={[
+          "Click 'New Budget' to create a budget for a bucket category",
+          "Set a monthly or yearly spending limit",
+          "Monitor the progress bars to see how you're tracking",
+          "Review alerts at the top when you're over 80% or exceeded"
+        ]}
+        tips={[
+          "Enable rollover to carry unused budget to the next period",
+          "Focus on your highest-spend categories first",
+          "The status colors show: green (on track), yellow (warning), red (exceeded)"
+        ]}
+      />
+
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Budget Tracking</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-3xl font-bold text-theme">Budget Tracking</h1>
+          <p className="mt-2 text-sm text-theme-muted">
             Monitor your spending against budget limits by bucket
           </p>
         </div>
