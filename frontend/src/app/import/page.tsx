@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
+import { PageHelp } from '@/components/PageHelp'
 
 const FORMAT_NAMES: Record<string, string> = {
   'bofa_bank': 'Bank of America (Checking/Savings)',
@@ -72,7 +73,25 @@ export default function ImportPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Import Transactions</h1>
+      <PageHelp
+        pageId="import"
+        title="Import Help"
+        description="Import transactions from your bank's CSV export files. Supported formats include Bank of America (checking and credit cards) and American Express."
+        steps={[
+          "Download a CSV export from your bank's website",
+          "Select the file using the file picker below",
+          "Optionally specify an account name to help organize your data",
+          "Click 'Preview Import' to see what will be imported",
+          "Review the preview, then click 'Confirm Import' to save"
+        ]}
+        tips={[
+          "The system auto-detects your bank's CSV format",
+          "Duplicate transactions are automatically skipped",
+          "You can view and rollback imports from the Admin page"
+        ]}
+      />
+
+      <h1 className="text-3xl font-bold text-theme">Import Transactions</h1>
 
       {/* Upload Form */}
       <div className="bg-white rounded-lg shadow p-6 space-y-4">
