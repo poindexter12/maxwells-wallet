@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
+import { PageHelp } from '@/components/PageHelp'
 
 interface RecurringPattern {
   id: number
@@ -135,6 +136,23 @@ export default function RecurringPage() {
 
   return (
     <div className="space-y-6">
+      <PageHelp
+        pageId="recurring"
+        title="Recurring Help"
+        description="Track subscriptions, bills, and recurring payments. The system automatically detects patterns in your transactions."
+        steps={[
+          "Click 'Detect Patterns' to scan for recurring transactions",
+          "Review detected patterns and their confidence scores",
+          "Check 'Upcoming' tab for expected transactions in the next 30 days",
+          "Monitor 'Missing' tab for overdue recurring payments"
+        ]}
+        tips={[
+          "Higher confidence scores mean more consistent patterns",
+          "You can pause patterns for seasonal subscriptions",
+          "Missing transactions may indicate cancelled subscriptions or billing changes"
+        ]}
+      />
+
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Recurring Transactions</h1>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/format'
+import { PageHelp } from '@/components/PageHelp'
 
 interface BucketStats {
   id: number
@@ -44,6 +45,21 @@ export default function BucketsPage() {
 
   return (
     <div className="space-y-6">
+      <PageHelp
+        pageId="buckets"
+        title="Buckets Help"
+        description="Buckets are your main spending categories (groceries, dining, entertainment, etc.). This page shows a summary of transactions in each bucket."
+        steps={[
+          "Click any bucket card to see its transactions",
+          "Use the Admin page to add, edit, or reorder buckets",
+          "Assign buckets to transactions on the Transactions page"
+        ]}
+        tips={[
+          "Set up Rules to auto-categorize common merchants",
+          "The colored bar shows each bucket's share of total spending"
+        ]}
+      />
+
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-theme">Buckets</h1>

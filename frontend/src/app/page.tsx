@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts'
 import { formatCurrency } from '@/lib/format'
+import { PageHelp } from '@/components/PageHelp'
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D']
 
@@ -83,6 +84,23 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
+      <PageHelp
+        pageId="dashboard"
+        title="Dashboard Help"
+        description="Your financial overview at a glance. See income, expenses, and spending trends for the current month."
+        steps={[
+          "View summary cards for income, expenses, and net for this month",
+          "Track your daily burn rate and projected spending",
+          "Review unusual activity and anomalies",
+          "See spending breakdown by bucket and top merchants"
+        ]}
+        tips={[
+          "Month-over-month comparisons show how you're doing vs last month",
+          "The spending velocity shows if you're on track for the month",
+          "Click through to Transactions for detailed views"
+        ]}
+      />
+
       <div>
         <h1 className="text-3xl font-bold text-theme">Dashboard</h1>
         <p className="mt-2 text-sm text-theme-muted">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { formatCurrency } from '@/lib/format'
+import { PageHelp } from '@/components/PageHelp'
 
 interface Tag {
   id: number
@@ -223,10 +224,28 @@ export default function TagRulesPage() {
 
   return (
     <div className="space-y-6">
+      <PageHelp
+        pageId="rules"
+        title="Rules Help"
+        description="Create rules to automatically categorize transactions based on merchant names, descriptions, or amounts. Rules run on import and can be applied to existing transactions."
+        steps={[
+          "Click 'New Rule' to create an auto-categorization rule",
+          "Set patterns to match (merchant name, description text, amount range)",
+          "Choose the bucket to assign when the pattern matches",
+          "Use 'Test Rule' to preview which transactions would match",
+          "Click 'Apply All Rules' to run rules on uncategorized transactions"
+        ]}
+        tips={[
+          "Higher priority rules are checked first (useful for specific overrides)",
+          "Use 'Match All' to require all conditions (AND logic), otherwise any match works (OR logic)",
+          "Patterns are case-insensitive substring matches"
+        ]}
+      />
+
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Bucket Rules</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-3xl font-bold text-theme">Bucket Rules</h1>
+          <p className="mt-2 text-sm text-theme-muted">
             Automatically assign buckets to transactions based on patterns
           </p>
         </div>
