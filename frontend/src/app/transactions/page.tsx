@@ -1073,8 +1073,8 @@ function TransactionsContent() {
                     )}
                   </div>
 
-                  {/* Right side: tags container (aligned with dropdowns) */}
-                  <div className="flex items-center flex-wrap gap-1.5 px-2 py-1 rounded border border-theme/30 min-h-[1.75rem] flex-1">
+                  {/* Right side: tags area (aligned with dropdowns) */}
+                  <div className="flex items-center flex-wrap gap-1.5 py-1 min-h-[1.75rem] flex-1">
                     {/* Notes indicator */}
                     {txn.notes && !expandedIds.has(txn.id) && (
                       <span className="inline-flex items-center gap-0.5 text-[11px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full" title={txn.notes}>
@@ -1085,25 +1085,30 @@ function TransactionsContent() {
                     )}
 
                     {/* Non-bucket, non-account tags as chips */}
-                    {txn.tags?.filter(t => t.namespace !== 'bucket' && t.namespace !== 'account').map((tag) => (
-                      <span
-                        key={tag.full}
-                        className="inline-flex items-center gap-0.5 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] text-purple-700"
-                        title={`${tag.namespace}:${tag.value}`}
-                      >
-                        {tag.value}
-                        <button
-                          onClick={() => handleRemoveTag(txn.id, tag.full)}
-                          className="hover:text-purple-900 ml-0.5"
+                    {txn.tags?.filter(t => t.namespace !== 'bucket' && t.namespace !== 'account').map((tag) => {
+                      // Look up the full tag to get description
+                      const fullTag = allTags.find(t => t.namespace === tag.namespace && t.value === tag.value)
+                      const displayText = fullTag?.description || tag.value.replace(/-/g, ' ')
+                      return (
+                        <span
+                          key={tag.full}
+                          className="inline-flex items-center gap-0.5 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] text-purple-700"
+                          title={`${tag.namespace}:${tag.value}`}
                         >
-                          ×
-                        </button>
-                      </span>
-                    ))}
+                          {displayText}
+                          <button
+                            onClick={() => handleRemoveTag(txn.id, tag.full)}
+                            className="hover:text-purple-900 ml-0.5"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      )
+                    })}
 
                     {/* Empty state when no tags */}
                     {(!txn.tags || txn.tags.filter(t => t.namespace !== 'bucket' && t.namespace !== 'account').length === 0) && !txn.notes && (
-                      <span className="text-[11px] text-theme-muted/50 italic">no tags</span>
+                      <span className="text-[11px] text-theme-muted/40">—</span>
                     )}
                   </div>
                 </div>
@@ -1178,15 +1183,19 @@ function TransactionsContent() {
                       </select>
 
                       {/* Tags */}
-                      {txn.tags?.filter(t => t.namespace !== 'bucket' && t.namespace !== 'account').map((tag) => (
-                        <span
-                          key={tag.full}
-                          className="inline-flex items-center gap-0.5 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] text-purple-700"
-                        >
-                          {tag.value}
-                          <button onClick={() => handleRemoveTag(txn.id, tag.full)} className="hover:text-purple-900">×</button>
-                        </span>
-                      ))}
+                      {txn.tags?.filter(t => t.namespace !== 'bucket' && t.namespace !== 'account').map((tag) => {
+                        const fullTag = allTags.find(t => t.namespace === tag.namespace && t.value === tag.value)
+                        const displayText = fullTag?.description || tag.value.replace(/-/g, ' ')
+                        return (
+                          <span
+                            key={tag.full}
+                            className="inline-flex items-center gap-0.5 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] text-purple-700"
+                          >
+                            {displayText}
+                            <button onClick={() => handleRemoveTag(txn.id, tag.full)} className="hover:text-purple-900">×</button>
+                          </span>
+                        )
+                      })}
 
                       <button
                         onClick={() => setAddingTagTo(txn.id)}
