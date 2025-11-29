@@ -1074,7 +1074,7 @@ function TransactionsContent() {
                   </div>
 
                   {/* Right side: tags area (aligned with dropdowns) */}
-                  <div className="flex items-center flex-wrap gap-1.5 py-1 min-h-[1.75rem] flex-1">
+                  <div className="flex items-center flex-wrap gap-1.5 px-2 py-1 rounded bg-theme-subtle min-h-[1.75rem] flex-1">
                     {/* Notes indicator */}
                     {txn.notes && !expandedIds.has(txn.id) && (
                       <span className="inline-flex items-center gap-0.5 text-[11px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full" title={txn.notes}>
