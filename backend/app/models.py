@@ -25,22 +25,6 @@ class BaseModel(SQLModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-class Category(BaseModel, table=True):
-    """Category for transaction classification - DEPRECATED, use Tag instead"""
-    __tablename__ = "categories"
-
-    name: str = Field(index=True, unique=True)
-    description: Optional[str] = None
-
-class CategoryCreate(SQLModel):
-    name: str
-    description: Optional[str] = None
-
-class CategoryUpdate(SQLModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-
-
 class TransactionTag(SQLModel, table=True):
     """Junction table linking transactions to tags"""
     __tablename__ = "transaction_tags"
@@ -244,12 +228,6 @@ class TagRuleUpdate(SQLModel):
     amount_max: Optional[float] = None
     account_source: Optional[str] = None
     match_all: Optional[bool] = None
-
-
-# Keep old names as aliases for backwards compatibility during migration
-CategoryRule = TagRule
-CategoryRuleCreate = TagRuleCreate
-CategoryRuleUpdate = TagRuleUpdate
 
 class RecurringFrequency(str, Enum):
     weekly = "weekly"
