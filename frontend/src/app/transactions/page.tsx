@@ -957,92 +957,87 @@ function TransactionsContent() {
               {/* DESKTOP: Compact table-style grid */}
               <div className="hidden md:block px-4 py-2">
                 {/* Top row: checkbox, date, merchant, bucket, account, amount */}
-                <div
-                  className="grid grid-cols-[auto_5.5rem_1fr_8rem_10rem_6.5rem] gap-x-4 items-start"
-                >
-                  {/* Checkbox */}
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(txn.id)}
-                    onChange={() => toggleSelect(txn.id)}
-                    className="w-4 h-4 rounded mt-0.5"
-                  />
-
-                  {/* Date */}
-                  <span className="text-xs text-theme-muted pt-0.5">
-                    {format(new Date(txn.date), 'MM/dd/yyyy')}
-                  </span>
-
-                  {/* Merchant only */}
-                  <p className="font-medium text-theme truncate">
-                    {txn.merchant || 'Unknown'}
-                  </p>
-
-                  {/* Bucket */}
-                  <select
-                    value={txn.bucket || ''}
-                    onChange={(e) => handleBucketChange(txn.id, e.target.value)}
-                    className="h-7 w-full rounded border border-theme px-2 text-xs bg-theme-elevated"
-                  >
-                    <option value="">No Bucket</option>
-                    {bucketTags.map((tag) => (
-                      <option key={tag.id} value={tag.value}>
-                        {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-
-                  {/* Account */}
-                  <select
-                    value={txn.account || ''}
-                    onChange={(e) => handleAccountChange(txn.id, e.target.value)}
-                    className="h-7 w-full rounded border border-theme px-2 text-xs bg-theme-elevated"
-                  >
-                    <option value="">No Account</option>
-                    {accountTags.map((tag) => (
-                      <option key={tag.id} value={tag.value}>
-                        {tag.description || tag.value}
-                      </option>
-                    ))}
-                  </select>
-
-                  {/* Amount + expand caret */}
-                  <div className="flex items-center justify-end gap-1">
-                    <span className={`font-semibold text-sm ${txn.amount >= 0 ? 'text-positive' : 'text-negative'}`}>
-                      {formatCurrency(txn.amount, true)}
+                {/* Using 50% split - left half for checkbox/date/merchant, right half for dropdowns/amount */}
+                <div className="flex items-start gap-3">
+                  {/* Left side: checkbox, date, merchant (about 50%) */}
+                  <div className="flex items-start gap-3 w-[45%] min-w-0">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(txn.id)}
+                      onChange={() => toggleSelect(txn.id)}
+                      className="w-4 h-4 rounded mt-0.5 flex-shrink-0"
+                    />
+                    <span className="text-xs text-theme-muted pt-0.5 w-20 flex-shrink-0">
+                      {format(new Date(txn.date), 'MM/dd/yyyy')}
                     </span>
-                    <button
-                      onClick={() => toggleExpand(txn.id)}
-                      className="text-theme-muted hover:text-theme p-0.5"
-                      title={expandedIds.has(txn.id) ? 'Collapse' : 'Expand'}
+                    <p className="font-medium text-theme truncate min-w-0">
+                      {txn.merchant || 'Unknown'}
+                    </p>
+                  </div>
+
+                  {/* Right side: bucket, account, amount (about 50%) */}
+                  <div className="flex items-start gap-3 flex-1 justify-end">
+                    <select
+                      value={txn.bucket || ''}
+                      onChange={(e) => handleBucketChange(txn.id, e.target.value)}
+                      className="h-7 w-32 rounded border border-theme px-2 text-xs bg-theme-elevated"
                     >
-                      <svg
-                        className={`w-4 h-4 transition-transform duration-200 ${expandedIds.has(txn.id) ? 'rotate-180' : ''}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                      <option value="">No Bucket</option>
+                      {bucketTags.map((tag) => (
+                        <option key={tag.id} value={tag.value}>
+                          {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={txn.account || ''}
+                      onChange={(e) => handleAccountChange(txn.id, e.target.value)}
+                      className="h-7 w-40 rounded border border-theme px-2 text-xs bg-theme-elevated"
+                    >
+                      <option value="">No Account</option>
+                      {accountTags.map((tag) => (
+                        <option key={tag.id} value={tag.value}>
+                          {tag.description || tag.value}
+                        </option>
+                      ))}
+                    </select>
+
+                    <div className="flex items-center gap-1 w-24 justify-end flex-shrink-0">
+                      <span className={`font-semibold text-sm ${txn.amount >= 0 ? 'text-positive' : 'text-negative'}`}>
+                        {formatCurrency(txn.amount, true)}
+                      </span>
+                      <button
+                        onClick={() => toggleExpand(txn.id)}
+                        className="text-theme-muted hover:text-theme p-0.5"
+                        title={expandedIds.has(txn.id) ? 'Collapse' : 'Expand'}
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
+                        <svg
+                          className={`w-4 h-4 transition-transform duration-200 ${expandedIds.has(txn.id) ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                {/* Second row: description (under merchant) + tags (under bucket, in bordered container) */}
-                <div
-                  className="grid grid-cols-[auto_5.5rem_1fr_calc(8rem+10rem+6.5rem+2rem)] gap-x-4 mt-1 items-center"
-                >
-                  {/* Empty spacers for checkbox and date columns */}
-                  <div className="w-4"></div>
-                  <div></div>
+                {/* Second row: description (under merchant) + tags (aligned with dropdowns) */}
+                <div className="flex items-center gap-3 mt-1">
+                  {/* Left side spacer + description */}
+                  <div className="flex items-center gap-3 w-[45%] min-w-0">
+                    <div className="w-4 flex-shrink-0"></div>
+                    <div className="w-20 flex-shrink-0"></div>
+                    <p className="text-xs text-theme-muted truncate min-w-0">
+                      {txn.description !== txn.merchant ? txn.description : ''}
+                    </p>
+                  </div>
 
-                  {/* Description - under merchant, truncated */}
-                  <p className="text-xs text-theme-muted truncate pr-2">
-                    {txn.description !== txn.merchant ? txn.description : ''}
-                  </p>
-
-                  {/* Tags container - bordered, with + tag right-justified */}
-                  <div className="flex items-center gap-1.5 px-2 py-1 rounded border border-theme/50 bg-theme-elevated/50 min-h-[1.75rem]">
+                  {/* Right side: tags container (aligned with dropdowns) */}
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded border border-theme/50 bg-theme-elevated/50 min-h-[1.75rem] flex-1">
                     {/* Notes indicator */}
                     {txn.notes && !expandedIds.has(txn.id) && (
                       <span className="inline-flex items-center gap-0.5 text-[11px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full" title={txn.notes}>
