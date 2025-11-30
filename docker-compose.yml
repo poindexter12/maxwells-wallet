@@ -1,0 +1,40 @@
+# Maxwell's Wallet - Docker Compose
+#
+# Start the app:
+#   docker compose up -d
+#
+# Seed with sample data:
+#   docker compose run --rm maxwells-wallet seed
+#
+# Run migrations only:
+#   docker compose run --rm maxwells-wallet migrate
+#
+# Access the app at http://localhost:3000
+# API available at http://localhost:8000
+
+services:
+  # All-in-One container (frontend + backend)
+  maxwells-wallet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"   # Frontend
+      - "3001:3001"   # Backend API
+    volumes:
+      # External data storage - map to your preferred location
+      - wallet-data:/data
+      # Optional: mount CSVs for import
+      # - ./my-data:/import:ro
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:////data/wallet.db
+    restart: unless-stopped
+
+volumes:
+  wallet-data:
+    driver: local
+    # To use a specific host path instead:
+    # driver_opts:
+    #   type: none
+    #   o: bind
+    #   device: /path/to/your/data
