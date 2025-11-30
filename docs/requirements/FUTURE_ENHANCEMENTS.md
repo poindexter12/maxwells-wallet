@@ -10,18 +10,18 @@ Ideas for future versions beyond v0.
 - Auto-detect more format types
 - Bank-specific merchant cleaning rules
 
-### Budget Tracking
-- Set monthly budgets per category
-- Track actual vs budget
-- Alert when approaching budget limit
-- Rollover unused budget
-- Yearly budget planning
+### Budget Tracking ✅ (Completed v0.3)
+- ✅ Set monthly budgets per bucket, occasion, or account
+- ✅ Track actual vs budget with status indicators
+- ✅ Alert when approaching budget limit (80%/100% thresholds)
+- Rollover unused budget (field exists, logic pending)
+- Yearly budget planning (yearly period supported, yearly status endpoint pending)
 
-### Recurring Transactions
-- Detect recurring patterns (subscriptions, bills)
-- Mark transactions as recurring
-- Predict future recurring transactions
-- Alert on missing expected transactions
+### Recurring Transactions ✅ (Completed v0.3)
+- ✅ Detect recurring patterns (subscriptions, bills)
+- ✅ Mark transactions as recurring
+- ✅ Predict future recurring transactions
+- ✅ Alert on missing expected transactions
 
 ### Receipt Management
 - Upload receipt images
@@ -215,14 +215,14 @@ Ideas for future versions beyond v0.
 - ✅ Recurring transaction detection (statistical pattern detection)
 - ✅ Category rules engine (pattern-based auto-categorization)
 
-### v0.4 (Planned - Active Backlog)
+### v0.4 (In Progress)
 
-See detailed specs below in **Active Backlog** section.
-
-1. **Multi-File Import** - Batch upload multiple CSVs at once
-2. **Quicken File Import** - Support QIF/QFX formats
-3. **Credit Card Account Support** - Account registry, payment matching, transfers
-4. **Transaction Hashing** - Content-based deduplication for reliable import
+1. ✅ **Multi-File Import** - Batch upload multiple CSVs at once (PR #7)
+2. ✅ **Transaction Hashing** - Content-based deduplication for reliable import
+3. ✅ **Multi-Namespace Budgets** - Budgets for buckets, occasions, and accounts (PR #10)
+4. **Transfer Detection** - Auto-detect CC payments, internal transfers
+5. **Merchant Aliases** - Map variations to canonical names
+6. **Additional Account Types** - Venmo, HSA, Investment (liquid) support
 
 ### v0.5+ (Future Ideas)
 - Bank integration (Plaid) for automatic sync
@@ -235,67 +235,19 @@ See detailed specs below in **Active Backlog** section.
 
 ## Active Backlog (v0.4)
 
-Detailed specifications for the next three features. Implement in order.
+Detailed specifications for upcoming features.
 
 ---
 
-### Backlog Item 1: Multi-File Import
+### ~~Backlog Item 1: Multi-File Import~~ ✅ COMPLETED (PR #7)
 
-**Priority**: High | **Complexity**: Medium | **Status**: Ready
+Implemented with cross-file duplicate detection via content hashing.
 
-#### Problem
-Users must import one CSV at a time. Tedious when downloading statements from multiple accounts or date ranges.
+---
 
-#### Requirements
+### ~~Backlog Item 4: Transaction Hashing~~ ✅ COMPLETED
 
-**FR-MFI-001: Batch File Upload**
-- Accept multiple files in single upload (up to 20 files, 10MB total)
-- Support mixed formats in same batch (e.g., 3 BOFA + 2 AMEX files)
-- Validate all files before processing any
-
-**FR-MFI-002: Per-File Preview**
-- Show preview for each file: detected format, transaction count, date range, account source
-- Allow user to exclude specific files before import
-- Allow per-file account source override
-
-**FR-MFI-003: Batch Import Execution**
-- Process files sequentially to handle cross-file duplicates
-- Aggregate results: total imported, duplicates (per-file and cross-file), errors
-- Continue on non-critical errors, report at end
-
-**FR-MFI-004: Progress Tracking**
-- Progress indicator during batch import
-- Per-file status: pending, processing, complete, error
-
-#### Technical Design
-
-**Backend Endpoints:**
-```
-POST /api/v1/import/batch/preview
-  - Accepts: multipart/form-data with multiple files
-  - Returns: Array of preview results per file
-
-POST /api/v1/import/batch/confirm
-  - Accepts: { files: [{ file_id, account_source, include: bool }] }
-  - Returns: Aggregate import results
-```
-
-**Implementation Notes:**
-- Store uploaded files temporarily with UUIDs during preview phase
-- Cross-file deduplication: maintain seen transactions set across files
-- Process in date order (oldest file first) for consistent duplicate detection
-
-**Frontend Changes:**
-- Multi-file dropzone component
-- File list with individual previews and checkboxes
-- Batch progress modal
-
-#### Acceptance Criteria
-- [ ] Can upload 5+ CSV files simultaneously
-- [ ] Each file shows individual preview with format detection
-- [ ] Can exclude specific files before confirming
-- [ ] Cross-file duplicates detected and reported
-- [ ] Clear aggregate summary after import completes
+Content-based SHA256 hashing implemented. All transactions get `content_hash` on import.
 
 ---
 
@@ -468,104 +420,262 @@ POST /api/v1/transactions/mark-transfer
 
 ---
 
-### Backlog Item 4: Transaction Hashing (Deduplication)
+### Backlog Item 4: Transfer Detection
 
-**Priority**: High | **Complexity**: Low-Medium | **Status**: Ready
+**Priority**: High | **Complexity**: Medium | **Status**: Ready
 
 #### Problem
-Current deduplication uses `date + amount + reference_id` matching, which is fragile:
-- BOFA generates weak reference IDs (`bofa_{date}_{amount}`)
-- Re-importing same file can create duplicates if reference_id changes
-- No way to detect "same transaction, different source file"
-
-#### Solution
-Hash the immutable content of each transaction and store it. On import, compute hash first and skip if exists.
+Credit card payments, bank-to-bank transfers, and other internal movements appear as expenses in spending reports. This inflates spending totals and distorts budget tracking.
 
 #### Requirements
 
-**FR-TXH-001: Transaction Content Hash**
-- Compute SHA256 hash from: `date + amount + description + account_source`
-- Store hash in new `content_hash` field on Transaction model
-- Hash computed at import time, immutable after creation
+**FR-TXF-001: Transfer Flag**
+- Add `is_transfer: bool` field to Transaction model
+- Transfers excluded from spending calculations (budgets, reports, analytics)
+- Transfers still visible in transaction list with visual indicator
 
-**FR-TXH-002: Import Deduplication**
-- Before creating transaction, check if `content_hash` exists in DB
-- If exists: skip and count as duplicate
-- If not: create transaction with computed hash
-- Works across files, accounts, and import sessions
+**FR-TXF-002: Auto-Detection Rules**
+- Detect likely transfers using patterns:
+  - Description contains: "PAYMENT", "AUTOPAY", "TRANSFER", "PMT", "XFER"
+  - Merchant matches credit card issuer (e.g., "AMEX AUTOPAY" from checking)
+  - Amount matches a recent credit card balance
+- Flag as "suggested transfer" for user confirmation
 
-**FR-TXH-003: Duplicate Detection API**
-- `GET /api/v1/transactions/duplicates` - Find potential duplicates
-- Useful for manual review of edge cases (same hash, different files)
+**FR-TXF-003: Manual Transfer Marking**
+- Bulk action: "Mark as Transfer" on transaction list
+- Single transaction toggle in edit modal
+- Link paired transactions (payment from checking ↔ payment received on CC)
 
-**FR-TXH-004: Migration**
-- Backfill `content_hash` for existing transactions
-- Handle legacy transactions without hash gracefully
+**FR-TXF-004: Transfer Analytics**
+- Dashboard widget: "Internal Transfers This Month"
+- Filter option: Show/hide transfers in transaction list
 
 #### Technical Design
 
-**Hash Function:**
-```python
-import hashlib
-
-def compute_transaction_hash(date: date, amount: float, description: str, account_source: str) -> str:
-    """Compute deterministic hash for transaction deduplication."""
-    # Normalize inputs
-    content = f"{date.isoformat()}|{amount:.2f}|{description.strip().upper()}|{account_source.strip().upper()}"
-    return hashlib.sha256(content.encode()).hexdigest()
-```
-
-**Model Change:**
+**Model Changes:**
 ```python
 class Transaction(BaseModel, table=True):
     # ... existing fields ...
-    content_hash: Optional[str] = Field(default=None, index=True, unique=True)
+    is_transfer: bool = Field(default=False, index=True)
+    linked_transaction_id: Optional[int] = Field(default=None, foreign_key="transactions.id")
 ```
 
-**Import Flow Change:**
+**Detection Patterns:**
 ```python
-# In confirm_import()
-for txn_data in transactions:
-    content_hash = compute_transaction_hash(
-        txn_data['date'],
-        txn_data['amount'],
-        txn_data['description'],
-        txn_data['account_source']
-    )
-
-    # Check for existing
-    existing = await session.execute(
-        select(Transaction).where(Transaction.content_hash == content_hash)
-    )
-    if existing.scalar_one_or_none():
-        duplicates += 1
-        continue
-
-    # Create with hash
-    txn_data['content_hash'] = content_hash
-    # ... create transaction ...
+TRANSFER_PATTERNS = [
+    r"(?i)payment.*thank",
+    r"(?i)autopay",
+    r"(?i)online\s*(pmt|payment)",
+    r"(?i)transfer\s*(from|to)",
+    r"(?i)xfer",
+    r"(?i)ach.*payment",
+]
 ```
 
-**Migration Script:**
-```python
-# Backfill existing transactions
-for txn in all_transactions:
-    if not txn.content_hash:
-        txn.content_hash = compute_transaction_hash(
-            txn.date, txn.amount, txn.description, txn.account_source
-        )
+**New Endpoints:**
 ```
-
-#### Relation to Anonymization Script
-The anonymization manifest tracks *file-level* hashes for a different purpose:
-- **File hash**: "Has this source file changed?" → Skip unchanged files (performance)
-- **Transaction hash**: "Has this transaction been imported?" → Prevent duplicates (data integrity)
-
-These are complementary. The anonymization script could optionally compute transaction hashes for the output manifest, enabling cross-reference between raw and anonymized data, but this is not required.
+POST /api/v1/transactions/mark-transfer
+  - Body: { transaction_ids: [int], is_transfer: bool }
+POST /api/v1/transactions/{id}/link
+  - Body: { linked_transaction_id: int }
+GET /api/v1/transactions/transfer-suggestions
+  - Returns: Transactions that look like transfers but aren't marked
+```
 
 #### Acceptance Criteria
-- [ ] All new transactions get `content_hash` on import
-- [ ] Duplicate imports are detected and skipped
-- [ ] Existing transactions are backfilled with hashes
-- [ ] Deduplication works across different import sessions
-- [ ] Hash collision handling (log warning, allow manual review)
+- [ ] Transactions can be marked as transfers
+- [ ] Transfers excluded from budget calculations
+- [ ] Transfers excluded from spending reports
+- [ ] Auto-detection suggests likely transfers on import
+- [ ] Paired transactions can be linked
+
+---
+
+### Backlog Item 5: Merchant Aliases
+
+**Priority**: Medium | **Complexity**: Low-Medium | **Status**: Ready
+
+#### Problem
+Same merchant appears with different names across transactions:
+- "AMZN MKTP US", "AMAZON.COM", "Amazon Prime" → all Amazon
+- "STARBUCKS #12345", "STARBUCKS STORE" → both Starbucks
+- "SQ *COFFEE SHOP", "SQUARE *COFFEE SHOP" → same local shop
+
+This makes reports fragmented and harder to understand.
+
+#### Requirements
+
+**FR-MA-001: Merchant Alias Table**
+- Create aliases mapping raw merchant strings to canonical names
+- Apply aliases to `merchant` field during import
+- Preserve original in `description` field
+
+**FR-MA-002: Alias Management UI**
+- List all unique merchants with transaction counts
+- "Create Alias" action: select multiple merchants → combine under one name
+- Edit/delete existing aliases
+
+**FR-MA-003: Auto-Alias Suggestions**
+- Detect similar merchant names using fuzzy matching
+- Suggest: "These 3 merchants look similar. Combine them?"
+- Learn from user's alias patterns
+
+**FR-MA-004: Retroactive Application**
+- Apply new aliases to existing transactions
+- Option to preview changes before applying
+
+#### Technical Design
+
+**New Model:**
+```python
+class MerchantAlias(BaseModel, table=True):
+    __tablename__ = "merchant_aliases"
+
+    pattern: str = Field(index=True)        # Raw merchant string to match
+    canonical_name: str = Field(index=True) # Clean display name
+    match_type: str = "exact"               # "exact", "contains", "regex"
+    priority: int = 0                       # Higher = applied first
+```
+
+**New Endpoints:**
+```
+GET /api/v1/merchants
+  - Returns: Unique merchants with counts, grouped by canonical name
+GET /api/v1/merchant-aliases
+POST /api/v1/merchant-aliases
+  - Body: { patterns: [str], canonical_name: str, match_type: str }
+DELETE /api/v1/merchant-aliases/{id}
+POST /api/v1/merchant-aliases/apply
+  - Apply aliases to all existing transactions
+GET /api/v1/merchant-aliases/suggestions
+  - Returns: Groups of similar-looking merchants
+```
+
+**Fuzzy Matching:**
+- Use `rapidfuzz` library for similarity scoring
+- Threshold: 85% similarity to suggest grouping
+- Normalize: lowercase, strip whitespace, remove common suffixes (#1234, LLC, INC)
+
+#### Acceptance Criteria
+- [ ] Can create aliases mapping multiple patterns to one name
+- [ ] Aliases applied during import
+- [ ] Can retroactively apply to existing transactions
+- [ ] Similar merchants suggested for grouping
+- [ ] Reports show canonical names, not raw strings
+
+---
+
+### Backlog Item 6: Additional Account Types
+
+**Priority**: High | **Complexity**: Medium | **Status**: Ready
+
+#### Problem
+Currently only supports Bank of America and American Express CSV formats. Users need to import from:
+- **Venmo** - P2P payments, different CSV structure
+- **HSA** - Health Savings Account transactions
+- **Investment accounts** - Brokerage transactions (liquid/cash only, not holdings)
+
+#### Requirements
+
+**FR-AAT-001: Venmo CSV Parser**
+- Parse Venmo statement CSV format
+- Fields: Date, Type (Payment/Charge/Transfer), From/To, Amount, Note
+- Handle Venmo-specific patterns:
+  - Payments between users (extract friend name)
+  - Transfers to/from bank (mark as transfer)
+  - Venmo fees
+
+**FR-AAT-002: HSA CSV Parser**
+- Parse common HSA provider formats (HealthEquity, Fidelity, etc.)
+- Fields: Date, Description, Amount, Category (medical, investment, fee)
+- Tag with `bucket:healthcare` by default
+- Track contributions vs. distributions
+
+**FR-AAT-003: Investment Account Parser**
+- Parse brokerage CSV exports (Fidelity, Schwab, Vanguard)
+- **Liquid transactions only**: deposits, withdrawals, dividends, interest
+- Exclude: buy/sell trades, transfers between investment accounts
+- Fields: Date, Type, Amount, Description
+
+**FR-AAT-004: Account Type Registry**
+- Extend existing account tag system with type metadata
+- Types: `checking`, `savings`, `credit_card`, `venmo`, `hsa`, `investment`
+- Type-specific display and filtering options
+
+**FR-AAT-005: Format Auto-Detection**
+- Detect format from CSV headers and content
+- Add to existing detection logic in `csv_parser.py`
+
+#### Technical Design
+
+**New Parser Modules:**
+```
+backend/app/parsers/
+├── __init__.py
+├── base.py          # Abstract parser interface
+├── bofa.py          # Existing BOFA logic
+├── amex.py          # Existing AMEX logic
+├── venmo.py         # NEW
+├── hsa.py           # NEW
+└── investment.py    # NEW
+```
+
+**Venmo Format Example:**
+```csv
+,Datetime,Type,Status,Note,From,To,Amount (total),Amount (tip),Amount (fee),Funding Source,Destination
+,2024-01-15 14:30:00,Payment,Complete,Dinner split,Friend Name,,- $25.00,$0.00,$0.00,Venmo balance,
+```
+
+**HSA Format Example (HealthEquity):**
+```csv
+Date,Transaction,Amount,Type
+01/15/2024,PHARMACY PURCHASE,-$45.00,Medical
+01/01/2024,EMPLOYER CONTRIBUTION,$200.00,Contribution
+```
+
+**Investment Format Example (Fidelity):**
+```csv
+Run Date,Action,Symbol,Description,Quantity,Price,Amount
+01/15/2024,DIVIDEND,,QUALIFIED DIVIDEND,,$50.00
+01/10/2024,ELECTRONIC FUNDS TRANSFER,,CASH CONTRIBUTION,,$500.00
+```
+
+**Import Format Enum Updates:**
+```python
+class ImportFormatType(str, Enum):
+    bofa_bank = "bofa_bank"
+    bofa_cc = "bofa_cc"
+    amex_cc = "amex_cc"
+    venmo = "venmo"           # NEW
+    hsa_healthequity = "hsa_healthequity"  # NEW
+    hsa_fidelity = "hsa_fidelity"          # NEW
+    investment_fidelity = "investment_fidelity"  # NEW
+    investment_schwab = "investment_schwab"      # NEW
+    unknown = "unknown"
+```
+
+**Account Type Metadata:**
+```python
+# Add to Tag model or separate AccountType enum
+ACCOUNT_TYPES = {
+    "checking": {"icon": "🏦", "color": "#3b82f6"},
+    "savings": {"icon": "🐷", "color": "#22c55e"},
+    "credit_card": {"icon": "💳", "color": "#ef4444"},
+    "venmo": {"icon": "📱", "color": "#008cff"},
+    "hsa": {"icon": "🏥", "color": "#10b981"},
+    "investment": {"icon": "📈", "color": "#8b5cf6"},
+}
+```
+
+#### Open Questions
+1. Which specific HSA providers to support first? (HealthEquity most common)
+2. Which investment brokerages? (Fidelity, Schwab, Vanguard cover most users)
+3. Should Venmo transfers auto-detect linked bank accounts?
+
+#### Acceptance Criteria
+- [ ] Can import Venmo transaction CSV
+- [ ] Can import HSA transactions with healthcare bucket
+- [ ] Can import investment account liquid transactions
+- [ ] Investment buys/sells are excluded (only cash flow)
+- [ ] Account types shown with appropriate icons/colors
+- [ ] Format auto-detected from CSV structure
