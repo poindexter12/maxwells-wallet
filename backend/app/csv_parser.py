@@ -6,7 +6,7 @@ from typing import List, Dict, Tuple, Optional
 from app.models import ImportFormatType
 
 def detect_format(csv_content: str) -> ImportFormatType:
-    """Auto-detect CSV format (BofA bank, BofA CC, Amex CC)"""
+    """Auto-detect CSV format (BofA bank, BofA CC, Amex CC, Inspira HSA, Venmo)"""
     lines = csv_content.strip().split('\n')
 
     # Check first few lines for format indicators
@@ -20,6 +20,12 @@ def detect_format(csv_content: str) -> ImportFormatType:
         # BofA Credit Card has "Posted Date,Reference Number,Payee"
         if 'Posted Date' in line and 'Reference Number' in line and 'Payee' in line:
             return ImportFormatType.bofa_cc
+        # Inspira HSA has "Transaction ID" and "Transaction Type" and "Expense Category"
+        if 'Transaction ID' in line and 'Transaction Type' in line and 'Expense Category' in line:
+            return ImportFormatType.inspira_hsa
+        # Venmo has "Account Statement" header and specific columns
+        if 'Account Statement' in line or ('ID' in line and 'Datetime' in line and 'From' in line and 'To' in line):
+            return ImportFormatType.venmo
 
     return ImportFormatType.unknown
 
@@ -226,6 +232,162 @@ def map_amex_category(amex_cat: str) -> Optional[str]:
 
     return None
 
+
+def parse_inspira_hsa_csv(csv_content: str, account_source: str) -> List[Dict]:
+    """Parse Inspira HSA CSV format
+
+    Headers: "Transaction ID","Transaction Type","Origination Date","Posted Date",
+             "Description","Amount","Expense Category","Expenses for","Contribution year",
+             "Document attached","Trade Details","Investment rebalance","Is Investment Trans Type",
+             "Verification Status"
+
+    Amount format: "$500.00" or "($29.44)" for negative
+    Date format: MM/DD/YYYY
+    """
+    transactions = []
+    reader = csv.DictReader(io.StringIO(csv_content))
+
+    for row in reader:
+        trans_id = row.get('Transaction ID', '').strip()
+        trans_type = row.get('Transaction Type', '').strip()
+        date_str = row.get('Posted Date', '') or row.get('Origination Date', '')
+        date_str = date_str.strip()
+        description = row.get('Description', '').strip()
+        amount_str = row.get('Amount', '').strip()
+        expense_category = row.get('Expense Category', '').strip()
+
+        if not date_str or not amount_str:
+            continue
+
+        # Parse amount: "$500.00" or "($29.44)" for negative
+        # Remove $ and handle parentheses for negative
+        amount_clean = amount_str.replace('$', '').replace(',', '').strip()
+        is_negative = amount_clean.startswith('(') and amount_clean.endswith(')')
+        if is_negative:
+            amount_clean = amount_clean[1:-1]  # Remove parentheses
+        amount = float(amount_clean)
+        if is_negative:
+            amount = -amount
+
+        # Parse date (MM/DD/YYYY)
+        try:
+            trans_date = datetime.strptime(date_str, '%m/%d/%Y').date()
+        except ValueError:
+            continue
+
+        # Build description from transaction type if description is empty
+        full_description = description if description else trans_type
+
+        # Extract merchant from description or use transaction type
+        merchant = description.split()[0] if description and description.split() else trans_type.split()[0] if trans_type else "HSA"
+
+        transactions.append({
+            'date': trans_date,
+            'amount': amount,
+            'description': full_description,
+            'merchant': merchant,
+            'account_source': account_source,
+            'card_member': None,
+            'reference_id': trans_id if trans_id else f"inspira_{date_str}_{amount}",
+            'suggested_category': 'Healthcare' if expense_category == 'Medical' else None,
+        })
+
+    return transactions
+
+
+def parse_venmo_csv(csv_content: str, account_source: str) -> List[Dict]:
+    """Parse Venmo CSV format
+
+    Format has header rows:
+    Row 1: "Account Statement - (@username) ,,,..."
+    Row 2: "Account Activity,,,..."
+    Row 3: ",ID,Datetime,Type,Status,Note,From,To,Amount (total),..."
+    Row 4: Balance row (skip)
+    Row 5+: Transaction data
+
+    Amount format: "+ $20.00" or "- $18.00"
+    Datetime format: ISO "2025-04-04T22:01:03"
+    """
+    transactions = []
+    lines = csv_content.strip().split('\n')
+
+    # Find the header row (contains "ID,Datetime,Type")
+    header_idx = None
+    for i, line in enumerate(lines):
+        if 'ID' in line and 'Datetime' in line and 'Type' in line:
+            header_idx = i
+            break
+
+    if header_idx is None:
+        return []
+
+    # Parse from header row forward
+    transaction_content = '\n'.join(lines[header_idx:])
+    reader = csv.DictReader(io.StringIO(transaction_content))
+
+    for row in reader:
+        trans_id = row.get('ID', '').strip()
+        datetime_str = row.get('Datetime', '').strip()
+        trans_type = row.get('Type', '').strip()
+        status = row.get('Status', '').strip()
+        note = row.get('Note', '').strip()
+        from_user = row.get('From', '').strip()
+        to_user = row.get('To', '').strip()
+        amount_str = row.get('Amount (total)', '').strip()
+
+        # Skip rows without transaction data (like balance rows)
+        if not trans_id or not datetime_str or not amount_str:
+            continue
+
+        # Skip incomplete/failed transactions
+        if status and status.lower() != 'complete':
+            continue
+
+        # Parse amount: "+ $20.00" or "- $18.00"
+        amount_clean = amount_str.replace('$', '').replace(',', '').replace(' ', '').strip()
+        if amount_clean.startswith('+'):
+            amount = float(amount_clean[1:])  # Income (received money)
+        elif amount_clean.startswith('-'):
+            amount = -float(amount_clean[1:])  # Expense (sent money)
+        else:
+            try:
+                amount = float(amount_clean)
+            except ValueError:
+                continue
+
+        # Parse datetime (ISO format: 2025-04-04T22:01:03)
+        try:
+            trans_datetime = datetime.fromisoformat(datetime_str)
+            trans_date = trans_datetime.date()
+        except ValueError:
+            continue
+
+        # Build description from note and transaction type
+        if note:
+            description = note
+        else:
+            description = f"{trans_type}: {from_user} -> {to_user}"
+
+        # Determine merchant/counterparty
+        if amount > 0:
+            # Received money - merchant is who sent it
+            merchant = from_user if from_user else "Venmo"
+        else:
+            # Sent money - merchant is who received it
+            merchant = to_user if to_user else "Venmo"
+
+        transactions.append({
+            'date': trans_date,
+            'amount': amount,
+            'description': description,
+            'merchant': merchant,
+            'account_source': account_source,
+            'card_member': None,
+            'reference_id': trans_id if trans_id else f"venmo_{datetime_str}_{amount}",
+        })
+
+    return transactions
+
 def parse_csv(csv_content: str, account_source: Optional[str] = None,
               format_hint: Optional[ImportFormatType] = None) -> Tuple[List[Dict], ImportFormatType]:
     """
@@ -255,6 +417,14 @@ def parse_csv(csv_content: str, account_source: Optional[str] = None,
         transactions = parse_bofa_cc_csv(csv_content, account_source)
     elif format_type == ImportFormatType.amex_cc:
         transactions = parse_amex_csv(csv_content)
+    elif format_type == ImportFormatType.inspira_hsa:
+        if not account_source:
+            account_source = "Inspira-HSA"
+        transactions = parse_inspira_hsa_csv(csv_content, account_source)
+    elif format_type == ImportFormatType.venmo:
+        if not account_source:
+            account_source = "Venmo"
+        transactions = parse_venmo_csv(csv_content, account_source)
     else:
         # Unknown format
         transactions = []

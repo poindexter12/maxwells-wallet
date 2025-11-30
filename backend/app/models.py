@@ -17,6 +17,8 @@ class ImportFormatType(str, Enum):
     bofa_bank = "bofa_bank"   # BofA Checking (Date,Description,Amount,Running Bal.)
     bofa_cc = "bofa_cc"       # BofA Credit Card (Posted Date,Reference Number,Payee,Address,Amount)
     amex_cc = "amex_cc"       # Amex Credit Card (Date,Description,Amount,Card Member,Account #)
+    inspira_hsa = "inspira_hsa"  # Inspira HSA (Transaction ID,Transaction Type,Origination Date,...)
+    venmo = "venmo"           # Venmo (ID,Datetime,Type,Status,Note,From,To,Amount...)
     unknown = "unknown"
 
 class BaseModel(SQLModel):
