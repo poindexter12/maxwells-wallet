@@ -91,6 +91,8 @@ function TransactionsContent() {
     startDate: '',
     endDate: ''
   })
+  // Separate state for search input to prevent refetch on every keystroke
+  const [searchInput, setSearchInput] = useState('')
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [showAccountDropdown, setShowAccountDropdown] = useState(false)
   const [addingTagTo, setAddingTagTo] = useState<number | null>(null)
@@ -151,6 +153,7 @@ function TransactionsContent() {
       startDate,
       endDate
     })
+    setSearchInput(search) // Sync search input with URL param
     setFiltersInitialized(true)
   }, [searchParams])
 
@@ -571,9 +574,13 @@ function TransactionsContent() {
             type="text"
             placeholder="Search merchant or description..."
             className="input"
-            value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-            onKeyDown={(e) => e.key === 'Enter' && fetchTransactions()}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setFilters({ ...filters, search: searchInput })
+              }
+            }}
           />
           <select
             className="input"
@@ -691,7 +698,7 @@ function TransactionsContent() {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={fetchTransactions}
+              onClick={() => setFilters({ ...filters, search: searchInput })}
               className="flex-1 btn-primary"
             >
               Search
@@ -756,6 +763,7 @@ function TransactionsContent() {
               />
               <button
                 onClick={() => {
+                  setSearchInput('')
                   setFilters({
                     search: '',
                     bucket: '',

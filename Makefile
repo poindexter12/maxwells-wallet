@@ -272,11 +272,16 @@ check-deps: ## Check if required dependencies are installed
 # Docker targets
 # =============================================================================
 
-.PHONY: docker-build docker-up docker-down docker-logs docker-shell
+.PHONY: docker-build docker-build-force docker-up docker-down docker-logs docker-shell
 
 docker-build: ## Build Docker image
 	@echo "$(BLUE)Building Docker image...$(NC)"
 	docker compose build
+	@echo "$(GREEN)✓ Docker image built$(NC)"
+
+docker-build-force: ## Build Docker image (no cache)
+	@echo "$(BLUE)Building Docker image (no cache)...$(NC)"
+	docker compose build --no-cache
 	@echo "$(GREEN)✓ Docker image built$(NC)"
 
 docker-up: ## Start Docker container
