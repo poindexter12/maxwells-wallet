@@ -32,6 +32,8 @@ TRANSFER_PATTERNS = [
     r"(?i)internal\s*transfer",
     r"(?i)funds\s*transfer",
     r"(?i)mobile\s*deposit",  # Could be transfer from another account
+    r"(?i)paypal\s*(transfer|instant|xfer)",
+    r"(?i)paypal.*bank",
 ]
 
 # Compiled patterns for efficiency
