@@ -46,11 +46,12 @@ async def monthly_summary(
     else:
         end_date = date(year, month + 1, 1)
 
-    # Get all transactions for the month
+    # Get all transactions for the month (excluding transfers)
     result = await session.execute(
         select(Transaction).where(
             Transaction.date >= start_date,
-            Transaction.date < end_date
+            Transaction.date < end_date,
+            Transaction.is_transfer == False  # Exclude transfers from spending reports
         )
     )
     transactions = result.scalars().all()
@@ -126,11 +127,12 @@ async def spending_trends(
     session: AsyncSession = Depends(get_session)
 ):
     """Get spending trends over time"""
-    # Get transactions in date range
+    # Get transactions in date range (excluding transfers)
     result = await session.execute(
         select(Transaction).where(
             Transaction.date >= start_date,
-            Transaction.date <= end_date
+            Transaction.date <= end_date,
+            Transaction.is_transfer == False  # Exclude transfers
         ).order_by(Transaction.date)
     )
     transactions = result.scalars().all()
@@ -241,10 +243,11 @@ async def top_merchants(
     else:  # all_time
         start_date = date(2000, 1, 1)
 
-    # Get transactions
+    # Get transactions (excluding transfers)
     query = select(Transaction).where(
         Transaction.date >= start_date,
-        Transaction.amount < 0  # Only expenses
+        Transaction.amount < 0,  # Only expenses
+        Transaction.is_transfer == False  # Exclude transfers
     )
     result = await session.execute(query)
     transactions = result.scalars().all()
@@ -276,7 +279,9 @@ async def account_summary(
     session: AsyncSession = Depends(get_session)
 ):
     """Get summary by account"""
-    result = await session.execute(select(Transaction))
+    result = await session.execute(
+        select(Transaction).where(Transaction.is_transfer == False)
+    )
     transactions = result.scalars().all()
 
     account_data = defaultdict(lambda: {'income': 0, 'expenses': 0, 'net': 0, 'count': 0})
@@ -308,7 +313,7 @@ async def bucket_summary(
     session: AsyncSession = Depends(get_session)
 ):
     """Get spending summary by bucket tag"""
-    query = select(Transaction)
+    query = select(Transaction).where(Transaction.is_transfer == False)
 
     if start_date:
         query = query.where(Transaction.date >= start_date)
@@ -384,7 +389,8 @@ async def month_over_month_comparison(
         result = await session.execute(
             select(Transaction).where(
                 Transaction.date >= start_date,
-                Transaction.date < end_date
+                Transaction.date < end_date,
+                Transaction.is_transfer == False  # Exclude transfers
             )
         )
         return result.scalars().all()
@@ -524,11 +530,12 @@ async def spending_velocity(
         days_elapsed = today.day
         analysis_end_date = today
 
-    # Get transactions for the month
+    # Get transactions for the month (excluding transfers)
     result = await session.execute(
         select(Transaction).where(
             Transaction.date >= start_date,
-            Transaction.date < end_date
+            Transaction.date < end_date,
+            Transaction.is_transfer == False  # Exclude transfers
         )
     )
     transactions = result.scalars().all()
@@ -562,7 +569,8 @@ async def spending_velocity(
     prev_result = await session.execute(
         select(Transaction).where(
             Transaction.date >= prev_start,
-            Transaction.date < prev_end
+            Transaction.date < prev_end,
+            Transaction.is_transfer == False  # Exclude transfers
         )
     )
     prev_transactions = prev_result.scalars().all()
@@ -635,7 +643,8 @@ async def detect_anomalies(
     result = await session.execute(
         select(Transaction).where(
             Transaction.date >= start_date,
-            Transaction.date < end_date
+            Transaction.date < end_date,
+            Transaction.is_transfer == False  # Exclude transfers
         )
     )
     current_transactions = result.scalars().all()
@@ -647,7 +656,8 @@ async def detect_anomalies(
     baseline_result = await session.execute(
         select(Transaction).where(
             Transaction.date >= lookback_start,
-            Transaction.date < lookback_end
+            Transaction.date < lookback_end,
+            Transaction.is_transfer == False  # Exclude transfers
         )
     )
     baseline_transactions = baseline_result.scalars().all()

@@ -164,6 +164,7 @@ async def get_spending_for_tag(
         return 0.0
 
     # Account tags use FK relationship, buckets/occasions use M2M junction table
+    # Exclude transfers from spending calculations
     if namespace == "account":
         # Accounts use direct FK (account_tag_id) on Transaction
         spending_result = await session.execute(
@@ -172,7 +173,8 @@ async def get_spending_for_tag(
                 Transaction.account_tag_id == tag.id,
                 Transaction.date >= start_date,
                 Transaction.date <= end_date,
-                Transaction.amount < 0  # Only expenses
+                Transaction.amount < 0,  # Only expenses
+                Transaction.is_transfer == False  # Exclude transfers
             )
         )
     else:
@@ -184,7 +186,8 @@ async def get_spending_for_tag(
                 TransactionTag.tag_id == tag.id,
                 Transaction.date >= start_date,
                 Transaction.date <= end_date,
-                Transaction.amount < 0  # Only expenses
+                Transaction.amount < 0,  # Only expenses
+                Transaction.is_transfer == False  # Exclude transfers
             )
         )
 

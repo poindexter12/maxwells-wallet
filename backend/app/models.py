@@ -82,11 +82,16 @@ class Transaction(BaseModel, table=True):
     reference_id: Optional[str] = Field(default=None, index=True)  # original bank reference/transaction ID
     import_session_id: Optional[int] = Field(default=None, foreign_key="import_sessions.id", index=True)
     content_hash: Optional[str] = Field(default=None, index=True)  # SHA256 hash for reliable deduplication
+    is_transfer: bool = Field(default=False, index=True)  # True if internal transfer (excluded from spending)
+    linked_transaction_id: Optional[int] = Field(default=None, foreign_key="transactions.id", index=True)  # Link paired transfers
 
     # Relationships
     tags: List["Tag"] = Relationship(back_populates="transactions", link_model=TransactionTag)
     account_tag: Optional["Tag"] = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[Transaction.account_tag_id]"}
+    )
+    linked_transaction: Optional["Transaction"] = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[Transaction.linked_transaction_id]", "remote_side": "[Transaction.id]"}
     )
 
 class TransactionCreate(SQLModel):
@@ -101,6 +106,8 @@ class TransactionCreate(SQLModel):
     notes: Optional[str] = None
     reference_id: Optional[str] = None
     content_hash: Optional[str] = None  # Optional - auto-generated if not provided
+    is_transfer: bool = False
+    linked_transaction_id: Optional[int] = None
 
 class TransactionUpdate(SQLModel):
     date: Optional[date_type] = None
@@ -115,6 +122,8 @@ class TransactionUpdate(SQLModel):
     notes: Optional[str] = None
     reference_id: Optional[str] = None
     content_hash: Optional[str] = None
+    is_transfer: Optional[bool] = None
+    linked_transaction_id: Optional[int] = None
 
 class ImportFormat(BaseModel, table=True):
     """Saved import format preferences"""

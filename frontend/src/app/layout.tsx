@@ -42,6 +42,9 @@ export default function RootLayout({
                   <Link href="/budgets" className="nav-link inline-flex items-center px-1 pt-1">
                     Budgets
                   </Link>
+                  <Link href="/transfers" className="nav-link inline-flex items-center px-1 pt-1">
+                    Transfers
+                  </Link>
                   <Link href="/rules" className="nav-link inline-flex items-center px-1 pt-1">
                     Rules
                   </Link>
