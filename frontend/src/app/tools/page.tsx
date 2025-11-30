@@ -4,7 +4,30 @@ import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
 
-type ToolsTab = 'transfers' | 'rules'
+type ToolsTab = 'transfers' | 'rules' | 'merchants'
+
+// Merchant types
+interface Merchant {
+  name: string
+  transaction_count: number
+}
+
+interface MerchantAlias {
+  id: number
+  pattern: string
+  canonical_name: string
+  match_type: 'exact' | 'contains' | 'regex'
+  priority: number
+  match_count: number
+}
+
+interface AliasPreviewUpdate {
+  transaction_id: number
+  description: string
+  old_merchant: string | null
+  new_merchant: string
+  matched_pattern: string
+}
 
 // Transfer types
 interface TransferSuggestion {
@@ -82,11 +105,22 @@ export default function ToolsPage() {
           >
             Rules
           </button>
+          <button
+            onClick={() => setActiveTab('merchants')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'merchants'
+                ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
+                : 'border-transparent text-theme-muted hover:text-theme hover:border-[var(--color-border-strong)]'
+            }`}
+          >
+            Merchants
+          </button>
         </nav>
       </div>
 
       {activeTab === 'transfers' && <TransfersContent />}
       {activeTab === 'rules' && <RulesContent />}
+      {activeTab === 'merchants' && <MerchantsContent />}
     </div>
   )
 }
@@ -471,6 +505,308 @@ function RulesContent() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function MerchantsContent() {
+  const [merchants, setMerchants] = useState<Merchant[]>([])
+  const [aliases, setAliases] = useState<MerchantAlias[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editingAlias, setEditingAlias] = useState<MerchantAlias | null>(null)
+  const [aliasForm, setAliasForm] = useState<{ pattern: string; canonical_name: string; match_type: 'exact' | 'contains' | 'regex'; priority: number }>({
+    pattern: '', canonical_name: '', match_type: 'contains', priority: 0
+  })
+  const [previewResults, setPreviewResults] = useState<AliasPreviewUpdate[] | null>(null)
+  const [applying, setApplying] = useState(false)
+  const [searchFilter, setSearchFilter] = useState('')
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  async function fetchData() {
+    try {
+      const [merchantsRes, aliasesRes] = await Promise.all([
+        fetch('/api/v1/merchants?limit=200'),
+        fetch('/api/v1/merchants/aliases')
+      ])
+      const merchantsData = await merchantsRes.json()
+      const aliasesData = await aliasesRes.json()
+      setMerchants(merchantsData.merchants || [])
+      setAliases(aliasesData || [])
+    } catch (err) {
+      console.error('Error fetching data:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function resetForm() {
+    setAliasForm({ pattern: '', canonical_name: '', match_type: 'contains', priority: 0 })
+    setEditingAlias(null)
+    setShowForm(false)
+  }
+
+  async function handleSaveAlias(e: React.FormEvent) {
+    e.preventDefault()
+    try {
+      if (editingAlias) {
+        await fetch(`/api/v1/merchants/aliases/${editingAlias.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(aliasForm)
+        })
+      } else {
+        await fetch('/api/v1/merchants/aliases', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(aliasForm)
+        })
+      }
+      resetForm()
+      await fetchData()
+    } catch (err) {
+      console.error('Error saving alias:', err)
+    }
+  }
+
+  async function handleDeleteAlias(id: number) {
+    if (!confirm('Delete this alias?')) return
+    await fetch(`/api/v1/merchants/aliases/${id}`, { method: 'DELETE' })
+    await fetchData()
+  }
+
+  async function handlePreview() {
+    setApplying(true)
+    try {
+      const res = await fetch('/api/v1/merchants/aliases/apply?dry_run=true', { method: 'POST' })
+      const data = await res.json()
+      setPreviewResults(data.updates || [])
+    } catch (err) {
+      console.error('Error previewing:', err)
+    } finally {
+      setApplying(false)
+    }
+  }
+
+  async function handleApply() {
+    if (!confirm(`Apply aliases to ${previewResults?.length || 0} transactions?`)) return
+    setApplying(true)
+    try {
+      await fetch('/api/v1/merchants/aliases/apply?dry_run=false', { method: 'POST' })
+      setPreviewResults(null)
+      await fetchData()
+    } catch (err) {
+      console.error('Error applying:', err)
+    } finally {
+      setApplying(false)
+    }
+  }
+
+  function startCreateFromMerchant(merchantName: string) {
+    setAliasForm({ pattern: merchantName, canonical_name: merchantName, match_type: 'contains', priority: 0 })
+    setEditingAlias(null)
+    setShowForm(true)
+  }
+
+  const filteredMerchants = merchants.filter(m =>
+    m.name.toLowerCase().includes(searchFilter.toLowerCase())
+  )
+
+  if (loading) return <div className="text-center py-12 text-theme-muted">Loading...</div>
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-theme-muted">Normalize messy bank merchant names into clean, consistent names</p>
+        <div className="flex gap-2">
+          <button
+            onClick={handlePreview}
+            disabled={applying || aliases.length === 0}
+            className="px-3 py-1.5 text-sm border border-theme rounded-md hover:bg-theme-elevated disabled:opacity-50"
+          >
+            {applying ? 'Checking...' : 'Preview Changes'}
+          </button>
+          <button
+            onClick={() => { setEditingAlias(null); resetForm(); setShowForm(true) }}
+            className="btn-primary text-sm"
+          >
+            + New Alias
+          </button>
+        </div>
+      </div>
+
+      {/* Preview Results */}
+      {previewResults && previewResults.length > 0 && (
+        <div className="card p-4 border-2 border-blue-500">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-semibold text-theme">Preview: {previewResults.length} transactions would be updated</h3>
+            <div className="flex gap-2">
+              <button onClick={() => setPreviewResults(null)} className="px-3 py-1 text-sm border border-theme rounded">
+                Dismiss
+              </button>
+              <button onClick={handleApply} disabled={applying} className="btn-primary text-sm disabled:opacity-50">
+                {applying ? 'Applying...' : 'Apply Changes'}
+              </button>
+            </div>
+          </div>
+          <div className="max-h-48 overflow-y-auto divide-y divide-theme">
+            {previewResults.slice(0, 20).map((u, i) => (
+              <div key={i} className="py-2 text-sm">
+                <span className="text-theme-muted">{u.old_merchant || '(none)'}</span>
+                <span className="mx-2">→</span>
+                <span className="text-theme font-medium">{u.new_merchant}</span>
+                <span className="ml-2 text-xs text-theme-muted">({u.matched_pattern})</span>
+              </div>
+            ))}
+            {previewResults.length > 20 && (
+              <div className="py-2 text-sm text-theme-muted">...and {previewResults.length - 20} more</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {previewResults && previewResults.length === 0 && (
+        <div className="card p-4 bg-theme-elevated">
+          <p className="text-sm text-theme-muted">No transactions would be updated. All merchants already match aliases.</p>
+          <button onClick={() => setPreviewResults(null)} className="mt-2 text-sm text-theme-muted hover:text-theme">Dismiss</button>
+        </div>
+      )}
+
+      {/* Form */}
+      {showForm && (
+        <div className="card p-4">
+          <form onSubmit={handleSaveAlias} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-theme mb-1">Pattern to Match</label>
+                <input
+                  type="text"
+                  value={aliasForm.pattern}
+                  onChange={(e) => setAliasForm({ ...aliasForm, pattern: e.target.value })}
+                  placeholder="e.g., AMZN MKTP"
+                  className="w-full px-3 py-2 bg-theme border border-theme rounded-md"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-theme mb-1">Display As</label>
+                <input
+                  type="text"
+                  value={aliasForm.canonical_name}
+                  onChange={(e) => setAliasForm({ ...aliasForm, canonical_name: e.target.value })}
+                  placeholder="e.g., Amazon"
+                  className="w-full px-3 py-2 bg-theme border border-theme rounded-md"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-theme mb-1">Match Type</label>
+                <select
+                  value={aliasForm.match_type}
+                  onChange={(e) => setAliasForm({ ...aliasForm, match_type: e.target.value as 'exact' | 'contains' | 'regex' })}
+                  className="w-full px-3 py-2 bg-theme border border-theme rounded-md"
+                >
+                  <option value="contains">Contains</option>
+                  <option value="exact">Exact Match</option>
+                  <option value="regex">Regex</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-theme mb-1">Priority</label>
+                <input
+                  type="number"
+                  value={aliasForm.priority}
+                  onChange={(e) => setAliasForm({ ...aliasForm, priority: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 bg-theme border border-theme rounded-md"
+                />
+                <p className="text-xs text-theme-muted mt-1">Higher = checked first</p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={resetForm} className="px-4 py-2 border border-theme rounded-md">Cancel</button>
+              <button type="submit" className="btn-primary">{editingAlias ? 'Update' : 'Create'}</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-6">
+        {/* Aliases */}
+        <div className="card">
+          <div className="p-4 border-b border-theme">
+            <h3 className="font-semibold text-theme">Aliases ({aliases.length})</h3>
+          </div>
+          {aliases.length === 0 ? (
+            <div className="p-8 text-center text-theme-muted text-sm">No aliases yet</div>
+          ) : (
+            <div className="divide-y divide-theme max-h-[400px] overflow-y-auto">
+              {aliases.map((alias) => (
+                <div key={alias.id} className="p-3 hover:bg-theme-elevated">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm truncate">{alias.pattern}</span>
+                        <span className="text-theme-muted">→</span>
+                        <span className="font-medium text-theme truncate">{alias.canonical_name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-theme-muted">
+                        <span className={`px-1.5 py-0.5 rounded ${
+                          alias.match_type === 'contains' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                          alias.match_type === 'exact' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                          'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+                        }`}>{alias.match_type}</span>
+                        <span>Used {alias.match_count}x</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-1 ml-2">
+                      <button
+                        onClick={() => {
+                          setAliasForm({ pattern: alias.pattern, canonical_name: alias.canonical_name, match_type: alias.match_type, priority: alias.priority })
+                          setEditingAlias(alias)
+                          setShowForm(true)
+                        }}
+                        className="px-2 py-1 text-xs text-theme-muted hover:text-theme"
+                      >Edit</button>
+                      <button onClick={() => handleDeleteAlias(alias.id)} className="px-2 py-1 text-xs text-red-500 hover:text-red-700">Delete</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* All Merchants */}
+        <div className="card">
+          <div className="p-4 border-b border-theme">
+            <div className="flex justify-between items-center">
+              <h3 className="font-semibold text-theme">All Merchants ({merchants.length})</h3>
+            </div>
+            <input
+              type="text"
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              placeholder="Filter merchants..."
+              className="mt-2 w-full px-3 py-1.5 text-sm bg-theme border border-theme rounded-md"
+            />
+          </div>
+          <div className="divide-y divide-theme max-h-[400px] overflow-y-auto">
+            {filteredMerchants.map((merchant, idx) => (
+              <div
+                key={idx}
+                className="p-3 flex items-center justify-between hover:bg-theme-elevated cursor-pointer"
+                onClick={() => startCreateFromMerchant(merchant.name)}
+              >
+                <span className="font-mono text-sm truncate flex-1">{merchant.name}</span>
+                <span className="text-xs text-theme-muted ml-2">{merchant.transaction_count} txns</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

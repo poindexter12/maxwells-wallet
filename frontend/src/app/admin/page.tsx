@@ -33,23 +33,6 @@ interface AdminStats {
   import_session_status: Record<string, number>
 }
 
-interface MerchantAlias {
-  id: number
-  pattern: string
-  canonical_name: string
-  match_type: 'exact' | 'contains' | 'regex'
-  priority: number
-  match_count: number
-  last_matched_date: string | null
-}
-
-interface AliasSuggestion {
-  raw_merchant: string
-  transaction_count: number
-  suggested_canonical: string | null
-  reason: string | null
-}
-
 interface Tag {
   id: number
   namespace: string
@@ -63,7 +46,7 @@ interface TagWithUsage extends Tag {
   usage_count?: number
 }
 
-type AdminTab = 'overview' | 'imports' | 'merchants' | 'all-tags' | 'buckets' | 'accounts' | 'occasions' | 'expense-types'
+type AdminTab = 'overview' | 'imports' | 'all-tags' | 'buckets' | 'accounts' | 'occasions' | 'expense-types'
 
 const TAG_TABS: { id: AdminTab; namespace: string | null; label: string; description: string; showNamespace: boolean }[] = [
   { id: 'all-tags', namespace: null, label: 'All Tags', description: 'View all tags across all namespaces', showNamespace: true },
@@ -90,16 +73,6 @@ export default function AdminPage() {
   const [newTag, setNewTag] = useState({ namespace: '', value: '', description: '' })
   const [saving, setSaving] = useState(false)
   const [tagError, setTagError] = useState<string | null>(null)
-
-  // Merchant alias state
-  const [aliases, setAliases] = useState<MerchantAlias[]>([])
-  const [suggestions, setSuggestions] = useState<AliasSuggestion[]>([])
-  const [aliasesLoading, setAliasesLoading] = useState(false)
-  const [showAliasForm, setShowAliasForm] = useState(false)
-  const [editingAlias, setEditingAlias] = useState<MerchantAlias | null>(null)
-  const [aliasForm, setAliasForm] = useState<{ pattern: string; canonical_name: string; match_type: 'exact' | 'contains' | 'regex'; priority: number }>({ pattern: '', canonical_name: '', match_type: 'contains', priority: 0 })
-  const [applying, setApplying] = useState(false)
-  const [applyResult, setApplyResult] = useState<{ updated_count: number; dry_run: boolean } | null>(null)
 
   const currentTagTab = TAG_TABS.find(t => t.id === activeTab)
 
@@ -156,87 +129,6 @@ export default function AdminPage() {
       fetchTags(currentTagTab.namespace)
     }
   }, [activeTab])
-
-  useEffect(() => {
-    if (activeTab === 'merchants') {
-      fetchMerchantAliases()
-    }
-  }, [activeTab])
-
-  async function fetchMerchantAliases() {
-    setAliasesLoading(true)
-    try {
-      const [aliasesRes, suggestionsRes] = await Promise.all([
-        fetch('/api/v1/merchants/aliases'),
-        fetch('/api/v1/merchants/aliases/suggestions?min_count=2')
-      ])
-      const aliasesData = await aliasesRes.json()
-      const suggestionsData = await suggestionsRes.json()
-      setAliases(aliasesData || [])
-      setSuggestions(suggestionsData.suggestions || [])
-    } catch (err) {
-      console.error('Error fetching merchant aliases:', err)
-    } finally {
-      setAliasesLoading(false)
-    }
-  }
-
-  function resetAliasForm() {
-    setAliasForm({ pattern: '', canonical_name: '', match_type: 'contains' as const, priority: 0 })
-    setEditingAlias(null)
-    setShowAliasForm(false)
-  }
-
-  async function handleSaveAlias(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      if (editingAlias) {
-        await fetch(`/api/v1/merchants/aliases/${editingAlias.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(aliasForm)
-        })
-      } else {
-        await fetch('/api/v1/merchants/aliases', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(aliasForm)
-        })
-      }
-      resetAliasForm()
-      await fetchMerchantAliases()
-    } catch (err) {
-      console.error('Error saving alias:', err)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function handleDeleteAlias(id: number) {
-    if (!confirm('Delete this alias?')) return
-    try {
-      await fetch(`/api/v1/merchants/aliases/${id}`, { method: 'DELETE' })
-      await fetchMerchantAliases()
-    } catch (err) {
-      console.error('Error deleting alias:', err)
-    }
-  }
-
-  async function applyAliases(dryRun: boolean) {
-    setApplying(true)
-    setApplyResult(null)
-    try {
-      const res = await fetch(`/api/v1/merchants/aliases/apply?dry_run=${dryRun}`, { method: 'POST' })
-      const data = await res.json()
-      setApplyResult({ updated_count: data.updated_count, dry_run: dryRun })
-      if (!dryRun) await fetchMerchantAliases()
-    } catch (err) {
-      console.error('Error applying aliases:', err)
-    } finally {
-      setApplying(false)
-    }
-  }
 
   const handleDeleteSession = async (sessionId: number) => {
     if (confirmDelete !== sessionId) {
@@ -423,16 +315,6 @@ export default function AdminPage() {
             }`}
           >
             Imports
-          </button>
-          <button
-            onClick={() => setActiveTab('merchants')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'merchants'
-                ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
-                : 'border-transparent text-theme-muted hover:text-theme hover:border-[var(--color-border-strong)]'
-            }`}
-          >
-            Merchants
           </button>
           {TAG_TABS.map((tab) => (
             <button
@@ -632,205 +514,6 @@ export default function AdminPage() {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
-
-      {/* Merchants Tab */}
-      {activeTab === 'merchants' && (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-theme-muted">
-              Create aliases to normalize messy bank merchant names into clean, consistent names.
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => applyAliases(true)}
-                disabled={applying || aliases.length === 0}
-                className="px-3 py-1.5 text-sm border border-theme rounded-md hover:bg-theme-elevated disabled:opacity-50"
-              >
-                {applying ? 'Checking...' : 'Preview'}
-              </button>
-              <button
-                onClick={() => applyAliases(false)}
-                disabled={applying || aliases.length === 0}
-                className="px-3 py-1.5 text-sm border border-theme rounded-md hover:bg-theme-elevated disabled:opacity-50"
-              >
-                {applying ? 'Applying...' : 'Apply All'}
-              </button>
-              <button
-                onClick={() => setShowAliasForm(true)}
-                className="btn-primary text-sm"
-              >
-                + Add Alias
-              </button>
-            </div>
-          </div>
-
-          {applyResult && (
-            <div className={`p-3 rounded-md text-sm ${applyResult.dry_run ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-green-50 dark:bg-green-900/20'}`}>
-              {applyResult.dry_run
-                ? `Preview: ${applyResult.updated_count} transactions would be updated`
-                : `Applied: ${applyResult.updated_count} transactions updated`}
-            </div>
-          )}
-
-          {showAliasForm && (
-            <div className="card p-4">
-              <form onSubmit={handleSaveAlias} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-theme mb-1">Pattern</label>
-                    <input
-                      type="text"
-                      value={aliasForm.pattern}
-                      onChange={(e) => setAliasForm({ ...aliasForm, pattern: e.target.value })}
-                      placeholder="e.g., AMZN or Amazon.*Prime"
-                      className="w-full px-3 py-2 bg-theme border border-theme rounded-md"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-theme mb-1">Canonical Name</label>
-                    <input
-                      type="text"
-                      value={aliasForm.canonical_name}
-                      onChange={(e) => setAliasForm({ ...aliasForm, canonical_name: e.target.value })}
-                      placeholder="e.g., Amazon"
-                      className="w-full px-3 py-2 bg-theme border border-theme rounded-md"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-theme mb-1">Match Type</label>
-                    <select
-                      value={aliasForm.match_type}
-                      onChange={(e) => setAliasForm({ ...aliasForm, match_type: e.target.value as 'exact' | 'contains' | 'regex' })}
-                      className="w-full px-3 py-2 bg-theme border border-theme rounded-md"
-                    >
-                      <option value="exact">Exact Match</option>
-                      <option value="contains">Contains</option>
-                      <option value="regex">Regex</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-theme mb-1">Priority</label>
-                    <input
-                      type="number"
-                      value={aliasForm.priority}
-                      onChange={(e) => setAliasForm({ ...aliasForm, priority: parseInt(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 bg-theme border border-theme rounded-md"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <button type="button" onClick={resetAliasForm} className="px-4 py-2 border border-theme rounded-md">
-                    Cancel
-                  </button>
-                  <button type="submit" disabled={saving} className="btn-primary disabled:opacity-50">
-                    {saving ? 'Saving...' : editingAlias ? 'Update' : 'Create'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {aliasesLoading ? (
-            <div className="text-center py-12 text-theme-muted">Loading...</div>
-          ) : (
-            <div className="card">
-              <div className="p-4 border-b border-theme">
-                <h3 className="font-semibold text-theme">Aliases ({aliases.length})</h3>
-              </div>
-              {aliases.length === 0 ? (
-                <div className="p-8 text-center text-theme-muted">
-                  No aliases defined yet.
-                </div>
-              ) : (
-                <div className="divide-y divide-theme">
-                  {aliases.map((alias) => (
-                    <div key={alias.id} className="p-4 flex items-center justify-between hover:bg-theme-elevated">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm bg-theme-elevated px-2 py-1 rounded">{alias.pattern}</span>
-                          <span className="text-theme-muted">→</span>
-                          <span className="font-medium text-theme">{alias.canonical_name}</span>
-                        </div>
-                        <div className="mt-1 flex items-center gap-4 text-xs text-theme-muted">
-                          <span className={`px-2 py-0.5 rounded ${
-                            alias.match_type === 'exact' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
-                            alias.match_type === 'contains' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                            'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
-                          }`}>{alias.match_type}</span>
-                          <span>Priority: {alias.priority}</span>
-                          <span>Matched: {alias.match_count}x</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            setAliasForm({
-                              pattern: alias.pattern,
-                              canonical_name: alias.canonical_name,
-                              match_type: alias.match_type,
-                              priority: alias.priority
-                            })
-                            setEditingAlias(alias)
-                            setShowAliasForm(true)
-                          }}
-                          className="px-3 py-1 text-sm text-theme-muted hover:text-theme"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteAlias(alias.id)}
-                          className="px-3 py-1 text-sm text-red-500 hover:text-red-700"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {suggestions.length > 0 && (
-            <div className="card">
-              <div className="p-4 border-b border-theme">
-                <h3 className="font-semibold text-theme">Suggestions ({suggestions.length})</h3>
-                <p className="text-xs text-theme-muted">Merchants that might benefit from cleanup</p>
-              </div>
-              <div className="divide-y divide-theme max-h-[300px] overflow-y-auto">
-                {suggestions.map((s, idx) => (
-                  <div key={idx} className="p-3 flex items-center justify-between hover:bg-theme-elevated">
-                    <div>
-                      <span className="font-mono text-sm">{s.raw_merchant}</span>
-                      {s.suggested_canonical && (
-                        <span className="ml-2 text-sm text-theme-muted">
-                          → <span className="text-accent">{s.suggested_canonical}</span>
-                        </span>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => {
-                        setAliasForm({
-                          pattern: s.raw_merchant,
-                          canonical_name: s.suggested_canonical || s.raw_merchant,
-                          match_type: 'contains',
-                          priority: 0
-                        })
-                        setShowAliasForm(true)
-                      }}
-                      className="px-2 py-1 text-xs border border-theme rounded hover:bg-theme-elevated"
-                    >
-                      Create
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
 
