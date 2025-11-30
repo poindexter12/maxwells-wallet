@@ -97,6 +97,7 @@ class Transaction(BaseModel, table=True):
     notes: Optional[str] = None
     reference_id: Optional[str] = Field(default=None, index=True)  # original bank reference/transaction ID
     import_session_id: Optional[int] = Field(default=None, foreign_key="import_sessions.id", index=True)
+    content_hash: Optional[str] = Field(default=None, index=True)  # SHA256 hash for reliable deduplication
 
     # Relationships
     tags: List["Tag"] = Relationship(back_populates="transactions", link_model=TransactionTag)
@@ -115,6 +116,7 @@ class TransactionCreate(SQLModel):
     reconciliation_status: ReconciliationStatus = ReconciliationStatus.unreconciled
     notes: Optional[str] = None
     reference_id: Optional[str] = None
+    content_hash: Optional[str] = None  # Optional - auto-generated if not provided
 
 class TransactionUpdate(SQLModel):
     date: Optional[date_type] = None
@@ -128,6 +130,7 @@ class TransactionUpdate(SQLModel):
     reconciliation_status: Optional[ReconciliationStatus] = None
     notes: Optional[str] = None
     reference_id: Optional[str] = None
+    content_hash: Optional[str] = None
 
 class ImportFormat(BaseModel, table=True):
     """Saved import format preferences"""
