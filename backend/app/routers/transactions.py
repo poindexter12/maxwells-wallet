@@ -10,7 +10,6 @@ from app.models import (
     Transaction, TransactionCreate, TransactionUpdate,
     ReconciliationStatus, Tag, TransactionTag
 )
-from app.category_inference import infer_category, build_user_history
 from app.utils.hashing import compute_transaction_content_hash
 from sqlmodel import and_
 from pydantic import BaseModel
@@ -272,43 +271,6 @@ async def delete_transaction(
 
     await session.delete(transaction)
     await session.commit()
-
-@router.post("/{transaction_id}/suggest-category")
-async def suggest_category(
-    transaction_id: int,
-    session: AsyncSession = Depends(get_session)
-):
-    """Suggest categories for a transaction based on inference"""
-    # Get the transaction
-    result = await session.execute(
-        select(Transaction).where(Transaction.id == transaction_id)
-    )
-    transaction = result.scalar_one_or_none()
-    if not transaction:
-        raise HTTPException(status_code=404, detail="Transaction not found")
-
-    # Build user history from past categorized transactions
-    all_txns_result = await session.execute(
-        select(Transaction).where(Transaction.category.isnot(None))
-    )
-    all_txns = all_txns_result.scalars().all()
-    user_history = build_user_history(all_txns)
-
-    # Infer categories
-    suggestions = infer_category(
-        transaction.merchant or "",
-        transaction.description,
-        transaction.amount,
-        user_history
-    )
-
-    return {
-        "transaction_id": transaction_id,
-        "suggestions": [
-            {"category": cat, "confidence": conf}
-            for cat, conf in suggestions
-        ]
-    }
 
 @router.post("/bulk-update")
 async def bulk_update_transactions(
