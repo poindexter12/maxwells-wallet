@@ -27,7 +27,7 @@ services:
       # Optional: mount CSVs for import
       # - ./my-data:/import:ro
     environment:
-      - DATABASE_URL=sqlite+aiosqlite:///data/wallet.db
+      - DATABASE_URL=sqlite+aiosqlite:////data/wallet.db
     restart: unless-stopped
 
 volumes:

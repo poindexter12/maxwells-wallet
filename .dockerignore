@@ -24,6 +24,9 @@ htmlcov/
 data/
 *.db
 wallet.db
+backend/wallet.db
+backend/*.db
+**/*.db
 
 # Node modules (will be installed fresh)
 frontend/node_modules/

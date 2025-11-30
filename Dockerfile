@@ -11,6 +11,8 @@ RUN npm ci
 
 # Copy frontend source and build
 COPY frontend/ ./
+# Ensure public directory exists (may be empty)
+RUN mkdir -p public
 ENV BACKEND_URL=http://localhost:8000
 RUN npm run build
 
@@ -81,7 +83,7 @@ EOF
 RUN mkdir -p /data
 
 # Environment variables
-ENV DATABASE_URL="sqlite+aiosqlite:///data/wallet.db"
+ENV DATABASE_URL="sqlite+aiosqlite:////data/wallet.db"
 ENV PYTHONUNBUFFERED=1
 
 # Expose both ports
@@ -94,31 +96,65 @@ set -e
 
 cd /app/backend
 
+init_database() {
+    echo "Initializing database schema..."
+    # Create tables via SQLModel metadata (not alembic migrations)
+    python -c "
+import asyncio
+from sqlmodel import SQLModel
+from sqlalchemy.ext.asyncio import create_async_engine
+import os
+# Import all models to register them
+from app.models import *
+
+async def create_tables():
+    DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite+aiosqlite:////data/wallet.db')
+    engine = create_async_engine(DATABASE_URL)
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
+    await engine.dispose()
+
+asyncio.run(create_tables())
+"
+    echo "Stamping alembic version..."
+    alembic stamp head
+}
+
 case "${1:-run}" in
   run)
-    echo "Running migrations..."
-    alembic upgrade head
+    # Initialize if fresh database
+    if [ ! -f /data/wallet.db ]; then
+        init_database
+    else
+        echo "Running migrations..."
+        alembic upgrade head
+    fi
     echo "Starting services..."
     exec supervisord -c /etc/supervisor/conf.d/supervisord.conf
     ;;
   migrate)
-    echo "Running migrations..."
-    alembic upgrade head
+    if [ ! -f /data/wallet.db ]; then
+        init_database
+    else
+        echo "Running migrations..."
+        alembic upgrade head
+    fi
     echo "Migrations complete."
     ;;
   seed)
-    echo "Running migrations..."
-    alembic upgrade head
-    echo "Seeding database..."
-    python -m app.seed
-    echo "Seeding complete."
+    echo "Note: Sample data seeding is not yet implemented."
+    echo "The database is ready for use - import your own CSV files."
     ;;
   shell)
     exec /bin/bash
     ;;
   backend-only)
-    echo "Running migrations..."
-    alembic upgrade head
+    if [ ! -f /data/wallet.db ]; then
+        init_database
+    else
+        echo "Running migrations..."
+        alembic upgrade head
+    fi
     echo "Starting backend only..."
     exec uvicorn app.main:app --host 0.0.0.0 --port 8000
     ;;
@@ -127,15 +163,13 @@ case "${1:-run}" in
     echo ""
     echo "  run          Start the application (default)"
     echo "  migrate      Run database migrations only"
-    echo "  seed         Run migrations and seed sample data"
     echo "  shell        Open a bash shell"
     echo "  backend-only Run backend API only (no frontend)"
     echo "  help         Show this help message"
     echo ""
     echo "Examples:"
-    echo "  docker run maxwells-wallet"
-    echo "  docker run maxwells-wallet seed"
-    echo "  docker run -it maxwells-wallet shell"
+    echo "  docker compose up -d"
+    echo "  docker compose run -it --rm maxwells-wallet shell"
     ;;
   *)
     echo "Unknown command: $1"
