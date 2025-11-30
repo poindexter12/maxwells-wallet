@@ -28,7 +28,6 @@ non_goals:
   - Authentication/authorization (local-only for v0)
   - Mobile apps (web-only)
   - Real-time bank sync/Plaid integration
-  - Budget enforcement/alerts
   - Investment tracking
   - Bill pay integration
   - Tax reporting

@@ -29,9 +29,9 @@ Built with:
 - **Anomaly Detection**: Automatically flag unusual purchases, new merchants, and budget leaks
 - **Enhanced Dashboard**: Real-time insights with color-coded indicators
 
-### Smart Budgeting & Automation (v0.3) - NEW! 🎉
-- **Budget Tracking**: Set spending limits by category with real-time status monitoring
-  - Monthly and yearly budgets
+### Smart Budgeting & Automation (v0.3) - NEW!
+- **Budget Tracking**: Set spending limits for buckets, occasions, or accounts
+  - Monthly and yearly budgets for any tag type
   - Progress indicators: on-track, warning, exceeded
   - Automatic alerts at 80% and 100% thresholds
 - **Category Rules Engine**: Automate transaction categorization with pattern-based rules
