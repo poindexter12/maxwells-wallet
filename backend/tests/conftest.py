@@ -10,7 +10,7 @@ import os
 
 from app.main import app
 from app.database import get_session
-from app.models import Category, Transaction, ImportFormat, Tag, TransactionTag
+from app.models import Transaction, ImportFormat, Tag, TransactionTag
 
 
 # Use in-memory SQLite for tests
@@ -118,28 +118,10 @@ async def seed_tags(async_session: AsyncSession):
 
 @pytest.fixture(scope="function")
 async def seed_categories(async_session: AsyncSession, seed_tags):
-    """Seed default categories (legacy) - also seeds tags"""
-    default_categories = [
-        "Income",
-        "Groceries",
-        "Dining & Coffee",
-        "Shopping",
-        "Utilities",
-        "Transportation",
-        "Entertainment",
-        "Healthcare",
-        "Education",
-        "Housing",
-        "Subscriptions",
-        "Other"
-    ]
-
-    for name in default_categories:
-        category = Category(name=name)
-        async_session.add(category)
-
-    await async_session.commit()
-    return default_categories
+    """Seed default tags (renamed from seed_categories for backward compatibility in tests)"""
+    # This fixture now just ensures tags are seeded (via seed_tags dependency)
+    # No longer creates Category objects - the Tag system replaces categories
+    return seed_tags
 
 
 @pytest.fixture(scope="function")
