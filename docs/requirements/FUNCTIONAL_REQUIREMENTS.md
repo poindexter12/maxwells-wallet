@@ -60,6 +60,21 @@
   - Auto-apply saved format on future imports
   - User can update/delete saved preferences
 
+### FR-001.7: Batch Import (Multi-File)
+- **Requirement**: Import multiple CSV files simultaneously
+- **Acceptance Criteria**:
+  - Accept multiple files via drag-and-drop or file picker
+  - Auto-detect format for each file independently
+  - Show unified preview across all files
+  - Detect duplicates within files (intra-file)
+  - Detect duplicates across files (cross-file)
+  - Detect duplicates against existing database
+  - Allow selective import (choose which files to import)
+  - Show per-file statistics (count, amount, duplicates)
+  - Show aggregate totals across all files
+  - Support mixed formats (e.g., BofA + Amex in same batch)
+  - Atomic import: all files succeed or none imported
+
 ## FR-002: Transaction Management
 
 ### FR-002.1: List Transactions
