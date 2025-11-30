@@ -9,6 +9,8 @@ const FORMAT_NAMES: Record<string, string> = {
   'bofa_bank': 'Bank of America (Checking/Savings)',
   'bofa_cc': 'Bank of America (Credit Card)',
   'amex_cc': 'American Express',
+  'inspira_hsa': 'Inspira HSA',
+  'venmo': 'Venmo',
   'unknown': 'Unknown'
 }
 
@@ -428,6 +430,8 @@ export default function ImportPage() {
               <option value="bofa_bank">Bank of America (Checking/Savings)</option>
               <option value="bofa_cc">Bank of America (Credit Card)</option>
               <option value="amex_cc">American Express</option>
+              <option value="inspira_hsa">Inspira HSA</option>
+              <option value="venmo">Venmo</option>
             </select>
           </div>
         </div>

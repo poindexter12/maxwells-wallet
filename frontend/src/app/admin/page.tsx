@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
+import Link from 'next/link'
 import { formatCurrency } from '@/lib/format'
 import { PageHelp } from '@/components/PageHelp'
 
@@ -9,6 +10,8 @@ const FORMAT_NAMES: Record<string, string> = {
   'bofa_bank': 'BofA Bank',
   'bofa_cc': 'BofA CC',
   'amex_cc': 'Amex CC',
+  'inspira_hsa': 'Inspira HSA',
+  'venmo': 'Venmo',
   'unknown': 'Unknown'
 }
 
@@ -422,11 +425,19 @@ export default function AdminPage() {
       {/* Imports Tab */}
       {activeTab === 'imports' && (
         <div className="card">
-          <div className="px-6 py-4 border-b border-theme">
-            <h2 className="text-lg font-semibold text-theme">Import Sessions</h2>
-            <p className="text-sm text-theme-muted">
-              History of all CSV imports. You can roll back individual imports by deleting their sessions.
-            </p>
+          <div className="px-6 py-4 border-b border-theme flex justify-between items-start">
+            <div>
+              <h2 className="text-lg font-semibold text-theme">Import Sessions</h2>
+              <p className="text-sm text-theme-muted">
+                History of all CSV imports. You can roll back individual imports by deleting their sessions.
+              </p>
+            </div>
+            <Link
+              href="/import"
+              className="btn-primary"
+            >
+              Import New
+            </Link>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-[var(--color-border)]">
