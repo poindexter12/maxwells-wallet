@@ -192,6 +192,8 @@ async def apply_aliases(
     Apply all aliases to transactions.
     Updates the merchant field on matching transactions.
     """
+    from sqlalchemy import update
+
     # Get all aliases ordered by priority
     result = await session.execute(
         select(MerchantAlias).order_by(MerchantAlias.priority.desc())
@@ -201,47 +203,57 @@ async def apply_aliases(
     if not aliases:
         return {"message": "No aliases defined", "updated_count": 0, "updates": []}
 
-    # Get transactions with descriptions or merchants that might need aliasing
+    # Get transactions with descriptions that might need aliasing
     result = await session.execute(
-        select(Transaction).where(Transaction.description.isnot(None))
+        select(Transaction.id, Transaction.description, Transaction.merchant)
+        .where(Transaction.description.isnot(None))
     )
-    transactions = result.scalars().all()
+    transactions = result.all()
 
     updates = []
     alias_match_counts = {a.id: 0 for a in aliases}
 
     for txn in transactions:
+        txn_id, txn_description, txn_merchant = txn
         # Check description against aliases (highest priority first)
         for alias in aliases:
-            # Check both description and current merchant
-            text_to_check = txn.description
-            if apply_alias_to_text(alias, text_to_check):
-                old_merchant = txn.merchant
+            if apply_alias_to_text(alias, txn_description):
+                old_merchant = txn_merchant
                 new_merchant = alias.canonical_name
 
                 if old_merchant != new_merchant:
                     updates.append({
-                        "transaction_id": txn.id,
-                        "description": txn.description,
+                        "transaction_id": txn_id,
+                        "description": txn_description,
                         "old_merchant": old_merchant,
                         "new_merchant": new_merchant,
                         "matched_alias_id": alias.id,
                         "matched_pattern": alias.pattern
                     })
-
-                    if not dry_run:
-                        txn.merchant = new_merchant
-                        txn.updated_at = datetime.utcnow()
-
                     alias_match_counts[alias.id] += 1
                 break  # Stop at first matching alias
 
-    # Update alias match counts
-    if not dry_run:
+    # Apply updates using explicit SQL UPDATE statements
+    if not dry_run and updates:
+        now = datetime.utcnow()
+        for upd in updates:
+            await session.execute(
+                update(Transaction)
+                .where(Transaction.id == upd["transaction_id"])
+                .values(merchant=upd["new_merchant"], updated_at=now)
+            )
+
+        # Update alias match counts
         for alias in aliases:
             if alias_match_counts[alias.id] > 0:
-                alias.match_count += alias_match_counts[alias.id]
-                alias.last_matched_date = datetime.utcnow()
+                await session.execute(
+                    update(MerchantAlias)
+                    .where(MerchantAlias.id == alias.id)
+                    .values(
+                        match_count=MerchantAlias.match_count + alias_match_counts[alias.id],
+                        last_matched_date=now
+                    )
+                )
 
         await session.commit()
 
