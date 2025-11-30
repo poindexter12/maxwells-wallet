@@ -9,11 +9,13 @@ from app.database import get_session
 from app.models import (
     Transaction, ImportFormat, ImportFormatCreate,
     ImportFormatType, ReconciliationStatus, ImportSession,
-    Tag, TransactionTag, BatchImportSession
+    Tag, TransactionTag, BatchImportSession,
+    MerchantAlias, MerchantAliasMatchType
 )
 from app.csv_parser import parse_csv, detect_format
 from app.tag_inference import infer_bucket_tag, build_user_history
 from app.utils.hashing import compute_transaction_hash_from_dict
+import re as regex_module
 
 router = APIRouter(prefix="/api/v1/import", tags=["import"])
 
@@ -78,6 +80,54 @@ async def apply_bucket_tag(session: AsyncSession, transaction_id: int, bucket_va
     # Add the new bucket tag
     txn_tag = TransactionTag(transaction_id=transaction_id, tag_id=tag.id)
     session.add(txn_tag)
+
+
+async def get_merchant_aliases(session: AsyncSession) -> List[MerchantAlias]:
+    """Get all merchant aliases ordered by priority (highest first)"""
+    result = await session.execute(
+        select(MerchantAlias).order_by(MerchantAlias.priority.desc())
+    )
+    return result.scalars().all()
+
+
+def apply_merchant_alias(description: str, aliases: List[MerchantAlias]) -> Optional[str]:
+    """
+    Apply merchant aliases to get a canonical merchant name from a description.
+    Returns the canonical name if matched, None otherwise.
+    """
+    if not description:
+        return None
+
+    desc_lower = description.lower()
+
+    for alias in aliases:
+        pattern_lower = alias.pattern.lower()
+
+        if alias.match_type == MerchantAliasMatchType.exact:
+            if desc_lower == pattern_lower:
+                return alias.canonical_name
+        elif alias.match_type == MerchantAliasMatchType.contains:
+            if pattern_lower in desc_lower:
+                return alias.canonical_name
+        elif alias.match_type == MerchantAliasMatchType.regex:
+            try:
+                if regex_module.search(alias.pattern, description, regex_module.IGNORECASE):
+                    return alias.canonical_name
+            except regex_module.error:
+                continue
+
+    return None
+
+
+async def update_alias_match_stats(session: AsyncSession, alias_id: int):
+    """Increment match count for an alias"""
+    result = await session.execute(
+        select(MerchantAlias).where(MerchantAlias.id == alias_id)
+    )
+    alias = result.scalar_one_or_none()
+    if alias:
+        alias.match_count += 1
+        alias.last_matched_date = datetime.utcnow()
 
 
 @router.post("/preview")
@@ -192,6 +242,9 @@ async def confirm_import(
             bucket_value = txn.category.lower().replace(' ', '-').replace('&', 'and')
             user_history[merchant] = f"bucket:{bucket_value}"
 
+    # Load merchant aliases for normalization
+    merchant_aliases = await get_merchant_aliases(session)
+
     # Create import session to track this batch
     import_session = ImportSession(
         filename=file.filename,
@@ -260,11 +313,18 @@ async def confirm_import(
         # Keep category field for backwards compatibility during migration
         category_display = bucket_value.replace('-', ' ').title() if bucket_value != 'none' else None
 
+        # Apply merchant alias to normalize merchant name
+        merchant_name = txn_data.get('merchant')
+        if merchant_aliases:
+            aliased_merchant = apply_merchant_alias(txn_data['description'], merchant_aliases)
+            if aliased_merchant:
+                merchant_name = aliased_merchant
+
         db_transaction = Transaction(
             date=txn_data['date'],
             amount=txn_data['amount'],
             description=txn_data['description'],
-            merchant=txn_data.get('merchant'),
+            merchant=merchant_name,
             account_source=txn_data['account_source'],
             card_member=txn_data.get('card_member'),
             category=category_display,  # Legacy field
@@ -577,6 +637,9 @@ async def batch_confirm_import(
             bucket_value = txn.category.lower().replace(' ', '-').replace('&', 'and')
             user_history[merchant] = f"bucket:{bucket_value}"
 
+    # Load merchant aliases for normalization
+    merchant_aliases = await get_merchant_aliases(session)
+
     # Track all transactions being imported for cross-file duplicate detection
     batch_transactions_to_import: List[Dict[str, Any]] = []
 
@@ -678,11 +741,18 @@ async def batch_confirm_import(
             # Create transaction
             category_display = bucket_value.replace('-', ' ').title() if bucket_value != 'none' else None
 
+            # Apply merchant alias to normalize merchant name
+            merchant_name = txn_data.get('merchant')
+            if merchant_aliases:
+                aliased_merchant = apply_merchant_alias(txn_data['description'], merchant_aliases)
+                if aliased_merchant:
+                    merchant_name = aliased_merchant
+
             db_transaction = Transaction(
                 date=txn_data['date'],
                 amount=txn_data['amount'],
                 description=txn_data['description'],
-                merchant=txn_data.get('merchant'),
+                merchant=merchant_name,
                 account_source=txn_data['account_source'],
                 card_member=txn_data.get('card_member'),
                 category=category_display,

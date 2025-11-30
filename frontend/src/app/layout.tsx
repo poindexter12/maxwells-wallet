@@ -30,23 +30,14 @@ export default function RootLayout({
                   <Link href="/transactions" className="nav-link inline-flex items-center px-1 pt-1">
                     Transactions
                   </Link>
-                  <Link href="/buckets" className="nav-link inline-flex items-center px-1 pt-1">
-                    Buckets
-                  </Link>
-                  <Link href="/occasions" className="nav-link inline-flex items-center px-1 pt-1">
-                    Occasions
-                  </Link>
-                  <Link href="/accounts" className="nav-link inline-flex items-center px-1 pt-1">
-                    Accounts
-                  </Link>
                   <Link href="/budgets" className="nav-link inline-flex items-center px-1 pt-1">
                     Budgets
                   </Link>
-                  <Link href="/transfers" className="nav-link inline-flex items-center px-1 pt-1">
-                    Transfers
+                  <Link href="/organize" className="nav-link inline-flex items-center px-1 pt-1">
+                    Organize
                   </Link>
-                  <Link href="/rules" className="nav-link inline-flex items-center px-1 pt-1">
-                    Rules
+                  <Link href="/tools" className="nav-link inline-flex items-center px-1 pt-1">
+                    Tools
                   </Link>
                   <Link href="/admin" className="nav-link inline-flex items-center px-1 pt-1">
                     Admin
