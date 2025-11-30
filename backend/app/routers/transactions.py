@@ -11,6 +11,7 @@ from app.models import (
     ReconciliationStatus, Tag, TransactionTag
 )
 from app.category_inference import infer_category, build_user_history
+from app.utils.hashing import compute_transaction_content_hash
 from sqlmodel import and_
 from pydantic import BaseModel
 
@@ -217,6 +218,15 @@ async def create_transaction(
     """Create a new transaction"""
     db_transaction = Transaction(**transaction.dict())
     db_transaction.reconciliation_status = ReconciliationStatus.manually_entered
+
+    # Auto-generate content_hash if not provided
+    if not db_transaction.content_hash:
+        db_transaction.content_hash = compute_transaction_content_hash(
+            date=db_transaction.date,
+            amount=db_transaction.amount,
+            description=db_transaction.description,
+            account_source=db_transaction.account_source
+        )
 
     session.add(db_transaction)
     await session.commit()
