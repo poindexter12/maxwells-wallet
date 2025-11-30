@@ -17,6 +17,7 @@ Built with:
   - Auto-detects format
   - Deduplicates transactions
   - Saves format preferences
+  - **Batch Import**: Import multiple files at once with cross-file duplicate detection
 - **Smart Categorization**: Auto-categorizes transactions using keyword matching and learning from past categorizations
 - **Dashboard**: Monthly spending analysis with charts and trends
 - **Reconciliation**: Bulk reconcile unreconciled transactions

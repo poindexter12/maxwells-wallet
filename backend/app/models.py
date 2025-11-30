@@ -146,6 +146,18 @@ class ImportSession(BaseModel, table=True):
     date_range_start: Optional[date_type] = None
     date_range_end: Optional[date_type] = None
     status: str = Field(default="completed")  # completed, rolled_back
+    batch_import_id: Optional[int] = Field(default=None, foreign_key="batch_import_sessions.id", index=True)
+
+
+class BatchImportSession(BaseModel, table=True):
+    """Tracks batch import operations (multiple files imported together)"""
+    __tablename__ = "batch_import_sessions"
+
+    total_files: int = 0
+    imported_files: int = 0
+    total_transactions: int = 0
+    total_duplicates: int = 0
+    status: str = Field(default="pending")  # pending, in_progress, completed
 
 class BudgetPeriod(str, Enum):
     monthly = "monthly"
