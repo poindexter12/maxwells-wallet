@@ -163,17 +163,31 @@ async def get_spending_for_tag(
     if not tag:
         return 0.0
 
-    # Sum transactions with this tag
-    spending_result = await session.execute(
-        select(func.sum(Transaction.amount))
-        .join(TransactionTag, Transaction.id == TransactionTag.transaction_id)
-        .where(
-            TransactionTag.tag_id == tag.id,
-            Transaction.date >= start_date,
-            Transaction.date <= end_date,
-            Transaction.amount < 0  # Only expenses
+    # Account tags use FK relationship, buckets/occasions use M2M junction table
+    if namespace == "account":
+        # Accounts use direct FK (account_tag_id) on Transaction
+        spending_result = await session.execute(
+            select(func.sum(Transaction.amount))
+            .where(
+                Transaction.account_tag_id == tag.id,
+                Transaction.date >= start_date,
+                Transaction.date <= end_date,
+                Transaction.amount < 0  # Only expenses
+            )
         )
-    )
+    else:
+        # Buckets and occasions use M2M via TransactionTag
+        spending_result = await session.execute(
+            select(func.sum(Transaction.amount))
+            .join(TransactionTag, Transaction.id == TransactionTag.transaction_id)
+            .where(
+                TransactionTag.tag_id == tag.id,
+                Transaction.date >= start_date,
+                Transaction.date <= end_date,
+                Transaction.amount < 0  # Only expenses
+            )
+        )
+
     spent_raw = spending_result.scalar()
     return abs(spent_raw) if spent_raw else 0.0
 

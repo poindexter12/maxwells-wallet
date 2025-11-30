@@ -45,6 +45,8 @@ interface BudgetAlert {
 export default function BudgetsPage() {
   const [budgets, setBudgets] = useState<Budget[]>([])
   const [bucketTags, setBucketTags] = useState<Tag[]>([])
+  const [occasionTags, setOccasionTags] = useState<Tag[]>([])
+  const [accountTags, setAccountTags] = useState<Tag[]>([])
   const [budgetStatuses, setBudgetStatuses] = useState<BudgetStatus[]>([])
   const [alerts, setAlerts] = useState<BudgetAlert[]>([])
   const [loading, setLoading] = useState(true)
@@ -63,22 +65,28 @@ export default function BudgetsPage() {
 
   async function fetchData() {
     try {
-      const [budgetsRes, statusRes, alertsRes, tagsRes] = await Promise.all([
+      const [budgetsRes, statusRes, alertsRes, bucketsRes, occasionsRes, accountsRes] = await Promise.all([
         fetch('/api/v1/budgets'),
         fetch('/api/v1/budgets/status/current'),
         fetch('/api/v1/budgets/alerts/active'),
-        fetch('/api/v1/tags/buckets')
+        fetch('/api/v1/tags/buckets'),
+        fetch('/api/v1/tags?namespace=occasion'),
+        fetch('/api/v1/tags?namespace=account')
       ])
 
       const budgetsData = await budgetsRes.json()
       const statusData = await statusRes.json()
       const alertsData = await alertsRes.json()
-      const tagsData = await tagsRes.json()
+      const bucketsData = await bucketsRes.json()
+      const occasionsData = await occasionsRes.json()
+      const accountsData = await accountsRes.json()
 
       setBudgets(budgetsData)
       setBudgetStatuses(statusData.budgets || [])
       setAlerts(alertsData.alerts || [])
-      setBucketTags(tagsData)
+      setBucketTags(bucketsData)
+      setOccasionTags(occasionsData)
+      setAccountTags(accountsData)
       setLoading(false)
     } catch (error) {
       console.error('Error fetching budget data:', error)
@@ -143,10 +151,13 @@ export default function BudgetsPage() {
   }
 
   function formatTagDisplay(tag: string): string {
-    // Convert "bucket:groceries" to "Groceries"
+    // Convert "bucket:groceries" to "Groceries (Bucket)"
     const parts = tag.split(':')
-    if (parts.length === 2 && parts[0] === 'bucket') {
-      return parts[1].charAt(0).toUpperCase() + parts[1].slice(1)
+    if (parts.length === 2) {
+      const [namespace, value] = parts
+      const formattedValue = value.charAt(0).toUpperCase() + value.slice(1)
+      const namespaceLabel = namespace.charAt(0).toUpperCase() + namespace.slice(1)
+      return `${formattedValue} (${namespaceLabel})`
     }
     return tag
   }
@@ -178,16 +189,17 @@ export default function BudgetsPage() {
       <PageHelp
         pageId="budgets"
         title="Budgets Help"
-        description="Set spending limits for your buckets and track your progress throughout the month. Get alerts when you're approaching or exceeding your limits."
+        description="Set spending limits for buckets, occasions, or accounts and track your progress. Get alerts when you're approaching or exceeding your limits."
         steps={[
-          "Click 'New Budget' to create a budget for a bucket category",
+          "Click 'New Budget' to create a budget for any bucket, occasion, or account",
           "Set a monthly or yearly spending limit",
           "Monitor the progress bars to see how you're tracking",
           "Review alerts at the top when you're over 80% or exceeded"
         ]}
         tips={[
           "Enable rollover to carry unused budget to the next period",
-          "Focus on your highest-spend categories first",
+          "Use occasion budgets for events like vacations or holidays",
+          "Account budgets help track spending per credit card or bank account",
           "The status colors show: green (on track), yellow (warning), red (exceeded)"
         ]}
       />
@@ -196,7 +208,7 @@ export default function BudgetsPage() {
         <div>
           <h1 className="text-3xl font-bold text-theme">Budget Tracking</h1>
           <p className="mt-2 text-sm text-theme-muted">
-            Monitor your spending against budget limits by bucket
+            Monitor spending against budget limits for buckets, occasions, and accounts
           </p>
         </div>
         <button
@@ -338,7 +350,7 @@ export default function BudgetsPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Bucket
+                  Category
                 </label>
                 <select
                   value={formData.tag}
@@ -346,12 +358,34 @@ export default function BudgetsPage() {
                   className="w-full px-3 py-2 border rounded-md"
                   required
                 >
-                  <option value="">Select a bucket...</option>
-                  {bucketTags.map((tag) => (
-                    <option key={tag.id} value={`bucket:${tag.value}`}>
-                      {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
-                    </option>
-                  ))}
+                  <option value="">Select a category...</option>
+                  {bucketTags.length > 0 && (
+                    <optgroup label="Buckets">
+                      {bucketTags.map((tag) => (
+                        <option key={tag.id} value={`bucket:${tag.value}`}>
+                          {tag.description || tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {occasionTags.length > 0 && (
+                    <optgroup label="Occasions">
+                      {occasionTags.map((tag) => (
+                        <option key={tag.id} value={`occasion:${tag.value}`}>
+                          {tag.description || tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {accountTags.length > 0 && (
+                    <optgroup label="Accounts">
+                      {accountTags.map((tag) => (
+                        <option key={tag.id} value={`account:${tag.value}`}>
+                          {tag.description || tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
               </div>
               <div>
