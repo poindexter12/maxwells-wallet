@@ -76,16 +76,21 @@ CREATE TABLE transactions (
     description VARCHAR NOT NULL,
     merchant VARCHAR,
     account_source VARCHAR NOT NULL,
+    account_tag_id INTEGER REFERENCES tags(id),
     card_member VARCHAR,
     reconciliation_status VARCHAR NOT NULL,
     notes VARCHAR,
     reference_id VARCHAR,
+    content_hash VARCHAR,
+    import_session_id INTEGER REFERENCES import_sessions(id),
 
     INDEX idx_date (date),
     INDEX idx_merchant (merchant),
     INDEX idx_account_source (account_source),
+    INDEX idx_account_tag_id (account_tag_id),
     INDEX idx_reconciliation_status (reconciliation_status),
-    INDEX idx_reference_id (reference_id)
+    INDEX idx_reference_id (reference_id),
+    INDEX idx_content_hash (content_hash)
 );
 ```
 
@@ -211,11 +216,16 @@ class Transaction(BaseModel, table=True):
     description: str
     merchant: Optional[str]
     account_source: str
+    account_tag_id: Optional[int]  # FK to account Tag
     card_member: Optional[str]
     reconciliation_status: ReconciliationStatus
     notes: Optional[str]
     reference_id: Optional[str]
-    # Tags are managed via TransactionTag junction table
+    content_hash: Optional[str]  # SHA256 for deduplication
+    import_session_id: Optional[int]
+    # Relationships:
+    # - account_tag: single FK to account Tag (for account budgets)
+    # - tags: M2M via TransactionTag (for buckets, occasions, etc.)
 ```
 
 ### Tag (SQLModel)
@@ -309,7 +319,7 @@ Defined in `backend/app/tag_inference.py`:
 - `/buckets` - Summary dashboard showing all buckets with transaction counts and totals (links to admin for editing)
 - `/occasions` - Summary dashboard for special events with spending totals (links to admin for editing)
 - `/accounts` - Summary dashboard showing accounts with transaction counts (links to admin for editing)
-- `/budgets` - Budget management with progress tracking
+- `/budgets` - Budget management for buckets, occasions, and accounts with progress tracking
 - `/rules` - Tag rules for auto-tagging
 - `/admin` - Admin panel (see below)
 
