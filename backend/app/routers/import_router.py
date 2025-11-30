@@ -12,6 +12,7 @@ from app.models import (
 )
 from app.csv_parser import parse_csv, detect_format
 from app.tag_inference import infer_bucket_tag, build_user_history
+from app.utils.hashing import compute_transaction_hash_from_dict
 
 router = APIRouter(prefix="/api/v1/import", tags=["import"])
 
@@ -211,18 +212,33 @@ async def confirm_import(
     dates = []
 
     for txn_data in transactions:
-        # Check for duplicate (date + amount + reference_id)
-        dup_query = select(Transaction).where(
-            Transaction.date == txn_data['date'],
-            Transaction.amount == txn_data['amount'],
-            Transaction.reference_id == txn_data.get('reference_id')
-        )
-        result = await session.execute(dup_query)
-        existing = result.scalar_one_or_none()
+        # Generate content_hash for reliable deduplication
+        content_hash = compute_transaction_hash_from_dict(txn_data)
 
-        if existing:
-            duplicate_count += 1
-            continue
+        # Check for duplicate using content_hash (primary method)
+        if content_hash:
+            dup_query = select(Transaction).where(
+                Transaction.content_hash == content_hash
+            )
+            result = await session.execute(dup_query)
+            existing = result.scalar_one_or_none()
+
+            if existing:
+                duplicate_count += 1
+                continue
+        else:
+            # Fallback to old deduplication logic if hash generation fails
+            dup_query = select(Transaction).where(
+                Transaction.date == txn_data['date'],
+                Transaction.amount == txn_data['amount'],
+                Transaction.reference_id == txn_data.get('reference_id')
+            )
+            result = await session.execute(dup_query)
+            existing = result.scalar_one_or_none()
+
+            if existing:
+                duplicate_count += 1
+                continue
 
         # Infer bucket tag
         suggestions = infer_bucket_tag(
@@ -253,7 +269,8 @@ async def confirm_import(
             category=category_display,  # Legacy field
             reconciliation_status=ReconciliationStatus.unreconciled,
             reference_id=txn_data.get('reference_id'),
-            import_session_id=import_session.id
+            import_session_id=import_session.id,
+            content_hash=content_hash  # Store computed hash
         )
 
         # Set account_tag_id foreign key for data integrity
