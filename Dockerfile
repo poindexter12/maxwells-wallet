@@ -13,7 +13,7 @@ RUN npm ci
 COPY frontend/ ./
 # Ensure public directory exists (may be empty)
 RUN mkdir -p public
-ENV BACKEND_URL=http://localhost:8000
+ENV BACKEND_URL=http://localhost:3001
 RUN npm run build
 
 # Final stage: Python + Node runtime
