@@ -363,7 +363,7 @@ export default function BudgetsPage() {
                     <optgroup label="Buckets">
                       {bucketTags.map((tag) => (
                         <option key={tag.id} value={`bucket:${tag.value}`}>
-                          {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
+                          {tag.description || tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
                         </option>
                       ))}
                     </optgroup>
@@ -372,7 +372,7 @@ export default function BudgetsPage() {
                     <optgroup label="Occasions">
                       {occasionTags.map((tag) => (
                         <option key={tag.id} value={`occasion:${tag.value}`}>
-                          {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
+                          {tag.description || tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
                         </option>
                       ))}
                     </optgroup>
@@ -381,7 +381,7 @@ export default function BudgetsPage() {
                     <optgroup label="Accounts">
                       {accountTags.map((tag) => (
                         <option key={tag.id} value={`account:${tag.value}`}>
-                          {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
+                          {tag.description || tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
                         </option>
                       ))}
                     </optgroup>
