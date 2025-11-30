@@ -66,7 +66,25 @@ Built with:
 
 ## Quick Start
 
-### Using Makefile (Recommended)
+### Using Docker (Recommended)
+
+```bash
+# Build and run with Docker Compose
+docker compose up -d
+
+# Open http://localhost:3000
+```
+
+Your data is persisted in a Docker volume. To use a custom location:
+```bash
+# Mount a specific host directory
+docker run -d \
+  -p 3000:3000 -p 8000:8000 \
+  -v /path/to/your/data:/data \
+  maxwells-wallet
+```
+
+### Using Makefile (Development)
 
 ```bash
 # First-time setup (installs dependencies + seeds database)
