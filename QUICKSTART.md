@@ -71,9 +71,13 @@ make help
 ## Explore the App
 
 1. **Dashboard** (/) - View monthly summary, charts, trends
-2. **Transactions** (/transactions) - Browse all transactions, filter, search
-3. **Import** (/import) - Upload new CSV files
-4. **Reconcile** (/reconcile) - Categorize and reconcile unprocessed transactions
+2. **Transactions** (/transactions) - Browse all transactions, filter, search, bulk edit
+3. **Budgets** (/budgets) - Set spending limits and track progress
+4. **Organize** (/organize) - Manage buckets, occasions, and accounts
+5. **Tools** (/tools) - Transfer detection, rules engine, merchant aliases
+6. **Admin** (/admin) - System configuration and data management
+7. **Import** (/import) - Upload new CSV files
+8. **Reconcile** (/reconcile) - Categorize and reconcile unprocessed transactions
 
 ## Importing Your Own Data
 

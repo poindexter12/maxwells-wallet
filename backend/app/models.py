@@ -303,3 +303,35 @@ class RecurringPatternUpdate(SQLModel):
     next_expected_date: Optional[date_type] = None
     confidence_score: Optional[float] = None
     status: Optional[RecurringStatus] = None
+
+
+class MerchantAliasMatchType(str, Enum):
+    exact = "exact"        # Exact string match (case-insensitive)
+    contains = "contains"  # Pattern contained in merchant string
+    regex = "regex"        # Regular expression match
+
+
+class MerchantAlias(BaseModel, table=True):
+    """Merchant alias for normalizing messy bank merchant names"""
+    __tablename__ = "merchant_aliases"
+
+    pattern: str = Field(index=True)        # Raw merchant string/pattern to match
+    canonical_name: str = Field(index=True) # Clean display name
+    match_type: MerchantAliasMatchType = Field(default=MerchantAliasMatchType.exact)
+    priority: int = Field(default=0, index=True)  # Higher = applied first
+    match_count: int = Field(default=0)     # Track how often this alias is used
+    last_matched_date: Optional[datetime] = None
+
+
+class MerchantAliasCreate(SQLModel):
+    pattern: str
+    canonical_name: str
+    match_type: MerchantAliasMatchType = MerchantAliasMatchType.exact
+    priority: int = 0
+
+
+class MerchantAliasUpdate(SQLModel):
+    pattern: Optional[str] = None
+    canonical_name: Optional[str] = None
+    match_type: Optional[MerchantAliasMatchType] = None
+    priority: Optional[int] = None
