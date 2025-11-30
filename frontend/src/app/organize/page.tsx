@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/format'
+import { PageHelp } from '@/components/PageHelp'
 
 type OrganizeTab = 'buckets' | 'occasions' | 'accounts'
 
@@ -60,6 +61,22 @@ export default function OrganizePage() {
 
   return (
     <div className="space-y-6">
+      <PageHelp
+        pageId="organize"
+        title="Organize Your Transactions"
+        description="Manage the three types of tags used to categorize your transactions: Buckets for spending categories, Occasions for special events, and Accounts for bank accounts."
+        steps={[
+          "Buckets are spending categories like groceries, dining, entertainment",
+          "Occasions track special events like vacations, holidays, or projects",
+          "Accounts are created automatically when you import transactions",
+          "Click any item to see its transactions"
+        ]}
+        tips={[
+          "Create and edit tags in Admin > Tags",
+          "Set budgets for any bucket, occasion, or account"
+        ]}
+      />
+
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-theme">Organize</h1>

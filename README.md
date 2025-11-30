@@ -29,7 +29,7 @@ Built with:
 - **Anomaly Detection**: Automatically flag unusual purchases, new merchants, and budget leaks
 - **Enhanced Dashboard**: Real-time insights with color-coded indicators
 
-### Smart Budgeting & Automation (v0.3) - NEW!
+### Smart Budgeting & Automation (v0.3)
 - **Budget Tracking**: Set spending limits for buckets, occasions, or accounts
   - Monthly and yearly budgets for any tag type
   - Progress indicators: on-track, warning, exceeded
@@ -44,6 +44,25 @@ Built with:
   - Confidence scoring
   - Upcoming payment predictions
   - Missing payment alerts
+
+### Transfer Detection & Merchant Normalization (v0.1) - NEW!
+- **Transfer Detection**: Automatically identify internal transfers between accounts
+  - Pattern matching for autopay, ACH, PayPal, wire transfers
+  - Mark transactions as transfers to exclude from spending calculations
+  - Link transfer pairs bidirectionally
+- **Merchant Aliases**: Normalize messy bank merchant names into clean, consistent names
+  - Exact, contains, and regex matching
+  - Priority-based alias resolution
+  - Preview changes before applying
+  - Applied automatically during import
+
+### Streamlined Navigation
+- **Dashboard** - Monthly summary, charts, trends
+- **Transactions** - Browse, filter, search, bulk edit
+- **Budgets** - Spending limits with progress tracking
+- **Organize** - Buckets, Occasions, and Accounts in one place
+- **Tools** - Transfers, Rules, and Merchant aliases
+- **Admin** - System configuration and data management
 
 ## Quick Start
 

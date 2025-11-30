@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
+import { PageHelp } from '@/components/PageHelp'
 
 type ToolsTab = 'transfers' | 'rules' | 'merchants'
 
@@ -75,6 +76,22 @@ export default function ToolsPage() {
 
   return (
     <div className="space-y-6">
+      <PageHelp
+        pageId="tools"
+        title="Automation Tools"
+        description="Utilities to automate categorization and clean up your transaction data."
+        steps={[
+          "Transfers: Identify and mark internal transfers between your accounts",
+          "Rules: Create auto-categorization rules based on merchant, description, or amount",
+          "Merchants: Normalize messy bank merchant names into clean, consistent names"
+        ]}
+        tips={[
+          "Transfers are excluded from spending calculations",
+          "Rules run automatically when you import new transactions",
+          "Preview merchant alias changes before applying them"
+        ]}
+      />
+
       <div>
         <h1 className="text-3xl font-bold text-theme">Tools</h1>
         <p className="mt-1 text-sm text-theme-muted">
