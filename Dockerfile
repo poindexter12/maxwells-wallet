@@ -58,7 +58,7 @@ logfile=/var/log/supervisor/supervisord.log
 pidfile=/var/run/supervisord.pid
 
 [program:backend]
-command=/app/backend/.venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+command=/app/backend/.venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 3001
 directory=/app/backend
 autostart=true
 autorestart=true
@@ -70,7 +70,7 @@ stderr_logfile_maxbytes=0
 [program:frontend]
 command=node /app/frontend/server.js
 directory=/app/frontend
-environment=PORT="3000",HOSTNAME="0.0.0.0",BACKEND_URL="http://localhost:8000"
+environment=PORT="3000",HOSTNAME="0.0.0.0",BACKEND_URL="http://localhost:3001"
 autostart=true
 autorestart=true
 stdout_logfile=/dev/stdout
@@ -87,7 +87,7 @@ ENV DATABASE_URL="sqlite+aiosqlite:////data/wallet.db"
 ENV PYTHONUNBUFFERED=1
 
 # Expose both ports
-EXPOSE 3000 8000
+EXPOSE 3000 3001
 
 # Create startup script with multiple commands
 COPY <<'EOF' /app/start.sh
@@ -156,7 +156,7 @@ case "${1:-run}" in
         alembic upgrade head
     fi
     echo "Starting backend only..."
-    exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+    exec uvicorn app.main:app --host 0.0.0.0 --port 3001
     ;;
   help)
     echo "Maxwell's Wallet Docker Commands:"
@@ -182,7 +182,7 @@ RUN chmod +x /app/start.sh
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:8000/health && curl -f http://localhost:3000 || exit 1
+    CMD curl -f http://localhost:3001/health && curl -f http://localhost:3000 || exit 1
 
 ENTRYPOINT ["/app/start.sh"]
 CMD ["run"]

@@ -20,7 +20,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"   # Frontend
-      - "8000:8000"   # Backend API
+      - "3001:3001"   # Backend API
     volumes:
       # External data storage - map to your preferred location
       - wallet-data:/data

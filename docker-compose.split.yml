@@ -12,14 +12,14 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "3001:3001"
     volumes:
       - wallet-data:/app/data
       - ./samples:/app/samples:ro
     environment:
       - DATABASE_URL=sqlite+aiosqlite:///./data/wallet.db
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -33,7 +33,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - BACKEND_URL=http://backend:8000
+      - BACKEND_URL=http://backend:3001
     depends_on:
       backend:
         condition: service_healthy
