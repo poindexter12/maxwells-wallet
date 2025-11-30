@@ -35,6 +35,7 @@ interface Transaction {
   tags?: TransactionTag[]
   bucket?: string  // Convenience field we'll compute
   account?: string  // Convenience field we'll compute from account tag
+  is_transfer?: boolean  // True if marked as internal transfer
 }
 
 const PAGE_SIZE = 50
@@ -1024,7 +1025,12 @@ function TransactionsContent() {
                     </select>
 
                     <div className="flex items-center gap-1 ml-auto flex-shrink-0">
-                      <span className={`font-semibold text-sm ${txn.amount >= 0 ? 'text-positive' : 'text-negative'}`}>
+                      {txn.is_transfer && (
+                        <span className="px-1.5 py-0.5 text-xs rounded bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" title="Internal transfer - excluded from spending">
+                          Transfer
+                        </span>
+                      )}
+                      <span className={`font-semibold text-sm ${txn.is_transfer ? 'text-theme-muted' : txn.amount >= 0 ? 'text-positive' : 'text-negative'}`}>
                         {formatCurrency(txn.amount, true)}
                       </span>
                       <button
@@ -1155,7 +1161,12 @@ function TransactionsContent() {
                         </p>
                       </div>
                       <div className="flex items-center gap-1">
-                        <span className={`font-semibold ${txn.amount >= 0 ? 'text-positive' : 'text-negative'}`}>
+                        {txn.is_transfer && (
+                          <span className="px-1 py-0.5 text-xs rounded bg-blue-100 text-blue-700" title="Transfer">
+                            T
+                          </span>
+                        )}
+                        <span className={`font-semibold ${txn.is_transfer ? 'text-theme-muted' : txn.amount >= 0 ? 'text-positive' : 'text-negative'}`}>
                           {formatCurrency(txn.amount, true)}
                         </span>
                         <button
