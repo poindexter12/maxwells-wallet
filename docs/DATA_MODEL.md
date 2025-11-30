@@ -36,10 +36,12 @@ erDiagram
         string description "raw bank description"
         string merchant "cleaned merchant name"
         string account_source "e.g. BOFA-CC AMEX-53004"
+        int account_tag_id FK "FK to account Tag"
         string card_member
         enum reconciliation_status "unreconciled|matched|manually_entered|ignored"
         string notes
         string reference_id "bank reference ID"
+        string content_hash "SHA256 for deduplication"
         int import_session_id FK
     }
 
@@ -129,7 +131,13 @@ Core entity representing financial transactions from bank/credit card statements
 - **description**: Raw description from bank CSV
 - **merchant**: Cleaned/extracted merchant name for tagging
 - **account_source**: Identifies the source account (e.g., "BOFA-CC", "AMEX-53004")
+- **account_tag_id**: FK to the account Tag (for budgets and filtering by account)
+- **content_hash**: SHA256 hash of transaction content for reliable deduplication
 - **reference_id**: Bank's unique transaction identifier for duplicate detection
+
+Transactions have two types of tag relationships:
+- **account_tag**: Single FK to an account namespace tag (1:1)
+- **tags**: Many-to-many relationship via TransactionTag for buckets, occasions, etc.
 
 ### Tag
 Namespaced tags for flexible transaction classification. Tags use a `namespace:value` format:
@@ -145,7 +153,12 @@ Tag values can be renamed via the PATCH endpoint; the namespace is immutable aft
 Junction table linking transactions to tags (many-to-many relationship).
 
 ### Budget
-Monthly or yearly spending limits per tag. Uses `namespace:value` format (e.g., `bucket:groceries`). Supports optional date ranges and rollover.
+Monthly or yearly spending limits that can be set against any tag namespace:
+- **Buckets**: Track spending by category (e.g., `bucket:groceries`, `bucket:dining`)
+- **Occasions**: Track spending for events (e.g., `occasion:vacation`, `occasion:christmas`)
+- **Accounts**: Track spending per account (e.g., `account:amex-gold`, `account:bofa-checking`)
+
+Uses `namespace:value` format. Supports optional date ranges and rollover.
 
 ### TagRule
 Auto-tagging rules applied to new transactions during import. Supports pattern matching on merchant, description, amount ranges, and account source. Rules are applied by priority (highest first).
