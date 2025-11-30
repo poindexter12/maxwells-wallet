@@ -1,0 +1,43 @@
+# Git
+.git/
+.gitignore
+.gitmodules
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Documentation (not needed in container)
+*.md
+docs/
+
+# Development files
+.claude/
+dev/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local data
+data/
+*.db
+wallet.db
+
+# Node modules (will be installed fresh)
+frontend/node_modules/
+frontend/.next/
+
+# Python virtual environments
+backend/.venv/
+backend/__pycache__/
+**/__pycache__/
+*.py[cod]
+
+# Misc
+.DS_Store
+*.log
+Makefile
+setup.sh
+forge.config.yaml

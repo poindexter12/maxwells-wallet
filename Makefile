@@ -1,4 +1,4 @@
-.PHONY: help setup install install-backend install-frontend db-init db-seed db-reset backend frontend dev clean anonymize anonymize-status anonymize-force test-backend test-unit test-reports test-tags test-import test-budgets test-e2e test-e2e-install test-e2e-headed test-e2e-debug test-e2e-import test-e2e-full test-all
+.PHONY: help setup install install-backend install-frontend db-init db-seed db-reset backend frontend dev clean anonymize anonymize-status anonymize-force test-backend test-unit test-reports test-tags test-import test-budgets test-e2e test-e2e-install test-e2e-headed test-e2e-debug test-e2e-import test-e2e-full test-all docker-build docker-up docker-down docker-logs docker-shell docker-clean docker-seed docker-migrate
 
 # Default target
 .DEFAULT_GOAL := help
@@ -267,3 +267,48 @@ check-deps: ## Check if required dependencies are installed
 	@command -v node >/dev/null 2>&1 || { echo "$(RED)✗ Node.js not found$(NC)"; exit 1; }
 	@command -v npm >/dev/null 2>&1 || { echo "$(RED)✗ npm not found. Install Node.js from nodejs.org$(NC)"; exit 1; }
 	@echo "$(GREEN)✓ All dependencies found$(NC)"
+
+# =============================================================================
+# Docker targets
+# =============================================================================
+
+.PHONY: docker-build docker-up docker-down docker-logs docker-shell
+
+docker-build: ## Build Docker image
+	@echo "$(BLUE)Building Docker image...$(NC)"
+	docker compose build
+	@echo "$(GREEN)✓ Docker image built$(NC)"
+
+docker-up: ## Start Docker container
+	@echo "$(BLUE)Starting Docker container...$(NC)"
+	docker compose up -d
+	@echo "$(GREEN)✓ Container started$(NC)"
+	@echo ""
+	@echo "Frontend: http://localhost:3000"
+	@echo "Backend:  http://localhost:8000"
+
+docker-down: ## Stop Docker container
+	@echo "$(BLUE)Stopping Docker container...$(NC)"
+	docker compose down
+	@echo "$(GREEN)✓ Container stopped$(NC)"
+
+docker-logs: ## View Docker logs
+	docker compose logs -f
+
+docker-shell: ## Open shell in Docker container
+	docker compose exec maxwells-wallet /bin/bash
+
+docker-clean: ## Remove Docker containers and volumes
+	@echo "$(RED)Removing Docker containers and volumes...$(NC)"
+	docker compose down -v
+	@echo "$(GREEN)✓ Cleaned$(NC)"
+
+docker-seed: ## Seed database with sample data
+	@echo "$(BLUE)Seeding database...$(NC)"
+	docker compose run --rm maxwells-wallet seed
+	@echo "$(GREEN)✓ Database seeded$(NC)"
+
+docker-migrate: ## Run database migrations
+	@echo "$(BLUE)Running migrations...$(NC)"
+	docker compose run --rm maxwells-wallet migrate
+	@echo "$(GREEN)✓ Migrations complete$(NC)"
