@@ -6,12 +6,18 @@ Comprehensive tests for all CSV import formats:
 - Amex Credit Card
 - Inspira HSA
 - Venmo
+
+Tests both the new parser class system and the backwards-compatible wrapper.
 """
 import pytest
 from httpx import AsyncClient
 from datetime import date
 import io
 
+# New parser system (preferred)
+from app.parsers import ParserRegistry, CSVFormatParser, ParsedTransaction
+
+# Backwards-compat wrapper (deprecated but still tested)
 from app.csv_parser import (
     detect_format,
     parse_csv,
@@ -24,6 +30,216 @@ from app.csv_parser import (
     map_amex_category,
 )
 from app.models import ImportFormatType
+
+
+# =============================================================================
+# Tests for New Parser Registry System
+# =============================================================================
+
+class TestParserRegistry:
+    """Test the ParserRegistry class"""
+
+    def test_all_parsers_registered(self):
+        """All 5 parsers should be registered"""
+        keys = ParserRegistry.get_format_keys()
+        assert "bofa_bank" in keys
+        assert "bofa_cc" in keys
+        assert "amex_cc" in keys
+        assert "inspira_hsa" in keys
+        assert "venmo" in keys
+        assert len(keys) == 5
+
+    def test_get_parser_by_key(self):
+        """Get parser instance by format_key"""
+        parser = ParserRegistry.get_parser("amex_cc")
+        assert parser is not None
+        assert parser.format_key == "amex_cc"
+        assert parser.format_name == "American Express"
+
+    def test_get_parser_unknown_key(self):
+        """Unknown key returns None"""
+        parser = ParserRegistry.get_parser("unknown_format")
+        assert parser is None
+
+    def test_detect_format_returns_parser(self):
+        """detect_format returns parser instance and confidence"""
+        csv_content = """Date,Description,Card Member,Account #,Amount
+11/15/2025,AMAZON,JOHN DOE,XXXXX-53004,50.00
+"""
+        parser, confidence = ParserRegistry.detect_format(csv_content)
+        assert parser is not None
+        assert parser.format_key == "amex_cc"
+        assert confidence >= 0.9
+
+    def test_detect_format_unknown(self):
+        """Unknown format returns None parser"""
+        csv_content = """Random,Headers,Here
+1,2,3
+"""
+        parser, confidence = ParserRegistry.detect_format(csv_content)
+        assert parser is None
+        assert confidence == 0.0
+
+    def test_get_format_names(self):
+        """get_format_names returns key->name mapping"""
+        names = ParserRegistry.get_format_names()
+        assert names["amex_cc"] == "American Express"
+        assert names["bofa_bank"] == "Bank of America Bank"
+        assert names["venmo"] == "Venmo"
+
+
+class TestBackwardsCompatWrapper:
+    """Test that the csv_parser.py wrapper correctly delegates to ParserRegistry"""
+
+    def test_wrapper_detect_format_uses_registry(self):
+        """detect_format() should use ParserRegistry.detect_format()"""
+        csv_content = """Date,Description,Card Member,Account #,Amount
+11/15/2025,AMAZON,JOHN DOE,XXXXX-53004,50.00
+"""
+        # Wrapper function
+        wrapper_result = detect_format(csv_content)
+
+        # Direct registry call
+        parser, confidence = ParserRegistry.detect_format(csv_content)
+
+        # Should produce the same format
+        assert wrapper_result.value == parser.format_key
+
+    def test_wrapper_parse_csv_matches_registry(self):
+        """parse_csv() should produce same results as ParserRegistry"""
+        csv_content = """Date,Description,Card Member,Account #,Amount,Extended Details,Appears On Your Statement As,Address,City/State,Zip Code,Country,Reference,Category
+11/15/2025,AMAZON.COM,JOHN DOE,XXXXX-53004,199.99,,,,,,,320251150001,Merchandise
+"""
+        # Wrapper function
+        wrapper_txns, wrapper_format = parse_csv(csv_content)
+
+        # Direct registry call
+        parser = ParserRegistry.get_parser("amex_cc")
+        registry_txns = parser.parse(csv_content)
+
+        # Same count and amounts
+        assert len(wrapper_txns) == len(registry_txns)
+        assert wrapper_txns[0]["amount"] == registry_txns[0].amount
+        assert wrapper_txns[0]["merchant"] == registry_txns[0].merchant
+
+    def test_wrapper_parse_bofa_csv_matches_registry(self):
+        """parse_bofa_csv() should delegate to BofaBankParser"""
+        csv_content = """Date,Description,Amount,Running Bal.
+11/15/2025,PAYROLL DEPOSIT,3500.00,4734.56
+"""
+        # Wrapper function
+        wrapper_txns = parse_bofa_csv(csv_content, "BOFA-Test")
+
+        # Direct registry call
+        parser = ParserRegistry.get_parser("bofa_bank")
+        registry_txns = parser.parse(csv_content, "BOFA-Test")
+
+        assert len(wrapper_txns) == len(registry_txns)
+        assert wrapper_txns[0]["amount"] == registry_txns[0].amount
+
+    def test_wrapper_map_amex_category_matches_parser(self):
+        """map_amex_category() should delegate to AmexCCParser.map_category()"""
+        from app.parsers.formats.amex_cc import AmexCCParser
+
+        # Wrapper function
+        wrapper_result = map_amex_category("Restaurant-Dining")
+
+        # Direct parser call
+        parser = AmexCCParser()
+        parser_result = parser.map_category("Restaurant-Dining")
+
+        assert wrapper_result == parser_result == "Dining & Coffee"
+
+    def test_wrapper_returns_dict_format(self):
+        """Wrapper functions should return dicts (not ParsedTransaction)"""
+        csv_content = """Date,Description,Card Member,Account #,Amount
+11/15/2025,TEST,JOHN DOE,XXXXX-53004,50.00
+"""
+        wrapper_txns, _ = parse_csv(csv_content)
+
+        # Wrapper returns dicts
+        assert isinstance(wrapper_txns[0], dict)
+        assert "date" in wrapper_txns[0]
+        assert "amount" in wrapper_txns[0]
+
+        # Registry returns ParsedTransaction
+        parser = ParserRegistry.get_parser("amex_cc")
+        registry_txns = parser.parse(csv_content)
+        assert isinstance(registry_txns[0], ParsedTransaction)
+
+
+class TestParserClassesDirect:
+    """Test parser classes directly (not through wrapper)"""
+
+    def test_amex_parser_parse(self):
+        """AmexCCParser.parse() returns ParsedTransaction objects"""
+        csv_content = """Date,Description,Card Member,Account #,Amount,Extended Details,Appears On Your Statement As,Address,City/State,Zip Code,Country,Reference,Category
+11/15/2025,AMAZON.COM,JOHN DOE,XXXXX-53004,199.99,,,,,,,320251150001,Merchandise
+"""
+        parser = ParserRegistry.get_parser("amex_cc")
+        transactions = parser.parse(csv_content)
+
+        assert len(transactions) == 1
+        assert isinstance(transactions[0], ParsedTransaction)
+        assert transactions[0].amount == -199.99  # Inverted for expenses
+        assert transactions[0].merchant == "AMAZON.COM"
+        assert transactions[0].suggested_category == "Shopping"
+
+    def test_bofa_bank_parser_parse(self):
+        """BofaBankParser.parse() returns ParsedTransaction objects"""
+        csv_content = """Date,Description,Amount,Running Bal.
+11/15/2025,PAYROLL DEPOSIT,3500.00,4734.56
+11/10/2025,AMAZON PURCHASE,-199.99,1234.56
+"""
+        parser = ParserRegistry.get_parser("bofa_bank")
+        transactions = parser.parse(csv_content, "BOFA-Checking")
+
+        assert len(transactions) == 2
+        assert isinstance(transactions[0], ParsedTransaction)
+        assert transactions[0].amount == 3500.00
+        assert transactions[0].account_source == "BOFA-Checking"
+
+    def test_venmo_parser_parse(self):
+        """VenmoParser.parse() returns ParsedTransaction objects"""
+        csv_content = """Account Statement - (@johndoe) ,,,,,,,,,,,,,,,,,,,,,
+Account Activity,,,,,,,,,,,,,,,,,,,,,
+,ID,Datetime,Type,Status,Note,From,To,Amount (total),Amount (tip)
+,1234567890,2025-09-05T04:06:46,Payment,Complete,Test note,John Doe,Jane Smith,- $35.00,
+"""
+        parser = ParserRegistry.get_parser("venmo")
+        transactions = parser.parse(csv_content, "Venmo")
+
+        assert len(transactions) == 1
+        assert isinstance(transactions[0], ParsedTransaction)
+        assert transactions[0].amount == -35.00
+        assert transactions[0].description == "Test note"
+
+    def test_inspira_parser_parse(self):
+        """InspiraHSAParser.parse() returns ParsedTransaction objects"""
+        csv_content = """"Transaction ID","Transaction Type","Origination Date","Posted Date","Description","Amount","Expense Category","Expenses for","Contribution year","Document attached","Trade Details","Investment rebalance","Is Investment Trans Type","Verification Status"
+"12345","Contribution","01/15/2025","01/15/2025","Employer HSA","$500.00","","","","","","","",""
+"""
+        parser = ParserRegistry.get_parser("inspira_hsa")
+        transactions = parser.parse(csv_content, "Inspira-HSA")
+
+        assert len(transactions) == 1
+        assert isinstance(transactions[0], ParsedTransaction)
+        assert transactions[0].amount == 500.00
+        assert transactions[0].reference_id == "12345"
+
+    def test_parsed_transaction_to_dict(self):
+        """ParsedTransaction.to_dict() for API compatibility"""
+        csv_content = """Date,Description,Card Member,Account #,Amount,Extended Details,Appears On Your Statement As,Address,City/State,Zip Code,Country,Reference,Category
+11/15/2025,TEST MERCHANT,JOHN DOE,XXXXX-53004,50.00,,,,,,,REF123,Merchandise
+"""
+        parser = ParserRegistry.get_parser("amex_cc")
+        transactions = parser.parse(csv_content)
+
+        tx_dict = transactions[0].to_dict()
+        assert isinstance(tx_dict, dict)
+        assert tx_dict["date"] == date(2025, 11, 15)
+        assert tx_dict["amount"] == -50.00
+        assert tx_dict["merchant"] == "TEST MERCHANT"
 
 
 # =============================================================================
