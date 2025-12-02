@@ -441,7 +441,7 @@ async def get_transaction_tags(
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
-    # Get tags
+    # Get tags from junction table (bucket, occasion, etc.)
     result = await session.execute(
         select(Tag)
         .join(TransactionTag)
@@ -449,10 +449,25 @@ async def get_transaction_tags(
     )
     tags = result.scalars().all()
 
+    tag_list = [
+        {"namespace": t.namespace, "value": t.value, "full": f"{t.namespace}:{t.value}"}
+        for t in tags
+    ]
+
+    # Also include account tag from direct FK (account_tag_id)
+    if transaction.account_tag_id:
+        account_result = await session.execute(
+            select(Tag).where(Tag.id == transaction.account_tag_id)
+        )
+        account_tag = account_result.scalar_one_or_none()
+        if account_tag:
+            tag_list.append({
+                "namespace": account_tag.namespace,
+                "value": account_tag.value,
+                "full": f"{account_tag.namespace}:{account_tag.value}"
+            })
+
     return {
         "transaction_id": transaction_id,
-        "tags": [
-            {"namespace": t.namespace, "value": t.value, "full": f"{t.namespace}:{t.value}"}
-            for t in tags
-        ]
+        "tags": tag_list
     }
