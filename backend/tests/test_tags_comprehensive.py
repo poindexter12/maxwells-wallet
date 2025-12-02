@@ -266,3 +266,177 @@ class TestTagRulesComprehensive:
         assert response.status_code == 200
         data = response.json()
         assert "applied_count" in data or "matched" in data or "updated" in data
+
+
+class TestTagsAdditional:
+    """Additional tag tests for coverage"""
+
+    @pytest.mark.asyncio
+    async def test_get_tag_not_found(self, client: AsyncClient):
+        """Get nonexistent tag returns 404"""
+        response = await client.get("/api/v1/tags/99999")
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_get_tag_by_name(self, client: AsyncClient, seed_categories):
+        """Get tag by namespace and value"""
+        response = await client.get("/api/v1/tags/by-name/bucket/groceries")
+        assert response.status_code == 200
+        tag = response.json()
+        assert tag["namespace"] == "bucket"
+        assert tag["value"] == "groceries"
+
+    @pytest.mark.asyncio
+    async def test_get_tag_by_name_not_found(self, client: AsyncClient):
+        """Get nonexistent tag by name returns 404"""
+        response = await client.get("/api/v1/tags/by-name/bucket/nonexistent12345")
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_create_duplicate_tag(self, client: AsyncClient):
+        """Create duplicate tag fails"""
+        tag_data = {
+            "namespace": "occasion",
+            "value": "duplicate-test-123"
+        }
+        # First creation
+        await client.post("/api/v1/tags", json=tag_data)
+
+        # Second creation should fail
+        response = await client.post("/api/v1/tags", json=tag_data)
+        assert response.status_code == 400
+        assert "already exists" in response.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_update_tag_value_conflict(self, client: AsyncClient):
+        """Update tag value to existing value fails"""
+        # Create two tags
+        await client.post("/api/v1/tags", json={
+            "namespace": "occasion",
+            "value": "existing-value-123"
+        })
+        create2 = await client.post("/api/v1/tags", json={
+            "namespace": "occasion",
+            "value": "other-value-456"
+        })
+        tag2_id = create2.json()["id"]
+
+        # Try to update to existing value
+        update_response = await client.patch(f"/api/v1/tags/{tag2_id}", json={
+            "value": "existing-value-123"
+        })
+        assert update_response.status_code == 400
+        assert "already exists" in update_response.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_update_nonexistent_tag(self, client: AsyncClient):
+        """Update nonexistent tag returns 404"""
+        response = await client.patch("/api/v1/tags/99999", json={
+            "description": "Test"
+        })
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_delete_nonexistent_tag(self, client: AsyncClient):
+        """Delete nonexistent tag returns 404"""
+        response = await client.delete("/api/v1/tags/99999")
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_list_buckets(self, client: AsyncClient, seed_categories):
+        """List bucket tags via convenience endpoint"""
+        response = await client.get("/api/v1/tags/buckets")
+        assert response.status_code == 200
+        tags = response.json()
+        for tag in tags:
+            assert tag["namespace"] == "bucket"
+
+    @pytest.mark.asyncio
+    async def test_get_usage_count(self, client: AsyncClient, seed_categories):
+        """Get usage count for a tag"""
+        # Create a tag
+        create_response = await client.post("/api/v1/tags", json={
+            "namespace": "occasion",
+            "value": "usage-test-123"
+        })
+        tag_id = create_response.json()["id"]
+
+        # Get usage count
+        response = await client.get(f"/api/v1/tags/{tag_id}/usage-count")
+        assert response.status_code == 200
+        data = response.json()
+        assert "tag_id" in data
+        assert "usage_count" in data
+
+    @pytest.mark.asyncio
+    async def test_get_usage_count_nonexistent(self, client: AsyncClient):
+        """Get usage count for nonexistent tag returns 404"""
+        response = await client.get("/api/v1/tags/99999/usage-count")
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_reorder_tags(self, client: AsyncClient, seed_categories):
+        """Reorder tags"""
+        # Get current tags
+        tags_response = await client.get("/api/v1/tags?namespace=bucket")
+        tags = tags_response.json()
+
+        if len(tags) >= 2:
+            # Reorder first two
+            reorder_data = {
+                "tags": [
+                    {"id": tags[0]["id"], "sort_order": 2},
+                    {"id": tags[1]["id"], "sort_order": 1}
+                ]
+            }
+            response = await client.post("/api/v1/tags/reorder", json=reorder_data)
+            assert response.status_code == 200
+            data = response.json()
+            assert data["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_get_account_stats(self, client: AsyncClient, seed_categories):
+        """Get account tag statistics"""
+        response = await client.get("/api/v1/tags/accounts/stats")
+        assert response.status_code == 200
+        data = response.json()
+        assert "accounts" in data
+        assert isinstance(data["accounts"], list)
+
+    @pytest.mark.asyncio
+    async def test_get_bucket_stats(self, client: AsyncClient, seed_categories):
+        """Get bucket tag statistics"""
+        response = await client.get("/api/v1/tags/buckets/stats")
+        assert response.status_code == 200
+        data = response.json()
+        assert "buckets" in data
+        assert isinstance(data["buckets"], list)
+
+    @pytest.mark.asyncio
+    async def test_get_occasion_stats(self, client: AsyncClient, seed_categories):
+        """Get occasion tag statistics"""
+        response = await client.get("/api/v1/tags/occasions/stats")
+        assert response.status_code == 200
+        data = response.json()
+        assert "occasions" in data
+        assert isinstance(data["occasions"], list)
+
+    @pytest.mark.asyncio
+    async def test_delete_tag_in_use(self, client: AsyncClient, seed_transactions, seed_categories):
+        """Delete tag in use fails"""
+        # Get a bucket tag that's likely in use
+        tags_response = await client.get("/api/v1/tags?namespace=bucket")
+        bucket_tags = tags_response.json()
+
+        for tag in bucket_tags:
+            usage_response = await client.get(f"/api/v1/tags/{tag['id']}/usage-count")
+            if usage_response.status_code == 200:
+                usage = usage_response.json()
+                if usage["usage_count"] > 0:
+                    # Try to delete
+                    delete_response = await client.delete(f"/api/v1/tags/{tag['id']}")
+                    assert delete_response.status_code == 400
+                    # Check for message indicating tag is in use
+                    detail = delete_response.json()["detail"].lower()
+                    assert "used by" in detail or "in use" in detail
+                    break
