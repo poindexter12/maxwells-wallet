@@ -348,3 +348,77 @@ class MerchantAliasUpdate(SQLModel):
     canonical_name: Optional[str] = None
     match_type: Optional[MerchantAliasMatchType] = None
     priority: Optional[int] = None
+
+
+class SavedFilter(BaseModel, table=True):
+    """Saved search filters for quick access to common queries"""
+    __tablename__ = "saved_filters"
+
+    name: str = Field(index=True)  # User-friendly name like "Amazon purchases"
+    description: Optional[str] = None
+
+    # Filter criteria (stored as JSON-serialized strings for flexibility)
+    accounts: Optional[str] = None  # JSON array of account values
+    accounts_exclude: Optional[str] = None  # JSON array of excluded accounts
+    tags: Optional[str] = None  # JSON array of namespace:value tags
+    tags_exclude: Optional[str] = None  # JSON array of excluded tags
+    search: Optional[str] = None  # Search text
+    search_regex: bool = Field(default=False)  # Use regex for search
+    amount_min: Optional[float] = None
+    amount_max: Optional[float] = None
+    reconciliation_status: Optional[str] = None  # ReconciliationStatus value
+    is_transfer: Optional[bool] = None
+    category: Optional[str] = None  # Legacy category filter
+
+    # Date range (relative or absolute)
+    date_range_type: Optional[str] = None  # "relative" or "absolute"
+    relative_days: Optional[int] = None  # e.g., 30 = last 30 days
+    start_date: Optional[date_type] = None  # For absolute dates
+    end_date: Optional[date_type] = None
+
+    # Usage stats
+    use_count: int = Field(default=0)
+    last_used_at: Optional[datetime] = None
+    is_pinned: bool = Field(default=False)  # Pinned filters appear at top
+
+
+class SavedFilterCreate(SQLModel):
+    name: str
+    description: Optional[str] = None
+    accounts: Optional[List[str]] = None
+    accounts_exclude: Optional[List[str]] = None
+    tags: Optional[List[str]] = None
+    tags_exclude: Optional[List[str]] = None
+    search: Optional[str] = None
+    search_regex: bool = False
+    amount_min: Optional[float] = None
+    amount_max: Optional[float] = None
+    reconciliation_status: Optional[ReconciliationStatus] = None
+    is_transfer: Optional[bool] = None
+    category: Optional[str] = None
+    date_range_type: Optional[str] = None
+    relative_days: Optional[int] = None
+    start_date: Optional[date_type] = None
+    end_date: Optional[date_type] = None
+    is_pinned: bool = False
+
+
+class SavedFilterUpdate(SQLModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    accounts: Optional[List[str]] = None
+    accounts_exclude: Optional[List[str]] = None
+    tags: Optional[List[str]] = None
+    tags_exclude: Optional[List[str]] = None
+    search: Optional[str] = None
+    search_regex: Optional[bool] = None
+    amount_min: Optional[float] = None
+    amount_max: Optional[float] = None
+    reconciliation_status: Optional[ReconciliationStatus] = None
+    is_transfer: Optional[bool] = None
+    category: Optional[str] = None
+    date_range_type: Optional[str] = None
+    relative_days: Optional[int] = None
+    start_date: Optional[date_type] = None
+    end_date: Optional[date_type] = None
+    is_pinned: Optional[bool] = None

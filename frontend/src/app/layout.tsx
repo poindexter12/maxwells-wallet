@@ -20,7 +20,8 @@ export default function RootLayout({
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
               <div className="flex">
-                <Link href="/" className="nav-brand flex items-center px-2">
+                <Link href="/" className="nav-brand flex items-center px-2 gap-2">
+                  <img src="/favicon.svg" alt="" className="w-6 h-6" />
                   Maxwell&apos;s Wallet
                 </Link>
                 <div className="hidden sm:ml-6 sm:flex sm:space-x-6">
