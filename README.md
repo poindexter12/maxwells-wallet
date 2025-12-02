@@ -13,10 +13,10 @@ Built with:
 ## Features
 
 ### Core Features (v0.1)
-- **CSV Import**: Import transactions from Bank of America and American Express
-  - Auto-detects format
-  - Deduplicates transactions
-  - Saves format preferences
+- **Multi-Format Import**: Import transactions from various sources
+  - Bank of America, American Express, Venmo, Inspira HSA CSV formats
+  - **Quicken QIF/QFX/OFX** - Import from Quicken, Microsoft Money, and financial software
+  - Auto-detects format, deduplicates transactions
   - **Batch Import**: Import multiple files at once with cross-file duplicate detection
 - **Smart Categorization**: Auto-categorizes transactions using keyword matching and learning from past categorizations
 - **Dashboard**: Monthly spending analysis with charts and trends
@@ -45,7 +45,7 @@ Built with:
   - Upcoming payment predictions
   - Missing payment alerts
 
-### Transfer Detection & Merchant Normalization (v0.1) - NEW!
+### Transfer Detection & Merchant Normalization (v0.4)
 - **Transfer Detection**: Automatically identify internal transfers between accounts
   - Pattern matching for autopay, ACH, PayPal, wire transfers
   - Mark transactions as transfers to exclude from spending calculations
@@ -55,6 +55,22 @@ Built with:
   - Priority-based alias resolution
   - Preview changes before applying
   - Applied automatically during import
+
+### Credit Card Management (v0.4)
+- **Credit Card Accounts**: Track credit cards with full account details
+  - Due dates, credit limits, available credit
+  - Utilization percentage tracking
+  - Account summary widget on dashboard
+- **Multi-Account Support**: Organize transactions across checking, savings, and credit accounts
+
+### Advanced Search & Filtering (v0.4)
+- **Quick Filters**: One-click filter buttons for common queries
+  - Date ranges: This Month, Last Month, This Year, YTD, Last 90 Days
+  - Insights: Large transactions (dynamic threshold), Top Spending, Unreconciled
+- **Dynamic Thresholds**: "Large" transactions calculated from your spending history (2σ above average)
+- **Saved Filters**: Save complex filter combinations for reuse
+- **CSV Export**: Export filtered transactions for external analysis
+- **Clickable Insights**: Dashboard anomaly counts link directly to filtered transactions
 
 ### Streamlined Navigation
 - **Dashboard** - Monthly summary, charts, trends
@@ -266,10 +282,20 @@ maxwells-wallet/
 - `GET /api/v1/reports/top-merchants` - Top merchants by spending
 - `GET /api/v1/reports/account-summary` - Summary by account
 
-### Reports (Advanced Analytics) - NEW!
+### Reports (Advanced Analytics)
 - `GET /api/v1/reports/month-over-month` - Compare current vs previous month
 - `GET /api/v1/reports/spending-velocity` - Daily burn rate and projections
-- `GET /api/v1/reports/anomalies` - Detect unusual transactions
+- `GET /api/v1/reports/anomalies` - Detect unusual transactions (includes dynamic threshold)
+
+### Filters & Export
+- `GET /api/v1/filters` - List saved filters
+- `POST /api/v1/filters` - Create saved filter
+- `GET /api/v1/filters/{id}/apply` - Apply saved filter
+- `GET /api/v1/transactions/export` - Export filtered transactions to CSV
+
+### Account Management
+- `GET /api/v1/accounts` - List accounts with credit card details
+- `PATCH /api/v1/accounts/{id}` - Update account (credit limit, due date, etc.)
 
 ## Default Categories
 

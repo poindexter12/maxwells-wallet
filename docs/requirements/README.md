@@ -82,27 +82,38 @@ When requirements change:
 
 ## Current Status
 
-**Last Updated**: 2025-11-27
+**Last Updated**: 2025-12-02
 
-**Version**: 0.2 (v0.2)
+**Version**: 0.4.4
 
 **Implemented**:
-- ✅ All FR-001 (CSV Import)
+- ✅ All FR-001 (CSV Import) - Enhanced with QIF/QFX/OFX support
 - ✅ All FR-002 (Transaction Management)
 - ✅ All FR-003 (Category Inference)
 - ✅ All FR-004 (Reconciliation)
 - ✅ All FR-005 (Reports & Analytics - Basic)
-- ✅ FR-006 (Export) - partial
-- ✅ **All FR-007 (Advanced Analytics)** - NEW!
+- ✅ All FR-006 (Export) - Full CSV export with filters
+- ✅ All FR-007 (Advanced Analytics)
   - Month-over-month comparison
   - Spending velocity (daily burn rate)
-  - Anomaly detection
+  - Anomaly detection with dynamic thresholds
   - Dashboard integration
+- ✅ **All FR-008 (Smart Budgeting)** - v0.3
+  - Budget tracking with monthly/yearly limits
+  - Recurring transaction detection
+  - Category rules engine
+- ✅ **All FR-009 (Transfer & Account Management)** - v0.4
+  - Transfer detection and management
+  - Merchant alias normalization
+  - Credit card account support (limits, due dates)
+- ✅ **All FR-010 (Advanced Search)** - v0.4+
+  - Quick filter buttons
+  - Saved filters
+  - CSV export
+  - Dynamic large transaction threshold
 
 **Not Implemented** (future):
-- Budget tracking (planned for v0.3)
-- Recurring transaction detection (planned for v0.3)
-- Authentication/multi-user (planned for v0.4)
+- Authentication/multi-user (planned for v1.0)
 - Bank integrations (planned for v1.0)
 - Mobile apps (planned for v1.0)
 - Everything else in FUTURE_ENHANCEMENTS.md

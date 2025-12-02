@@ -31,6 +31,7 @@ def build_transaction_filter_query(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
     search: Optional[str] = None,
+    search_regex: bool = False,
     amount_min: Optional[float] = None,
     amount_max: Optional[float] = None,
     tag: Optional[List[str]] = None,
@@ -74,11 +75,26 @@ def build_transaction_filter_query(
     if end_date:
         query = query.where(Transaction.date <= end_date)
     if search:
-        search_pattern = f"%{search}%"
-        query = query.where(
-            (Transaction.merchant.ilike(search_pattern)) |
-            (Transaction.description.ilike(search_pattern))
-        )
+        if search_regex:
+            # Regex search using SQLite REGEXP or PostgreSQL ~*
+            # SQLite requires regexp extension, PostgreSQL has built-in
+            # Use op('REGEXP') for SQLite compatibility
+            from sqlalchemy import or_
+            query = query.where(
+                or_(
+                    Transaction.merchant.op('REGEXP')(search),
+                    Transaction.description.op('REGEXP')(search),
+                    Transaction.notes.op('REGEXP')(search)
+                )
+            )
+        else:
+            # Standard ILIKE search (case-insensitive substring)
+            search_pattern = f"%{search}%"
+            query = query.where(
+                (Transaction.merchant.ilike(search_pattern)) |
+                (Transaction.description.ilike(search_pattern)) |
+                (Transaction.notes.ilike(search_pattern))
+            )
     if amount_min is not None:
         query = query.where(Transaction.amount >= amount_min)
     if amount_max is not None:
@@ -121,7 +137,8 @@ async def count_transactions(
     reconciliation_status: Optional[ReconciliationStatus] = None,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
-    search: Optional[str] = None,
+    search: Optional[str] = Query(None, description="Search in merchant, description, and notes fields"),
+    search_regex: bool = Query(False, description="Use regex pattern matching instead of substring search"),
     amount_min: Optional[float] = None,
     amount_max: Optional[float] = None,
     tag: Optional[List[str]] = Query(None, description="Filter by tags in namespace:value format (can specify multiple)"),
@@ -141,6 +158,7 @@ async def count_transactions(
         start_date=start_date,
         end_date=end_date,
         search=search,
+        search_regex=search_regex,
         amount_min=amount_min,
         amount_max=amount_max,
         tag=tag,
@@ -164,7 +182,8 @@ async def list_transactions(
     reconciliation_status: Optional[ReconciliationStatus] = None,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
-    search: Optional[str] = None,
+    search: Optional[str] = Query(None, description="Search in merchant, description, and notes fields"),
+    search_regex: bool = Query(False, description="Use regex pattern matching instead of substring search"),
     amount_min: Optional[float] = None,
     amount_max: Optional[float] = None,
     tag: Optional[List[str]] = Query(None, description="Filter by tags in namespace:value format (can specify multiple)"),
@@ -180,6 +199,8 @@ async def list_transactions(
     - tag: Include transactions with specific tags (AND logic)
     - tag_exclude: Exclude transactions with specific tags
     - is_transfer: Filter by transfer status
+    - search: Search in merchant, description, and notes (substring or regex)
+    - search_regex: Enable regex pattern matching for search
     """
     base_query = select(Transaction)
     query = build_transaction_filter_query(
@@ -192,6 +213,7 @@ async def list_transactions(
         start_date=start_date,
         end_date=end_date,
         search=search,
+        search_regex=search_regex,
         amount_min=amount_min,
         amount_max=amount_max,
         tag=tag,
@@ -471,3 +493,97 @@ async def get_transaction_tags(
         "transaction_id": transaction_id,
         "tags": tag_list
     }
+
+
+@router.get("/export/csv")
+async def export_transactions_csv(
+    account_source: Optional[str] = None,
+    account: Optional[List[str]] = Query(None, description="Filter by account tag values (can specify multiple, OR logic)"),
+    account_exclude: Optional[List[str]] = Query(None, description="Exclude account tag values (can specify multiple)"),
+    category: Optional[str] = None,
+    reconciliation_status: Optional[ReconciliationStatus] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    search: Optional[str] = Query(None, description="Search in merchant, description, and notes fields"),
+    search_regex: bool = Query(False, description="Use regex pattern matching instead of substring search"),
+    amount_min: Optional[float] = None,
+    amount_max: Optional[float] = None,
+    tag: Optional[List[str]] = Query(None, description="Filter by tags in namespace:value format (can specify multiple)"),
+    tag_exclude: Optional[List[str]] = Query(None, description="Exclude tags in namespace:value format (can specify multiple)"),
+    is_transfer: Optional[bool] = Query(None, description="Filter by transfer status"),
+    session: AsyncSession = Depends(get_session)
+):
+    """Export transactions matching filters as CSV.
+
+    Returns a streaming CSV response with all matching transactions.
+    No pagination limit - exports all matching records.
+    """
+    from fastapi.responses import StreamingResponse
+    import csv
+    import io
+
+    # Build query (no limit for export)
+    base_query = select(Transaction)
+    query = build_transaction_filter_query(
+        base_query,
+        account=account,
+        account_exclude=account_exclude,
+        account_source=account_source,
+        category=category,
+        reconciliation_status=reconciliation_status,
+        start_date=start_date,
+        end_date=end_date,
+        search=search,
+        search_regex=search_regex,
+        amount_min=amount_min,
+        amount_max=amount_max,
+        tag=tag,
+        tag_exclude=tag_exclude,
+        is_transfer=is_transfer,
+    )
+
+    query = query.order_by(Transaction.date.desc())
+
+    result = await session.execute(query)
+    transactions = result.scalars().all()
+
+    # Generate CSV
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Write header
+    writer.writerow([
+        'Date', 'Amount', 'Merchant', 'Description', 'Account',
+        'Category', 'Status', 'Notes', 'Is Transfer', 'Reference ID'
+    ])
+
+    # Write data
+    for txn in transactions:
+        writer.writerow([
+            txn.date.isoformat() if txn.date else '',
+            txn.amount,
+            txn.merchant or '',
+            txn.description or '',
+            txn.account_source or '',
+            txn.category or '',
+            txn.reconciliation_status.value if txn.reconciliation_status else '',
+            txn.notes or '',
+            'Yes' if txn.is_transfer else 'No',
+            txn.reference_id or ''
+        ])
+
+    output.seek(0)
+
+    # Generate filename with date range if provided
+    filename_parts = ['transactions']
+    if start_date:
+        filename_parts.append(f'from_{start_date.isoformat()}')
+    if end_date:
+        filename_parts.append(f'to_{end_date.isoformat()}')
+    filename = '_'.join(filename_parts) + '.csv'
+
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type='text/csv',
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+    )

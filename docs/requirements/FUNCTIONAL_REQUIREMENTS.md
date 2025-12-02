@@ -575,7 +575,164 @@
   - `unknown`: Unrecognized format
 - **Status**: ✅ Implemented (2025-11-28)
 
-## Non-Goals (Out of Scope for v0.4)
+## FR-013: Extended Import Formats (v0.4)
+
+### FR-013.1: Venmo CSV Import
+- **Requirement**: Import transactions from Venmo CSV exports
+- **Acceptance Criteria**:
+  - Auto-detect Venmo format by headers
+  - Parse amount, date, merchant/note
+  - Handle Venmo-specific fields
+- **Status**: ✅ Implemented (2025-11-30)
+
+### FR-013.2: Inspira HSA Import
+- **Requirement**: Import from Inspira HSA transaction exports
+- **Status**: ✅ Implemented (2025-11-30)
+
+### FR-013.3: Quicken QIF/QFX/OFX Import
+- **Requirement**: Import from Quicken, Microsoft Money, and OFX-compatible software
+- **Acceptance Criteria**:
+  - Support QIF (Quicken Interchange Format)
+  - Support QFX (Quicken Financial Exchange)
+  - Support OFX (Open Financial Exchange)
+  - Parse date, amount, payee, memo fields
+  - Handle investment vs banking transactions
+  - Auto-detect format by file extension and content
+- **API**: `POST /api/v1/import/preview`, `POST /api/v1/import/confirm`
+- **Status**: ✅ Implemented (2025-12-02)
+
+## FR-014: Transfer Detection & Management (v0.4)
+
+### FR-014.1: Transfer Detection
+- **Requirement**: Identify internal transfers between accounts
+- **Purpose**: Exclude transfers from spending calculations
+- **Acceptance Criteria**:
+  - Pattern matching: autopay, ACH, wire, PayPal transfers
+  - Detect credit card payments
+  - Mark transactions as transfers
+  - Track transfer pairs (linked transactions)
+- **API**: `POST /api/v1/transfers/mark`, `POST /api/v1/transfers/detect`
+- **Status**: ✅ Implemented (2025-11-30)
+
+### FR-014.2: Transfer Linking
+- **Requirement**: Link matching transfer pairs
+- **Acceptance Criteria**:
+  - Link debit and credit sides of same transfer
+  - Auto-suggest matches based on amount and date
+  - Manual linking/unlinking
+  - Bidirectional links (both transactions reference each other)
+- **API**: `POST /api/v1/transfers/{id}/link`, `DELETE /api/v1/transfers/{id}/link`
+- **Status**: ✅ Implemented (2025-12-02)
+
+### FR-014.3: Transfer UI
+- **Requirement**: Manage transfers through web interface
+- **Features**:
+  - Filter transactions to show/hide/only transfers
+  - Toggle transfer status per transaction
+  - Link/unlink pairs
+  - Transfer summary statistics
+- **Status**: ✅ Implemented (2025-12-02)
+
+## FR-015: Merchant Aliases (v0.4)
+
+### FR-015.1: Alias Creation
+- **Requirement**: Map merchant name variations to canonical names
+- **Purpose**: Normalize messy bank merchant names
+- **Acceptance Criteria**:
+  - Match types: exact, contains, regex
+  - Priority-based resolution (higher priority wins)
+  - Apply during import automatically
+  - CRUD operations
+- **API**: `GET /api/v1/merchant-aliases`, `POST /api/v1/merchant-aliases`
+- **Status**: ✅ Implemented (2025-11-30)
+
+### FR-015.2: Alias Preview
+- **Requirement**: Preview alias changes before applying
+- **Acceptance Criteria**:
+  - Show which transactions would be affected
+  - Display original vs new merchant name
+  - Test without modifying data
+- **API**: `POST /api/v1/merchant-aliases/{id}/preview`
+- **Status**: ✅ Implemented (2025-11-30)
+
+## FR-016: Credit Card Account Management (v0.4)
+
+### FR-016.1: Credit Card Properties
+- **Requirement**: Track credit card-specific account details
+- **Acceptance Criteria**:
+  - Credit limit
+  - Due date (day of month)
+  - Interest rate (APR)
+  - Available credit (calculated)
+  - Utilization percentage
+- **API**: `GET /api/v1/accounts`, `PATCH /api/v1/accounts/{id}`
+- **Status**: ✅ Implemented (2025-12-02)
+
+### FR-016.2: Credit Card Summary Widget
+- **Requirement**: Dashboard widget showing credit card status
+- **Features**:
+  - Current balance
+  - Available credit
+  - Utilization percentage
+  - Due date
+  - Visual utilization indicator
+- **Status**: ✅ Implemented (2025-12-02)
+
+## FR-017: Advanced Search & Filtering (v0.4)
+
+### FR-017.1: Quick Filter Buttons
+- **Requirement**: One-click filter shortcuts
+- **Filters**:
+  - Date ranges: This Month, Last Month, This Year, YTD, Last 90 Days
+  - Insights: Large transactions, Top Spending, Unreconciled
+- **Acceptance Criteria**:
+  - Apply filter immediately on click
+  - Update URL for shareable links
+  - Clear visual indication of active filter
+- **Status**: ✅ Implemented (2025-12-02)
+
+### FR-017.2: Dynamic Large Transaction Threshold
+- **Requirement**: Calculate "large" based on user's spending history
+- **Purpose**: Personalize insights to individual spending patterns
+- **Acceptance Criteria**:
+  - Calculate from 3-month expense history
+  - Threshold = mean + 2 standard deviations (95th percentile)
+  - Display threshold amount in UI
+  - Fall back to $100 if insufficient history
+- **API**: `GET /api/v1/reports/anomalies` (returns `large_threshold_amount`)
+- **Status**: ✅ Implemented (2025-12-02)
+
+### FR-017.3: Saved Filters
+- **Requirement**: Save and reuse complex filter combinations
+- **Acceptance Criteria**:
+  - Save current filter state with name
+  - List saved filters
+  - Apply saved filter with one click
+  - Pin frequently used filters
+  - Delete unused filters
+- **API**: `GET /api/v1/filters`, `POST /api/v1/filters`, `GET /api/v1/filters/{id}/apply`
+- **Status**: ✅ Implemented (2025-12-02)
+
+### FR-017.4: CSV Export
+- **Requirement**: Export filtered transactions to CSV
+- **Acceptance Criteria**:
+  - Export applies current filters
+  - Include all transaction fields
+  - Download as file
+  - Filename includes date and filter context
+- **API**: `GET /api/v1/transactions/export`
+- **Status**: ✅ Implemented (2025-12-02)
+
+### FR-017.5: Clickable Dashboard Insights
+- **Requirement**: Link dashboard anomaly counts to filtered transactions
+- **Acceptance Criteria**:
+  - Click Large count → transactions filtered by large threshold
+  - Click New count → transactions from new merchants
+  - Click Over Avg count → unusual bucket spending transactions
+  - Click individual anomaly item → transaction detail
+- **Status**: ✅ Implemented (2025-12-02)
+
+## Non-Goals (Out of Scope for v1.0)
 - ❌ Multi-user / multi-tenant
 - ❌ User authentication / login
 - ❌ Bill payment
@@ -587,5 +744,3 @@
 - ❌ Scheduled imports
 - ❌ OCR receipt scanning
 - ❌ AI/ML-based predictions (beyond statistical analysis)
-- ❌ Custom budget rollover logic
-- ❌ Advanced rules engine (regex, fuzzy matching)
