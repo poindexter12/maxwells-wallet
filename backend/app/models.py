@@ -42,11 +42,15 @@ class Tag(BaseModel, table=True):
     __tablename__ = "tags"
     __table_args__ = {"extend_existing": True}
 
-    namespace: str = Field(index=True)  # "bucket", "occasion", "merchant"
-    value: str = Field(index=True)       # "groceries", "vacation", "amazon"
+    namespace: str = Field(index=True)  # "bucket", "occasion", "merchant", "account"
+    value: str = Field(index=True)       # "groceries", "vacation", "amazon", "amex-53004"
     description: Optional[str] = None
     sort_order: int = Field(default=0)   # For drag-and-drop ordering within namespace
     color: Optional[str] = None          # Hex color code (e.g., "#22c55e") for UI display
+
+    # Account-specific fields (only used when namespace="account")
+    due_day: Optional[int] = None        # Day of month payment is due (1-31)
+    credit_limit: Optional[float] = None  # Credit limit for credit card accounts
 
     # Note: Unique constraint on (namespace, value) added via migration
 
@@ -65,6 +69,8 @@ class TagUpdate(SQLModel):
     description: Optional[str] = None
     sort_order: Optional[int] = None
     color: Optional[str] = None
+    due_day: Optional[int] = None        # For account tags: day of month payment is due
+    credit_limit: Optional[float] = None  # For account tags: credit limit
 
 class Transaction(BaseModel, table=True):
     """Transaction model"""
