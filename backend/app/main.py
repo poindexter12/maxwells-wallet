@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db
-from app.routers import transactions, import_router, reports, budgets, tag_rules, recurring, admin, tags, transfers, merchants, accounts
+from app.routers import transactions, import_router, reports, budgets, tag_rules, recurring, admin, tags, transfers, merchants, accounts, filters
 
 
 @asynccontextmanager
@@ -41,6 +41,7 @@ app.include_router(tags.router)
 app.include_router(transfers.router)
 app.include_router(merchants.router)
 app.include_router(accounts.router)
+app.include_router(filters.router)
 
 @app.get("/")
 async def root():

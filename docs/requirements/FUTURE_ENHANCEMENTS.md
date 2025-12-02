@@ -29,11 +29,11 @@ Ideas for future versions beyond v0.
 - Link receipts to transactions
 - Store in cloud storage
 
-### Advanced Search
-- Full-text search
-- Save search filters as "views"
-- Export search results
-- Regex pattern matching
+### Advanced Search ✅ (Completed v0.5)
+- ✅ Full-text search (merchant, description, notes fields)
+- ✅ Save search filters as "views" (SavedFilter model with CRUD endpoints)
+- ✅ Export search results (CSV export endpoint)
+- ✅ Regex pattern matching (search_regex parameter)
 
 ## Medium Priority
 
@@ -227,7 +227,13 @@ Ideas for future versions beyond v0.
 8. ✅ **Dashboard Month Selector** - Navigate historical months (PR #16)
 9. ✅ **Docker Support** - Containerized deployment (PR #13)
 
-### v0.5+ (Future Ideas)
+### v0.5 ✅ (In Progress - 2025-12-01)
+
+1. ✅ **Quicken Import** - QIF/QFX/OFX file import support (PR #19)
+2. ✅ **Credit Card Account Support** - Due dates, credit limits, account summary (PR #20)
+3. ✅ **Advanced Search** - Notes search, regex support, saved filters, CSV export (PR #21)
+
+### v0.6+ (Future Ideas)
 - Bank integration (Plaid) for automatic sync
 - Receipt management (OCR, image upload)
 - Mobile app / PWA
