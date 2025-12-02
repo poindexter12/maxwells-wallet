@@ -10,75 +10,50 @@ Built with:
 
 📋 **[Full Requirements & Specifications →](docs/requirements/)**
 
+## What's New
+
+- **Quicken QIF/QFX/OFX Import** - Import from Quicken, Microsoft Money, and other financial software
+- **Credit Card Accounts** - Track due dates, credit limits, and utilization
+- **Advanced Search** - Quick filters, saved filters, CSV export
+- **Dynamic Thresholds** - "Large" transactions calculated from your spending history (2σ above average)
+- **Clickable Insights** - Dashboard anomaly counts link directly to filtered transactions
+
+See [CHANGELOG.md](CHANGELOG.md) for full release history.
+
 ## Features
 
-### Core Features (v0.1)
-- **Multi-Format Import**: Import transactions from various sources
-  - Bank of America, American Express, Venmo, Inspira HSA CSV formats
-  - **Quicken QIF/QFX/OFX** - Import from Quicken, Microsoft Money, and financial software
-  - Auto-detects format, deduplicates transactions
-  - **Batch Import**: Import multiple files at once with cross-file duplicate detection
-- **Smart Categorization**: Auto-categorizes transactions using keyword matching and learning from past categorizations
-- **Dashboard**: Monthly spending analysis with charts and trends
-- **Reconciliation**: Bulk reconcile unreconciled transactions
-- **Transaction Management**: Search, filter, and categorize transactions
+### Import & Data Management
+- **Multi-Format Import**: Bank of America, American Express, Venmo, Inspira HSA, Quicken QIF/QFX/OFX
+- **Batch Import**: Upload multiple files with cross-file duplicate detection
+- **Smart Categorization**: Auto-categorize using keyword matching and learning from past choices
+- **Merchant Aliases**: Normalize messy bank merchant names to clean, consistent names
+- **Transfer Detection**: Auto-identify internal transfers (CC payments, bank transfers)
 
-### Advanced Analytics (v0.2)
-- **Month-over-Month Comparison**: Track spending changes with % increases/decreases per category
-- **Daily Burn Rate**: See if you're on track to overspend with projected monthly totals
-- **Anomaly Detection**: Automatically flag unusual purchases, new merchants, and budget leaks
-- **Enhanced Dashboard**: Real-time insights with color-coded indicators
+### Budgeting & Analysis
+- **Budget Tracking**: Set monthly/yearly limits for buckets, occasions, or accounts
+- **Recurring Detection**: Identify subscriptions with upcoming payment predictions
+- **Anomaly Detection**: Flag unusual purchases, new merchants, and budget leaks
+- **Month-over-Month**: Track spending changes with category-level breakdown
+- **Daily Burn Rate**: Know early if you're on track to overspend
 
-### Smart Budgeting & Automation (v0.3)
-- **Budget Tracking**: Set spending limits for buckets, occasions, or accounts
-  - Monthly and yearly budgets for any tag type
-  - Progress indicators: on-track, warning, exceeded
-  - Automatic alerts at 80% and 100% thresholds
-- **Category Rules Engine**: Automate transaction categorization with pattern-based rules
-  - Match by merchant, description, amount, or account
-  - Priority-based rule execution
-  - Test rules before applying
-  - Bulk categorization
-- **Recurring Transaction Detection**: Identify subscriptions and recurring bills automatically
-  - Statistical pattern detection (weekly, monthly, quarterly, yearly)
-  - Confidence scoring
-  - Upcoming payment predictions
-  - Missing payment alerts
-
-### Transfer Detection & Merchant Normalization (v0.4)
-- **Transfer Detection**: Automatically identify internal transfers between accounts
-  - Pattern matching for autopay, ACH, PayPal, wire transfers
-  - Mark transactions as transfers to exclude from spending calculations
-  - Link transfer pairs bidirectionally
-- **Merchant Aliases**: Normalize messy bank merchant names into clean, consistent names
-  - Exact, contains, and regex matching
-  - Priority-based alias resolution
-  - Preview changes before applying
-  - Applied automatically during import
-
-### Credit Card Management (v0.4)
-- **Credit Card Accounts**: Track credit cards with full account details
-  - Due dates, credit limits, available credit
-  - Utilization percentage tracking
-  - Account summary widget on dashboard
-- **Multi-Account Support**: Organize transactions across checking, savings, and credit accounts
-
-### Advanced Search & Filtering (v0.4)
-- **Quick Filters**: One-click filter buttons for common queries
-  - Date ranges: This Month, Last Month, This Year, YTD, Last 90 Days
-  - Insights: Large transactions (dynamic threshold), Top Spending, Unreconciled
-- **Dynamic Thresholds**: "Large" transactions calculated from your spending history (2σ above average)
-- **Saved Filters**: Save complex filter combinations for reuse
+### Search & Filtering
+- **Quick Filters**: One-click buttons for This Month, Last Month, Large, Unreconciled
+- **Saved Filters**: Save and reuse complex filter combinations
 - **CSV Export**: Export filtered transactions for external analysis
-- **Clickable Insights**: Dashboard anomaly counts link directly to filtered transactions
+- **Dynamic Thresholds**: "Large" is personalized based on your spending patterns
 
-### Streamlined Navigation
-- **Dashboard** - Monthly summary, charts, trends
+### Account Management
+- **Multi-Account Support**: Checking, savings, and credit card accounts
+- **Credit Card Tracking**: Due dates, credit limits, available credit, utilization %
+- **Category Rules**: Automate categorization with pattern-based rules
+
+### Navigation
+- **Dashboard** - Monthly summary, charts, trends, anomalies
 - **Transactions** - Browse, filter, search, bulk edit
 - **Budgets** - Spending limits with progress tracking
-- **Organize** - Buckets, Occasions, and Accounts in one place
+- **Organize** - Buckets, Occasions, and Accounts
 - **Tools** - Transfers, Rules, and Merchant aliases
-- **Admin** - System configuration and data management
+- **Admin** - Import history, data management
 
 ## Quick Start
 
