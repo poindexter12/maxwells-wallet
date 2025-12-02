@@ -2,7 +2,7 @@
 # Testing Targets
 # =============================================================================
 
-.PHONY: test-backend test-unit test-reports test-tags test-import test-budgets
+.PHONY: test-backend test-unit test-coverage test-reports test-tags test-import test-budgets
 .PHONY: test-e2e-install test-e2e test-e2e-headed test-e2e-debug test-e2e-import test-e2e-full
 .PHONY: test-all lint-frontend
 
@@ -18,6 +18,13 @@ test-backend: ## Run backend tests
 	@echo "$(GREEN)✓ Tests complete$(NC)"
 
 test-unit: test-backend ## Run unit/integration tests (alias)
+
+test-coverage: ## Run tests with coverage report
+	@echo "$(BLUE)Running tests with coverage...$(NC)"
+	@cd $(BACKEND_DIR) && \
+		unset VIRTUAL_ENV && \
+		.venv/bin/python -m pytest --ignore=tests/e2e -v --cov=app --cov-report=term-missing --cov-report=html
+	@echo "$(GREEN)✓ Coverage report generated in backend/htmlcov/$(NC)"
 
 test-reports: ## Run report/analytics tests only
 	@echo "$(BLUE)Running report tests...$(NC)"
