@@ -215,14 +215,17 @@ Ideas for future versions beyond v0.
 - ✅ Recurring transaction detection (statistical pattern detection)
 - ✅ Category rules engine (pattern-based auto-categorization)
 
-### v0.4 (In Progress)
+### v0.4 ✅ (Completed - 2025-12-01)
 
 1. ✅ **Multi-File Import** - Batch upload multiple CSVs at once (PR #7)
 2. ✅ **Transaction Hashing** - Content-based deduplication for reliable import
 3. ✅ **Multi-Namespace Budgets** - Budgets for buckets, occasions, and accounts (PR #10)
-4. **Transfer Detection** - Auto-detect CC payments, internal transfers
-5. **Merchant Aliases** - Map variations to canonical names
-6. **Additional Account Types** - Venmo, HSA, Investment (liquid) support
+4. ✅ **Transfer Detection** - Auto-detect CC payments, internal transfers (PR #11, #16)
+5. ✅ **Merchant Aliases** - Map variations to canonical names (PR #12)
+6. ✅ **Additional Account Types** - Venmo, HSA import formats (PR #14)
+7. ✅ **Extensible CSV Parser** - Strategy pattern for easy new format addition (PR #15)
+8. ✅ **Dashboard Month Selector** - Navigate historical months (PR #16)
+9. ✅ **Docker Support** - Containerized deployment (PR #13)
 
 ### v0.5+ (Future Ideas)
 - Bank integration (Plaid) for automatic sync
