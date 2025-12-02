@@ -76,6 +76,9 @@ class Transaction(BaseModel, table=True):
     """Transaction model"""
     __tablename__ = "transactions"
 
+    # Pydantic config for proper enum serialization
+    model_config = {"use_enum_values": True}
+
     date: date_type = Field(index=True)
     amount: float  # positive=income, negative=expense
     description: str  # raw description from bank
