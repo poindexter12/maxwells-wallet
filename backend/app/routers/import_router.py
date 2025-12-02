@@ -19,6 +19,14 @@ import re as regex_module
 
 router = APIRouter(prefix="/api/v1/import", tags=["import"])
 
+# Supported import file extensions
+SUPPORTED_EXTENSIONS = ('.csv', '.qif', '.qfx', '.ofx')
+
+
+def is_valid_import_file(filename: str) -> bool:
+    """Check if a filename has a supported import extension."""
+    return filename.lower().endswith(SUPPORTED_EXTENSIONS)
+
 
 async def get_or_create_bucket_tag(session: AsyncSession, bucket_value: str) -> Tag:
     """Get bucket tag by value, creating if needed"""
@@ -138,12 +146,16 @@ async def preview_import(
     session: AsyncSession = Depends(get_session)
 ):
     """
-    Preview CSV import without saving to database
+    Preview import without saving to database.
 
-    Returns parsed transactions and detected format
+    Supports CSV, QIF, and QFX/OFX file formats.
+    Returns parsed transactions and detected format.
     """
-    if not file.filename.endswith('.csv'):
-        raise HTTPException(status_code=400, detail="Only CSV files are supported")
+    if not is_valid_import_file(file.filename):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type. Supported formats: {', '.join(SUPPORTED_EXTENSIONS)}"
+        )
 
     # Read file content
     content = await file.read()
@@ -209,26 +221,31 @@ async def confirm_import(
     session: AsyncSession = Depends(get_session)
 ):
     """
-    Confirm and save imported transactions
+    Confirm and save imported transactions.
+
+    Supports CSV, QIF, and QFX/OFX file formats.
 
     Args:
-        file: CSV file
+        file: Transaction file (CSV, QIF, QFX, or OFX)
         account_source: Account source identifier
         format_type: Confirmed format type
         save_format: Whether to save this format preference
     """
-    if not file.filename.endswith('.csv'):
-        raise HTTPException(status_code=400, detail="Only CSV files are supported")
+    if not is_valid_import_file(file.filename):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type. Supported formats: {', '.join(SUPPORTED_EXTENSIONS)}"
+        )
 
     # Read file content
     content = await file.read()
-    csv_content = content.decode('utf-8')
+    file_content = content.decode('utf-8')
 
-    # Parse CSV with confirmed format
-    transactions, _ = parse_csv(csv_content, account_source, format_type)
+    # Parse file with confirmed format
+    transactions, _ = parse_csv(file_content, account_source, format_type)
 
     if not transactions:
-        raise HTTPException(status_code=400, detail="No transactions found in CSV")
+        raise HTTPException(status_code=400, detail="No transactions found in file")
 
     # Build user history for bucket tag suggestions
     all_txns_result = await session.execute(
@@ -449,7 +466,9 @@ async def batch_upload_preview(
     session: AsyncSession = Depends(get_session)
 ):
     """
-    Upload multiple CSV files for batch import preview
+    Upload multiple files for batch import preview.
+
+    Supports CSV, QIF, and QFX/OFX file formats.
 
     Returns preview data for each file including:
     - Detected format
@@ -461,12 +480,12 @@ async def batch_upload_preview(
     if not files:
         raise HTTPException(status_code=400, detail="No files provided")
 
-    # Validate all files are CSVs
+    # Validate all files have supported extensions
     for file in files:
-        if not file.filename.endswith('.csv'):
+        if not is_valid_import_file(file.filename):
             raise HTTPException(
                 status_code=400,
-                detail=f"File {file.filename} is not a CSV file"
+                detail=f"File {file.filename} has unsupported format. Supported: {', '.join(SUPPORTED_EXTENSIONS)}"
             )
 
     previews: List[BatchFilePreview] = []
@@ -497,8 +516,13 @@ async def batch_upload_preview(
         account_source = None
         filename_lower = file.filename.lower()
         if 'bofa' in filename_lower or 'bank-of-america' in filename_lower:
-            # Extract account info from filename
-            parts = file.filename.replace('.csv', '').split('-')
+            # Extract account info from filename (strip any supported extension)
+            base_filename = file.filename
+            for ext in SUPPORTED_EXTENSIONS:
+                if base_filename.lower().endswith(ext):
+                    base_filename = base_filename[:-len(ext)]
+                    break
+            parts = base_filename.split('-')
             if len(parts) >= 2:
                 account_source = '-'.join(parts[:2])
 
