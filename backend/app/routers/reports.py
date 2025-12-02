@@ -34,11 +34,24 @@ async def get_transaction_tags(session: AsyncSession, transaction_ids: List[int]
 
 @router.get("/monthly-summary")
 async def monthly_summary(
-    year: int = Query(...),
-    month: int = Query(..., ge=1, le=12),
+    year: int = Query(..., description="Year (e.g., 2024)"),
+    month: int = Query(..., ge=1, le=12, description="Month (1-12)"),
     session: AsyncSession = Depends(get_session)
 ):
-    """Get spending summary for a specific month"""
+    """
+    Get comprehensive spending summary for a specific month.
+
+    Returns:
+    - **total_income**: Sum of all positive transactions
+    - **total_expenses**: Sum of all negative transactions (as positive number)
+    - **net**: Income minus expenses
+    - **category_breakdown**: Spending grouped by legacy category
+    - **bucket_breakdown**: Spending grouped by bucket tags
+    - **top_merchants**: Top 5 merchants by spending
+    - **transaction_count**: Total number of transactions
+
+    Note: Transfers are excluded from all calculations.
+    """
     # Calculate date range
     start_date = date(year, month, 1)
     if month == 12:
@@ -121,12 +134,22 @@ async def monthly_summary(
 
 @router.get("/trends")
 async def spending_trends(
-    start_date: date = Query(...),
-    end_date: date = Query(...),
-    group_by: str = Query("month", pattern="^(month|category|account|tag)$"),
+    start_date: date = Query(..., description="Start date (YYYY-MM-DD)"),
+    end_date: date = Query(..., description="End date (YYYY-MM-DD)"),
+    group_by: str = Query("month", pattern="^(month|category|account|tag)$", description="Grouping: month, category, account, or tag"),
     session: AsyncSession = Depends(get_session)
 ):
-    """Get spending trends over time"""
+    """
+    Get spending trends over a date range.
+
+    Supports multiple grouping modes:
+    - **month**: Income, expenses, and net by month (for line charts)
+    - **category**: Spending breakdown by category
+    - **account**: Spending breakdown by account
+    - **tag**: Spending breakdown by bucket tag
+
+    Transfers are excluded from all calculations.
+    """
     # Get transactions in date range (excluding transfers)
     result = await session.execute(
         select(Transaction).where(
@@ -377,13 +400,20 @@ async def bucket_summary(
 
 @router.get("/month-over-month")
 async def month_over_month_comparison(
-    current_year: int = Query(...),
-    current_month: int = Query(..., ge=1, le=12),
+    current_year: int = Query(..., description="Year to compare (e.g., 2024)"),
+    current_month: int = Query(..., ge=1, le=12, description="Month to compare (1-12)"),
     session: AsyncSession = Depends(get_session)
 ):
     """
     Compare current month with previous month to identify spending changes.
-    Returns absolute and percentage changes to help identify where to save money.
+
+    Returns:
+    - **current/previous**: Totals for income, expenses, net
+    - **changes**: Absolute dollar and percentage changes
+    - **bucket_changes**: Per-bucket spending comparison
+    - **insights**: Biggest increase/decrease categories
+
+    Use this to identify where spending increased or decreased month-over-month.
     """
     # Calculate previous month
     if current_month == 1:
@@ -517,13 +547,21 @@ async def month_over_month_comparison(
 
 @router.get("/spending-velocity")
 async def spending_velocity(
-    year: int = Query(...),
-    month: int = Query(..., ge=1, le=12),
+    year: int = Query(..., description="Year (e.g., 2024)"),
+    month: int = Query(..., ge=1, le=12, description="Month (1-12)"),
     session: AsyncSession = Depends(get_session)
 ):
     """
     Calculate daily spending rate and project monthly total.
-    Helps answer: Am I on track to overspend this month?
+
+    Returns:
+    - **daily_burn_rate**: Average spending per day so far
+    - **projected_monthly_total**: Estimated month-end total at current pace
+    - **days_elapsed / days_remaining**: Progress through the month
+    - **pace**: "on_track", "under_budget", or "over_budget" vs previous month
+    - **previous_month_total**: Last month's total for comparison
+
+    Use this to catch overspending early in the month.
     """
     # Calculate date range
     start_date = date(year, month, 1)
@@ -638,14 +676,26 @@ async def spending_velocity(
 
 @router.get("/anomalies")
 async def detect_anomalies(
-    year: int = Query(...),
-    month: int = Query(..., ge=1, le=12),
-    threshold: float = Query(2.0, ge=1.0, le=5.0, description="Standard deviations from mean"),
+    year: int = Query(..., description="Year (e.g., 2024)"),
+    month: int = Query(..., ge=1, le=12, description="Month (1-12)"),
+    threshold: float = Query(2.0, ge=1.0, le=5.0, description="Sensitivity: standard deviations from mean (lower = more sensitive)"),
     session: AsyncSession = Depends(get_session)
 ):
     """
     Detect unusual transactions that might indicate waste or errors.
-    Helps identify: large unexpected purchases, new merchants, unusual category spending.
+
+    Analyzes transactions using a 3-month baseline to identify:
+    - **Large transactions**: Spending significantly above your average (z-score > threshold)
+    - **New merchants**: First-time purchases at merchants you haven't used before
+    - **Unusual categories**: Category spending far above historical average
+    - **Unusual buckets**: Bucket spending far above historical average
+
+    Returns:
+    - **summary**: Counts of each anomaly type, plus `large_threshold_amount` showing the dollar threshold
+    - **anomalies**: Detailed lists of flagged items with amounts and explanations
+
+    The `threshold` parameter controls sensitivity (default 2.0 = ~95th percentile).
+    Lower values flag more transactions; higher values only flag extreme outliers.
     """
     # Get current month transactions
     start_date = date(year, month, 1)
