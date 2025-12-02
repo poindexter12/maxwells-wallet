@@ -1,4 +1,4 @@
-.PHONY: help setup install install-backend install-frontend db-init db-seed db-reset backend frontend dev clean anonymize anonymize-status anonymize-force test-backend test-unit test-reports test-tags test-import test-budgets test-e2e test-e2e-install test-e2e-headed test-e2e-debug test-e2e-import test-e2e-full test-all docker-build docker-up docker-down docker-logs docker-shell docker-clean docker-seed docker-migrate
+.PHONY: help setup install install-backend install-frontend db-init db-seed db-reset backend frontend dev clean anonymize anonymize-status anonymize-force test-backend test-unit test-reports test-tags test-import test-budgets test-e2e test-e2e-install test-e2e-headed test-e2e-debug test-e2e-import test-e2e-full test-all docker-build docker-up docker-down docker-logs docker-shell docker-clean docker-seed docker-migrate release release-patch release-minor release-major
 
 # Default target
 .DEFAULT_GOAL := help
@@ -317,3 +317,55 @@ docker-migrate: ## Run database migrations
 	@echo "$(BLUE)Running migrations...$(NC)"
 	docker compose run --rm maxwells-wallet migrate
 	@echo "$(GREEN)✓ Migrations complete$(NC)"
+
+# =============================================================================
+# Release targets
+# =============================================================================
+
+# Get current version from backend/pyproject.toml
+CURRENT_VERSION := $(shell grep -E '^version = ' $(BACKEND_DIR)/pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+
+release: ## Create a release (usage: make release VERSION=x.y.z)
+ifndef VERSION
+	@echo "$(RED)Error: VERSION is required$(NC)"
+	@echo "Usage: make release VERSION=x.y.z"
+	@echo "   or: make release-patch  ($(CURRENT_VERSION) -> next patch)"
+	@echo "   or: make release-minor  ($(CURRENT_VERSION) -> next minor)"
+	@echo "   or: make release-major  ($(CURRENT_VERSION) -> next major)"
+	@exit 1
+endif
+	@echo "$(BLUE)Creating release v$(VERSION)...$(NC)"
+	@# Update backend version
+	@sed -i '' 's/^version = ".*"/version = "$(VERSION)"/' $(BACKEND_DIR)/pyproject.toml
+	@# Update frontend version
+	@sed -i '' 's/"version": ".*"/"version": "$(VERSION)"/' $(FRONTEND_DIR)/package.json
+	@# Generate changelog entry
+	@./scripts/generate-changelog.sh $(VERSION)
+	@# Commit and tag
+	@git add -A
+	@git commit -m "chore: release v$(VERSION)"
+	@git tag v$(VERSION)
+	@# Push to trigger GitHub Actions
+	@echo "$(BLUE)Pushing to GitHub...$(NC)"
+	@git push origin main --tags
+	@echo ""
+	@echo "$(GREEN)✓ Release v$(VERSION) created!$(NC)"
+	@echo ""
+	@echo "GitHub Actions will now:"
+	@echo "  1. Create GitHub Release with changelog"
+	@echo "  2. Build Docker image"
+	@echo "  3. Push to ghcr.io/poindexter12/maxwells-wallet:$(VERSION)"
+	@echo ""
+	@echo "Monitor progress: $(YELLOW)gh run watch$(NC)"
+
+release-patch: ## Create a patch release (x.y.Z+1)
+	@NEW_VERSION=$$(echo $(CURRENT_VERSION) | awk -F. '{print $$1"."$$2"."$$3+1}'); \
+	$(MAKE) release VERSION=$$NEW_VERSION
+
+release-minor: ## Create a minor release (x.Y+1.0)
+	@NEW_VERSION=$$(echo $(CURRENT_VERSION) | awk -F. '{print $$1"."$$2+1".0"}'); \
+	$(MAKE) release VERSION=$$NEW_VERSION
+
+release-major: ## Create a major release (X+1.0.0)
+	@NEW_VERSION=$$(echo $(CURRENT_VERSION) | awk -F. '{print $$1+1".0.0"}'); \
+	$(MAKE) release VERSION=$$NEW_VERSION
