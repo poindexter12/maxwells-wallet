@@ -18,42 +18,44 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   const now = new Date()
-  const currentYear = now.getFullYear()
-  const currentMonth = now.getMonth() + 1
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear())
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true)
       try {
-        // Fetch current month summary
-        const summaryRes = await fetch(`/api/v1/reports/monthly-summary?year=${currentYear}&month=${currentMonth}`)
+        // Fetch selected month summary
+        const summaryRes = await fetch(`/api/v1/reports/monthly-summary?year=${selectedYear}&month=${selectedMonth}`)
         const summaryData = await summaryRes.json()
         setMonthlySummary(summaryData)
 
-        // Fetch 6-month trends
-        const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1)
+        // Fetch 6-month trends ending at selected month
+        const selectedDate = new Date(selectedYear, selectedMonth - 1, 1)
+        const sixMonthsAgo = new Date(selectedYear, selectedMonth - 7, 1)
         const trendsRes = await fetch(
-          `/api/v1/reports/trends?start_date=${format(sixMonthsAgo, 'yyyy-MM-dd')}&end_date=${format(now, 'yyyy-MM-dd')}&group_by=month`
+          `/api/v1/reports/trends?start_date=${format(sixMonthsAgo, 'yyyy-MM-dd')}&end_date=${format(selectedDate, 'yyyy-MM-dd')}&group_by=month`
         )
         const trendsData = await trendsRes.json()
         setTrends(trendsData)
 
-        // Fetch top merchants
-        const merchantsRes = await fetch('/api/v1/reports/top-merchants?limit=10&period=current_month')
+        // Fetch top merchants for selected month
+        const merchantsRes = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}&month=${selectedMonth}`)
         const merchantsData = await merchantsRes.json()
         setTopMerchants(merchantsData)
 
         // Fetch month-over-month comparison
-        const momRes = await fetch(`/api/v1/reports/month-over-month?current_year=${currentYear}&current_month=${currentMonth}`)
+        const momRes = await fetch(`/api/v1/reports/month-over-month?current_year=${selectedYear}&current_month=${selectedMonth}`)
         const momData = await momRes.json()
         setMonthOverMonth(momData)
 
         // Fetch spending velocity
-        const velocityRes = await fetch(`/api/v1/reports/spending-velocity?year=${currentYear}&month=${currentMonth}`)
+        const velocityRes = await fetch(`/api/v1/reports/spending-velocity?year=${selectedYear}&month=${selectedMonth}`)
         const velocityData = await velocityRes.json()
         setSpendingVelocity(velocityData)
 
         // Fetch anomalies
-        const anomaliesRes = await fetch(`/api/v1/reports/anomalies?year=${currentYear}&month=${currentMonth}&threshold=2.0`)
+        const anomaliesRes = await fetch(`/api/v1/reports/anomalies?year=${selectedYear}&month=${selectedMonth}&threshold=2.0`)
         const anomaliesData = await anomaliesRes.json()
         setAnomalies(anomaliesData)
 
@@ -65,7 +67,7 @@ export default function Dashboard() {
     }
 
     fetchData()
-  }, [currentYear, currentMonth])
+  }, [selectedYear, selectedMonth])
 
   if (loading) {
     return <div className="text-center py-12">Loading...</div>
@@ -101,11 +103,48 @@ export default function Dashboard() {
         ]}
       />
 
-      <div>
-        <h1 className="text-3xl font-bold text-theme">Dashboard</h1>
-        <p className="mt-2 text-sm text-theme-muted">
-          Viewing {format(new Date(currentYear, currentMonth - 1), 'MMMM yyyy')}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-theme">Dashboard</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              if (selectedMonth === 1) {
+                setSelectedYear(selectedYear - 1)
+                setSelectedMonth(12)
+              } else {
+                setSelectedMonth(selectedMonth - 1)
+              }
+            }}
+            className="p-2 rounded-md hover:bg-[var(--color-bg-hover)] text-theme-muted hover:text-theme"
+            title="Previous month"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <span className="text-lg font-medium text-theme min-w-[140px] text-center">
+            {format(new Date(selectedYear, selectedMonth - 1), 'MMMM yyyy')}
+          </span>
+          <button
+            onClick={() => {
+              if (selectedMonth === 12) {
+                setSelectedYear(selectedYear + 1)
+                setSelectedMonth(1)
+              } else {
+                setSelectedMonth(selectedMonth + 1)
+              }
+            }}
+            disabled={selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1}
+            className="p-2 rounded-md hover:bg-[var(--color-bg-hover)] text-theme-muted hover:text-theme disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Next month"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Summary Cards */}
