@@ -36,6 +36,7 @@ interface Transaction {
   bucket?: string  // Convenience field we'll compute
   account?: string  // Convenience field we'll compute from account tag
   is_transfer?: boolean  // True if marked as internal transfer
+  linked_transaction_id?: number | null  // ID of linked transfer pair
 }
 
 const PAGE_SIZE = 50
@@ -89,7 +90,8 @@ function TransactionsContent() {
     amountMin: '',
     amountMax: '',
     startDate: '',
-    endDate: ''
+    endDate: '',
+    transfers: 'hide' as 'all' | 'hide' | 'only'  // Transfer filter: all, hide, only
   })
   // Separate state for search input to prevent refetch on every keystroke
   const [searchInput, setSearchInput] = useState('')
@@ -129,6 +131,8 @@ function TransactionsContent() {
     const amountMax = searchParams.get('amount_max') || ''
     const startDate = searchParams.get('start_date') || ''
     const endDate = searchParams.get('end_date') || ''
+    const transfersParam = searchParams.get('transfers') || 'hide'
+    const transfers = (['all', 'hide', 'only'].includes(transfersParam) ? transfersParam : 'hide') as 'all' | 'hide' | 'only'
 
     // Combine single account with multi-accounts
     const accounts = accountSingle
@@ -136,7 +140,7 @@ function TransactionsContent() {
       : accountsMulti
 
     // Check if we have any advanced filters in URL
-    const hasAdvanced = status || amountMin || amountMax || startDate || endDate || accountsExclude.length > 0
+    const hasAdvanced = status || amountMin || amountMax || startDate || endDate || accountsExclude.length > 0 || transfers !== 'hide'
     if (hasAdvanced) {
       setShowAdvancedFilters(true)
     }
@@ -151,7 +155,8 @@ function TransactionsContent() {
       amountMin,
       amountMax,
       startDate,
-      endDate
+      endDate,
+      transfers
     })
     setSearchInput(search) // Sync search input with URL param
     setFiltersInitialized(true)
@@ -230,6 +235,9 @@ function TransactionsContent() {
     if (filters.amountMax) params.append('amount_max', filters.amountMax)
     if (filters.startDate) params.append('start_date', filters.startDate)
     if (filters.endDate) params.append('end_date', filters.endDate)
+    // Transfer filter: hide=false, only=true, all=no param
+    if (filters.transfers === 'hide') params.append('is_transfer', 'false')
+    else if (filters.transfers === 'only') params.append('is_transfer', 'true')
     return params
   }
 
@@ -503,6 +511,35 @@ function TransactionsContent() {
     return BUCKET_COLORS[bucket.toLowerCase()] || 'border-l-gray-400'
   }
 
+  // Toggle transfer status
+  async function handleToggleTransfer(txnId: number, currentIsTransfer: boolean) {
+    try {
+      await fetch('/api/v1/transfers/mark', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transaction_ids: [txnId],
+          is_transfer: !currentIsTransfer
+        })
+      })
+      fetchTransactions()
+    } catch (error) {
+      console.error('Error toggling transfer status:', error)
+    }
+  }
+
+  // Unlink a transfer pair
+  async function handleUnlinkTransfer(txnId: number) {
+    try {
+      await fetch(`/api/v1/transfers/${txnId}/link`, {
+        method: 'DELETE'
+      })
+      fetchTransactions()
+    } catch (error) {
+      console.error('Error unlinking transfer:', error)
+    }
+  }
+
   // Handle notes save
   async function handleSaveNote(txnId: number) {
     try {
@@ -718,7 +755,7 @@ function TransactionsContent() {
         {/* Advanced filters (collapsible) */}
         {showAdvancedFilters && (
           <div className="pt-4 border-t border-theme">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               <select
                 className="input"
                 value={filters.status}
@@ -729,6 +766,16 @@ function TransactionsContent() {
                 <option value="matched">Matched</option>
                 <option value="manually_entered">Manually Entered</option>
                 <option value="ignored">Ignored</option>
+              </select>
+              <select
+                className="input"
+                value={filters.transfers}
+                onChange={(e) => setFilters({ ...filters, transfers: e.target.value as 'all' | 'hide' | 'only' })}
+                title="Filter internal transfers (CC payments, bank transfers)"
+              >
+                <option value="hide">Hide Transfers</option>
+                <option value="all">All Transactions</option>
+                <option value="only">Transfers Only</option>
               </select>
               <div className="flex gap-2 items-center">
                 <input
@@ -774,7 +821,8 @@ function TransactionsContent() {
                     amountMin: '',
                     amountMax: '',
                     startDate: '',
-                    endDate: ''
+                    endDate: '',
+                    transfers: 'hide'
                   })
                   setShowAccountDropdown(false)
                 }}
@@ -787,7 +835,7 @@ function TransactionsContent() {
         )}
 
         {/* Active filters pills */}
-        {(filters.bucket || filters.occasion || filters.accounts.length > 0 || filters.accountsExclude.length > 0 || filters.status || filters.amountMin || filters.amountMax || filters.startDate || filters.endDate) && (
+        {(filters.bucket || filters.occasion || filters.accounts.length > 0 || filters.accountsExclude.length > 0 || filters.status || filters.amountMin || filters.amountMax || filters.startDate || filters.endDate || filters.transfers !== 'hide') && (
           <div className="flex flex-wrap gap-2 pt-2">
             {filters.bucket && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
@@ -829,6 +877,12 @@ function TransactionsContent() {
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
                 Date: {filters.startDate || '...'} – {filters.endDate || '...'}
                 <button onClick={() => setFilters({ ...filters, startDate: '', endDate: '' })} className="hover:text-gray-900">×</button>
+              </span>
+            )}
+            {filters.transfers !== 'hide' && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                {filters.transfers === 'all' ? 'Including Transfers' : 'Transfers Only'}
+                <button onClick={() => setFilters({ ...filters, transfers: 'hide' })} className="hover:text-blue-900">×</button>
               </span>
             )}
           </div>
@@ -1283,6 +1337,34 @@ function TransactionsContent() {
                         <span className="text-theme-muted w-24">ID:</span>
                         <span className="text-theme-muted font-mono text-xs">{txn.id}</span>
                       </div>
+                      {/* Transfer controls */}
+                      <div className="flex gap-2 items-center">
+                        <span className="text-theme-muted w-24">Transfer:</span>
+                        <button
+                          onClick={() => handleToggleTransfer(txn.id, txn.is_transfer || false)}
+                          className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+                            txn.is_transfer
+                              ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                          title={txn.is_transfer ? 'Click to unmark as transfer' : 'Click to mark as transfer'}
+                        >
+                          {txn.is_transfer ? '✓ Marked as Transfer' : 'Not a Transfer'}
+                        </button>
+                      </div>
+                      {txn.linked_transaction_id && (
+                        <div className="flex gap-2 items-center">
+                          <span className="text-theme-muted w-24">Linked to:</span>
+                          <span className="text-theme font-mono text-xs">#{txn.linked_transaction_id}</span>
+                          <button
+                            onClick={() => handleUnlinkTransfer(txn.id)}
+                            className="text-xs text-red-500 hover:text-red-700"
+                            title="Unlink this transfer pair"
+                          >
+                            Unlink
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Right column: notes */}
