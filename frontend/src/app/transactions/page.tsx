@@ -117,7 +117,9 @@ function TransactionsContent() {
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
-  // Initialize filters from URL params on mount
+  // Initialize filters from URL params on mount and when URL changes
+  // Using searchParams.toString() ensures we detect all URL param changes
+  const searchParamsString = searchParams.toString()
   useEffect(() => {
     const bucket = searchParams.get('bucket') || ''
     const occasion = searchParams.get('occasion') || ''
@@ -160,7 +162,7 @@ function TransactionsContent() {
     })
     setSearchInput(search) // Sync search input with URL param
     setFiltersInitialized(true)
-  }, [searchParams])
+  }, [searchParamsString])
 
   // Fetch tags on mount
   useEffect(() => {
@@ -695,13 +697,25 @@ function TransactionsContent() {
           {/* Insight Quick Filters */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-theme-muted font-medium uppercase tracking-wide">Quick:</span>
-            <Link
-              href="/"
+            <button
+              onClick={() => {
+                const now = new Date()
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+                setFilters({
+                  ...filters,
+                  startDate: firstDay.toISOString().split('T')[0],
+                  endDate: lastDay.toISOString().split('T')[0],
+                  amountMin: '',
+                  amountMax: '-200'
+                })
+                setShowAdvancedFilters(true)
+              }}
               className="px-3 py-1.5 text-xs rounded-full border border-orange-300 text-orange-700 bg-orange-50 hover:bg-orange-100 transition-colors dark:border-orange-700 dark:text-orange-300 dark:bg-orange-900/30 dark:hover:bg-orange-900/50"
-              title="View unusual spending patterns on dashboard"
+              title="Large transactions this month (over $200)"
             >
-              ⚠️ Unusual Activity
-            </Link>
+              ⚠️ Large This Month
+            </button>
             <button
               onClick={() => {
                 const now = new Date()
