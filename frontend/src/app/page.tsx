@@ -251,9 +251,9 @@ export default function Dashboard() {
               <div className="space-y-4">
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <Link
-                    href={`/transactions?amount_max=-100&start_date=${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01&end_date=${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${new Date(selectedYear, selectedMonth, 0).getDate()}`}
+                    href={`/transactions?amount_max=-${anomalies.summary.large_threshold_amount || 100}&start_date=${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01&end_date=${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${new Date(selectedYear, selectedMonth, 0).getDate()}`}
                     className="bg-negative rounded p-2 hover:opacity-80 transition-opacity cursor-pointer"
-                    title="View large transactions"
+                    title={anomalies.summary.large_threshold_amount ? `Transactions over $${Math.round(anomalies.summary.large_threshold_amount)} (2σ above average)` : 'Large transactions'}
                   >
                     <p className="text-2xl font-bold text-negative">{anomalies.summary.large_transaction_count}</p>
                     <p className="text-xs text-theme-muted">Large</p>

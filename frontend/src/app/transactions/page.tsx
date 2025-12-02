@@ -113,6 +113,9 @@ function TransactionsContent() {
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null)
   const [noteValue, setNoteValue] = useState('')
 
+  // Dynamic large transaction threshold (from anomaly detection)
+  const [largeThreshold, setLargeThreshold] = useState<number | null>(null)
+
   // Infinite scroll refs
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
@@ -164,13 +167,32 @@ function TransactionsContent() {
     setFiltersInitialized(true)
   }, [searchParamsString])
 
-  // Fetch tags on mount
+  // Fetch tags and anomaly threshold on mount
   useEffect(() => {
     fetchBucketTags()
     fetchAllTags()
     fetchAccountTags()
     fetchOccasionTags()
+    fetchLargeThreshold()
   }, [])
+
+  // Fetch the dynamic large transaction threshold from anomaly detection
+  async function fetchLargeThreshold() {
+    try {
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = now.getMonth() + 1
+      const res = await fetch(`/api/v1/reports/anomalies?year=${year}&month=${month}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.summary?.large_threshold_amount) {
+          setLargeThreshold(Math.round(data.summary.large_threshold_amount))
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching anomaly threshold:', error)
+    }
+  }
 
   // Fetch transactions when filters are initialized or change
   useEffect(() => {
@@ -702,19 +724,21 @@ function TransactionsContent() {
                 const now = new Date()
                 const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
                 const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+                // Use dynamic threshold or fall back to $100
+                const threshold = largeThreshold || 100
                 setFilters({
                   ...filters,
                   startDate: firstDay.toISOString().split('T')[0],
                   endDate: lastDay.toISOString().split('T')[0],
                   amountMin: '',
-                  amountMax: '-200'
+                  amountMax: `-${threshold}`
                 })
                 setShowAdvancedFilters(true)
               }}
               className="px-3 py-1.5 text-xs rounded-full border border-orange-300 text-orange-700 bg-orange-50 hover:bg-orange-100 transition-colors dark:border-orange-700 dark:text-orange-300 dark:bg-orange-900/30 dark:hover:bg-orange-900/50"
-              title="Large transactions this month (over $200)"
+              title={largeThreshold ? `Large transactions this month (over $${largeThreshold} - 2σ above your average)` : 'Large transactions this month'}
             >
-              ⚠️ Large This Month
+              ⚠️ Large{largeThreshold ? ` ($${largeThreshold}+)` : ''}
             </button>
             <button
               onClick={() => {

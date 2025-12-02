@@ -689,9 +689,15 @@ async def detect_anomalies(
 
     # 1. Detect large transactions (> threshold std devs from mean)
     expense_amounts = [abs(txn.amount) for txn in baseline_transactions if txn.amount < 0]
+    large_threshold_amount = None
+    mean_expense = None
+    std_expense = None
+
     if len(expense_amounts) >= 2:
         mean_expense = statistics.mean(expense_amounts)
         std_expense = statistics.stdev(expense_amounts)
+        if std_expense > 0:
+            large_threshold_amount = mean_expense + (threshold * std_expense)
 
         for txn in current_transactions:
             if txn.amount < 0:
@@ -826,7 +832,9 @@ async def detect_anomalies(
             "large_transaction_count": len(anomalies["large_transactions"]),
             "new_merchant_count": len(anomalies["new_merchants"]),
             "unusual_category_count": len(anomalies["unusual_categories"]),
-            "unusual_bucket_count": len(anomalies["unusual_buckets"])
+            "unusual_bucket_count": len(anomalies["unusual_buckets"]),
+            "large_threshold_amount": round(large_threshold_amount, 2) if large_threshold_amount else None,
+            "mean_expense": round(mean_expense, 2) if mean_expense else None
         },
         "baseline_period": {
             "start": str(lookback_start),
