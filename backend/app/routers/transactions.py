@@ -35,9 +35,14 @@ def build_transaction_filter_query(
     amount_max: Optional[float] = None,
     tag: Optional[List[str]] = None,
     tag_exclude: Optional[List[str]] = None,
+    is_transfer: Optional[bool] = None,
 ):
     """Build query with filters - shared between list and count endpoints"""
     query = base_query
+
+    # Transfer filter
+    if is_transfer is not None:
+        query = query.where(Transaction.is_transfer == is_transfer)
 
     # Account filtering via account_tag_id FK (preferred method)
     if account:
@@ -121,6 +126,7 @@ async def count_transactions(
     amount_max: Optional[float] = None,
     tag: Optional[List[str]] = Query(None, description="Filter by tags in namespace:value format (can specify multiple)"),
     tag_exclude: Optional[List[str]] = Query(None, description="Exclude tags in namespace:value format (can specify multiple)"),
+    is_transfer: Optional[bool] = Query(None, description="Filter by transfer status (true=transfers only, false=non-transfers only)"),
     session: AsyncSession = Depends(get_session)
 ):
     """Get total count of transactions matching filters"""
@@ -139,6 +145,7 @@ async def count_transactions(
         amount_max=amount_max,
         tag=tag,
         tag_exclude=tag_exclude,
+        is_transfer=is_transfer,
     )
 
     result = await session.execute(query)
@@ -162,6 +169,7 @@ async def list_transactions(
     amount_max: Optional[float] = None,
     tag: Optional[List[str]] = Query(None, description="Filter by tags in namespace:value format (can specify multiple)"),
     tag_exclude: Optional[List[str]] = Query(None, description="Exclude tags in namespace:value format (can specify multiple)"),
+    is_transfer: Optional[bool] = Query(None, description="Filter by transfer status (true=transfers only, false=non-transfers only)"),
     session: AsyncSession = Depends(get_session)
 ):
     """List transactions with filtering and pagination
@@ -171,6 +179,7 @@ async def list_transactions(
     - account_exclude: Exclude transactions from specific accounts
     - tag: Include transactions with specific tags (AND logic)
     - tag_exclude: Exclude transactions with specific tags
+    - is_transfer: Filter by transfer status
     """
     base_query = select(Transaction)
     query = build_transaction_filter_query(
@@ -187,6 +196,7 @@ async def list_transactions(
         amount_max=amount_max,
         tag=tag,
         tag_exclude=tag_exclude,
+        is_transfer=is_transfer,
     )
 
     query = query.order_by(Transaction.date.desc()).offset(skip).limit(limit)

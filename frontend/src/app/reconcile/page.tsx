@@ -181,6 +181,48 @@ export default function ReconcilePage() {
     }
   }
 
+  async function markAsTransfer(txnId: number) {
+    try {
+      // Mark as transfer
+      await fetch('/api/v1/transfers/mark', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transaction_ids: [txnId],
+          is_transfer: true
+        })
+      })
+      // Also mark as reconciled since transfers are expected
+      await fetch(`/api/v1/transactions/${txnId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reconciliation_status: 'matched' })
+      })
+      fetchUnreconciledTransactions()
+    } catch (error) {
+      console.error('Error marking as transfer:', error)
+    }
+  }
+
+  async function bulkMarkAsTransfer() {
+    if (selected.size === 0) return
+    try {
+      // Mark all as transfers
+      await fetch('/api/v1/transfers/mark', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transaction_ids: Array.from(selected),
+          is_transfer: true
+        })
+      })
+      // Also mark as reconciled
+      await bulkUpdate({ reconciliation_status: 'matched' })
+    } catch (error) {
+      console.error('Error bulk marking as transfers:', error)
+    }
+  }
+
   if (loading) {
     return <div className="text-center py-12">Loading...</div>
   }
@@ -220,6 +262,14 @@ export default function ReconcilePage() {
             Mark {selected.size} as Reconciled
           </button>
           <button
+            onClick={bulkMarkAsTransfer}
+            disabled={selected.size === 0}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            title="Mark as internal transfer and reconcile"
+          >
+            Transfer {selected.size}
+          </button>
+          <button
             onClick={() => bulkUpdate({ reconciliation_status: 'ignored' })}
             disabled={selected.size === 0}
             className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
@@ -246,7 +296,7 @@ export default function ReconcilePage() {
             <span className="text-xs font-medium text-gray-500 uppercase w-24">Date</span>
             <span className="text-xs font-medium text-gray-500 uppercase flex-1">Merchant</span>
             <span className="text-xs font-medium text-gray-500 uppercase w-28 text-right">Amount</span>
-            <span className="text-xs font-medium text-gray-500 uppercase w-16 text-center">Actions</span>
+            <span className="text-xs font-medium text-gray-500 uppercase w-24 text-center">Actions</span>
           </div>
 
           {transactions.map((txn) => (
@@ -268,13 +318,20 @@ export default function ReconcilePage() {
                 <span className={`font-semibold text-lg whitespace-nowrap w-28 text-right ${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {formatCurrency(txn.amount, true)}
                 </span>
-                <div className="w-16 text-center">
+                <div className="w-24 text-center flex gap-1 justify-center">
                   <button
                     onClick={() => markReconciled(txn.id)}
-                    className="text-green-600 hover:text-green-900 mr-2"
+                    className="text-green-600 hover:text-green-900"
                     title="Mark as reconciled"
                   >
                     ✓
+                  </button>
+                  <button
+                    onClick={() => markAsTransfer(txn.id)}
+                    className="text-blue-600 hover:text-blue-900 text-xs font-medium"
+                    title="Mark as internal transfer"
+                  >
+                    T
                   </button>
                   <button
                     onClick={() => markIgnored(txn.id)}
