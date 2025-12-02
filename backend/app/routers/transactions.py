@@ -225,7 +225,7 @@ async def create_transaction(
     session: AsyncSession = Depends(get_session)
 ):
     """Create a new transaction"""
-    db_transaction = Transaction(**transaction.dict())
+    db_transaction = Transaction(**transaction.model_dump())
     db_transaction.reconciliation_status = ReconciliationStatus.manually_entered
 
     # Auto-generate content_hash if not provided
@@ -257,7 +257,7 @@ async def update_transaction(
         raise HTTPException(status_code=404, detail="Transaction not found")
 
     # Update fields
-    for key, value in transaction.dict(exclude_unset=True).items():
+    for key, value in transaction.model_dump(exclude_unset=True).items():
         setattr(db_transaction, key, value)
 
     db_transaction.updated_at = datetime.utcnow()
@@ -298,7 +298,7 @@ async def bulk_update_transactions(
         raise HTTPException(status_code=404, detail="No transactions found")
 
     for txn in transactions:
-        for key, value in updates.dict(exclude_unset=True).items():
+        for key, value in updates.model_dump(exclude_unset=True).items():
             setattr(txn, key, value)
         txn.updated_at = datetime.utcnow()
 
