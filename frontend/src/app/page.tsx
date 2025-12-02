@@ -249,38 +249,62 @@ export default function Dashboard() {
             ) : (
               <div className="space-y-4">
                 <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="bg-negative rounded p-2">
+                  <Link
+                    href={`/transactions?amount_max=-100&start_date=${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01&end_date=${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${new Date(selectedYear, selectedMonth, 0).getDate()}`}
+                    className="bg-negative rounded p-2 hover:opacity-80 transition-opacity cursor-pointer"
+                    title="View large transactions"
+                  >
                     <p className="text-2xl font-bold text-negative">{anomalies.summary.large_transaction_count}</p>
                     <p className="text-xs text-theme-muted">Large</p>
-                  </div>
-                  <div className="bg-blue-500/20 rounded p-2">
+                  </Link>
+                  <Link
+                    href={`/transactions?start_date=${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01&end_date=${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${new Date(selectedYear, selectedMonth, 0).getDate()}`}
+                    className="bg-blue-500/20 rounded p-2 hover:opacity-80 transition-opacity cursor-pointer"
+                    title="View transactions from new merchants"
+                  >
                     <p className="text-2xl font-bold text-blue-500">{anomalies.summary.new_merchant_count}</p>
                     <p className="text-xs text-theme-muted">New</p>
-                  </div>
-                  <div className="bg-orange-500/20 rounded p-2">
+                  </Link>
+                  <Link
+                    href={`/transactions?start_date=${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01&end_date=${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${new Date(selectedYear, selectedMonth, 0).getDate()}`}
+                    className="bg-orange-500/20 rounded p-2 hover:opacity-80 transition-opacity cursor-pointer"
+                    title="View buckets with unusually high spending"
+                  >
                     <p className="text-2xl font-bold text-orange-500">{anomalies.summary.unusual_bucket_count}</p>
-                    <p className="text-xs text-theme-muted">Bucket</p>
-                  </div>
+                    <p className="text-xs text-theme-muted">Over Avg</p>
+                  </Link>
                 </div>
 
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {anomalies.anomalies.large_transactions.slice(0, 3).map((txn: any, idx: number) => (
-                    <div key={`large-${idx}`} className="border-l-4 border-red-500 pl-3 py-1">
+                    <Link
+                      key={`large-${idx}`}
+                      href={`/transactions?search=${encodeURIComponent(txn.merchant || '')}&start_date=${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01&end_date=${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${new Date(selectedYear, selectedMonth, 0).getDate()}`}
+                      className="block border-l-4 border-red-500 pl-3 py-1 hover:bg-[var(--color-bg-hover)] transition-colors"
+                    >
                       <p className="text-sm font-medium text-theme">{formatCurrency(txn.amount)} - {txn.merchant}</p>
                       <p className="text-xs text-theme-muted">{txn.reason}</p>
-                    </div>
+                    </Link>
                   ))}
                   {anomalies.anomalies.new_merchants.slice(0, 3).map((txn: any, idx: number) => (
-                    <div key={`new-${idx}`} className="border-l-4 border-blue-500 pl-3 py-1">
+                    <Link
+                      key={`new-${idx}`}
+                      href={`/transactions?search=${encodeURIComponent(txn.merchant || '')}&start_date=${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01&end_date=${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${new Date(selectedYear, selectedMonth, 0).getDate()}`}
+                      className="block border-l-4 border-blue-500 pl-3 py-1 hover:bg-[var(--color-bg-hover)] transition-colors"
+                    >
                       <p className="text-sm font-medium text-theme">{formatCurrency(txn.amount)} - {txn.merchant}</p>
                       <p className="text-xs text-theme-muted">{txn.reason}</p>
-                    </div>
+                    </Link>
                   ))}
                   {anomalies.anomalies.unusual_buckets.slice(0, 2).map((bucket: any, idx: number) => (
-                    <div key={`bucket-${idx}`} className="border-l-4 border-orange-500 pl-3 py-1">
+                    <Link
+                      key={`bucket-${idx}`}
+                      href={`/transactions?bucket=${encodeURIComponent(bucket.bucket || '')}&start_date=${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01&end_date=${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${new Date(selectedYear, selectedMonth, 0).getDate()}`}
+                      className="block border-l-4 border-orange-500 pl-3 py-1 hover:bg-[var(--color-bg-hover)] transition-colors"
+                    >
                       <p className="text-sm font-medium text-theme">{bucket.bucket}</p>
                       <p className="text-xs text-theme-muted">{bucket.reason}</p>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>

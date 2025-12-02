@@ -696,19 +696,31 @@ function TransactionsContent() {
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-theme-muted font-medium uppercase tracking-wide">Quick:</span>
             <Link
-              href="/?tab=anomalies"
+              href="/"
               className="px-3 py-1.5 text-xs rounded-full border border-orange-300 text-orange-700 bg-orange-50 hover:bg-orange-100 transition-colors dark:border-orange-700 dark:text-orange-300 dark:bg-orange-900/30 dark:hover:bg-orange-900/50"
-              title="View unusual spending patterns"
+              title="View unusual spending patterns on dashboard"
             >
               ⚠️ Unusual Activity
             </Link>
-            <Link
-              href="/?tab=merchants"
+            <button
+              onClick={() => {
+                const now = new Date()
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+                setFilters({
+                  ...filters,
+                  startDate: firstDay.toISOString().split('T')[0],
+                  endDate: lastDay.toISOString().split('T')[0],
+                  amountMin: '',
+                  amountMax: '-50'
+                })
+                setShowAdvancedFilters(true)
+              }}
               className="px-3 py-1.5 text-xs rounded-full border border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors dark:border-blue-700 dark:text-blue-300 dark:bg-blue-900/30 dark:hover:bg-blue-900/50"
-              title="View top merchants by spending"
+              title="Top spending this month (over $50)"
             >
-              🏪 Top Merchants
-            </Link>
+              🏪 Top Spending
+            </button>
             <button
               onClick={() => {
                 setFilters({
