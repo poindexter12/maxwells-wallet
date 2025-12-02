@@ -1,7 +1,7 @@
 docs_dir: docs-site
 site_name: Maxwell's Wallet
 site_description: Personal finance tracker with CSV import, smart categorization, and spending insights
-site_url: https://poindexter12.github.io/maxwells-wallet/
+site_url: https://docs.maxwellswallet.com/
 repo_url: https://github.com/poindexter12/maxwells-wallet
 repo_name: poindexter12/maxwells-wallet
 
