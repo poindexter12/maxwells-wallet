@@ -140,16 +140,26 @@ async def update_alias_match_stats(session: AsyncSession, alias_id: int):
 
 @router.post("/preview")
 async def preview_import(
-    file: UploadFile = File(...),
-    account_source: Optional[str] = Form(None),
-    format_hint: Optional[ImportFormatType] = Form(None),
+    file: UploadFile = File(..., description="CSV, QIF, QFX, or OFX file to import"),
+    account_source: Optional[str] = Form(None, description="Account name (required for some formats like Bank of America)"),
+    format_hint: Optional[ImportFormatType] = Form(None, description="Override auto-detection with specific format"),
     session: AsyncSession = Depends(get_session)
 ):
     """
     Preview import without saving to database.
 
-    Supports CSV, QIF, and QFX/OFX file formats.
-    Returns parsed transactions and detected format.
+    Supports multiple file formats:
+    - **CSV**: Bank of America, American Express, Venmo, Inspira HSA
+    - **QIF**: Quicken Interchange Format
+    - **QFX/OFX**: Quicken Financial Exchange / Open Financial Exchange
+
+    Returns:
+    - **transactions**: Parsed transactions with suggested bucket tags
+    - **detected_format**: Auto-detected file format
+    - **total_amount**: Sum of all transaction amounts
+    - **duplicate_count**: Number of transactions already in database
+
+    Use this to review before calling `/confirm` to actually import.
     """
     if not is_valid_import_file(file.filename):
         raise HTTPException(
@@ -214,22 +224,24 @@ async def preview_import(
 
 @router.post("/confirm")
 async def confirm_import(
-    file: UploadFile = File(...),
-    account_source: Optional[str] = Form(None),
-    format_type: ImportFormatType = Form(...),
-    save_format: bool = Form(False),
+    file: UploadFile = File(..., description="Same file that was previewed"),
+    account_source: Optional[str] = Form(None, description="Account name"),
+    format_type: ImportFormatType = Form(..., description="Confirmed format from preview"),
+    save_format: bool = Form(False, description="Remember this format for future imports"),
     session: AsyncSession = Depends(get_session)
 ):
     """
-    Confirm and save imported transactions.
+    Confirm and save imported transactions to database.
 
-    Supports CSV, QIF, and QFX/OFX file formats.
+    Call this after `/preview` to actually import the transactions.
 
-    Args:
-        file: Transaction file (CSV, QIF, QFX, or OFX)
-        account_source: Account source identifier
-        format_type: Confirmed format type
-        save_format: Whether to save this format preference
+    Returns:
+    - **imported_count**: Number of new transactions imported
+    - **duplicate_count**: Number of duplicates skipped
+    - **import_session_id**: ID for tracking this import batch
+
+    Duplicates are detected by content hash (date + amount + description + account).
+    Merchant aliases are applied automatically during import.
     """
     if not is_valid_import_file(file.filename):
         raise HTTPException(
