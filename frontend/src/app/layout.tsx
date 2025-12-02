@@ -6,10 +6,6 @@ import './globals.css'
 export const metadata: Metadata = {
   title: "Maxwell's Wallet - Personal Finance Tracker",
   description: 'Personal finance tracker with CSV import, smart tagging, and spending trend analysis.',
-  icons: {
-    icon: '/favicon.svg',
-    apple: '/wallet-icon.svg',
-  },
 }
 
 export default function RootLayout({
