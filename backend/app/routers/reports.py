@@ -224,24 +224,36 @@ async def spending_trends(
 async def top_merchants(
     limit: int = Query(10, ge=1, le=100),
     period: str = Query("current_month", pattern="^(current_month|last_month|last_3_months|last_6_months|all_time)$"),
+    year: Optional[int] = Query(None, description="Specific year (overrides period)"),
+    month: Optional[int] = Query(None, ge=1, le=12, description="Specific month (overrides period)"),
     session: AsyncSession = Depends(get_session)
 ):
     """Get top merchants by spending"""
     # Calculate date range
     today = date.today()
-    if period == "current_month":
-        start_date = date(today.year, today.month, 1)
-    elif period == "last_month":
-        if today.month == 1:
-            start_date = date(today.year - 1, 12, 1)
+
+    # If year and month are provided, use them instead of period
+    if year is not None and month is not None:
+        start_date = date(year, month, 1)
+        if month == 12:
+            end_date = date(year + 1, 1, 1)
         else:
-            start_date = date(today.year, today.month - 1, 1)
-    elif period == "last_3_months":
-        start_date = date(today.year, max(1, today.month - 3), 1)
-    elif period == "last_6_months":
-        start_date = date(today.year, max(1, today.month - 6), 1)
-    else:  # all_time
-        start_date = date(2000, 1, 1)
+            end_date = date(year, month + 1, 1)
+    else:
+        end_date = None  # Will be set to None for open-ended queries
+        if period == "current_month":
+            start_date = date(today.year, today.month, 1)
+        elif period == "last_month":
+            if today.month == 1:
+                start_date = date(today.year - 1, 12, 1)
+            else:
+                start_date = date(today.year, today.month - 1, 1)
+        elif period == "last_3_months":
+            start_date = date(today.year, max(1, today.month - 3), 1)
+        elif period == "last_6_months":
+            start_date = date(today.year, max(1, today.month - 6), 1)
+        else:  # all_time
+            start_date = date(2000, 1, 1)
 
     # Get transactions (excluding transfers)
     query = select(Transaction).where(
@@ -249,6 +261,8 @@ async def top_merchants(
         Transaction.amount < 0,  # Only expenses
         Transaction.is_transfer == False  # Exclude transfers
     )
+    if end_date:
+        query = query.where(Transaction.date < end_date)
     result = await session.execute(query)
     transactions = result.scalars().all()
 
