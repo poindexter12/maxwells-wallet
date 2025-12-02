@@ -84,7 +84,7 @@ When requirements change:
 
 **Last Updated**: 2025-12-02
 
-**Version**: 0.4.5
+**Version**: 0.4.4
 
 **Implemented**:
 - ✅ All FR-001 (CSV Import) - Enhanced with QIF/QFX/OFX support

@@ -8,19 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Credit card account support** - Track credit cards with due dates, credit limits, and available credit (#20)
+- **Quicken QIF/QFX import** - Import from Quicken, Microsoft Money, and other OFX-compatible software (#19)
+- Credit card summary widget showing balances, due dates, and utilization
 - **Advanced search** - Filter transactions by text, date ranges, amounts, and tags (#21)
 - **Saved filters** - Save and reuse complex filter combinations
 - **CSV export** - Export filtered transactions to CSV
 - **Quick filter buttons** - One-click filters for common queries (This Month, Last Month, Large, Unreconciled)
 - **Dynamic large transaction threshold** - "Large" is calculated per-user based on spending history (2σ above average)
 - **Clickable anomaly links** - Dashboard anomaly counts link directly to filtered transactions
-
-## [0.4.5] - 2025-12-02
-
-### Added
-- **Credit card account support** - Track credit cards with due dates, credit limits, and available credit (#20)
-- **Quicken QIF/QFX import** - Import from Quicken, Microsoft Money, and other OFX-compatible software (#19)
-- Credit card summary widget showing balances, due dates, and utilization
 
 ### Changed
 - Refactored Makefile into modular components under `make/` directory (#18)
