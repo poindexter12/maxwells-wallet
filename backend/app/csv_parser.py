@@ -135,6 +135,32 @@ def parse_venmo_csv(csv_content: str, account_source: str) -> List[Dict]:
     return []
 
 
+def parse_qif(content: str, account_source: Optional[str] = None) -> List[Dict]:
+    """
+    Parse Quicken Interchange Format (QIF) content.
+
+    DEPRECATED: Use ParserRegistry.get_parser("qif").parse() instead.
+    """
+    parser = ParserRegistry.get_parser("qif")
+    if parser:
+        transactions = parser.parse(content, account_source)
+        return [t.to_dict() for t in transactions]
+    return []
+
+
+def parse_qfx(content: str, account_source: Optional[str] = None) -> List[Dict]:
+    """
+    Parse QFX/OFX (Open Financial Exchange) content.
+
+    DEPRECATED: Use ParserRegistry.get_parser("qfx").parse() instead.
+    """
+    parser = ParserRegistry.get_parser("qfx")
+    if parser:
+        transactions = parser.parse(content, account_source)
+        return [t.to_dict() for t in transactions]
+    return []
+
+
 def parse_csv(
     csv_content: str,
     account_source: Optional[str] = None,

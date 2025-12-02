@@ -19,6 +19,8 @@ class ImportFormatType(str, Enum):
     amex_cc = "amex_cc"       # Amex Credit Card (Date,Description,Amount,Card Member,Account #)
     inspira_hsa = "inspira_hsa"  # Inspira HSA (Transaction ID,Transaction Type,Origination Date,...)
     venmo = "venmo"           # Venmo (ID,Datetime,Type,Status,Note,From,To,Amount...)
+    qif = "qif"               # Quicken Interchange Format (text-based)
+    qfx = "qfx"               # Quicken Financial Exchange / OFX (XML-based)
     unknown = "unknown"
 
 class BaseModel(SQLModel):
