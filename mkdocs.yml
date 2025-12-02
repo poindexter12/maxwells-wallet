@@ -1,0 +1,67 @@
+docs_dir: docs-site
+site_name: Maxwell's Wallet
+site_description: Personal finance tracker with CSV import, smart categorization, and spending insights
+site_url: https://poindexter12.github.io/maxwells-wallet/
+repo_url: https://github.com/poindexter12/maxwells-wallet
+repo_name: poindexter12/maxwells-wallet
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: getting-started/quickstart.md
+    - Docker Setup: getting-started/docker.md
+    - Development Setup: getting-started/development.md
+  - Features:
+    - Import: features/import.md
+    - Transactions: features/transactions.md
+    - Budgets: features/budgets.md
+    - Analytics: features/analytics.md
+  - API Reference:
+    - Overview: api/overview.md
+    - Transactions: api/transactions.md
+    - Reports: api/reports.md
+    - Import: api/import.md
+  - Domain Model: domain-model.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/poindexter12/maxwells-wallet
