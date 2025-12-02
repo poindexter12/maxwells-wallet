@@ -254,80 +254,21 @@ Content-based SHA256 hashing implemented. All transactions get `content_hash` on
 
 ---
 
-### Backlog Item 2: Quicken File Import (QIF/QFX)
+### ~~Backlog Item 2: Quicken File Import (QIF/QFX)~~ ✅ COMPLETED
 
-**Priority**: Medium | **Complexity**: Medium-High | **Status**: Ready
+**Priority**: Medium | **Complexity**: Medium-High | **Status**: ✅ Completed (2025-12-01)
 
-#### Problem
-Many banks offer Quicken export formats (QIF, QFX) alongside CSV. These formats are more standardized and often contain richer data (categories, check numbers, memo fields).
-
-#### Requirements
-
-**FR-QIF-001: QIF File Parsing**
-- Parse QIF (Quicken Interchange Format) text files
-- Support transaction types: Bank, CCard, Cash
-- Extract: Date, Amount, Payee, Memo, Category, Check Number, Cleared status
-- Handle multiple accounts in single QIF file (separated by `!Account` headers)
-
-**FR-QIF-002: QFX/OFX File Parsing**
-- Parse QFX/OFX (XML-based Open Financial Exchange) files
-- Extract: FITID (transaction ID), date, amount, name, memo
-- Use FITID as reference_id for superior deduplication
-- Extract account info from `<BANKACCTFROM>` or `<CCACCTFROM>` tags
-
-**FR-QIF-003: Format Auto-Detection**
-- Detect by file extension (.qif, .qfx, .ofx) and content inspection
-- QIF: Look for `!Type:` header lines
-- QFX/OFX: Look for `<OFX>` or `<?OFX` tags
-
-**FR-QIF-004: Field Mapping**
-- Quicken Payee → merchant
-- Quicken Memo → description
-- Quicken Category → category (if present)
-- QFX FITID → reference_id
-- Check numbers → notes field
-
-#### Technical Design
-
-**New Parser Module:** `backend/app/quicken_parser.py`
-```python
-def parse_qif(content: str) -> list[dict]
-def parse_qfx(content: str) -> list[dict]
-def detect_quicken_format(content: str, filename: str) -> str | None
-```
-
-**QIF Format Example:**
-```
-!Type:Bank
-D12/15/2024
-T-150.00
-PAMAZON.COM
-MORDER #123-456
-LOnline Shopping
-^
-```
-Fields: `D`=Date, `T`=Amount, `P`=Payee, `M`=Memo, `L`=Category, `^`=End record
-
-**QFX/OFX Format Example:**
-```xml
-<STMTTRN>
-  <TRNTYPE>DEBIT</TRNTYPE>
-  <DTPOSTED>20241215</DTPOSTED>
-  <TRNAMT>-150.00</TRNAMT>
-  <FITID>2024121500001</FITID>
-  <NAME>AMAZON.COM</NAME>
-</STMTTRN>
-```
-
-**Model Changes:**
-- Add to `ImportFormatType` enum: `qif`, `qfx`
+Implemented as part of the extensible parser framework:
+- `backend/app/parsers/formats/qif.py` - QIF parser
+- `backend/app/parsers/formats/qfx.py` - QFX/OFX parser
+- 47 unit tests in `backend/tests/test_quicken_import.py`
 
 #### Acceptance Criteria
-- [ ] Can import .qif files with transactions appearing correctly
-- [ ] Can import .qfx/.ofx files with FITID-based deduplication
-- [ ] Auto-detects format from file content
-- [ ] Preserves Quicken categories when present
-- [ ] Multi-account QIF files handled correctly
+- [x] Can import .qif files with transactions appearing correctly
+- [x] Can import .qfx/.ofx files with FITID-based deduplication
+- [x] Auto-detects format from file content
+- [x] Preserves Quicken categories when present
+- [x] Multi-account QIF files handled correctly
 
 #### References
 - [QIF Format (W3C)](https://www.w3.org/2000/10/swap/pim/qif-doc/QIF-doc.htm)

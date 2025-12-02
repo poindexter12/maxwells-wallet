@@ -40,14 +40,16 @@ class TestParserRegistry:
     """Test the ParserRegistry class"""
 
     def test_all_parsers_registered(self):
-        """All 5 parsers should be registered"""
+        """All 7 parsers should be registered"""
         keys = ParserRegistry.get_format_keys()
         assert "bofa_bank" in keys
         assert "bofa_cc" in keys
         assert "amex_cc" in keys
         assert "inspira_hsa" in keys
         assert "venmo" in keys
-        assert len(keys) == 5
+        assert "qif" in keys
+        assert "qfx" in keys
+        assert len(keys) == 7
 
     def test_get_parser_by_key(self):
         """Get parser instance by format_key"""
