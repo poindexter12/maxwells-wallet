@@ -51,8 +51,8 @@ export default function Dashboard() {
   const [selectedYear, setSelectedYear] = useState(now.getFullYear())
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
   const [availableBuckets, setAvailableBuckets] = useState<{ id: number; value: string }[]>([])
-  const [selectedBuckets, setSelectedBuckets] = useState<string[]>([])
-  const [bucketFilterOpen, setBucketFilterOpen] = useState(false)
+  // Per-widget data for widgets with bucket filters
+  const [widgetData, setWidgetData] = useState<Record<number, any>>({})
 
   // Fetch widget configuration and bucket tags
   useEffect(() => {
@@ -150,16 +150,47 @@ export default function Dashboard() {
     }
   }
 
+  async function handleDuplicate(widgetId: number) {
+    try {
+      await fetch(`/api/v1/dashboard/widgets/${widgetId}/duplicate`, { method: 'POST' })
+      fetchWidgets()
+    } catch (error) {
+      console.error('Error duplicating widget:', error)
+    }
+  }
+
+  async function handleUpdateWidget(widgetId: number, title: string, config: { buckets?: string[] }) {
+    try {
+      await fetch(`/api/v1/dashboard/widgets/${widgetId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title || null,
+          config: Object.keys(config).length > 0 ? JSON.stringify(config) : null
+        })
+      })
+      fetchWidgets()
+    } catch (error) {
+      console.error('Error updating widget:', error)
+    }
+  }
+
+  async function handleDeleteWidget(widgetId: number) {
+    try {
+      await fetch(`/api/v1/dashboard/widgets/${widgetId}`, { method: 'DELETE' })
+      fetchWidgets()
+    } catch (error) {
+      console.error('Error deleting widget:', error)
+    }
+  }
+
   useEffect(() => {
     async function fetchData() {
       setLoading(true)
-      // Build bucket filter query string
-      const bucketParam = selectedBuckets.length > 0 ? `&buckets=${encodeURIComponent(selectedBuckets.join(','))}` : ''
-
       try {
         if (viewMode === 'month') {
           // Monthly view - fetch month-specific data
-          const summaryRes = await fetch(`/api/v1/reports/monthly-summary?year=${selectedYear}&month=${selectedMonth}${bucketParam}`)
+          const summaryRes = await fetch(`/api/v1/reports/monthly-summary?year=${selectedYear}&month=${selectedMonth}`)
           const summaryData = await summaryRes.json()
           setSummary(summaryData)
 
@@ -170,48 +201,48 @@ export default function Dashboard() {
           const twelveWeeksAgo = new Date(effectiveEnd)
           twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - 84) // 12 weeks = 84 days
           const trendsRes = await fetch(
-            `/api/v1/reports/trends?start_date=${format(twelveWeeksAgo, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=week${bucketParam}`
+            `/api/v1/reports/trends?start_date=${format(twelveWeeksAgo, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=week`
           )
           const trendsData = await trendsRes.json()
           setTrends(trendsData)
 
           // Fetch top merchants for selected month
-          const merchantsRes = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}&month=${selectedMonth}${bucketParam}`)
+          const merchantsRes = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}&month=${selectedMonth}`)
           const merchantsData = await merchantsRes.json()
           setTopMerchants(merchantsData)
 
-          // Fetch month-over-month comparison (no bucket filter - compares overall)
+          // Fetch month-over-month comparison
           const momRes = await fetch(`/api/v1/reports/month-over-month?current_year=${selectedYear}&current_month=${selectedMonth}`)
           const momData = await momRes.json()
           setMonthOverMonth(momData)
 
-          // Fetch spending velocity (no bucket filter - overall velocity)
+          // Fetch spending velocity
           const velocityRes = await fetch(`/api/v1/reports/spending-velocity?year=${selectedYear}&month=${selectedMonth}`)
           const velocityData = await velocityRes.json()
           setSpendingVelocity(velocityData)
 
-          // Fetch anomalies (no bucket filter - overall anomalies)
+          // Fetch anomalies
           const anomaliesRes = await fetch(`/api/v1/reports/anomalies?year=${selectedYear}&month=${selectedMonth}&threshold=2.0`)
           const anomaliesData = await anomaliesRes.json()
           setAnomalies(anomaliesData)
 
           // Fetch Sankey flow data
-          const sankeyRes = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}&month=${selectedMonth}${bucketParam}`)
+          const sankeyRes = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}&month=${selectedMonth}`)
           const sankeyJson = await sankeyRes.json()
           setSankeyData(sankeyJson)
 
           // Fetch Treemap data
-          const treemapRes = await fetch(`/api/v1/reports/treemap?year=${selectedYear}&month=${selectedMonth}${bucketParam}`)
+          const treemapRes = await fetch(`/api/v1/reports/treemap?year=${selectedYear}&month=${selectedMonth}`)
           const treemapJson = await treemapRes.json()
           setTreemapData(treemapJson)
 
           // Fetch Heatmap data
-          const heatmapRes = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}&month=${selectedMonth}${bucketParam}`)
+          const heatmapRes = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}&month=${selectedMonth}`)
           const heatmapJson = await heatmapRes.json()
           setHeatmapData(heatmapJson)
         } else {
           // Year view - fetch annual data
-          const summaryRes = await fetch(`/api/v1/reports/annual-summary?year=${selectedYear}${bucketParam}`)
+          const summaryRes = await fetch(`/api/v1/reports/annual-summary?year=${selectedYear}`)
           const summaryData = await summaryRes.json()
           setSummary(summaryData)
 
@@ -221,13 +252,13 @@ export default function Dashboard() {
           const today = new Date()
           const effectiveEnd = yearEnd > today ? today : yearEnd
           const trendsRes = await fetch(
-            `/api/v1/reports/trends?start_date=${format(yearStart, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=month${bucketParam}`
+            `/api/v1/reports/trends?start_date=${format(yearStart, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=month`
           )
           const trendsData = await trendsRes.json()
           setTrends(trendsData)
 
           // Fetch top merchants for the year
-          const merchantsRes = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}${bucketParam}`)
+          const merchantsRes = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}`)
           const merchantsData = await merchantsRes.json()
           setTopMerchants(merchantsData)
 
@@ -237,15 +268,15 @@ export default function Dashboard() {
           setAnomalies(null)
 
           // Fetch year-level Sankey, Treemap, Heatmap
-          const sankeyRes = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}${bucketParam}`)
+          const sankeyRes = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}`)
           const sankeyJson = await sankeyRes.json()
           setSankeyData(sankeyJson)
 
-          const treemapRes = await fetch(`/api/v1/reports/treemap?year=${selectedYear}${bucketParam}`)
+          const treemapRes = await fetch(`/api/v1/reports/treemap?year=${selectedYear}`)
           const treemapJson = await treemapRes.json()
           setTreemapData(treemapJson)
 
-          const heatmapRes = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}${bucketParam}`)
+          const heatmapRes = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}`)
           const heatmapJson = await heatmapRes.json()
           setHeatmapData(heatmapJson)
         }
@@ -258,7 +289,89 @@ export default function Dashboard() {
     }
 
     fetchData()
-  }, [selectedYear, selectedMonth, viewMode, selectedBuckets])
+  }, [selectedYear, selectedMonth, viewMode])
+
+  // Fetch data for widgets with bucket filters
+  useEffect(() => {
+    async function fetchFilteredWidgetData() {
+      const filteredWidgets = widgets.filter(w => {
+        if (!w.config) return false
+        try {
+          const config = JSON.parse(w.config)
+          return config.buckets && config.buckets.length > 0
+        } catch {
+          return false
+        }
+      })
+
+      if (filteredWidgets.length === 0) {
+        setWidgetData({})
+        return
+      }
+
+      const newWidgetData: Record<number, any> = {}
+
+      for (const widget of filteredWidgets) {
+        const config = JSON.parse(widget.config!)
+        const bucketParam = `&buckets=${encodeURIComponent(config.buckets.join(','))}`
+        const monthParam = viewMode === 'month' ? `&month=${selectedMonth}` : ''
+
+        try {
+          let data = null
+          switch (widget.widget_type) {
+            case 'bucket_pie':
+            case 'top_merchants': {
+              const res = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}${monthParam}${bucketParam}`)
+              data = await res.json()
+              break
+            }
+            case 'trends': {
+              const endDate = viewMode === 'month'
+                ? new Date(selectedYear, selectedMonth, 0)
+                : new Date(selectedYear, 11, 31)
+              const today = new Date()
+              const effectiveEnd = endDate > today ? today : endDate
+              const startDate = viewMode === 'month'
+                ? new Date(effectiveEnd.getTime() - 84 * 24 * 60 * 60 * 1000)
+                : new Date(selectedYear, 0, 1)
+              const groupBy = viewMode === 'month' ? 'week' : 'month'
+              const res = await fetch(
+                `/api/v1/reports/trends?start_date=${format(startDate, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=${groupBy}${bucketParam}`
+              )
+              data = await res.json()
+              break
+            }
+            case 'sankey': {
+              const res = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}${monthParam}${bucketParam}`)
+              data = await res.json()
+              break
+            }
+            case 'treemap': {
+              const res = await fetch(`/api/v1/reports/treemap?year=${selectedYear}${monthParam}${bucketParam}`)
+              data = await res.json()
+              break
+            }
+            case 'heatmap': {
+              const res = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}${monthParam}${bucketParam}`)
+              data = await res.json()
+              break
+            }
+          }
+          if (data) {
+            newWidgetData[widget.id] = data
+          }
+        } catch (error) {
+          console.error(`Error fetching data for widget ${widget.id}:`, error)
+        }
+      }
+
+      setWidgetData(newWidgetData)
+    }
+
+    if (widgets.length > 0 && !loading) {
+      fetchFilteredWidgetData()
+    }
+  }, [widgets, selectedYear, selectedMonth, viewMode, loading])
 
   // Check if a widget type is visible
   const isWidgetVisible = useCallback((widgetType: string) => {
@@ -490,9 +603,9 @@ export default function Dashboard() {
     )
   }
 
-  const renderBucketPieWidget = () => (
-    <div key="bucket_pie" className="card p-6">
-      <h2 className="text-lg font-semibold text-theme mb-4">Spending by Bucket</h2>
+  const renderBucketPieWidget = (widget?: Widget, customData?: any) => (
+    <div key={widget?.id ?? "bucket_pie"} className="card p-6">
+      <h2 className="text-lg font-semibold text-theme mb-4">{widget?.title || 'Spending by Bucket'}</h2>
       {bucketData.length > 0 ? (
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
@@ -519,12 +632,14 @@ export default function Dashboard() {
     </div>
   )
 
-  const renderTopMerchantsWidget = () => (
-    <div key="top_merchants" className="card p-6">
-      <h2 className="text-lg font-semibold text-theme mb-4">Top Merchants</h2>
-      {topMerchants && topMerchants.merchants.length > 0 ? (
+  const renderTopMerchantsWidget = (widget?: Widget, customData?: any) => {
+    const data = customData || topMerchants
+    return (
+    <div key={widget?.id ?? "top_merchants"} className="card p-6">
+      <h2 className="text-lg font-semibold text-theme mb-4">{widget?.title || 'Top Merchants'}</h2>
+      {data && data.merchants.length > 0 ? (
         <div className="space-y-3">
-          {topMerchants.merchants.slice(0, 10).map((merchant: any, index: number) => (
+          {data.merchants.slice(0, 10).map((merchant: any, index: number) => (
             <div key={index} className="flex justify-between items-center">
               <span className="text-sm text-theme">{merchant.merchant}</span>
               <span className="text-sm font-semibold text-theme">
@@ -537,13 +652,14 @@ export default function Dashboard() {
         <p className="text-theme-muted text-center py-12">No merchant data available</p>
       )}
     </div>
-  )
+  )}
 
-  const renderTrendsWidget = () => {
-    if (!trends || !trends.data || trends.data.length === 0) return null
+  const renderTrendsWidget = (widget?: Widget, customData?: any) => {
+    const data = customData || trends
+    if (!data || !data.data || data.data.length === 0) return null
 
-    const isWeekly = trends.group_by === 'week'
-    const title = viewMode === 'year' ? '12-Month Trend' : '12-Week Trend'
+    const isWeekly = data.group_by === 'week'
+    const title = widget?.title || (viewMode === 'year' ? '12-Month Trend' : '12-Week Trend')
 
     // Format period labels for display
     const formatPeriodLabel = (period: string) => {
@@ -559,10 +675,10 @@ export default function Dashboard() {
     }
 
     return (
-      <div key="trends" className="card p-6">
+      <div key={widget?.id ?? "trends"} className="card p-6">
         <h2 className="text-lg font-semibold text-theme mb-4">{title}</h2>
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={trends.data}>
+          <LineChart data={data.data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="period" tickFormatter={formatPeriodLabel} />
             <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
@@ -580,19 +696,22 @@ export default function Dashboard() {
     )
   }
 
-  const renderSankeyWidget = () => {
-    if (!sankeyData || !sankeyData.nodes || sankeyData.nodes.length === 0) {
+  const renderSankeyWidget = (widget?: Widget, customData?: any) => {
+    const data = customData || sankeyData
+    const title = widget?.title || 'Money Flow'
+
+    if (!data || !data.nodes || data.nodes.length === 0) {
       return (
-        <div key="sankey" className="card p-6">
-          <h2 className="text-lg font-semibold text-theme mb-4">Money Flow</h2>
-          <p className="text-theme-muted text-center py-12">No flow data available for this month</p>
+        <div key={widget?.id ?? "sankey"} className="card p-6">
+          <h2 className="text-lg font-semibold text-theme mb-4">{title}</h2>
+          <p className="text-theme-muted text-center py-12">No flow data available for this period</p>
         </div>
       )
     }
 
     // Custom node component with labels - uses CSS variables directly for theme reactivity
     const SankeyNode = ({ x, y, width, height, index, payload }: any) => {
-      const name = payload?.name || sankeyData.nodes[index]?.name || ''
+      const name = payload?.name || data.nodes[index]?.name || ''
       const isLeftSide = x < 200
       const colorVar = CHART_VARS[index % CHART_VARS.length]
       return (
@@ -619,12 +738,12 @@ export default function Dashboard() {
     }
 
     return (
-      <div key="sankey" className="card p-6">
-        <h2 className="text-lg font-semibold text-theme mb-4">Money Flow</h2>
+      <div key={widget?.id ?? "sankey"} className="card p-6">
+        <h2 className="text-lg font-semibold text-theme mb-4">{title}</h2>
         <p className="text-sm text-theme-muted mb-4">Income → Accounts → Spending Categories</p>
         <ResponsiveContainer width="100%" height={450}>
           <Sankey
-            data={sankeyData}
+            data={data}
             nodePadding={40}
             nodeWidth={12}
             linkCurvature={0.5}
@@ -649,12 +768,15 @@ export default function Dashboard() {
     )
   }
 
-  const renderTreemapWidget = () => {
-    if (!treemapData || !treemapData.data || treemapData.data.children.length === 0) {
+  const renderTreemapWidget = (widget?: Widget, customData?: any) => {
+    const data = customData || treemapData
+    const title = widget?.title || 'Spending Breakdown'
+
+    if (!data || !data.data || data.data.children.length === 0) {
       return (
-        <div key="treemap" className="card p-6">
-          <h2 className="text-lg font-semibold text-theme mb-4">Spending Breakdown</h2>
-          <p className="text-theme-muted text-center py-12">No spending data available for this month</p>
+        <div key={widget?.id ?? "treemap"} className="card p-6">
+          <h2 className="text-lg font-semibold text-theme mb-4">{title}</h2>
+          <p className="text-theme-muted text-center py-12">No spending data available for this period</p>
         </div>
       )
     }
@@ -668,12 +790,12 @@ export default function Dashboard() {
     }
 
     return (
-      <div key="treemap" className="card p-6">
-        <h2 className="text-lg font-semibold text-theme mb-4">Spending Breakdown</h2>
+      <div key={widget?.id ?? "treemap"} className="card p-6">
+        <h2 className="text-lg font-semibold text-theme mb-4">{title}</h2>
         <p className="text-sm text-theme-muted mb-4">Spending by category and merchant</p>
         <ResponsiveContainer width="100%" height={400}>
           <Treemap
-            data={treemapData.data.children}
+            data={data.data.children}
             dataKey="value"
             aspectRatio={4/3}
             stroke="#fff"
@@ -743,11 +865,14 @@ export default function Dashboard() {
     )
   }
 
-  const renderHeatmapWidget = () => {
-    if (!heatmapData || !heatmapData.days) {
+  const renderHeatmapWidget = (widget?: Widget, customData?: any) => {
+    const data = customData || heatmapData
+    const title = widget?.title || (viewMode === 'year' ? 'Monthly Spending Overview' : 'Spending Calendar')
+
+    if (!data || !data.days) {
       return (
-        <div key="heatmap" className="card p-6">
-          <h2 className="text-lg font-semibold text-theme mb-4">Spending Calendar</h2>
+        <div key={widget?.id ?? "heatmap"} className="card p-6">
+          <h2 className="text-lg font-semibold text-theme mb-4">{title}</h2>
           <p className="text-theme-muted text-center py-12">No spending data available</p>
         </div>
       )
@@ -756,26 +881,26 @@ export default function Dashboard() {
     // Year view: show monthly grid
     if (viewMode === 'year') {
       return (
-        <div key="heatmap" className="card p-6">
-          <h2 className="text-lg font-semibold text-theme mb-4">Monthly Spending Overview</h2>
-          {heatmapData.summary && (
+        <div key={widget?.id ?? "heatmap"} className="card p-6">
+          <h2 className="text-lg font-semibold text-theme mb-4">{title}</h2>
+          {data.summary && (
             <div className="flex gap-6 mb-4 text-sm">
               <div>
                 <span className="text-theme-muted">Total: </span>
-                <span className="font-semibold text-theme">{formatCurrency(heatmapData.summary.total_spending)}</span>
+                <span className="font-semibold text-theme">{formatCurrency(data.summary.total_spending)}</span>
               </div>
               <div>
                 <span className="text-theme-muted">Max Month: </span>
-                <span className="font-semibold text-theme">{formatCurrency(heatmapData.summary.max_monthly || 0)}</span>
+                <span className="font-semibold text-theme">{formatCurrency(data.summary.max_monthly || 0)}</span>
               </div>
               <div>
                 <span className="text-theme-muted">Active Months: </span>
-                <span className="font-semibold text-theme">{heatmapData.summary.months_with_spending || 0}</span>
+                <span className="font-semibold text-theme">{data.summary.months_with_spending || 0}</span>
               </div>
             </div>
           )}
           <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
-            {heatmapData.days.map((month: any) => {
+            {data.days.map((month: any) => {
               const colorVar = HEATMAP_VARS[Math.min(month.intensity, 5)]
               const useLightText = month.intensity >= 3
 
@@ -822,10 +947,10 @@ export default function Dashboard() {
     const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
     // Organize days into weeks (7 columns)
-    const firstDayWeekday = heatmapData.days[0]?.weekday ?? 0
+    const firstDayWeekday = data.days[0]?.weekday ?? 0
     const paddedDays = [
       ...Array(firstDayWeekday).fill(null),
-      ...heatmapData.days
+      ...data.days
     ]
     const weeks: any[][] = []
     for (let i = 0; i < paddedDays.length; i += 7) {
@@ -833,21 +958,21 @@ export default function Dashboard() {
     }
 
     return (
-      <div key="heatmap" className="card p-6">
-        <h2 className="text-lg font-semibold text-theme mb-4">Spending Calendar</h2>
-        {heatmapData.summary && (
+      <div key={widget?.id ?? "heatmap"} className="card p-6">
+        <h2 className="text-lg font-semibold text-theme mb-4">{title}</h2>
+        {data.summary && (
           <div className="flex gap-6 mb-4 text-sm">
             <div>
               <span className="text-theme-muted">Total: </span>
-              <span className="font-semibold text-theme">{formatCurrency(heatmapData.summary.total_spending)}</span>
+              <span className="font-semibold text-theme">{formatCurrency(data.summary.total_spending)}</span>
             </div>
             <div>
               <span className="text-theme-muted">Max Day: </span>
-              <span className="font-semibold text-theme">{formatCurrency(heatmapData.summary.max_daily)}</span>
+              <span className="font-semibold text-theme">{formatCurrency(data.summary.max_daily)}</span>
             </div>
             <div>
               <span className="text-theme-muted">Active Days: </span>
-              <span className="font-semibold text-theme">{heatmapData.summary.days_with_spending}</span>
+              <span className="font-semibold text-theme">{data.summary.days_with_spending}</span>
             </div>
           </div>
         )}
@@ -915,6 +1040,9 @@ export default function Dashboard() {
 
   // Render widget by type
   const renderWidget = (widget: Widget) => {
+    // Check if this widget has custom data from bucket filter
+    const customData = widgetData[widget.id]
+
     switch (widget.widget_type) {
       case 'summary':
         return renderSummaryWidget()
@@ -923,17 +1051,17 @@ export default function Dashboard() {
       case 'anomalies':
         return renderAnomaliesWidget()
       case 'bucket_pie':
-        return renderBucketPieWidget()
+        return renderBucketPieWidget(widget, customData)
       case 'top_merchants':
-        return renderTopMerchantsWidget()
+        return renderTopMerchantsWidget(widget, customData)
       case 'trends':
-        return renderTrendsWidget()
+        return renderTrendsWidget(widget, customData)
       case 'sankey':
-        return renderSankeyWidget()
+        return renderSankeyWidget(widget, customData)
       case 'treemap':
-        return renderTreemapWidget()
+        return renderTreemapWidget(widget, customData)
       case 'heatmap':
-        return renderHeatmapWidget()
+        return renderHeatmapWidget(widget, customData)
       default:
         return null
     }
@@ -993,93 +1121,16 @@ export default function Dashboard() {
             </button>
           </div>
 
-          {/* Bucket Filter */}
-          {availableBuckets.length > 0 && (
-            <div className="relative">
-              <button
-                onClick={() => setBucketFilterOpen(!bucketFilterOpen)}
-                className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md border transition-colors ${
-                  selectedBuckets.length > 0
-                    ? 'border-blue-500 bg-blue-500/10 text-blue-500'
-                    : 'border-theme hover:bg-[var(--color-bg-hover)]'
-                }`}
-                title="Filter by bucket"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-                <span>
-                  {selectedBuckets.length === 0
-                    ? 'All Buckets'
-                    : selectedBuckets.length === 1
-                    ? selectedBuckets[0]
-                    : `${selectedBuckets.length} buckets`}
-                </span>
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {bucketFilterOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setBucketFilterOpen(false)}
-                  />
-                  <div className="absolute right-0 mt-2 w-56 bg-theme-elevated border border-theme rounded-lg shadow-xl z-50">
-                    <div className="p-2 border-b border-theme">
-                      <button
-                        onClick={() => {
-                          setSelectedBuckets([])
-                          setBucketFilterOpen(false)
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm rounded hover:bg-[var(--color-bg-hover)] text-theme-muted"
-                      >
-                        Clear filter (show all)
-                      </button>
-                    </div>
-                    <div className="p-2 max-h-60 overflow-y-auto">
-                      {availableBuckets.map((bucket) => (
-                        <label
-                          key={bucket.id}
-                          className="flex items-center gap-2 px-3 py-2 rounded hover:bg-[var(--color-bg-hover)] cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedBuckets.includes(bucket.value)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedBuckets([...selectedBuckets, bucket.value])
-                              } else {
-                                setSelectedBuckets(selectedBuckets.filter(b => b !== bucket.value))
-                              }
-                            }}
-                            className="rounded border-theme text-blue-500 focus:ring-blue-500"
-                          />
-                          <span className="text-sm text-theme capitalize">{bucket.value}</span>
-                        </label>
-                      ))}
-                    </div>
-                    <div className="p-2 border-t border-theme text-center">
-                      <button
-                        onClick={() => setBucketFilterOpen(false)}
-                        className="text-sm text-theme-muted hover:text-theme"
-                      >
-                        Done
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
           <DashboardConfig
             widgets={widgets}
+            availableBuckets={availableBuckets}
             onToggleVisibility={handleToggleVisibility}
             onMoveUp={handleMoveUp}
             onMoveDown={handleMoveDown}
             onReset={handleReset}
+            onDuplicate={handleDuplicate}
+            onUpdateWidget={handleUpdateWidget}
+            onDeleteWidget={handleDeleteWidget}
           />
 
           {/* Time Navigation */}

@@ -224,3 +224,41 @@ async def toggle_widget_visibility(
     await session.refresh(widget)
 
     return {"id": widget.id, "is_visible": widget.is_visible}
+
+
+@router.post("/widgets/{widget_id}/duplicate", response_model=DashboardWidget, status_code=201)
+async def duplicate_widget(
+    widget_id: int,
+    session: AsyncSession = Depends(get_session)
+):
+    """Duplicate a widget with a new position at the end.
+
+    Useful for creating multiple instances of the same widget type
+    with different configurations (e.g., filtered views).
+    """
+    result = await session.execute(
+        select(DashboardWidget).where(DashboardWidget.id == widget_id)
+    )
+    original = result.scalar_one_or_none()
+    if not original:
+        raise HTTPException(status_code=404, detail="Widget not found")
+
+    # Find max position
+    max_result = await session.execute(select(DashboardWidget))
+    all_widgets = list(max_result.scalars().all())
+    max_position = max(w.position for w in all_widgets) if all_widgets else -1
+
+    # Create duplicate
+    new_widget = DashboardWidget(
+        widget_type=original.widget_type,
+        title=f"{original.title or original.widget_type} (copy)",
+        position=max_position + 1,
+        width=original.width,
+        is_visible=True,
+        config=None  # Start with no config, user will configure
+    )
+    session.add(new_widget)
+    await session.commit()
+    await session.refresh(new_widget)
+
+    return new_widget
