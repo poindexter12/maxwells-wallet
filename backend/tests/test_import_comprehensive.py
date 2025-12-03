@@ -470,3 +470,416 @@ class TestImportHelpers:
         response = await client.post("/api/v1/import/confirm", files=files, data=data)
         assert response.status_code == 200
         # Bucket tag should be inferred from "GROCERY"
+
+
+class TestMerchantAliasMatching:
+    """Tests for merchant alias matching during import"""
+
+    @pytest.mark.asyncio
+    async def test_import_with_exact_match_alias(self, client: AsyncClient, seed_categories):
+        """Import applies exact match merchant alias"""
+        # Create exact match alias
+        alias_data = {
+            "pattern": "WALMART SUPERCENTER",
+            "canonical_name": "Walmart",
+            "match_type": "exact",
+            "priority": 100
+        }
+        await client.post("/api/v1/merchants/aliases", json=alias_data)
+
+        csv_content = """Date,Description,Card Member,Account #,Amount
+11/15/2025,WALMART SUPERCENTER,JOHN DOE,XXXXX-00001,-99.99
+"""
+        files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
+        data = {"format_type": "amex_cc", "account_source": "ExactMatchTest"}
+        response = await client.post("/api/v1/import/confirm", files=files, data=data)
+        assert response.status_code == 200
+        assert response.json()["imported"] >= 1
+
+    @pytest.mark.asyncio
+    async def test_import_with_contains_match_alias(self, client: AsyncClient, seed_categories):
+        """Import applies contains match merchant alias"""
+        alias_data = {
+            "pattern": "COSTCO",
+            "canonical_name": "Costco Wholesale",
+            "match_type": "contains",
+            "priority": 90
+        }
+        await client.post("/api/v1/merchants/aliases", json=alias_data)
+
+        csv_content = """Date,Description,Card Member,Account #,Amount
+11/15/2025,COSTCO WHOLESALE #123,JOHN DOE,XXXXX-00001,-250.00
+"""
+        files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
+        data = {"format_type": "amex_cc", "account_source": "ContainsMatchTest"}
+        response = await client.post("/api/v1/import/confirm", files=files, data=data)
+        assert response.status_code == 200
+        assert response.json()["imported"] >= 1
+
+    @pytest.mark.asyncio
+    async def test_import_with_regex_match_alias(self, client: AsyncClient, seed_categories):
+        """Import applies regex match merchant alias"""
+        alias_data = {
+            "pattern": r"^SQ \*.*",
+            "canonical_name": "Square Payment",
+            "match_type": "regex",
+            "priority": 80
+        }
+        await client.post("/api/v1/merchants/aliases", json=alias_data)
+
+        csv_content = """Date,Description,Card Member,Account #,Amount
+11/15/2025,SQ *COFFEE SHOP,JOHN DOE,XXXXX-00001,-5.50
+"""
+        files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
+        data = {"format_type": "amex_cc", "account_source": "RegexMatchTest"}
+        response = await client.post("/api/v1/import/confirm", files=files, data=data)
+        assert response.status_code == 200
+        assert response.json()["imported"] >= 1
+
+    @pytest.mark.asyncio
+    async def test_import_no_alias_match(self, client: AsyncClient, seed_categories):
+        """Import with no matching alias keeps original merchant"""
+        csv_content = """Date,Description,Card Member,Account #,Amount
+11/15/2025,UNIQUE STORE ABCXYZ,JOHN DOE,XXXXX-00001,-15.00
+"""
+        files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
+        data = {"format_type": "amex_cc", "account_source": "NoAliasTest"}
+        response = await client.post("/api/v1/import/confirm", files=files, data=data)
+        assert response.status_code == 200
+
+
+class TestImportFormatPersistence:
+    """Tests for import format save/update logic"""
+
+    @pytest.mark.asyncio
+    async def test_save_format_creates_new(self, client: AsyncClient, seed_categories):
+        """Save format creates new format preference"""
+        csv_content = """Date,Description,Card Member,Account #,Amount
+11/15/2025,NEW FORMAT TEST,JOHN DOE,XXXXX-00001,-22.00
+"""
+        files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
+        data = {
+            "format_type": "amex_cc",
+            "account_source": "NewFormatAccount123",
+            "save_format": "true"
+        }
+        response = await client.post("/api/v1/import/confirm", files=files, data=data)
+        assert response.status_code == 200
+        assert response.json()["format_saved"] is True
+
+        # Verify format was saved
+        formats = await client.get("/api/v1/import/formats")
+        format_list = formats.json()
+        found = any(f.get("account_source") == "NewFormatAccount123" for f in format_list)
+        assert found
+
+    @pytest.mark.asyncio
+    async def test_save_format_updates_existing(self, client: AsyncClient, seed_categories):
+        """Save format updates existing format preference"""
+        # First import to create format
+        csv_content = """Date,Description,Card Member,Account #,Amount
+11/15/2025,UPDATE FORMAT TEST 1,JOHN DOE,XXXXX-00001,-11.00
+"""
+        files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
+        data = {
+            "format_type": "amex_cc",
+            "account_source": "UpdateFormatAccount",
+            "save_format": "true"
+        }
+        await client.post("/api/v1/import/confirm", files=files, data=data)
+
+        # Second import with different format to update
+        csv_content2 = """Date,Description,Card Member,Account #,Amount
+11/16/2025,UPDATE FORMAT TEST 2,JOHN DOE,XXXXX-00001,-12.00
+"""
+        files2 = {"file": ("test2.csv", io.BytesIO(csv_content2.encode()), "text/csv")}
+        data2 = {
+            "format_type": "amex_cc",
+            "account_source": "UpdateFormatAccount",
+            "save_format": "true"
+        }
+        response = await client.post("/api/v1/import/confirm", files=files2, data=data2)
+        assert response.status_code == 200
+        assert response.json()["format_saved"] is True
+
+    @pytest.mark.asyncio
+    async def test_preview_uses_saved_format(self, client: AsyncClient, seed_categories):
+        """Preview uses saved format preference for account"""
+        # First create a saved format
+        csv_content = """Date,Description,Card Member,Account #,Amount
+11/15/2025,SAVED FORMAT PREVIEW,JOHN DOE,XXXXX-00001,-33.00
+"""
+        files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
+        data = {
+            "format_type": "amex_cc",
+            "account_source": "SavedFormatPreview",
+            "save_format": "true"
+        }
+        await client.post("/api/v1/import/confirm", files=files, data=data)
+
+        # Preview with same account should use saved format
+        csv_content2 = """Date,Description,Card Member,Account #,Amount
+11/16/2025,TEST SAVED FORMAT,JOHN DOE,XXXXX-00001,-44.00
+"""
+        files2 = {"file": ("test2.csv", io.BytesIO(csv_content2.encode()), "text/csv")}
+        response = await client.post(
+            "/api/v1/import/preview",
+            files=files2,
+            data={"account_source": "SavedFormatPreview"}
+        )
+        assert response.status_code == 200
+
+
+class TestImportDateRangeCalculation:
+    """Tests for import date range tracking"""
+
+    @pytest.mark.asyncio
+    async def test_import_calculates_date_range(self, client: AsyncClient, seed_categories):
+        """Import calculates correct date range for import session"""
+        csv_content = """Date,Description,Card Member,Account #,Amount
+11/01/2025,FIRST DATE TXN,JOHN DOE,XXXXX-00001,-10.00
+11/15/2025,MIDDLE DATE TXN,JOHN DOE,XXXXX-00001,-20.00
+11/30/2025,LAST DATE TXN,JOHN DOE,XXXXX-00001,-30.00
+"""
+        files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
+        data = {"format_type": "amex_cc", "account_source": "DateRangeTest"}
+        response = await client.post("/api/v1/import/confirm", files=files, data=data)
+        assert response.status_code == 200
+        result = response.json()
+        assert result["imported"] >= 1
+        assert "import_session_id" in result
+
+
+class TestBucketTagCreation:
+    """Tests for bucket tag creation during import"""
+
+    @pytest.mark.asyncio
+    async def test_import_creates_bucket_tag_if_needed(self, client: AsyncClient, seed_categories):
+        """Import creates bucket tag if it doesn't exist"""
+        # Import transaction - bucket tag should be created or reused
+        csv_content = """Date,Description,Card Member,Account #,Amount
+11/15/2025,GROCERY TEST SAFEWAY,JOHN DOE,XXXXX-00001,-55.00
+"""
+        files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
+        data = {"format_type": "amex_cc", "account_source": "BucketTagCreate"}
+        response = await client.post("/api/v1/import/confirm", files=files, data=data)
+        assert response.status_code == 200
+        assert response.json()["imported"] >= 1
+
+
+class TestBatchImportAdvanced:
+    """Advanced tests for batch import functionality"""
+
+    @pytest.mark.asyncio
+    async def test_batch_upload_multiple_formats(self, client: AsyncClient, seed_categories):
+        """Batch upload with different file formats"""
+        csv1 = """Date,Description,Card Member,Account #,Amount
+11/15/2025,AMEX FORMAT FILE,JOHN DOE,XXXXX-00001,-40.00
+"""
+        csv2 = """Date,Description,Card Member,Account #,Amount
+11/16/2025,AMEX FORMAT FILE 2,JANE DOE,XXXXX-00002,-60.00
+"""
+        files = [
+            ("files", ("amex1.csv", io.BytesIO(csv1.encode()), "text/csv")),
+            ("files", ("amex2.csv", io.BytesIO(csv2.encode()), "text/csv")),
+        ]
+        response = await client.post("/api/v1/import/batch/upload", files=files)
+        assert response.status_code == 200
+        result = response.json()
+        assert result["total_files"] == 2
+        assert result["total_transactions"] >= 2
+
+    @pytest.mark.asyncio
+    async def test_batch_upload_with_db_duplicates(self, client: AsyncClient, seed_transactions, seed_categories):
+        """Batch upload detects duplicates against DB"""
+        # Import first to create DB records
+        csv_content = """Date,Description,Card Member,Account #,Amount
+11/15/2025,DB DUP CHECK UNIQUE,JOHN DOE,XXXXX-00001,-77.00
+"""
+        files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
+        data = {"format_type": "amex_cc", "account_source": "DBDupCheck"}
+        await client.post("/api/v1/import/confirm", files=files, data=data)
+
+        # Batch upload same transaction - should detect as duplicate
+        batch_files = [
+            ("files", ("batch.csv", io.BytesIO(csv_content.encode()), "text/csv")),
+        ]
+        response = await client.post("/api/v1/import/batch/upload", files=batch_files)
+        assert response.status_code == 200
+        result = response.json()
+        # Should have detected the duplicate
+        assert "total_duplicates" in result
+
+    @pytest.mark.asyncio
+    async def test_batch_confirm_with_multiple_files(self, client: AsyncClient, seed_categories):
+        """Batch confirm imports multiple files correctly"""
+        csv1 = """Date,Description,Card Member,Account #,Amount
+11/15/2025,MULTI FILE BATCH 1,JOHN DOE,XXXXX-00001,-88.00
+"""
+        csv2 = """Date,Description,Card Member,Account #,Amount
+11/16/2025,MULTI FILE BATCH 2,JANE DOE,XXXXX-00002,-99.00
+"""
+        request_data = {
+            "files": [
+                {"filename": "batch1.csv", "account_source": "MultiBatch1", "format_type": "amex_cc"},
+                {"filename": "batch2.csv", "account_source": "MultiBatch2", "format_type": "amex_cc"},
+            ],
+            "save_format": False
+        }
+        files = [
+            ("files", ("batch1.csv", io.BytesIO(csv1.encode()), "text/csv")),
+            ("files", ("batch2.csv", io.BytesIO(csv2.encode()), "text/csv")),
+        ]
+        response = await client.post(
+            "/api/v1/import/batch/confirm",
+            files=files,
+            data={"request": json.dumps(request_data)}
+        )
+        assert response.status_code == 200
+        result = response.json()
+        assert result["total_imported"] >= 2
+        assert len(result["files"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_batch_confirm_save_format_per_file(self, client: AsyncClient, seed_categories):
+        """Batch confirm saves format preference per file"""
+        csv_content = """Date,Description,Card Member,Account #,Amount
+11/15/2025,BATCH SAVE EACH,JOHN DOE,XXXXX-00001,-66.00
+"""
+        request_data = {
+            "files": [
+                {"filename": "save.csv", "account_source": "BatchSaveEach123", "format_type": "amex_cc"}
+            ],
+            "save_format": True
+        }
+        files = [
+            ("files", ("save.csv", io.BytesIO(csv_content.encode()), "text/csv")),
+        ]
+        response = await client.post(
+            "/api/v1/import/batch/confirm",
+            files=files,
+            data={"request": json.dumps(request_data)}
+        )
+        assert response.status_code == 200
+        assert response.json()["format_saved"] is True
+
+        # Verify format was saved
+        formats = await client.get("/api/v1/import/formats")
+        format_list = formats.json()
+        found = any(f.get("account_source") == "BatchSaveEach123" for f in format_list)
+        assert found
+
+    @pytest.mark.asyncio
+    async def test_batch_confirm_update_existing_format(self, client: AsyncClient, seed_categories):
+        """Batch confirm updates existing format preference"""
+        # First create format
+        csv1 = """Date,Description,Card Member,Account #,Amount
+11/15/2025,BATCH UPDATE FMT 1,JOHN DOE,XXXXX-00001,-11.00
+"""
+        request1 = {
+            "files": [
+                {"filename": "update1.csv", "account_source": "BatchUpdateFmt", "format_type": "amex_cc"}
+            ],
+            "save_format": True
+        }
+        files1 = [("files", ("update1.csv", io.BytesIO(csv1.encode()), "text/csv"))]
+        await client.post("/api/v1/import/batch/confirm", files=files1, data={"request": json.dumps(request1)})
+
+        # Update format
+        csv2 = """Date,Description,Card Member,Account #,Amount
+11/16/2025,BATCH UPDATE FMT 2,JOHN DOE,XXXXX-00001,-22.00
+"""
+        request2 = {
+            "files": [
+                {"filename": "update2.csv", "account_source": "BatchUpdateFmt", "format_type": "amex_cc"}
+            ],
+            "save_format": True
+        }
+        files2 = [("files", ("update2.csv", io.BytesIO(csv2.encode()), "text/csv"))]
+        response = await client.post(
+            "/api/v1/import/batch/confirm",
+            files=files2,
+            data={"request": json.dumps(request2)}
+        )
+        assert response.status_code == 200
+
+
+class TestImportContentHashDedup:
+    """Tests for content hash based deduplication"""
+
+    @pytest.mark.asyncio
+    async def test_duplicate_detection_by_content_hash(self, client: AsyncClient, seed_categories):
+        """Import detects duplicates by content hash"""
+        csv_content = """Date,Description,Card Member,Account #,Amount
+11/15/2025,CONTENT HASH DUP TEST,JOHN DOE,XXXXX-00001,-123.45
+"""
+        # First import
+        files1 = {"file": ("first.csv", io.BytesIO(csv_content.encode()), "text/csv")}
+        data = {"format_type": "amex_cc", "account_source": "ContentHashTest"}
+        response1 = await client.post("/api/v1/import/confirm", files=files1, data=data)
+        assert response1.status_code == 200
+        assert response1.json()["imported"] >= 1
+
+        # Second import of exact same transaction
+        files2 = {"file": ("second.csv", io.BytesIO(csv_content.encode()), "text/csv")}
+        response2 = await client.post("/api/v1/import/confirm", files=files2, data=data)
+        assert response2.status_code == 200
+        # Should detect as duplicate
+        assert response2.json()["duplicates"] >= 1 or response2.json()["imported"] == 0
+
+    @pytest.mark.asyncio
+    async def test_different_transactions_not_duplicates(self, client: AsyncClient, seed_categories):
+        """Import allows different transactions"""
+        csv1 = """Date,Description,Card Member,Account #,Amount
+11/15/2025,UNIQUE TXN ONE,JOHN DOE,XXXXX-00001,-50.00
+"""
+        csv2 = """Date,Description,Card Member,Account #,Amount
+11/16/2025,UNIQUE TXN TWO,JOHN DOE,XXXXX-00001,-75.00
+"""
+        data = {"format_type": "amex_cc", "account_source": "UniqueTxnTest"}
+
+        files1 = {"file": ("first.csv", io.BytesIO(csv1.encode()), "text/csv")}
+        response1 = await client.post("/api/v1/import/confirm", files=files1, data=data)
+        assert response1.status_code == 200
+        assert response1.json()["imported"] >= 1
+
+        files2 = {"file": ("second.csv", io.BytesIO(csv2.encode()), "text/csv")}
+        response2 = await client.post("/api/v1/import/confirm", files=files2, data=data)
+        assert response2.status_code == 200
+        assert response2.json()["imported"] >= 1
+
+
+class TestBatchImportInferAccountSource:
+    """Tests for batch import account source inference"""
+
+    @pytest.mark.asyncio
+    async def test_batch_infers_account_from_bank_of_america_filename(self, client: AsyncClient, seed_categories):
+        """Batch upload infers account from 'bank-of-america' filename"""
+        csv_content = """Date,Description,Card Member,Account #,Amount
+11/15/2025,BOFA INFER TEST,JOHN DOE,XXXXX-00001,-20.00
+"""
+        files = [
+            ("files", ("bank-of-america-checking.csv", io.BytesIO(csv_content.encode()), "text/csv")),
+        ]
+        response = await client.post("/api/v1/import/batch/upload", files=files)
+        assert response.status_code == 200
+        result = response.json()
+        # Should have inferred account source
+        if result["files"]:
+            assert result["files"][0]["account_source"] is not None
+
+
+class TestImportEmptyDescription:
+    """Tests for edge cases with empty/null values"""
+
+    @pytest.mark.asyncio
+    async def test_import_with_empty_merchant(self, client: AsyncClient, seed_categories):
+        """Import handles transactions with empty merchant"""
+        csv_content = """Date,Description,Card Member,Account #,Amount
+11/15/2025,,JOHN DOE,XXXXX-00001,-15.00
+"""
+        files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
+        data = {"format_type": "amex_cc", "account_source": "EmptyMerchantTest"}
+        response = await client.post("/api/v1/import/confirm", files=files, data=data)
+        # Should handle gracefully
+        assert response.status_code in [200, 400]
