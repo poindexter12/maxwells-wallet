@@ -144,11 +144,14 @@ export default function Dashboard() {
           const summaryData = await summaryRes.json()
           setSummary(summaryData)
 
-          // Fetch 6-month trends ending at selected month
-          const selectedDate = new Date(selectedYear, selectedMonth - 1, 1)
-          const sixMonthsAgo = new Date(selectedYear, selectedMonth - 7, 1)
+          // Fetch 12-week trends ending at current date in selected month
+          const endOfMonth = new Date(selectedYear, selectedMonth, 0) // Last day of selected month
+          const today = new Date()
+          const effectiveEnd = endOfMonth > today ? today : endOfMonth
+          const twelveWeeksAgo = new Date(effectiveEnd)
+          twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - 84) // 12 weeks = 84 days
           const trendsRes = await fetch(
-            `/api/v1/reports/trends?start_date=${format(sixMonthsAgo, 'yyyy-MM-dd')}&end_date=${format(selectedDate, 'yyyy-MM-dd')}&group_by=month`
+            `/api/v1/reports/trends?start_date=${format(twelveWeeksAgo, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=week`
           )
           const trendsData = await trendsRes.json()
           setTrends(trendsData)
@@ -193,15 +196,16 @@ export default function Dashboard() {
           const summaryData = await summaryRes.json()
           setSummary(summaryData)
 
-          // For trends, use the monthly_breakdown from annual summary
-          // Transform it into the format expected by the trends chart
-          const monthlyData = summaryData.monthly_breakdown || {}
-          const trendsData = Object.entries(monthlyData).map(([month, data]: [string, any]) => ({
-            period: `${selectedYear}-${String(month).padStart(2, '0')}`,
-            total: data.expenses,
-            count: data.count
-          }))
-          setTrends({ data: trendsData })
+          // Fetch 12-month trends for the year
+          const yearStart = new Date(selectedYear, 0, 1)
+          const yearEnd = new Date(selectedYear, 11, 31)
+          const today = new Date()
+          const effectiveEnd = yearEnd > today ? today : yearEnd
+          const trendsRes = await fetch(
+            `/api/v1/reports/trends?start_date=${format(yearStart, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=month`
+          )
+          const trendsData = await trendsRes.json()
+          setTrends(trendsData)
 
           // Fetch top merchants for the year
           const merchantsRes = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}`)
@@ -518,15 +522,35 @@ export default function Dashboard() {
 
   const renderTrendsWidget = () => {
     if (!trends || !trends.data || trends.data.length === 0) return null
+
+    const isWeekly = trends.group_by === 'week'
+    const title = viewMode === 'year' ? '12-Month Trend' : '12-Week Trend'
+
+    // Format period labels for display
+    const formatPeriodLabel = (period: string) => {
+      if (isWeekly) {
+        // Format "2024-W48" to "W48"
+        return period.split('-')[1] || period
+      } else {
+        // Format "2024-01" to "Jan"
+        const [year, month] = period.split('-')
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        return monthNames[parseInt(month) - 1] || period
+      }
+    }
+
     return (
       <div key="trends" className="card p-6">
-        <h2 className="text-lg font-semibold text-theme mb-4">6-Month Trend</h2>
+        <h2 className="text-lg font-semibold text-theme mb-4">{title}</h2>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={trends.data}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="period" />
-            <YAxis />
-            <Tooltip formatter={(value: any) => formatCurrency(value)} />
+            <XAxis dataKey="period" tickFormatter={formatPeriodLabel} />
+            <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+            <Tooltip
+              formatter={(value: any) => formatCurrency(value)}
+              labelFormatter={(label) => isWeekly ? `Week ${label.split('-')[1]?.replace('W', '') || label}` : formatPeriodLabel(label)}
+            />
             <Legend />
             <Line type="monotone" dataKey="income" stroke="#10b981" name="Income" />
             <Line type="monotone" dataKey="expenses" stroke="#ef4444" name="Expenses" />

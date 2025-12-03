@@ -249,7 +249,7 @@ async def annual_summary(
 async def spending_trends(
     start_date: date = Query(..., description="Start date (YYYY-MM-DD)"),
     end_date: date = Query(..., description="End date (YYYY-MM-DD)"),
-    group_by: str = Query("month", pattern="^(month|category|account|tag)$", description="Grouping: month, category, account, or tag"),
+    group_by: str = Query("month", pattern="^(month|week|category|account|tag)$", description="Grouping: month, week, category, account, or tag"),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -257,6 +257,7 @@ async def spending_trends(
 
     Supports multiple grouping modes:
     - **month**: Income, expenses, and net by month (for line charts)
+    - **week**: Income, expenses, and net by week (for line charts)
     - **category**: Spending breakdown by category
     - **account**: Spending breakdown by account
     - **tag**: Spending breakdown by bucket tag
@@ -292,6 +293,30 @@ async def spending_trends(
             "data": [
                 {"period": k, **v}
                 for k, v in sorted(monthly_data.items())
+            ]
+        }
+
+    elif group_by == "week":
+        # Group by ISO week
+        weekly_data = defaultdict(lambda: {'income': 0, 'expenses': 0, 'net': 0})
+
+        for txn in transactions:
+            # ISO week: YYYY-Www format
+            iso_cal = txn.date.isocalendar()
+            week_key = f"{iso_cal[0]}-W{iso_cal[1]:02d}"
+            if txn.amount > 0:
+                weekly_data[week_key]['income'] += txn.amount
+            else:
+                weekly_data[week_key]['expenses'] += abs(txn.amount)
+            weekly_data[week_key]['net'] = (
+                weekly_data[week_key]['income'] - weekly_data[week_key]['expenses']
+            )
+
+        return {
+            "group_by": "week",
+            "data": [
+                {"period": k, **v}
+                for k, v in sorted(weekly_data.items())
             ]
         }
 
