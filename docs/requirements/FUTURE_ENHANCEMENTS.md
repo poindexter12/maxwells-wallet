@@ -7,9 +7,11 @@ Ideas for future versions beyond v0.
 ### Advanced Visualizations
 - ✅ ~~Custom dashboard widgets~~ - Implemented v0.5 (PR #25)
 - ✅ ~~Configurable widget visibility/order~~ - Implemented v0.5 (PR #25)
-- More chart types (sankey, treemap, heatmaps)
+- ✅ ~~More chart types (sankey, treemap, heatmaps)~~ - Implemented v0.6 (PR #26)
 - Data drill-down (click chart to filter transactions)
 - Interactive filters on charts
+- Dashboard year/month view toggle (default: month, with year summary)
+- Widget tag filtering (filter widget data by selected tags)
 
 ### Observability & Monitoring
 - OpenTelemetry integration for distributed tracing
@@ -181,8 +183,10 @@ These features are interesting but not currently prioritized:
 - Customizable Dashboard - Show/hide and reorder widgets
 - Nightly Code Quality - Vulture, ruff, mypy, pip-audit automation
 
-### v0.6 (Planned)
-- Advanced visualizations (sankey, treemap, heatmaps)
+### v0.6 (In Progress)
+- ✅ Advanced visualizations (sankey, treemap, heatmaps) - PR #26
+- Dashboard year/month view toggle
+- Widget tag filtering
 - Scheduled reports & email digests
 
 ### v0.7 (Planned)
