@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { formatCurrency } from '@/lib/format'
 import { PageHelp } from '@/components/PageHelp'
 import { HelpTip } from '@/components/Tooltip'
+import { SplitTransaction } from '@/components/SplitTransaction'
 
 interface Tag {
   id: number
@@ -1491,7 +1492,7 @@ function TransactionsContent() {
               {/* EXPANDED METADATA SECTION */}
               {expandedIds.has(txn.id) && (
                 <div className="px-4 pb-4 pt-2 md:pl-12 border-t border-theme bg-[var(--color-bg-hover)]">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     {/* Left column: metadata */}
                     <div className="space-y-2">
                       <div className="flex gap-2">
@@ -1554,7 +1555,7 @@ function TransactionsContent() {
                       )}
                     </div>
 
-                    {/* Right column: notes */}
+                    {/* Middle column: notes */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-theme-muted">Notes:</span>
@@ -1597,6 +1598,16 @@ function TransactionsContent() {
                           {txn.notes || 'No notes'}
                         </p>
                       )}
+                    </div>
+
+                    {/* Right column: splits */}
+                    <div className="border-l border-theme pl-4">
+                      <SplitTransaction
+                        transactionId={txn.id}
+                        transactionAmount={txn.amount}
+                        bucketTags={bucketTags}
+                        onSplitsChanged={fetchTransactions}
+                      />
                     </div>
                   </div>
                 </div>

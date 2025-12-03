@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Body
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlmodel import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List, Dict, Any
@@ -7,13 +7,13 @@ from pydantic import BaseModel as PydanticBaseModel
 
 from app.database import get_session
 from app.models import (
-    Transaction, ImportFormat, ImportFormatCreate,
+    Transaction, ImportFormat,
     ImportFormatType, ReconciliationStatus, ImportSession,
     Tag, TransactionTag, BatchImportSession,
     MerchantAlias, MerchantAliasMatchType
 )
 from app.csv_parser import parse_csv, detect_format
-from app.tag_inference import infer_bucket_tag, build_user_history
+from app.tag_inference import infer_bucket_tag
 from app.utils.hashing import compute_transaction_hash_from_dict
 import re as regex_module
 
