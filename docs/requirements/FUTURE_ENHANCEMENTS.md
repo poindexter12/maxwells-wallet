@@ -181,8 +181,10 @@ These features are interesting but not currently prioritized:
 - Customizable Dashboard - Show/hide and reorder widgets
 - Nightly Code Quality - Vulture, ruff, mypy, pip-audit automation
 
-### v0.6+ (Planned)
+### v0.6 (Planned)
 - Advanced visualizations (sankey, treemap, heatmaps)
+- Scheduled reports & email digests
+
+### v0.7 (Planned)
 - Observability & OpenTelemetry integration
 - Performance optimization
-- Scheduled reports & email digests
