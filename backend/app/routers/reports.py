@@ -132,11 +132,124 @@ async def monthly_summary(
         ]
     }
 
+
+@router.get("/annual-summary")
+async def annual_summary(
+    year: int = Query(..., description="Year (e.g., 2024)"),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Get comprehensive spending summary for a full year.
+
+    Returns:
+    - **total_income**: Sum of all positive transactions for the year
+    - **total_expenses**: Sum of all negative transactions (as positive number)
+    - **net**: Income minus expenses
+    - **monthly_breakdown**: Monthly spending totals
+    - **bucket_breakdown**: Spending grouped by bucket tags
+    - **top_merchants**: Top 10 merchants by spending
+    - **transaction_count**: Total number of transactions
+
+    Note: Transfers are excluded from all calculations.
+    """
+    start_date = date(year, 1, 1)
+    end_date = date(year + 1, 1, 1)
+
+    # Get all transactions for the year (excluding transfers)
+    result = await session.execute(
+        select(Transaction).where(
+            Transaction.date >= start_date,
+            Transaction.date < end_date,
+            Transaction.is_transfer == False
+        )
+    )
+    transactions = result.scalars().all()
+
+    # Calculate totals
+    total_income = sum(txn.amount for txn in transactions if txn.amount > 0)
+    total_expenses = abs(sum(txn.amount for txn in transactions if txn.amount < 0))
+    net = total_income - total_expenses
+
+    # Monthly breakdown
+    monthly_breakdown = {}
+    for month_num in range(1, 13):
+        monthly_breakdown[month_num] = {
+            'income': 0,
+            'expenses': 0,
+            'net': 0,
+            'count': 0
+        }
+
+    for txn in transactions:
+        month = txn.date.month
+        if txn.amount > 0:
+            monthly_breakdown[month]['income'] += txn.amount
+        else:
+            monthly_breakdown[month]['expenses'] += abs(txn.amount)
+        monthly_breakdown[month]['count'] += 1
+
+    for month in monthly_breakdown:
+        monthly_breakdown[month]['net'] = (
+            monthly_breakdown[month]['income'] - monthly_breakdown[month]['expenses']
+        )
+
+    # Group by bucket tag
+    txn_ids = [txn.id for txn in transactions]
+    txn_tags = await get_transaction_tags(session, txn_ids)
+
+    bucket_breakdown = defaultdict(lambda: {'amount': 0, 'count': 0})
+    for txn in transactions:
+        bucket = txn_tags.get(txn.id, 'Untagged')
+        bucket_breakdown[bucket]['amount'] += abs(txn.amount) if txn.amount < 0 else 0
+        bucket_breakdown[bucket]['count'] += 1
+
+    bucket_breakdown = dict(sorted(
+        bucket_breakdown.items(),
+        key=lambda x: x[1]['amount'],
+        reverse=True
+    ))
+
+    # Top merchants
+    merchant_totals = defaultdict(float)
+    for txn in transactions:
+        if txn.merchant and txn.amount < 0:
+            merchant_totals[txn.merchant] += abs(txn.amount)
+
+    top_merchants = sorted(
+        merchant_totals.items(),
+        key=lambda x: x[1],
+        reverse=True
+    )[:10]
+
+    # Calculate days in year for velocity
+    today = date.today()
+    if year == today.year:
+        days_elapsed = (today - start_date).days + 1
+    else:
+        days_elapsed = 366 if calendar.isleap(year) else 365
+
+    return {
+        "year": year,
+        "total_income": total_income,
+        "total_expenses": total_expenses,
+        "net": net,
+        "transaction_count": len(transactions),
+        "monthly_breakdown": monthly_breakdown,
+        "bucket_breakdown": bucket_breakdown,
+        "top_merchants": [
+            {"merchant": m, "amount": a}
+            for m, a in top_merchants
+        ],
+        "daily_average": round(total_expenses / days_elapsed, 2) if days_elapsed > 0 else 0,
+        "days_elapsed": days_elapsed
+    }
+
+
 @router.get("/trends")
 async def spending_trends(
     start_date: date = Query(..., description="Start date (YYYY-MM-DD)"),
     end_date: date = Query(..., description="End date (YYYY-MM-DD)"),
-    group_by: str = Query("month", pattern="^(month|category|account|tag)$", description="Grouping: month, category, account, or tag"),
+    group_by: str = Query("month", pattern="^(month|week|category|account|tag)$", description="Grouping: month, week, category, account, or tag"),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -144,6 +257,7 @@ async def spending_trends(
 
     Supports multiple grouping modes:
     - **month**: Income, expenses, and net by month (for line charts)
+    - **week**: Income, expenses, and net by week (for line charts)
     - **category**: Spending breakdown by category
     - **account**: Spending breakdown by account
     - **tag**: Spending breakdown by bucket tag
@@ -179,6 +293,30 @@ async def spending_trends(
             "data": [
                 {"period": k, **v}
                 for k, v in sorted(monthly_data.items())
+            ]
+        }
+
+    elif group_by == "week":
+        # Group by ISO week
+        weekly_data = defaultdict(lambda: {'income': 0, 'expenses': 0, 'net': 0})
+
+        for txn in transactions:
+            # ISO week: YYYY-Www format
+            iso_cal = txn.date.isocalendar()
+            week_key = f"{iso_cal[0]}-W{iso_cal[1]:02d}"
+            if txn.amount > 0:
+                weekly_data[week_key]['income'] += txn.amount
+            else:
+                weekly_data[week_key]['expenses'] += abs(txn.amount)
+            weekly_data[week_key]['net'] = (
+                weekly_data[week_key]['income'] - weekly_data[week_key]['expenses']
+            )
+
+        return {
+            "group_by": "week",
+            "data": [
+                {"period": k, **v}
+                for k, v in sorted(weekly_data.items())
             ]
         }
 
@@ -255,13 +393,19 @@ async def top_merchants(
     # Calculate date range
     today = date.today()
 
-    # If year and month are provided, use them instead of period
-    if year is not None and month is not None:
-        start_date = date(year, month, 1)
-        if month == 12:
-            end_date = date(year + 1, 1, 1)
+    # If year is provided, use it instead of period
+    if year is not None:
+        if month is not None:
+            # Specific month
+            start_date = date(year, month, 1)
+            if month == 12:
+                end_date = date(year + 1, 1, 1)
+            else:
+                end_date = date(year, month + 1, 1)
         else:
-            end_date = date(year, month + 1, 1)
+            # Full year
+            start_date = date(year, 1, 1)
+            end_date = date(year + 1, 1, 1)
     else:
         end_date = None  # Will be set to None for open-ended queries
         if period == "current_month":
@@ -897,7 +1041,7 @@ async def detect_anomalies(
 @router.get("/sankey-flow")
 async def sankey_flow(
     year: int = Query(..., description="Year (e.g., 2024)"),
-    month: int = Query(..., ge=1, le=12, description="Month (1-12)"),
+    month: Optional[int] = Query(None, ge=1, le=12, description="Month (1-12), omit for full year"),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -906,10 +1050,15 @@ async def sankey_flow(
     Shows flow from income sources → accounts → spending buckets.
 
     Returns nodes and links in Recharts Sankey format.
+    If month is omitted, returns data for the full year.
     """
-    start_date = date(year, month, 1)
-    last_day = calendar.monthrange(year, month)[1]
-    end_date = date(year, month, last_day)
+    if month is not None:
+        start_date = date(year, month, 1)
+        last_day = calendar.monthrange(year, month)[1]
+        end_date = date(year, month, last_day)
+    else:
+        start_date = date(year, 1, 1)
+        end_date = date(year, 12, 31)
 
     # Get all transactions for the month (excluding transfers)
     result = await session.execute(
@@ -994,17 +1143,22 @@ async def sankey_flow(
 @router.get("/treemap")
 async def treemap_data(
     year: int = Query(..., description="Year (e.g., 2024)"),
-    month: int = Query(..., ge=1, le=12, description="Month (1-12)"),
+    month: Optional[int] = Query(None, ge=1, le=12, description="Month (1-12), omit for full year"),
     session: AsyncSession = Depends(get_session)
 ):
     """
     Get hierarchical spending data for Treemap visualization.
 
     Returns spending organized as: Bucket → Merchant hierarchy.
+    If month is omitted, returns data for the full year.
     """
-    start_date = date(year, month, 1)
-    last_day = calendar.monthrange(year, month)[1]
-    end_date = date(year, month, last_day)
+    if month is not None:
+        start_date = date(year, month, 1)
+        last_day = calendar.monthrange(year, month)[1]
+        end_date = date(year, month, last_day)
+    else:
+        start_date = date(year, 1, 1)
+        end_date = date(year, 12, 31)
 
     # Get expense transactions only (excluding transfers)
     result = await session.execute(
@@ -1068,72 +1222,132 @@ async def treemap_data(
 @router.get("/spending-heatmap")
 async def spending_heatmap(
     year: int = Query(..., description="Year (e.g., 2024)"),
-    month: int = Query(..., ge=1, le=12, description="Month (1-12)"),
+    month: Optional[int] = Query(None, ge=1, le=12, description="Month (1-12), omit for full year"),
     session: AsyncSession = Depends(get_session)
 ):
     """
-    Get daily spending data for calendar heatmap visualization.
+    Get spending data for calendar heatmap visualization.
 
-    Returns spending amount for each day of the month.
+    If month is provided, returns daily spending for that month.
+    If month is omitted, returns monthly spending for the full year.
     """
-    start_date = date(year, month, 1)
-    last_day = calendar.monthrange(year, month)[1]
-    end_date = date(year, month, last_day)
+    if month is not None:
+        # Monthly view: daily breakdown
+        start_date = date(year, month, 1)
+        last_day = calendar.monthrange(year, month)[1]
+        end_date = date(year, month, last_day)
 
-    # Get expense transactions (excluding transfers)
-    result = await session.execute(
-        select(Transaction).where(
-            and_(
-                Transaction.date >= start_date,
-                Transaction.date <= end_date,
-                Transaction.amount < 0,
-                Transaction.is_transfer == False
+        result = await session.execute(
+            select(Transaction).where(
+                and_(
+                    Transaction.date >= start_date,
+                    Transaction.date <= end_date,
+                    Transaction.amount < 0,
+                    Transaction.is_transfer == False
+                )
             )
         )
-    )
-    transactions = result.scalars().all()
+        transactions = result.scalars().all()
 
-    # Aggregate by day
-    daily_spending = defaultdict(float)
-    daily_count = defaultdict(int)
+        daily_spending = defaultdict(float)
+        daily_count = defaultdict(int)
 
-    for txn in transactions:
-        day = txn.date.day
-        daily_spending[day] += abs(txn.amount)
-        daily_count[day] += 1
+        for txn in transactions:
+            day = txn.date.day
+            daily_spending[day] += abs(txn.amount)
+            daily_count[day] += 1
 
-    # Build calendar data
-    days = []
-    max_spending = max(daily_spending.values()) if daily_spending else 0
+        days = []
+        max_spending = max(daily_spending.values()) if daily_spending else 0
 
-    for day in range(1, last_day + 1):
-        day_date = date(year, month, day)
-        amount = daily_spending.get(day, 0)
-        count = daily_count.get(day, 0)
+        for day in range(1, last_day + 1):
+            day_date = date(year, month, day)
+            amount = daily_spending.get(day, 0)
+            count = daily_count.get(day, 0)
 
-        # Calculate intensity (0-4 scale for heatmap coloring)
-        if max_spending > 0:
-            intensity = min(4, int((amount / max_spending) * 4))
-        else:
-            intensity = 0
+            if max_spending > 0:
+                intensity = min(5, int((amount / max_spending) * 5))
+            else:
+                intensity = 0
 
-        days.append({
-            "date": str(day_date),
-            "day": day,
-            "weekday": day_date.weekday(),  # 0=Monday, 6=Sunday
-            "amount": round(amount, 2),
-            "count": count,
-            "intensity": intensity
-        })
+            days.append({
+                "date": str(day_date),
+                "day": day,
+                "weekday": day_date.weekday(),
+                "amount": round(amount, 2),
+                "count": count,
+                "intensity": intensity
+            })
+    else:
+        # Year view: monthly breakdown
+        start_date = date(year, 1, 1)
+        end_date = date(year, 12, 31)
+
+        result = await session.execute(
+            select(Transaction).where(
+                and_(
+                    Transaction.date >= start_date,
+                    Transaction.date <= end_date,
+                    Transaction.amount < 0,
+                    Transaction.is_transfer == False
+                )
+            )
+        )
+        transactions = result.scalars().all()
+
+        monthly_spending = defaultdict(float)
+        monthly_count = defaultdict(int)
+
+        for txn in transactions:
+            m = txn.date.month
+            monthly_spending[m] += abs(txn.amount)
+            monthly_count[m] += 1
+
+        days = []  # Using 'days' key for consistency, but contains months
+        max_spending = max(monthly_spending.values()) if monthly_spending else 0
+
+        month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+        for m in range(1, 13):
+            amount = monthly_spending.get(m, 0)
+            count = monthly_count.get(m, 0)
+
+            if max_spending > 0:
+                intensity = min(5, int((amount / max_spending) * 5))
+            else:
+                intensity = 0
+
+            days.append({
+                "month": m,
+                "month_name": month_names[m - 1],
+                "amount": round(amount, 2),
+                "count": count,
+                "intensity": intensity
+            })
+
+    total_spending = sum(d['amount'] for d in days)
+
+    if month is not None:
+        # Monthly summary
+        summary = {
+            "total_spending": round(total_spending, 2),
+            "max_daily": round(max_spending, 2),
+            "avg_daily": round(total_spending / last_day, 2) if days else 0,
+            "days_with_spending": len([d for d in days if d['amount'] > 0])
+        }
+    else:
+        # Yearly summary
+        summary = {
+            "total_spending": round(total_spending, 2),
+            "max_monthly": round(max_spending, 2),
+            "avg_monthly": round(total_spending / 12, 2) if days else 0,
+            "months_with_spending": len([d for d in days if d['amount'] > 0])
+        }
 
     return {
         "year": year,
         "month": month,
         "days": days,
-        "summary": {
-            "total_spending": round(sum(daily_spending.values()), 2),
-            "max_daily": round(max_spending, 2),
-            "avg_daily": round(sum(daily_spending.values()) / last_day, 2) if daily_spending else 0,
-            "days_with_spending": len([d for d in daily_spending.values() if d > 0])
-        }
+        "summary": summary
     }

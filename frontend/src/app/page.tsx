@@ -31,9 +31,11 @@ interface Widget {
   config: string | null
 }
 
+type ViewMode = 'month' | 'year'
+
 export default function Dashboard() {
   const [widgets, setWidgets] = useState<Widget[]>([])
-  const [monthlySummary, setMonthlySummary] = useState<any>(null)
+  const [summary, setSummary] = useState<any>(null)
   const [trends, setTrends] = useState<any>(null)
   const [topMerchants, setTopMerchants] = useState<any>(null)
   const [monthOverMonth, setMonthOverMonth] = useState<any>(null)
@@ -45,6 +47,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   const now = new Date()
+  const [viewMode, setViewMode] = useState<ViewMode>('month')
   const [selectedYear, setSelectedYear] = useState(now.getFullYear())
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
 
@@ -135,54 +138,98 @@ export default function Dashboard() {
     async function fetchData() {
       setLoading(true)
       try {
-        // Fetch selected month summary
-        const summaryRes = await fetch(`/api/v1/reports/monthly-summary?year=${selectedYear}&month=${selectedMonth}`)
-        const summaryData = await summaryRes.json()
-        setMonthlySummary(summaryData)
+        if (viewMode === 'month') {
+          // Monthly view - fetch month-specific data
+          const summaryRes = await fetch(`/api/v1/reports/monthly-summary?year=${selectedYear}&month=${selectedMonth}`)
+          const summaryData = await summaryRes.json()
+          setSummary(summaryData)
 
-        // Fetch 6-month trends ending at selected month
-        const selectedDate = new Date(selectedYear, selectedMonth - 1, 1)
-        const sixMonthsAgo = new Date(selectedYear, selectedMonth - 7, 1)
-        const trendsRes = await fetch(
-          `/api/v1/reports/trends?start_date=${format(sixMonthsAgo, 'yyyy-MM-dd')}&end_date=${format(selectedDate, 'yyyy-MM-dd')}&group_by=month`
-        )
-        const trendsData = await trendsRes.json()
-        setTrends(trendsData)
+          // Fetch 12-week trends ending at current date in selected month
+          const endOfMonth = new Date(selectedYear, selectedMonth, 0) // Last day of selected month
+          const today = new Date()
+          const effectiveEnd = endOfMonth > today ? today : endOfMonth
+          const twelveWeeksAgo = new Date(effectiveEnd)
+          twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - 84) // 12 weeks = 84 days
+          const trendsRes = await fetch(
+            `/api/v1/reports/trends?start_date=${format(twelveWeeksAgo, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=week`
+          )
+          const trendsData = await trendsRes.json()
+          setTrends(trendsData)
 
-        // Fetch top merchants for selected month
-        const merchantsRes = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}&month=${selectedMonth}`)
-        const merchantsData = await merchantsRes.json()
-        setTopMerchants(merchantsData)
+          // Fetch top merchants for selected month
+          const merchantsRes = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}&month=${selectedMonth}`)
+          const merchantsData = await merchantsRes.json()
+          setTopMerchants(merchantsData)
 
-        // Fetch month-over-month comparison
-        const momRes = await fetch(`/api/v1/reports/month-over-month?current_year=${selectedYear}&current_month=${selectedMonth}`)
-        const momData = await momRes.json()
-        setMonthOverMonth(momData)
+          // Fetch month-over-month comparison
+          const momRes = await fetch(`/api/v1/reports/month-over-month?current_year=${selectedYear}&current_month=${selectedMonth}`)
+          const momData = await momRes.json()
+          setMonthOverMonth(momData)
 
-        // Fetch spending velocity
-        const velocityRes = await fetch(`/api/v1/reports/spending-velocity?year=${selectedYear}&month=${selectedMonth}`)
-        const velocityData = await velocityRes.json()
-        setSpendingVelocity(velocityData)
+          // Fetch spending velocity
+          const velocityRes = await fetch(`/api/v1/reports/spending-velocity?year=${selectedYear}&month=${selectedMonth}`)
+          const velocityData = await velocityRes.json()
+          setSpendingVelocity(velocityData)
 
-        // Fetch anomalies
-        const anomaliesRes = await fetch(`/api/v1/reports/anomalies?year=${selectedYear}&month=${selectedMonth}&threshold=2.0`)
-        const anomaliesData = await anomaliesRes.json()
-        setAnomalies(anomaliesData)
+          // Fetch anomalies
+          const anomaliesRes = await fetch(`/api/v1/reports/anomalies?year=${selectedYear}&month=${selectedMonth}&threshold=2.0`)
+          const anomaliesData = await anomaliesRes.json()
+          setAnomalies(anomaliesData)
 
-        // Fetch Sankey flow data
-        const sankeyRes = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}&month=${selectedMonth}`)
-        const sankeyJson = await sankeyRes.json()
-        setSankeyData(sankeyJson)
+          // Fetch Sankey flow data
+          const sankeyRes = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}&month=${selectedMonth}`)
+          const sankeyJson = await sankeyRes.json()
+          setSankeyData(sankeyJson)
 
-        // Fetch Treemap data
-        const treemapRes = await fetch(`/api/v1/reports/treemap?year=${selectedYear}&month=${selectedMonth}`)
-        const treemapJson = await treemapRes.json()
-        setTreemapData(treemapJson)
+          // Fetch Treemap data
+          const treemapRes = await fetch(`/api/v1/reports/treemap?year=${selectedYear}&month=${selectedMonth}`)
+          const treemapJson = await treemapRes.json()
+          setTreemapData(treemapJson)
 
-        // Fetch Heatmap data
-        const heatmapRes = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}&month=${selectedMonth}`)
-        const heatmapJson = await heatmapRes.json()
-        setHeatmapData(heatmapJson)
+          // Fetch Heatmap data
+          const heatmapRes = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}&month=${selectedMonth}`)
+          const heatmapJson = await heatmapRes.json()
+          setHeatmapData(heatmapJson)
+        } else {
+          // Year view - fetch annual data
+          const summaryRes = await fetch(`/api/v1/reports/annual-summary?year=${selectedYear}`)
+          const summaryData = await summaryRes.json()
+          setSummary(summaryData)
+
+          // Fetch 12-month trends for the year
+          const yearStart = new Date(selectedYear, 0, 1)
+          const yearEnd = new Date(selectedYear, 11, 31)
+          const today = new Date()
+          const effectiveEnd = yearEnd > today ? today : yearEnd
+          const trendsRes = await fetch(
+            `/api/v1/reports/trends?start_date=${format(yearStart, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=month`
+          )
+          const trendsData = await trendsRes.json()
+          setTrends(trendsData)
+
+          // Fetch top merchants for the year
+          const merchantsRes = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}`)
+          const merchantsData = await merchantsRes.json()
+          setTopMerchants(merchantsData)
+
+          // Clear month-specific data
+          setMonthOverMonth(null)
+          setSpendingVelocity(null)
+          setAnomalies(null)
+
+          // Fetch year-level Sankey, Treemap, Heatmap
+          const sankeyRes = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}`)
+          const sankeyJson = await sankeyRes.json()
+          setSankeyData(sankeyJson)
+
+          const treemapRes = await fetch(`/api/v1/reports/treemap?year=${selectedYear}`)
+          const treemapJson = await treemapRes.json()
+          setTreemapData(treemapJson)
+
+          const heatmapRes = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}`)
+          const heatmapJson = await heatmapRes.json()
+          setHeatmapData(heatmapJson)
+        }
 
         setLoading(false)
       } catch (error) {
@@ -192,7 +239,7 @@ export default function Dashboard() {
     }
 
     fetchData()
-  }, [selectedYear, selectedMonth])
+  }, [selectedYear, selectedMonth, viewMode])
 
   // Check if a widget type is visible
   const isWidgetVisible = useCallback((widgetType: string) => {
@@ -209,12 +256,12 @@ export default function Dashboard() {
     return <div className="text-center py-12">Loading...</div>
   }
 
-  if (!monthlySummary) {
+  if (!summary) {
     return <div className="text-center py-12">No data available</div>
   }
 
   // Prepare bucket data for pie chart
-  const bucketData = Object.entries(monthlySummary.bucket_breakdown || {}).map(([name, data]: [string, any]) => ({
+  const bucketData = Object.entries(summary.bucket_breakdown || {}).map(([name, data]: [string, any]) => ({
     name: name.charAt(0).toUpperCase() + name.slice(1),
     value: data.amount,
     count: data.count
@@ -226,7 +273,7 @@ export default function Dashboard() {
       <div className="card p-6">
         <p className="text-sm font-medium text-theme-muted">Total Income</p>
         <p className="mt-2 text-3xl font-bold text-positive">
-          {formatCurrency(monthlySummary.total_income)}
+          {formatCurrency(summary.total_income)}
         </p>
         {monthOverMonth && (
           <p className={`mt-2 text-sm ${monthOverMonth.changes.income.amount >= 0 ? 'text-positive' : 'text-negative'}`}>
@@ -237,7 +284,7 @@ export default function Dashboard() {
       <div className="card p-6">
         <p className="text-sm font-medium text-theme-muted">Total Expenses</p>
         <p className="mt-2 text-3xl font-bold text-negative">
-          {formatCurrency(monthlySummary.total_expenses)}
+          {formatCurrency(summary.total_expenses)}
         </p>
         {monthOverMonth && (
           <p className={`mt-2 text-sm ${monthOverMonth.changes.expenses.amount < 0 ? 'text-positive' : 'text-negative'}`}>
@@ -247,8 +294,8 @@ export default function Dashboard() {
       </div>
       <div className="card p-6">
         <p className="text-sm font-medium text-theme-muted">Net</p>
-        <p className={`mt-2 text-3xl font-bold ${monthlySummary.net >= 0 ? 'text-positive' : 'text-negative'}`}>
-          {formatCurrency(monthlySummary.net)}
+        <p className={`mt-2 text-3xl font-bold ${summary.net >= 0 ? 'text-positive' : 'text-negative'}`}>
+          {formatCurrency(summary.net)}
         </p>
         {monthOverMonth && (
           <p className={`mt-2 text-sm ${monthOverMonth.changes.net.amount >= 0 ? 'text-positive' : 'text-negative'}`}>
@@ -260,6 +307,41 @@ export default function Dashboard() {
   )
 
   const renderVelocityWidget = () => {
+    // Year view: show annual velocity from summary
+    if (viewMode === 'year' && summary) {
+      const daysInYear = selectedYear === now.getFullYear()
+        ? Math.floor((now.getTime() - new Date(selectedYear, 0, 1).getTime()) / (1000 * 60 * 60 * 24)) + 1
+        : (selectedYear % 4 === 0 ? 366 : 365)
+      const daysTotal = selectedYear % 4 === 0 ? 366 : 365
+
+      return (
+        <div key="velocity" className="card p-6">
+          <h2 className="text-lg font-semibold text-theme mb-4">Annual Spending Rate</h2>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-theme-muted">Daily Average</p>
+              <p className="text-2xl font-bold text-theme">{formatCurrency(summary.daily_average || 0)}/day</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-theme-muted">Days Elapsed</p>
+                <p className="text-lg font-semibold text-theme">{summary.days_elapsed || daysInYear} / {daysTotal}</p>
+              </div>
+              <div>
+                <p className="text-sm text-theme-muted">Total Spending</p>
+                <p className="text-lg font-semibold text-theme">{formatCurrency(summary.total_expenses)}</p>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-theme-muted">Transactions</p>
+              <p className="text-xl font-bold text-theme">{summary.transaction_count}</p>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    // Month view: show monthly velocity
     if (!spendingVelocity) return null
     return (
       <div key="velocity" className="card p-6">
@@ -440,15 +522,35 @@ export default function Dashboard() {
 
   const renderTrendsWidget = () => {
     if (!trends || !trends.data || trends.data.length === 0) return null
+
+    const isWeekly = trends.group_by === 'week'
+    const title = viewMode === 'year' ? '12-Month Trend' : '12-Week Trend'
+
+    // Format period labels for display
+    const formatPeriodLabel = (period: string) => {
+      if (isWeekly) {
+        // Format "2024-W48" to "W48"
+        return period.split('-')[1] || period
+      } else {
+        // Format "2024-01" to "Jan"
+        const [year, month] = period.split('-')
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        return monthNames[parseInt(month) - 1] || period
+      }
+    }
+
     return (
       <div key="trends" className="card p-6">
-        <h2 className="text-lg font-semibold text-theme mb-4">6-Month Trend</h2>
+        <h2 className="text-lg font-semibold text-theme mb-4">{title}</h2>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={trends.data}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="period" />
-            <YAxis />
-            <Tooltip formatter={(value: any) => formatCurrency(value)} />
+            <XAxis dataKey="period" tickFormatter={formatPeriodLabel} />
+            <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+            <Tooltip
+              formatter={(value: any) => formatCurrency(value)}
+              labelFormatter={(label) => isWeekly ? `Week ${label.split('-')[1]?.replace('W', '') || label}` : formatPeriodLabel(label)}
+            />
             <Legend />
             <Line type="monotone" dataKey="income" stroke="#10b981" name="Income" />
             <Line type="monotone" dataKey="expenses" stroke="#ef4444" name="Expenses" />
@@ -632,6 +734,72 @@ export default function Dashboard() {
       )
     }
 
+    // Year view: show monthly grid
+    if (viewMode === 'year') {
+      return (
+        <div key="heatmap" className="card p-6">
+          <h2 className="text-lg font-semibold text-theme mb-4">Monthly Spending Overview</h2>
+          {heatmapData.summary && (
+            <div className="flex gap-6 mb-4 text-sm">
+              <div>
+                <span className="text-theme-muted">Total: </span>
+                <span className="font-semibold text-theme">{formatCurrency(heatmapData.summary.total_spending)}</span>
+              </div>
+              <div>
+                <span className="text-theme-muted">Max Month: </span>
+                <span className="font-semibold text-theme">{formatCurrency(heatmapData.summary.max_monthly || 0)}</span>
+              </div>
+              <div>
+                <span className="text-theme-muted">Active Months: </span>
+                <span className="font-semibold text-theme">{heatmapData.summary.months_with_spending || 0}</span>
+              </div>
+            </div>
+          )}
+          <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
+            {heatmapData.days.map((month: any) => {
+              const colorVar = HEATMAP_VARS[Math.min(month.intensity, 5)]
+              const useLightText = month.intensity >= 3
+
+              return (
+                <div
+                  key={month.month}
+                  className="rounded-lg p-3 flex flex-col items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                  style={{ backgroundColor: colorVar }}
+                  title={`${month.month_name}: ${formatCurrency(month.amount)} (${month.count} transactions)`}
+                  onClick={() => {
+                    setViewMode('month')
+                    setSelectedMonth(month.month)
+                  }}
+                >
+                  <span
+                    className="font-semibold text-sm"
+                    style={{ color: useLightText ? 'var(--chart-text-light)' : 'var(--chart-text)' }}
+                  >
+                    {month.month_name}
+                  </span>
+                  <span
+                    className="text-xs mt-1"
+                    style={{ color: useLightText ? 'rgba(255,255,255,0.8)' : 'var(--color-text-muted)' }}
+                  >
+                    {formatCurrency(month.amount)}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+          {/* Legend */}
+          <div className="flex items-center gap-2 mt-4 text-xs text-theme-muted">
+            <span>Less</span>
+            {HEATMAP_VARS.map((colorVar, i) => (
+              <div key={i} className="w-4 h-4 rounded" style={{ backgroundColor: colorVar }} />
+            ))}
+            <span>More</span>
+          </div>
+        </div>
+      )
+    }
+
+    // Month view: show daily calendar
     const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
     // Organize days into weeks (7 columns)
@@ -782,6 +950,30 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold text-theme">Dashboard</h1>
         </div>
         <div className="flex items-center gap-4">
+          {/* View Mode Toggle */}
+          <div className="flex items-center rounded-lg border border-theme overflow-hidden">
+            <button
+              onClick={() => setViewMode('month')}
+              className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                viewMode === 'month'
+                  ? 'bg-blue-500 text-white'
+                  : 'text-theme-muted hover:text-theme hover:bg-[var(--color-bg-hover)]'
+              }`}
+            >
+              Month
+            </button>
+            <button
+              onClick={() => setViewMode('year')}
+              className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                viewMode === 'year'
+                  ? 'bg-blue-500 text-white'
+                  : 'text-theme-muted hover:text-theme hover:bg-[var(--color-bg-hover)]'
+              }`}
+            >
+              Year
+            </button>
+          </div>
+
           <DashboardConfig
             widgets={widgets}
             onToggleVisibility={handleToggleVisibility}
@@ -789,38 +981,55 @@ export default function Dashboard() {
             onMoveDown={handleMoveDown}
             onReset={handleReset}
           />
+
+          {/* Time Navigation */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
-                if (selectedMonth === 1) {
-                  setSelectedYear(selectedYear - 1)
-                  setSelectedMonth(12)
+                if (viewMode === 'month') {
+                  if (selectedMonth === 1) {
+                    setSelectedYear(selectedYear - 1)
+                    setSelectedMonth(12)
+                  } else {
+                    setSelectedMonth(selectedMonth - 1)
+                  }
                 } else {
-                  setSelectedMonth(selectedMonth - 1)
+                  setSelectedYear(selectedYear - 1)
                 }
               }}
               className="p-2 rounded-md hover:bg-[var(--color-bg-hover)] text-theme-muted hover:text-theme"
-              title="Previous month"
+              title={viewMode === 'month' ? 'Previous month' : 'Previous year'}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <span className="text-lg font-medium text-theme min-w-[140px] text-center">
-              {format(new Date(selectedYear, selectedMonth - 1), 'MMMM yyyy')}
+              {viewMode === 'month'
+                ? format(new Date(selectedYear, selectedMonth - 1), 'MMMM yyyy')
+                : String(selectedYear)
+              }
             </span>
             <button
               onClick={() => {
-                if (selectedMonth === 12) {
-                  setSelectedYear(selectedYear + 1)
-                  setSelectedMonth(1)
+                if (viewMode === 'month') {
+                  if (selectedMonth === 12) {
+                    setSelectedYear(selectedYear + 1)
+                    setSelectedMonth(1)
+                  } else {
+                    setSelectedMonth(selectedMonth + 1)
+                  }
                 } else {
-                  setSelectedMonth(selectedMonth + 1)
+                  setSelectedYear(selectedYear + 1)
                 }
               }}
-              disabled={selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1}
+              disabled={
+                viewMode === 'month'
+                  ? selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1
+                  : selectedYear === now.getFullYear()
+              }
               className="p-2 rounded-md hover:bg-[var(--color-bg-hover)] text-theme-muted hover:text-theme disabled:opacity-30 disabled:cursor-not-allowed"
-              title="Next month"
+              title={viewMode === 'month' ? 'Next month' : 'Next year'}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
