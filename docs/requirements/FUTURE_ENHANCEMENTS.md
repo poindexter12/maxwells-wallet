@@ -8,10 +8,12 @@ Ideas for future versions beyond v0.
 - ✅ ~~Custom dashboard widgets~~ - Implemented v0.5 (PR #25)
 - ✅ ~~Configurable widget visibility/order~~ - Implemented v0.5 (PR #25)
 - ✅ ~~More chart types (sankey, treemap, heatmaps)~~ - Implemented v0.6 (PR #26)
+- ✅ ~~Dashboard year/month view toggle~~ - Implemented v0.6 (PR #27)
+- ✅ ~~Widget tag filtering (filter by bucket/account/merchant)~~ - Implemented v0.6 (PR #28)
 - Data drill-down (click chart to filter transactions)
 - Interactive filters on charts
-- Dashboard year/month view toggle (default: month, with year summary)
-- Widget tag filtering (filter widget data by selected tags)
+- Multiple dashboards (create/switch between different dashboard layouts)
+- Widget width configuration (full/half/third)
 
 ### Observability & Monitoring
 - OpenTelemetry integration for distributed tracing
