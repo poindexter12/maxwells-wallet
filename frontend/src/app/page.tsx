@@ -8,13 +8,15 @@ import { formatCurrency } from '@/lib/format'
 import { PageHelp } from '@/components/PageHelp'
 import { DashboardConfig } from '@/components/DashboardConfig'
 
-// Muted, professional color palette for charts
+// Chart colors - accessed via CSS variables for theme support
+// These are fallbacks; actual colors come from CSS --chart-* variables
 const COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#f97316', '#eab308']
-// Treemap uses a separate, more subtle palette with good contrast
-const TREEMAP_COLORS = [
-  '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#ec4899',
-  '#14b8a6', '#10b981', '#22c55e', '#84cc16', '#eab308'
-]
+
+// Helper to get CSS variable value
+const getCSSVar = (name: string) => {
+  if (typeof window === 'undefined') return ''
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
 
 interface Widget {
   id: number
@@ -464,6 +466,20 @@ export default function Dashboard() {
       )
     }
 
+    // Get theme colors
+    const chartColors = [
+      getCSSVar('--chart-1') || COLORS[0],
+      getCSSVar('--chart-2') || COLORS[1],
+      getCSSVar('--chart-3') || COLORS[2],
+      getCSSVar('--chart-4') || COLORS[3],
+      getCSSVar('--chart-5') || COLORS[4],
+      getCSSVar('--chart-6') || COLORS[5],
+      getCSSVar('--chart-7') || COLORS[6],
+      getCSSVar('--chart-8') || COLORS[7],
+    ]
+    const linkColor = getCSSVar('--chart-link') || 'rgba(148, 163, 184, 0.4)'
+    const textColor = getCSSVar('--chart-text') || '#1a1a2e'
+
     // Custom node component with labels
     const SankeyNode = ({ x, y, width, height, index, payload }: any) => {
       const name = payload?.name || sankeyData.nodes[index]?.name || ''
@@ -475,8 +491,8 @@ export default function Dashboard() {
             y={y}
             width={width}
             height={height}
-            fill={COLORS[index % COLORS.length]}
-            stroke={COLORS[index % COLORS.length]}
+            fill={chartColors[index % chartColors.length]}
+            stroke={chartColors[index % chartColors.length]}
           />
           <text
             x={isLeftSide ? x - 6 : x + width + 6}
@@ -484,8 +500,7 @@ export default function Dashboard() {
             textAnchor={isLeftSide ? 'end' : 'start'}
             dominantBaseline="middle"
             fontSize={12}
-            fill="currentColor"
-            className="text-theme"
+            fill={textColor}
           >
             {name}
           </text>
@@ -506,12 +521,17 @@ export default function Dashboard() {
             margin={{ top: 20, right: 150, bottom: 20, left: 150 }}
             node={<SankeyNode />}
             link={{
-              stroke: '#94a3b8',
-              strokeOpacity: 0.4
+              stroke: linkColor
             }}
           >
             <Tooltip
               formatter={(value: any) => formatCurrency(value)}
+              contentStyle={{
+                backgroundColor: getCSSVar('--tooltip-bg') || 'rgba(0,0,0,0.8)',
+                border: 'none',
+                borderRadius: '6px',
+                color: getCSSVar('--tooltip-text') || '#fff'
+              }}
             />
           </Sankey>
         </ResponsiveContainer>
@@ -528,6 +548,19 @@ export default function Dashboard() {
         </div>
       )
     }
+
+    // Get theme colors
+    const chartColors = [
+      getCSSVar('--chart-1') || COLORS[0],
+      getCSSVar('--chart-2') || COLORS[1],
+      getCSSVar('--chart-3') || COLORS[2],
+      getCSSVar('--chart-4') || COLORS[3],
+      getCSSVar('--chart-5') || COLORS[4],
+      getCSSVar('--chart-6') || COLORS[5],
+      getCSSVar('--chart-7') || COLORS[6],
+      getCSSVar('--chart-8') || COLORS[7],
+    ]
+    const textLightColor = getCSSVar('--chart-text-light') || 'rgba(255,255,255,0.95)'
 
     // Truncate text to fit within available width
     const truncateText = (text: string, maxWidth: number, fontSize: number) => {
@@ -548,11 +581,11 @@ export default function Dashboard() {
             aspectRatio={4/3}
             stroke="#fff"
             fill="#8884d8"
-            content={({ x, y, width, height, name, value, index, depth }: any) => {
+            content={({ x, y, width, height, name, value, index }: any) => {
               const showLabels = width >= 60 && height >= 40
               const fontSize = Math.min(14, Math.max(10, width / 8))
               const truncatedName = truncateText(name || '', width, fontSize)
-              const color = TREEMAP_COLORS[index % TREEMAP_COLORS.length]
+              const color = chartColors[index % chartColors.length]
 
               return (
                 <g>
@@ -575,7 +608,7 @@ export default function Dashboard() {
                         x={x + 8}
                         y={y + 20}
                         textAnchor="start"
-                        fill="rgba(255,255,255,0.95)"
+                        fill={textLightColor}
                         fontSize={fontSize}
                         fontWeight="600"
                         style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
@@ -587,8 +620,9 @@ export default function Dashboard() {
                           x={x + 8}
                           y={y + 38}
                           textAnchor="start"
-                          fill="rgba(255,255,255,0.8)"
+                          fill={textLightColor}
                           fontSize={fontSize - 2}
+                          style={{ opacity: 0.8 }}
                         >
                           {formatCurrency(value)}
                         </text>
@@ -602,10 +636,10 @@ export default function Dashboard() {
             <Tooltip
               formatter={(value: any) => formatCurrency(value)}
               contentStyle={{
-                backgroundColor: 'rgba(0,0,0,0.8)',
+                backgroundColor: getCSSVar('--tooltip-bg') || 'rgba(0,0,0,0.8)',
                 border: 'none',
                 borderRadius: '6px',
-                color: '#fff'
+                color: getCSSVar('--tooltip-text') || '#fff'
               }}
             />
           </Treemap>
@@ -624,15 +658,18 @@ export default function Dashboard() {
       )
     }
 
-    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    const intensityColors = [
-      'bg-gray-100 dark:bg-gray-800',
-      'bg-green-200 dark:bg-green-900',
-      'bg-green-400 dark:bg-green-700',
-      'bg-green-500 dark:bg-green-600',
-      'bg-green-600 dark:bg-green-500',
-      'bg-green-700 dark:bg-green-400'
+    // Get theme heatmap colors
+    const heatmapColors = [
+      getCSSVar('--heatmap-0') || '#f0f0f0',
+      getCSSVar('--heatmap-1') || '#c6e48b',
+      getCSSVar('--heatmap-2') || '#7bc96f',
+      getCSSVar('--heatmap-3') || '#449d44',
+      getCSSVar('--heatmap-4') || '#2d6a4f',
+      getCSSVar('--heatmap-5') || '#1e4d3a',
     ]
+    const textColor = getCSSVar('--chart-text') || '#1a1a2e'
+
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
     // Organize days into weeks (7 columns)
     const firstDayWeekday = heatmapData.days[0]?.weekday ?? 0
@@ -643,6 +680,17 @@ export default function Dashboard() {
     const weeks: any[][] = []
     for (let i = 0; i < paddedDays.length; i += 7) {
       weeks.push(paddedDays.slice(i, i + 7))
+    }
+
+    // Determine if a color is dark (for text contrast)
+    const isColorDark = (color: string) => {
+      const hex = color.replace('#', '')
+      if (hex.length !== 6) return false
+      const r = parseInt(hex.substring(0, 2), 16)
+      const g = parseInt(hex.substring(2, 4), 16)
+      const b = parseInt(hex.substring(4, 6), 16)
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+      return luminance < 0.5
     }
 
     return (
@@ -677,28 +725,34 @@ export default function Dashboard() {
             {/* Calendar grid */}
             {weeks.map((week, weekIndex) => (
               <div key={weekIndex} className="grid grid-cols-7 gap-1 mb-1">
-                {week.map((day: any, dayIndex: number) => (
-                  <div
-                    key={dayIndex}
-                    className={`w-10 h-10 rounded flex flex-col items-center justify-center text-xs ${
-                      day ? intensityColors[Math.min(day.intensity, 5)] : 'bg-transparent'
-                    }`}
-                    title={day ? `${format(new Date(selectedYear, selectedMonth - 1, day.day), 'MMM d')}: ${formatCurrency(day.amount)} (${day.count} transactions)` : ''}
-                  >
-                    {day && (
-                      <>
-                        <span className={`font-medium ${day.intensity > 2 ? 'text-white' : 'text-theme'}`}>
-                          {day.day}
-                        </span>
-                        {day.amount > 0 && (
-                          <span className={`text-[8px] ${day.intensity > 2 ? 'text-white/80' : 'text-theme-muted'}`}>
-                            ${Math.round(day.amount)}
+                {week.map((day: any, dayIndex: number) => {
+                  const bgColor = day ? heatmapColors[Math.min(day.intensity, 5)] : 'transparent'
+                  const isDark = day ? isColorDark(bgColor) : false
+                  const dayTextColor = isDark ? '#ffffff' : textColor
+                  const amountTextColor = isDark ? 'rgba(255,255,255,0.8)' : getCSSVar('--color-text-muted') || '#5a5a6e'
+
+                  return (
+                    <div
+                      key={dayIndex}
+                      className="w-10 h-10 rounded flex flex-col items-center justify-center text-xs"
+                      style={{ backgroundColor: bgColor }}
+                      title={day ? `${format(new Date(selectedYear, selectedMonth - 1, day.day), 'MMM d')}: ${formatCurrency(day.amount)} (${day.count} transactions)` : ''}
+                    >
+                      {day && (
+                        <>
+                          <span className="font-medium" style={{ color: dayTextColor }}>
+                            {day.day}
                           </span>
-                        )}
-                      </>
-                    )}
-                  </div>
-                ))}
+                          {day.amount > 0 && (
+                            <span className="text-[8px]" style={{ color: amountTextColor }}>
+                              ${Math.round(day.amount)}
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             ))}
           </div>
@@ -706,8 +760,8 @@ export default function Dashboard() {
         {/* Legend */}
         <div className="flex items-center gap-2 mt-4 text-xs text-theme-muted">
           <span>Less</span>
-          {intensityColors.map((color, i) => (
-            <div key={i} className={`w-4 h-4 rounded ${color}`} />
+          {heatmapColors.map((color, i) => (
+            <div key={i} className="w-4 h-4 rounded" style={{ backgroundColor: color }} />
           ))}
           <span>More</span>
         </div>
