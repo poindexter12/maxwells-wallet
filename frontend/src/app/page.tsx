@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { format } from 'date-fns'
 import Link from 'next/link'
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts'
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, Sankey, Treemap } from 'recharts'
 import { formatCurrency } from '@/lib/format'
 import { PageHelp } from '@/components/PageHelp'
 import { DashboardConfig } from '@/components/DashboardConfig'
@@ -28,6 +28,9 @@ export default function Dashboard() {
   const [monthOverMonth, setMonthOverMonth] = useState<any>(null)
   const [spendingVelocity, setSpendingVelocity] = useState<any>(null)
   const [anomalies, setAnomalies] = useState<any>(null)
+  const [sankeyData, setSankeyData] = useState<any>(null)
+  const [treemapData, setTreemapData] = useState<any>(null)
+  const [heatmapData, setHeatmapData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   const now = new Date()
@@ -154,6 +157,21 @@ export default function Dashboard() {
         const anomaliesRes = await fetch(`/api/v1/reports/anomalies?year=${selectedYear}&month=${selectedMonth}&threshold=2.0`)
         const anomaliesData = await anomaliesRes.json()
         setAnomalies(anomaliesData)
+
+        // Fetch Sankey flow data
+        const sankeyRes = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}&month=${selectedMonth}`)
+        const sankeyJson = await sankeyRes.json()
+        setSankeyData(sankeyJson)
+
+        // Fetch Treemap data
+        const treemapRes = await fetch(`/api/v1/reports/treemap?year=${selectedYear}&month=${selectedMonth}`)
+        const treemapJson = await treemapRes.json()
+        setTreemapData(treemapJson)
+
+        // Fetch Heatmap data
+        const heatmapRes = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}&month=${selectedMonth}`)
+        const heatmapJson = await heatmapRes.json()
+        setHeatmapData(heatmapJson)
 
         setLoading(false)
       } catch (error) {
@@ -430,6 +448,214 @@ export default function Dashboard() {
     )
   }
 
+  const renderSankeyWidget = () => {
+    if (!sankeyData || !sankeyData.nodes || sankeyData.nodes.length === 0) {
+      return (
+        <div key="sankey" className="card p-6">
+          <h2 className="text-lg font-semibold text-theme mb-4">Money Flow</h2>
+          <p className="text-theme-muted text-center py-12">No flow data available for this month</p>
+        </div>
+      )
+    }
+
+    return (
+      <div key="sankey" className="card p-6">
+        <h2 className="text-lg font-semibold text-theme mb-4">Money Flow</h2>
+        <p className="text-sm text-theme-muted mb-4">Income → Accounts → Spending Categories</p>
+        <ResponsiveContainer width="100%" height={400}>
+          <Sankey
+            data={sankeyData}
+            nodePadding={50}
+            nodeWidth={10}
+            linkCurvature={0.5}
+            node={{
+              fill: '#8884d8',
+              stroke: '#8884d8'
+            }}
+            link={{
+              stroke: '#d0d0d0',
+              strokeOpacity: 0.5
+            }}
+          >
+            <Tooltip
+              formatter={(value: any) => formatCurrency(value)}
+            />
+          </Sankey>
+        </ResponsiveContainer>
+      </div>
+    )
+  }
+
+  const renderTreemapWidget = () => {
+    if (!treemapData || !treemapData.data || treemapData.data.children.length === 0) {
+      return (
+        <div key="treemap" className="card p-6">
+          <h2 className="text-lg font-semibold text-theme mb-4">Spending Breakdown</h2>
+          <p className="text-theme-muted text-center py-12">No spending data available for this month</p>
+        </div>
+      )
+    }
+
+    return (
+      <div key="treemap" className="card p-6">
+        <h2 className="text-lg font-semibold text-theme mb-4">Spending Breakdown</h2>
+        <p className="text-sm text-theme-muted mb-4">Click to drill down by category and merchant</p>
+        <ResponsiveContainer width="100%" height={400}>
+          <Treemap
+            data={treemapData.data.children}
+            dataKey="value"
+            aspectRatio={4/3}
+            stroke="#fff"
+            fill="#8884d8"
+            content={({ x, y, width, height, name, value, depth }: any) => (
+              <g>
+                <rect
+                  x={x}
+                  y={y}
+                  width={width}
+                  height={height}
+                  style={{
+                    fill: COLORS[depth % COLORS.length],
+                    stroke: '#fff',
+                    strokeWidth: 2
+                  }}
+                />
+                {width >= 50 && height >= 30 && (
+                  <>
+                    <text
+                      x={x + width / 2}
+                      y={y + height / 2 - 7}
+                      textAnchor="middle"
+                      fill="#fff"
+                      fontSize={12}
+                      fontWeight="bold"
+                    >
+                      {name}
+                    </text>
+                    <text
+                      x={x + width / 2}
+                      y={y + height / 2 + 10}
+                      textAnchor="middle"
+                      fill="#fff"
+                      fontSize={10}
+                    >
+                      {formatCurrency(value)}
+                    </text>
+                  </>
+                )}
+              </g>
+            )}
+          >
+            <Tooltip
+              formatter={(value: any) => formatCurrency(value)}
+            />
+          </Treemap>
+        </ResponsiveContainer>
+      </div>
+    )
+  }
+
+  const renderHeatmapWidget = () => {
+    if (!heatmapData || !heatmapData.days) {
+      return (
+        <div key="heatmap" className="card p-6">
+          <h2 className="text-lg font-semibold text-theme mb-4">Spending Calendar</h2>
+          <p className="text-theme-muted text-center py-12">No spending data available</p>
+        </div>
+      )
+    }
+
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    const intensityColors = [
+      'bg-gray-100 dark:bg-gray-800',
+      'bg-green-200 dark:bg-green-900',
+      'bg-green-400 dark:bg-green-700',
+      'bg-green-500 dark:bg-green-600',
+      'bg-green-600 dark:bg-green-500',
+      'bg-green-700 dark:bg-green-400'
+    ]
+
+    // Organize days into weeks (7 columns)
+    const firstDayWeekday = heatmapData.days[0]?.weekday ?? 0
+    const paddedDays = [
+      ...Array(firstDayWeekday).fill(null),
+      ...heatmapData.days
+    ]
+    const weeks: any[][] = []
+    for (let i = 0; i < paddedDays.length; i += 7) {
+      weeks.push(paddedDays.slice(i, i + 7))
+    }
+
+    return (
+      <div key="heatmap" className="card p-6">
+        <h2 className="text-lg font-semibold text-theme mb-4">Spending Calendar</h2>
+        {heatmapData.summary && (
+          <div className="flex gap-6 mb-4 text-sm">
+            <div>
+              <span className="text-theme-muted">Total: </span>
+              <span className="font-semibold text-theme">{formatCurrency(heatmapData.summary.total_spending)}</span>
+            </div>
+            <div>
+              <span className="text-theme-muted">Max Day: </span>
+              <span className="font-semibold text-theme">{formatCurrency(heatmapData.summary.max_daily)}</span>
+            </div>
+            <div>
+              <span className="text-theme-muted">Active Days: </span>
+              <span className="font-semibold text-theme">{heatmapData.summary.days_with_spending}</span>
+            </div>
+          </div>
+        )}
+        <div className="overflow-x-auto">
+          <div className="inline-block">
+            {/* Weekday headers */}
+            <div className="grid grid-cols-7 gap-1 mb-1">
+              {weekdays.map(day => (
+                <div key={day} className="text-xs text-theme-muted text-center w-10">
+                  {day}
+                </div>
+              ))}
+            </div>
+            {/* Calendar grid */}
+            {weeks.map((week, weekIndex) => (
+              <div key={weekIndex} className="grid grid-cols-7 gap-1 mb-1">
+                {week.map((day: any, dayIndex: number) => (
+                  <div
+                    key={dayIndex}
+                    className={`w-10 h-10 rounded flex flex-col items-center justify-center text-xs ${
+                      day ? intensityColors[Math.min(day.intensity, 5)] : 'bg-transparent'
+                    }`}
+                    title={day ? `${format(new Date(selectedYear, selectedMonth - 1, day.day), 'MMM d')}: ${formatCurrency(day.amount)} (${day.count} transactions)` : ''}
+                  >
+                    {day && (
+                      <>
+                        <span className={`font-medium ${day.intensity > 2 ? 'text-white' : 'text-theme'}`}>
+                          {day.day}
+                        </span>
+                        {day.amount > 0 && (
+                          <span className={`text-[8px] ${day.intensity > 2 ? 'text-white/80' : 'text-theme-muted'}`}>
+                            ${Math.round(day.amount)}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Legend */}
+        <div className="flex items-center gap-2 mt-4 text-xs text-theme-muted">
+          <span>Less</span>
+          {intensityColors.map((color, i) => (
+            <div key={i} className={`w-4 h-4 rounded ${color}`} />
+          ))}
+          <span>More</span>
+        </div>
+      </div>
+    )
+  }
+
   // Render widget by type
   const renderWidget = (widget: Widget) => {
     switch (widget.widget_type) {
@@ -445,6 +671,12 @@ export default function Dashboard() {
         return renderTopMerchantsWidget()
       case 'trends':
         return renderTrendsWidget()
+      case 'sankey':
+        return renderSankeyWidget()
+      case 'treemap':
+        return renderTreemapWidget()
+      case 'heatmap':
+        return renderHeatmapWidget()
       default:
         return null
     }

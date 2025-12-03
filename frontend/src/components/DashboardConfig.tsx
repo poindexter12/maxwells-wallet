@@ -26,7 +26,10 @@ const WIDGET_ICONS: Record<string, string> = {
   anomalies: '⚠️',
   bucket_pie: '🥧',
   top_merchants: '🏪',
-  trends: '📈'
+  trends: '📈',
+  sankey: '🌊',
+  treemap: '🗺️',
+  heatmap: '🗓️'
 }
 
 export function DashboardConfig({
