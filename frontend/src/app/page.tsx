@@ -458,23 +458,50 @@ export default function Dashboard() {
       )
     }
 
+    // Custom node component with labels
+    const SankeyNode = ({ x, y, width, height, index, payload }: any) => {
+      const name = payload?.name || sankeyData.nodes[index]?.name || ''
+      const isLeftSide = x < 200
+      return (
+        <g>
+          <rect
+            x={x}
+            y={y}
+            width={width}
+            height={height}
+            fill={COLORS[index % COLORS.length]}
+            stroke={COLORS[index % COLORS.length]}
+          />
+          <text
+            x={isLeftSide ? x - 6 : x + width + 6}
+            y={y + height / 2}
+            textAnchor={isLeftSide ? 'end' : 'start'}
+            dominantBaseline="middle"
+            fontSize={12}
+            fill="currentColor"
+            className="text-theme"
+          >
+            {name}
+          </text>
+        </g>
+      )
+    }
+
     return (
       <div key="sankey" className="card p-6">
         <h2 className="text-lg font-semibold text-theme mb-4">Money Flow</h2>
         <p className="text-sm text-theme-muted mb-4">Income → Accounts → Spending Categories</p>
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={450}>
           <Sankey
             data={sankeyData}
-            nodePadding={50}
-            nodeWidth={10}
+            nodePadding={40}
+            nodeWidth={12}
             linkCurvature={0.5}
-            node={{
-              fill: '#8884d8',
-              stroke: '#8884d8'
-            }}
+            margin={{ top: 20, right: 150, bottom: 20, left: 150 }}
+            node={<SankeyNode />}
             link={{
-              stroke: '#d0d0d0',
-              strokeOpacity: 0.5
+              stroke: '#94a3b8',
+              strokeOpacity: 0.4
             }}
           >
             <Tooltip
