@@ -8,15 +8,18 @@ import { formatCurrency } from '@/lib/format'
 import { PageHelp } from '@/components/PageHelp'
 import { DashboardConfig } from '@/components/DashboardConfig'
 
-// Chart colors - accessed via CSS variables for theme support
-// These are fallbacks; actual colors come from CSS --chart-* variables
+// Fallback colors if CSS variables aren't available
 const COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#f97316', '#eab308']
 
-// Helper to get CSS variable value
-const getCSSVar = (name: string) => {
-  if (typeof window === 'undefined') return ''
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-}
+// CSS variable names for chart colors (used directly in styles for theme reactivity)
+const CHART_VARS = [
+  'var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)',
+  'var(--chart-5)', 'var(--chart-6)', 'var(--chart-7)', 'var(--chart-8)'
+]
+const HEATMAP_VARS = [
+  'var(--heatmap-0)', 'var(--heatmap-1)', 'var(--heatmap-2)',
+  'var(--heatmap-3)', 'var(--heatmap-4)', 'var(--heatmap-5)'
+]
 
 interface Widget {
   id: number
@@ -466,24 +469,11 @@ export default function Dashboard() {
       )
     }
 
-    // Get theme colors
-    const chartColors = [
-      getCSSVar('--chart-1') || COLORS[0],
-      getCSSVar('--chart-2') || COLORS[1],
-      getCSSVar('--chart-3') || COLORS[2],
-      getCSSVar('--chart-4') || COLORS[3],
-      getCSSVar('--chart-5') || COLORS[4],
-      getCSSVar('--chart-6') || COLORS[5],
-      getCSSVar('--chart-7') || COLORS[6],
-      getCSSVar('--chart-8') || COLORS[7],
-    ]
-    const linkColor = getCSSVar('--chart-link') || 'rgba(148, 163, 184, 0.4)'
-    const textColor = getCSSVar('--chart-text') || '#1a1a2e'
-
-    // Custom node component with labels
+    // Custom node component with labels - uses CSS variables directly for theme reactivity
     const SankeyNode = ({ x, y, width, height, index, payload }: any) => {
       const name = payload?.name || sankeyData.nodes[index]?.name || ''
       const isLeftSide = x < 200
+      const colorVar = CHART_VARS[index % CHART_VARS.length]
       return (
         <g>
           <rect
@@ -491,8 +481,7 @@ export default function Dashboard() {
             y={y}
             width={width}
             height={height}
-            fill={chartColors[index % chartColors.length]}
-            stroke={chartColors[index % chartColors.length]}
+            style={{ fill: colorVar, stroke: colorVar }}
           />
           <text
             x={isLeftSide ? x - 6 : x + width + 6}
@@ -500,7 +489,7 @@ export default function Dashboard() {
             textAnchor={isLeftSide ? 'end' : 'start'}
             dominantBaseline="middle"
             fontSize={12}
-            fill={textColor}
+            style={{ fill: 'var(--chart-text)' }}
           >
             {name}
           </text>
@@ -521,16 +510,16 @@ export default function Dashboard() {
             margin={{ top: 20, right: 150, bottom: 20, left: 150 }}
             node={<SankeyNode />}
             link={{
-              stroke: linkColor
+              stroke: 'var(--chart-link)'
             }}
           >
             <Tooltip
               formatter={(value: any) => formatCurrency(value)}
               contentStyle={{
-                backgroundColor: getCSSVar('--tooltip-bg') || 'rgba(0,0,0,0.8)',
+                backgroundColor: 'var(--tooltip-bg)',
                 border: 'none',
                 borderRadius: '6px',
-                color: getCSSVar('--tooltip-text') || '#fff'
+                color: 'var(--tooltip-text)'
               }}
             />
           </Sankey>
@@ -548,19 +537,6 @@ export default function Dashboard() {
         </div>
       )
     }
-
-    // Get theme colors
-    const chartColors = [
-      getCSSVar('--chart-1') || COLORS[0],
-      getCSSVar('--chart-2') || COLORS[1],
-      getCSSVar('--chart-3') || COLORS[2],
-      getCSSVar('--chart-4') || COLORS[3],
-      getCSSVar('--chart-5') || COLORS[4],
-      getCSSVar('--chart-6') || COLORS[5],
-      getCSSVar('--chart-7') || COLORS[6],
-      getCSSVar('--chart-8') || COLORS[7],
-    ]
-    const textLightColor = getCSSVar('--chart-text-light') || 'rgba(255,255,255,0.95)'
 
     // Truncate text to fit within available width
     const truncateText = (text: string, maxWidth: number, fontSize: number) => {
@@ -585,7 +561,7 @@ export default function Dashboard() {
               const showLabels = width >= 60 && height >= 40
               const fontSize = Math.min(14, Math.max(10, width / 8))
               const truncatedName = truncateText(name || '', width, fontSize)
-              const color = chartColors[index % chartColors.length]
+              const colorVar = CHART_VARS[index % CHART_VARS.length]
 
               return (
                 <g>
@@ -595,7 +571,7 @@ export default function Dashboard() {
                     width={width}
                     height={height}
                     style={{
-                      fill: color,
+                      fill: colorVar,
                       stroke: 'rgba(255,255,255,0.3)',
                       strokeWidth: 1
                     }}
@@ -608,10 +584,9 @@ export default function Dashboard() {
                         x={x + 8}
                         y={y + 20}
                         textAnchor="start"
-                        fill={textLightColor}
                         fontSize={fontSize}
                         fontWeight="600"
-                        style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
+                        style={{ fill: 'var(--chart-text-light)', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
                       >
                         {truncatedName}
                       </text>
@@ -620,9 +595,8 @@ export default function Dashboard() {
                           x={x + 8}
                           y={y + 38}
                           textAnchor="start"
-                          fill={textLightColor}
                           fontSize={fontSize - 2}
-                          style={{ opacity: 0.8 }}
+                          style={{ fill: 'var(--chart-text-light)', opacity: 0.8 }}
                         >
                           {formatCurrency(value)}
                         </text>
@@ -636,10 +610,10 @@ export default function Dashboard() {
             <Tooltip
               formatter={(value: any) => formatCurrency(value)}
               contentStyle={{
-                backgroundColor: getCSSVar('--tooltip-bg') || 'rgba(0,0,0,0.8)',
+                backgroundColor: 'var(--tooltip-bg)',
                 border: 'none',
                 borderRadius: '6px',
-                color: getCSSVar('--tooltip-text') || '#fff'
+                color: 'var(--tooltip-text)'
               }}
             />
           </Treemap>
@@ -658,17 +632,6 @@ export default function Dashboard() {
       )
     }
 
-    // Get theme heatmap colors
-    const heatmapColors = [
-      getCSSVar('--heatmap-0') || '#f0f0f0',
-      getCSSVar('--heatmap-1') || '#c6e48b',
-      getCSSVar('--heatmap-2') || '#7bc96f',
-      getCSSVar('--heatmap-3') || '#449d44',
-      getCSSVar('--heatmap-4') || '#2d6a4f',
-      getCSSVar('--heatmap-5') || '#1e4d3a',
-    ]
-    const textColor = getCSSVar('--chart-text') || '#1a1a2e'
-
     const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
     // Organize days into weeks (7 columns)
@@ -680,17 +643,6 @@ export default function Dashboard() {
     const weeks: any[][] = []
     for (let i = 0; i < paddedDays.length; i += 7) {
       weeks.push(paddedDays.slice(i, i + 7))
-    }
-
-    // Determine if a color is dark (for text contrast)
-    const isColorDark = (color: string) => {
-      const hex = color.replace('#', '')
-      if (hex.length !== 6) return false
-      const r = parseInt(hex.substring(0, 2), 16)
-      const g = parseInt(hex.substring(2, 4), 16)
-      const b = parseInt(hex.substring(4, 6), 16)
-      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-      return luminance < 0.5
     }
 
     return (
@@ -726,25 +678,30 @@ export default function Dashboard() {
             {weeks.map((week, weekIndex) => (
               <div key={weekIndex} className="grid grid-cols-7 gap-1 mb-1">
                 {week.map((day: any, dayIndex: number) => {
-                  const bgColor = day ? heatmapColors[Math.min(day.intensity, 5)] : 'transparent'
-                  const isDark = day ? isColorDark(bgColor) : false
-                  const dayTextColor = isDark ? '#ffffff' : textColor
-                  const amountTextColor = isDark ? 'rgba(255,255,255,0.8)' : getCSSVar('--color-text-muted') || '#5a5a6e'
+                  const colorVar = day ? HEATMAP_VARS[Math.min(day.intensity, 5)] : 'transparent'
+                  // For higher intensities (3+), use light text; for lower, use theme text
+                  const useLightText = day && day.intensity >= 3
 
                   return (
                     <div
                       key={dayIndex}
                       className="w-10 h-10 rounded flex flex-col items-center justify-center text-xs"
-                      style={{ backgroundColor: bgColor }}
+                      style={{ backgroundColor: colorVar }}
                       title={day ? `${format(new Date(selectedYear, selectedMonth - 1, day.day), 'MMM d')}: ${formatCurrency(day.amount)} (${day.count} transactions)` : ''}
                     >
                       {day && (
                         <>
-                          <span className="font-medium" style={{ color: dayTextColor }}>
+                          <span
+                            className="font-medium"
+                            style={{ color: useLightText ? 'var(--chart-text-light)' : 'var(--chart-text)' }}
+                          >
                             {day.day}
                           </span>
                           {day.amount > 0 && (
-                            <span className="text-[8px]" style={{ color: amountTextColor }}>
+                            <span
+                              className="text-[8px]"
+                              style={{ color: useLightText ? 'rgba(255,255,255,0.8)' : 'var(--color-text-muted)' }}
+                            >
                               ${Math.round(day.amount)}
                             </span>
                           )}
@@ -760,8 +717,8 @@ export default function Dashboard() {
         {/* Legend */}
         <div className="flex items-center gap-2 mt-4 text-xs text-theme-muted">
           <span>Less</span>
-          {heatmapColors.map((color, i) => (
-            <div key={i} className="w-4 h-4 rounded" style={{ backgroundColor: color }} />
+          {HEATMAP_VARS.map((colorVar, i) => (
+            <div key={i} className="w-4 h-4 rounded" style={{ backgroundColor: colorVar }} />
           ))}
           <span>More</span>
         </div>
