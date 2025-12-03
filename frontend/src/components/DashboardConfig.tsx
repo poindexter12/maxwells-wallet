@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 
 interface Widget {
   id: number
@@ -17,7 +18,6 @@ interface DashboardConfigProps {
   onToggleVisibility: (widgetId: number) => void
   onMoveUp: (widgetId: number) => void
   onMoveDown: (widgetId: number) => void
-  onReset: () => void
 }
 
 const WIDGET_ICONS: Record<string, string> = {
@@ -36,12 +36,20 @@ export function DashboardConfig({
   widgets,
   onToggleVisibility,
   onMoveUp,
-  onMoveDown,
-  onReset
+  onMoveDown
 }: DashboardConfigProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   const sortedWidgets = [...widgets].sort((a, b) => a.position - b.position)
+
+  const parseConfig = (config: string | null): { buckets?: string[] } => {
+    if (!config) return {}
+    try {
+      return JSON.parse(config)
+    } catch {
+      return {}
+    }
+  }
 
   return (
     <div className="relative">
@@ -68,83 +76,92 @@ export function DashboardConfig({
           {/* Config Panel */}
           <div className="absolute right-0 mt-2 w-72 bg-theme-elevated border border-theme rounded-lg shadow-xl z-50">
             <div className="p-3 border-b border-theme">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium text-theme">Dashboard Widgets</h3>
-                <button
-                  onClick={onReset}
-                  className="text-xs text-theme-muted hover:text-theme"
-                >
-                  Reset
-                </button>
-              </div>
+              <h3 className="font-medium text-theme">Quick Widget Toggle</h3>
               <p className="text-xs text-theme-muted mt-1">
-                Show/hide and reorder widgets
+                Show/hide widgets. For more options, use the full configuration page.
               </p>
             </div>
 
             <div className="p-2 max-h-80 overflow-y-auto">
-              {sortedWidgets.map((widget, index) => (
-                <div
-                  key={widget.id}
-                  className={`flex items-center gap-2 p-2 rounded ${
-                    widget.is_visible ? 'bg-theme-subtle' : 'opacity-50'
-                  }`}
-                >
-                  {/* Visibility toggle */}
-                  <button
-                    onClick={() => onToggleVisibility(widget.id)}
-                    className={`w-5 h-5 rounded flex items-center justify-center text-xs ${
-                      widget.is_visible
-                        ? 'bg-blue-500 text-white'
-                        : 'border border-theme'
+              {sortedWidgets.map((widget, index) => {
+                const config = parseConfig(widget.config)
+                const hasFilter = config.buckets && config.buckets.length > 0
+
+                return (
+                  <div
+                    key={widget.id}
+                    className={`flex items-center gap-2 p-2 rounded ${
+                      widget.is_visible ? 'bg-theme-subtle' : 'opacity-50'
                     }`}
-                    title={widget.is_visible ? 'Hide widget' : 'Show widget'}
                   >
-                    {widget.is_visible && '✓'}
-                  </button>
-
-                  {/* Icon and title */}
-                  <span className="text-lg">
-                    {WIDGET_ICONS[widget.widget_type] || '📦'}
-                  </span>
-                  <span className="flex-1 text-sm text-theme truncate">
-                    {widget.title || widget.widget_type}
-                  </span>
-
-                  {/* Reorder buttons */}
-                  <div className="flex flex-col">
+                    {/* Visibility toggle */}
                     <button
-                      onClick={() => onMoveUp(widget.id)}
-                      disabled={index === 0}
-                      className="text-theme-muted hover:text-theme disabled:opacity-30 p-0.5"
-                      title="Move up"
+                      onClick={() => onToggleVisibility(widget.id)}
+                      className={`w-5 h-5 rounded flex items-center justify-center text-xs flex-shrink-0 ${
+                        widget.is_visible
+                          ? 'bg-blue-500 text-white'
+                          : 'border border-theme'
+                      }`}
+                      title={widget.is_visible ? 'Hide widget' : 'Show widget'}
                     >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                      </svg>
+                      {widget.is_visible && '✓'}
                     </button>
-                    <button
-                      onClick={() => onMoveDown(widget.id)}
-                      disabled={index === sortedWidgets.length - 1}
-                      className="text-theme-muted hover:text-theme disabled:opacity-30 p-0.5"
-                      title="Move down"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
+
+                    {/* Icon and title */}
+                    <span className="text-lg">
+                      {WIDGET_ICONS[widget.widget_type] || '📦'}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm text-theme truncate block">
+                        {widget.title || widget.widget_type}
+                      </span>
+                      {hasFilter && (
+                        <span className="text-xs text-blue-500">Filtered</span>
+                      )}
+                    </div>
+
+                    {/* Reorder buttons */}
+                    <div className="flex flex-col">
+                      <button
+                        onClick={() => onMoveUp(widget.id)}
+                        disabled={index === 0}
+                        className="text-theme-muted hover:text-theme disabled:opacity-30 p-0.5"
+                        title="Move up"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => onMoveDown(widget.id)}
+                        disabled={index === sortedWidgets.length - 1}
+                        className="text-theme-muted hover:text-theme disabled:opacity-30 p-0.5"
+                        title="Move down"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
-            <div className="p-2 border-t border-theme text-center">
-              <button
+            <div className="p-3 border-t border-theme">
+              <Link
+                href="/dashboard/configure"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600"
                 onClick={() => setIsOpen(false)}
-                className="text-sm text-theme-muted hover:text-theme"
               >
-                Done
-              </button>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+                Full Configuration
+              </Link>
+              <p className="text-xs text-theme-muted text-center mt-2">
+                Duplicate widgets, configure filters, and more
+              </p>
             </div>
           </div>
         </>
