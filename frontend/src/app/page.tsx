@@ -1123,14 +1123,9 @@ export default function Dashboard() {
 
           <DashboardConfig
             widgets={widgets}
-            availableBuckets={availableBuckets}
             onToggleVisibility={handleToggleVisibility}
             onMoveUp={handleMoveUp}
             onMoveDown={handleMoveDown}
-            onReset={handleReset}
-            onDuplicate={handleDuplicate}
-            onUpdateWidget={handleUpdateWidget}
-            onDeleteWidget={handleDeleteWidget}
           />
 
           {/* Time Navigation */}
