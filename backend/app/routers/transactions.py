@@ -8,7 +8,8 @@ from datetime import date, datetime
 from app.database import get_session
 from app.models import (
     Transaction, TransactionCreate, TransactionUpdate,
-    ReconciliationStatus, Tag, TransactionTag
+    ReconciliationStatus, Tag, TransactionTag,
+    SplitItem, TransactionSplits, TransactionSplitResponse
 )
 from app.utils.hashing import compute_transaction_content_hash
 from sqlmodel import and_
@@ -17,6 +18,11 @@ from pydantic import BaseModel
 
 class AddTagRequest(BaseModel):
     tag: str  # namespace:value format
+
+
+class AddTagWithAmountRequest(BaseModel):
+    tag: str  # namespace:value format
+    amount: Optional[float] = None  # Split amount
 
 router = APIRouter(prefix="/api/v1/transactions", tags=["transactions"])
 
@@ -493,6 +499,176 @@ async def get_transaction_tags(
         "transaction_id": transaction_id,
         "tags": tag_list
     }
+
+
+@router.get("/{transaction_id}/splits", response_model=TransactionSplitResponse)
+async def get_transaction_splits(
+    transaction_id: int,
+    session: AsyncSession = Depends(get_session)
+):
+    """Get split allocations for a transaction.
+
+    Returns the list of bucket splits with their amounts and the unallocated remainder.
+    """
+    # Validate transaction exists
+    txn_result = await session.execute(
+        select(Transaction).where(Transaction.id == transaction_id)
+    )
+    transaction = txn_result.scalar_one_or_none()
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    # Get all bucket tags with amounts for this transaction
+    result = await session.execute(
+        select(Tag, TransactionTag.amount)
+        .join(TransactionTag, TransactionTag.tag_id == Tag.id)
+        .where(
+            and_(
+                TransactionTag.transaction_id == transaction_id,
+                Tag.namespace == "bucket",
+                TransactionTag.amount.isnot(None)
+            )
+        )
+    )
+    rows = result.all()
+
+    splits = [
+        SplitItem(tag=f"bucket:{row[0].value}", amount=row[1])
+        for row in rows
+    ]
+
+    total_allocated = sum(s.amount for s in splits)
+    unallocated = abs(transaction.amount) - total_allocated
+
+    return TransactionSplitResponse(
+        transaction_id=transaction_id,
+        total_amount=abs(transaction.amount),
+        splits=splits,
+        unallocated=max(0, unallocated)  # Don't show negative unallocated
+    )
+
+
+@router.put("/{transaction_id}/splits", response_model=TransactionSplitResponse)
+async def set_transaction_splits(
+    transaction_id: int,
+    splits_data: TransactionSplits,
+    session: AsyncSession = Depends(get_session)
+):
+    """Set split allocations for a transaction.
+
+    Replaces all existing splits. Each split must reference a valid bucket tag.
+    Splits don't need to sum to the transaction amount - partial splits are allowed,
+    and over-allocation is also permitted (no validation enforcement).
+    """
+    # Validate transaction exists
+    txn_result = await session.execute(
+        select(Transaction).where(Transaction.id == transaction_id)
+    )
+    transaction = txn_result.scalar_one_or_none()
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    # Remove existing bucket splits (TransactionTags with amounts)
+    existing_result = await session.execute(
+        select(TransactionTag)
+        .join(Tag, TransactionTag.tag_id == Tag.id)
+        .where(
+            and_(
+                TransactionTag.transaction_id == transaction_id,
+                Tag.namespace == "bucket",
+                TransactionTag.amount.isnot(None)
+            )
+        )
+    )
+    for existing in existing_result.scalars().all():
+        await session.delete(existing)
+
+    # Also remove bucket tags without amounts (they'll be replaced by splits)
+    existing_bucket_result = await session.execute(
+        select(TransactionTag)
+        .join(Tag, TransactionTag.tag_id == Tag.id)
+        .where(
+            and_(
+                TransactionTag.transaction_id == transaction_id,
+                Tag.namespace == "bucket"
+            )
+        )
+    )
+    for existing in existing_bucket_result.scalars().all():
+        await session.delete(existing)
+
+    # Add new splits
+    for split in splits_data.splits:
+        # Parse tag
+        try:
+            namespace, value = parse_tag_string(split.tag)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+        if namespace != "bucket":
+            raise HTTPException(
+                status_code=400,
+                detail=f"Splits must use bucket tags, got '{namespace}'"
+            )
+
+        # Get the tag
+        tag_result = await session.execute(
+            select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
+        )
+        tag = tag_result.scalar_one_or_none()
+        if not tag:
+            raise HTTPException(status_code=400, detail=f"Tag '{split.tag}' does not exist")
+
+        # Create transaction tag with amount
+        txn_tag = TransactionTag(
+            transaction_id=transaction_id,
+            tag_id=tag.id,
+            amount=split.amount
+        )
+        session.add(txn_tag)
+
+    await session.commit()
+
+    # Return the new splits state
+    return await get_transaction_splits(transaction_id, session)
+
+
+@router.delete("/{transaction_id}/splits")
+async def clear_transaction_splits(
+    transaction_id: int,
+    session: AsyncSession = Depends(get_session)
+):
+    """Remove all split allocations from a transaction.
+
+    This removes the amount from bucket tags but doesn't remove the tags themselves.
+    """
+    # Validate transaction exists
+    txn_result = await session.execute(
+        select(Transaction).where(Transaction.id == transaction_id)
+    )
+    transaction = txn_result.scalar_one_or_none()
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    # Remove all bucket splits
+    existing_result = await session.execute(
+        select(TransactionTag)
+        .join(Tag, TransactionTag.tag_id == Tag.id)
+        .where(
+            and_(
+                TransactionTag.transaction_id == transaction_id,
+                Tag.namespace == "bucket"
+            )
+        )
+    )
+    deleted_count = 0
+    for existing in existing_result.scalars().all():
+        await session.delete(existing)
+        deleted_count += 1
+
+    await session.commit()
+
+    return {"message": "Splits cleared", "transaction_id": transaction_id, "removed": deleted_count}
 
 
 @router.get("/export/csv")
