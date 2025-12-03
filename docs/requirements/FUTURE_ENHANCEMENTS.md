@@ -185,7 +185,7 @@ These features are interesting but not currently prioritized:
 
 ### v0.6 (In Progress)
 - ✅ Advanced visualizations (sankey, treemap, heatmaps) - PR #26
-- Dashboard year/month view toggle
+- ✅ Dashboard year/month view toggle - PR #27
 - Widget tag filtering
 - Scheduled reports & email digests
 
