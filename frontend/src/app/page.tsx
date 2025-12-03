@@ -8,7 +8,13 @@ import { formatCurrency } from '@/lib/format'
 import { PageHelp } from '@/components/PageHelp'
 import { DashboardConfig } from '@/components/DashboardConfig'
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D']
+// Muted, professional color palette for charts
+const COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#f97316', '#eab308']
+// Treemap uses a separate, more subtle palette with good contrast
+const TREEMAP_COLORS = [
+  '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#ec4899',
+  '#14b8a6', '#10b981', '#22c55e', '#84cc16', '#eab308'
+]
 
 interface Widget {
   id: number
@@ -523,10 +529,18 @@ export default function Dashboard() {
       )
     }
 
+    // Truncate text to fit within available width
+    const truncateText = (text: string, maxWidth: number, fontSize: number) => {
+      const avgCharWidth = fontSize * 0.6
+      const maxChars = Math.floor((maxWidth - 16) / avgCharWidth) // 16px padding
+      if (text.length <= maxChars) return text
+      return maxChars > 3 ? text.slice(0, maxChars - 1) + '…' : ''
+    }
+
     return (
       <div key="treemap" className="card p-6">
         <h2 className="text-lg font-semibold text-theme mb-4">Spending Breakdown</h2>
-        <p className="text-sm text-theme-muted mb-4">Click to drill down by category and merchant</p>
+        <p className="text-sm text-theme-muted mb-4">Spending by category and merchant</p>
         <ResponsiveContainer width="100%" height={400}>
           <Treemap
             data={treemapData.data.children}
@@ -534,47 +548,65 @@ export default function Dashboard() {
             aspectRatio={4/3}
             stroke="#fff"
             fill="#8884d8"
-            content={({ x, y, width, height, name, value, depth }: any) => (
-              <g>
-                <rect
-                  x={x}
-                  y={y}
-                  width={width}
-                  height={height}
-                  style={{
-                    fill: COLORS[depth % COLORS.length],
-                    stroke: '#fff',
-                    strokeWidth: 2
-                  }}
-                />
-                {width >= 50 && height >= 30 && (
-                  <>
-                    <text
-                      x={x + width / 2}
-                      y={y + height / 2 - 7}
-                      textAnchor="middle"
-                      fill="#fff"
-                      fontSize={12}
-                      fontWeight="bold"
-                    >
-                      {name}
-                    </text>
-                    <text
-                      x={x + width / 2}
-                      y={y + height / 2 + 10}
-                      textAnchor="middle"
-                      fill="#fff"
-                      fontSize={10}
-                    >
-                      {formatCurrency(value)}
-                    </text>
-                  </>
-                )}
-              </g>
-            )}
+            content={({ x, y, width, height, name, value, index, depth }: any) => {
+              const showLabels = width >= 60 && height >= 40
+              const fontSize = Math.min(14, Math.max(10, width / 8))
+              const truncatedName = truncateText(name || '', width, fontSize)
+              const color = TREEMAP_COLORS[index % TREEMAP_COLORS.length]
+
+              return (
+                <g>
+                  <rect
+                    x={x}
+                    y={y}
+                    width={width}
+                    height={height}
+                    style={{
+                      fill: color,
+                      stroke: 'rgba(255,255,255,0.3)',
+                      strokeWidth: 1
+                    }}
+                    rx={3}
+                    ry={3}
+                  />
+                  {showLabels && truncatedName && (
+                    <>
+                      <text
+                        x={x + 8}
+                        y={y + 20}
+                        textAnchor="start"
+                        fill="rgba(255,255,255,0.95)"
+                        fontSize={fontSize}
+                        fontWeight="600"
+                        style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
+                      >
+                        {truncatedName}
+                      </text>
+                      {height >= 55 && (
+                        <text
+                          x={x + 8}
+                          y={y + 38}
+                          textAnchor="start"
+                          fill="rgba(255,255,255,0.8)"
+                          fontSize={fontSize - 2}
+                        >
+                          {formatCurrency(value)}
+                        </text>
+                      )}
+                    </>
+                  )}
+                </g>
+              )
+            }}
           >
             <Tooltip
               formatter={(value: any) => formatCurrency(value)}
+              contentStyle={{
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                border: 'none',
+                borderRadius: '6px',
+                color: '#fff'
+              }}
             />
           </Treemap>
         </ResponsiveContainer>
