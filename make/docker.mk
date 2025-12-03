@@ -2,8 +2,10 @@
 # Docker Targets
 # =============================================================================
 
-.PHONY: docker-build docker-build-force docker-up docker-down docker-logs
+.PHONY: docker docker-build docker-build-force docker-up docker-down docker-logs
 .PHONY: docker-shell docker-clean docker-seed docker-migrate
+
+docker: docker-build docker-up ## Build and start Docker container
 
 docker-build: ## Build Docker image
 	@echo "$(BLUE)Building Docker image...$(NC)"

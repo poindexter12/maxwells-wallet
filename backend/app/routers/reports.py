@@ -892,3 +892,248 @@ async def detect_anomalies(
             "transaction_count": len(baseline_transactions)
         }
     }
+
+
+@router.get("/sankey-flow")
+async def sankey_flow(
+    year: int = Query(..., description="Year (e.g., 2024)"),
+    month: int = Query(..., ge=1, le=12, description="Month (1-12)"),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Get money flow data for Sankey diagram visualization.
+
+    Shows flow from income sources → accounts → spending buckets.
+
+    Returns nodes and links in Recharts Sankey format.
+    """
+    start_date = date(year, month, 1)
+    last_day = calendar.monthrange(year, month)[1]
+    end_date = date(year, month, last_day)
+
+    # Get all transactions for the month (excluding transfers)
+    result = await session.execute(
+        select(Transaction).where(
+            and_(
+                Transaction.date >= start_date,
+                Transaction.date <= end_date,
+                Transaction.is_transfer == False
+            )
+        )
+    )
+    transactions = result.scalars().all()
+
+    if not transactions:
+        return {"nodes": [], "links": []}
+
+    # Get bucket tags for all transactions
+    txn_ids = [t.id for t in transactions]
+    txn_tags = await get_transaction_tags(session, txn_ids)
+
+    # Build nodes and links
+    nodes = []
+    node_index = {}
+    links = []
+
+    # Track flows
+    income_to_account = defaultdict(float)  # "Income" -> account_source
+    account_to_bucket = defaultdict(lambda: defaultdict(float))  # account_source -> bucket
+
+    for txn in transactions:
+        account = txn.account_source or "Unknown"
+        bucket = txn_tags.get(txn.id, "uncategorized")
+
+        if txn.amount > 0:
+            # Income: flows from "Income" node to account
+            income_to_account[account] += txn.amount
+        else:
+            # Expense: flows from account to bucket
+            account_to_bucket[account][bucket] += abs(txn.amount)
+
+    # Create nodes
+    def get_node_index(name: str, node_type: str) -> int:
+        key = f"{node_type}:{name}"
+        if key not in node_index:
+            node_index[key] = len(nodes)
+            nodes.append({"name": name, "type": node_type})
+        return node_index[key]
+
+    # Add Income node if we have income
+    if income_to_account:
+        get_node_index("Income", "income")
+
+    # Add account nodes and income links
+    for account, amount in income_to_account.items():
+        account_idx = get_node_index(account, "account")
+        income_idx = get_node_index("Income", "income")
+        links.append({
+            "source": income_idx,
+            "target": account_idx,
+            "value": round(amount, 2)
+        })
+
+    # Add bucket nodes and expense links
+    for account, buckets in account_to_bucket.items():
+        account_idx = get_node_index(account, "account")
+        for bucket, amount in buckets.items():
+            bucket_idx = get_node_index(bucket.capitalize(), "bucket")
+            links.append({
+                "source": account_idx,
+                "target": bucket_idx,
+                "value": round(amount, 2)
+            })
+
+    return {
+        "year": year,
+        "month": month,
+        "nodes": nodes,
+        "links": links
+    }
+
+
+@router.get("/treemap")
+async def treemap_data(
+    year: int = Query(..., description="Year (e.g., 2024)"),
+    month: int = Query(..., ge=1, le=12, description="Month (1-12)"),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Get hierarchical spending data for Treemap visualization.
+
+    Returns spending organized as: Bucket → Merchant hierarchy.
+    """
+    start_date = date(year, month, 1)
+    last_day = calendar.monthrange(year, month)[1]
+    end_date = date(year, month, last_day)
+
+    # Get expense transactions only (excluding transfers)
+    result = await session.execute(
+        select(Transaction).where(
+            and_(
+                Transaction.date >= start_date,
+                Transaction.date <= end_date,
+                Transaction.amount < 0,
+                Transaction.is_transfer == False
+            )
+        )
+    )
+    transactions = result.scalars().all()
+
+    if not transactions:
+        return {
+            "year": year,
+            "month": month,
+            "data": {"name": "Spending", "children": []}
+        }
+
+    # Get bucket tags
+    txn_ids = [t.id for t in transactions]
+    txn_tags = await get_transaction_tags(session, txn_ids)
+
+    # Build hierarchy: bucket -> merchant -> amount
+    hierarchy = defaultdict(lambda: defaultdict(float))
+
+    for txn in transactions:
+        bucket = txn_tags.get(txn.id, "Uncategorized")
+        merchant = txn.merchant or "Unknown"
+        hierarchy[bucket][merchant] += abs(txn.amount)
+
+    # Convert to treemap format
+    children = []
+    for bucket, merchants in hierarchy.items():
+        bucket_children = [
+            {"name": merchant, "value": round(amount, 2)}
+            for merchant, amount in sorted(merchants.items(), key=lambda x: -x[1])
+        ]
+        bucket_total = sum(m["value"] for m in bucket_children)
+        children.append({
+            "name": bucket.capitalize(),
+            "value": round(bucket_total, 2),
+            "children": bucket_children[:10]  # Top 10 merchants per bucket
+        })
+
+    # Sort by total value
+    children.sort(key=lambda x: -x["value"])
+
+    return {
+        "year": year,
+        "month": month,
+        "data": {
+            "name": "Spending",
+            "children": children
+        }
+    }
+
+
+@router.get("/spending-heatmap")
+async def spending_heatmap(
+    year: int = Query(..., description="Year (e.g., 2024)"),
+    month: int = Query(..., ge=1, le=12, description="Month (1-12)"),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Get daily spending data for calendar heatmap visualization.
+
+    Returns spending amount for each day of the month.
+    """
+    start_date = date(year, month, 1)
+    last_day = calendar.monthrange(year, month)[1]
+    end_date = date(year, month, last_day)
+
+    # Get expense transactions (excluding transfers)
+    result = await session.execute(
+        select(Transaction).where(
+            and_(
+                Transaction.date >= start_date,
+                Transaction.date <= end_date,
+                Transaction.amount < 0,
+                Transaction.is_transfer == False
+            )
+        )
+    )
+    transactions = result.scalars().all()
+
+    # Aggregate by day
+    daily_spending = defaultdict(float)
+    daily_count = defaultdict(int)
+
+    for txn in transactions:
+        day = txn.date.day
+        daily_spending[day] += abs(txn.amount)
+        daily_count[day] += 1
+
+    # Build calendar data
+    days = []
+    max_spending = max(daily_spending.values()) if daily_spending else 0
+
+    for day in range(1, last_day + 1):
+        day_date = date(year, month, day)
+        amount = daily_spending.get(day, 0)
+        count = daily_count.get(day, 0)
+
+        # Calculate intensity (0-4 scale for heatmap coloring)
+        if max_spending > 0:
+            intensity = min(4, int((amount / max_spending) * 4))
+        else:
+            intensity = 0
+
+        days.append({
+            "date": str(day_date),
+            "day": day,
+            "weekday": day_date.weekday(),  # 0=Monday, 6=Sunday
+            "amount": round(amount, 2),
+            "count": count,
+            "intensity": intensity
+        })
+
+    return {
+        "year": year,
+        "month": month,
+        "days": days,
+        "summary": {
+            "total_spending": round(sum(daily_spending.values()), 2),
+            "max_daily": round(max_spending, 2),
+            "avg_daily": round(sum(daily_spending.values()) / last_day, 2) if daily_spending else 0,
+            "days_with_spending": len([d for d in daily_spending.values() if d > 0])
+        }
+    }
