@@ -25,6 +25,9 @@ DEFAULT_WIDGETS = [
     {"widget_type": "bucket_pie", "title": "Spending by Bucket", "position": 3, "width": "half", "is_visible": True},
     {"widget_type": "top_merchants", "title": "Top Merchants", "position": 4, "width": "half", "is_visible": True},
     {"widget_type": "trends", "title": "Trends", "position": 5, "width": "full", "is_visible": True},
+    {"widget_type": "sankey", "title": "Money Flow", "position": 6, "width": "full", "is_visible": False},
+    {"widget_type": "treemap", "title": "Spending Breakdown", "position": 7, "width": "full", "is_visible": False},
+    {"widget_type": "heatmap", "title": "Spending Calendar", "position": 8, "width": "full", "is_visible": False},
 ]
 
 
@@ -33,11 +36,12 @@ async def list_widgets(session: AsyncSession = Depends(get_session)):
     """Get all dashboard widgets ordered by position.
 
     If no widgets exist, initializes with default configuration.
+    Also adds any new widget types that don't exist yet.
     """
     result = await session.execute(
         select(DashboardWidget).order_by(DashboardWidget.position)
     )
-    widgets = result.scalars().all()
+    widgets = list(result.scalars().all())
 
     # Initialize with defaults if empty
     if not widgets:
@@ -50,7 +54,28 @@ async def list_widgets(session: AsyncSession = Depends(get_session)):
         result = await session.execute(
             select(DashboardWidget).order_by(DashboardWidget.position)
         )
-        widgets = result.scalars().all()
+        widgets = list(result.scalars().all())
+    else:
+        # Check for missing widget types and add them
+        existing_types = {w.widget_type for w in widgets}
+        max_position = max(w.position for w in widgets) if widgets else -1
+        added = False
+
+        for widget_data in DEFAULT_WIDGETS:
+            if widget_data["widget_type"] not in existing_types:
+                max_position += 1
+                widget = DashboardWidget(
+                    **{**widget_data, "position": max_position}
+                )
+                session.add(widget)
+                added = True
+
+        if added:
+            await session.commit()
+            result = await session.execute(
+                select(DashboardWidget).order_by(DashboardWidget.position)
+            )
+            widgets = list(result.scalars().all())
 
     return widgets
 
