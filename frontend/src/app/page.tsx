@@ -50,11 +50,27 @@ export default function Dashboard() {
   const [viewMode, setViewMode] = useState<ViewMode>('month')
   const [selectedYear, setSelectedYear] = useState(now.getFullYear())
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
+  const [availableBuckets, setAvailableBuckets] = useState<{ id: number; value: string }[]>([])
+  const [selectedBuckets, setSelectedBuckets] = useState<string[]>([])
+  const [bucketFilterOpen, setBucketFilterOpen] = useState(false)
 
-  // Fetch widget configuration
+  // Fetch widget configuration and bucket tags
   useEffect(() => {
     fetchWidgets()
+    fetchBuckets()
   }, [])
+
+  async function fetchBuckets() {
+    try {
+      const res = await fetch('/api/v1/tags/buckets')
+      if (res.ok) {
+        const data = await res.json()
+        setAvailableBuckets(data)
+      }
+    } catch (error) {
+      console.error('Error fetching buckets:', error)
+    }
+  }
 
   async function fetchWidgets() {
     try {
@@ -137,10 +153,13 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchData() {
       setLoading(true)
+      // Build bucket filter query string
+      const bucketParam = selectedBuckets.length > 0 ? `&buckets=${encodeURIComponent(selectedBuckets.join(','))}` : ''
+
       try {
         if (viewMode === 'month') {
           // Monthly view - fetch month-specific data
-          const summaryRes = await fetch(`/api/v1/reports/monthly-summary?year=${selectedYear}&month=${selectedMonth}`)
+          const summaryRes = await fetch(`/api/v1/reports/monthly-summary?year=${selectedYear}&month=${selectedMonth}${bucketParam}`)
           const summaryData = await summaryRes.json()
           setSummary(summaryData)
 
@@ -151,48 +170,48 @@ export default function Dashboard() {
           const twelveWeeksAgo = new Date(effectiveEnd)
           twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - 84) // 12 weeks = 84 days
           const trendsRes = await fetch(
-            `/api/v1/reports/trends?start_date=${format(twelveWeeksAgo, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=week`
+            `/api/v1/reports/trends?start_date=${format(twelveWeeksAgo, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=week${bucketParam}`
           )
           const trendsData = await trendsRes.json()
           setTrends(trendsData)
 
           // Fetch top merchants for selected month
-          const merchantsRes = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}&month=${selectedMonth}`)
+          const merchantsRes = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}&month=${selectedMonth}${bucketParam}`)
           const merchantsData = await merchantsRes.json()
           setTopMerchants(merchantsData)
 
-          // Fetch month-over-month comparison
+          // Fetch month-over-month comparison (no bucket filter - compares overall)
           const momRes = await fetch(`/api/v1/reports/month-over-month?current_year=${selectedYear}&current_month=${selectedMonth}`)
           const momData = await momRes.json()
           setMonthOverMonth(momData)
 
-          // Fetch spending velocity
+          // Fetch spending velocity (no bucket filter - overall velocity)
           const velocityRes = await fetch(`/api/v1/reports/spending-velocity?year=${selectedYear}&month=${selectedMonth}`)
           const velocityData = await velocityRes.json()
           setSpendingVelocity(velocityData)
 
-          // Fetch anomalies
+          // Fetch anomalies (no bucket filter - overall anomalies)
           const anomaliesRes = await fetch(`/api/v1/reports/anomalies?year=${selectedYear}&month=${selectedMonth}&threshold=2.0`)
           const anomaliesData = await anomaliesRes.json()
           setAnomalies(anomaliesData)
 
           // Fetch Sankey flow data
-          const sankeyRes = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}&month=${selectedMonth}`)
+          const sankeyRes = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}&month=${selectedMonth}${bucketParam}`)
           const sankeyJson = await sankeyRes.json()
           setSankeyData(sankeyJson)
 
           // Fetch Treemap data
-          const treemapRes = await fetch(`/api/v1/reports/treemap?year=${selectedYear}&month=${selectedMonth}`)
+          const treemapRes = await fetch(`/api/v1/reports/treemap?year=${selectedYear}&month=${selectedMonth}${bucketParam}`)
           const treemapJson = await treemapRes.json()
           setTreemapData(treemapJson)
 
           // Fetch Heatmap data
-          const heatmapRes = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}&month=${selectedMonth}`)
+          const heatmapRes = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}&month=${selectedMonth}${bucketParam}`)
           const heatmapJson = await heatmapRes.json()
           setHeatmapData(heatmapJson)
         } else {
           // Year view - fetch annual data
-          const summaryRes = await fetch(`/api/v1/reports/annual-summary?year=${selectedYear}`)
+          const summaryRes = await fetch(`/api/v1/reports/annual-summary?year=${selectedYear}${bucketParam}`)
           const summaryData = await summaryRes.json()
           setSummary(summaryData)
 
@@ -202,13 +221,13 @@ export default function Dashboard() {
           const today = new Date()
           const effectiveEnd = yearEnd > today ? today : yearEnd
           const trendsRes = await fetch(
-            `/api/v1/reports/trends?start_date=${format(yearStart, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=month`
+            `/api/v1/reports/trends?start_date=${format(yearStart, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=month${bucketParam}`
           )
           const trendsData = await trendsRes.json()
           setTrends(trendsData)
 
           // Fetch top merchants for the year
-          const merchantsRes = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}`)
+          const merchantsRes = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}${bucketParam}`)
           const merchantsData = await merchantsRes.json()
           setTopMerchants(merchantsData)
 
@@ -218,15 +237,15 @@ export default function Dashboard() {
           setAnomalies(null)
 
           // Fetch year-level Sankey, Treemap, Heatmap
-          const sankeyRes = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}`)
+          const sankeyRes = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}${bucketParam}`)
           const sankeyJson = await sankeyRes.json()
           setSankeyData(sankeyJson)
 
-          const treemapRes = await fetch(`/api/v1/reports/treemap?year=${selectedYear}`)
+          const treemapRes = await fetch(`/api/v1/reports/treemap?year=${selectedYear}${bucketParam}`)
           const treemapJson = await treemapRes.json()
           setTreemapData(treemapJson)
 
-          const heatmapRes = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}`)
+          const heatmapRes = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}${bucketParam}`)
           const heatmapJson = await heatmapRes.json()
           setHeatmapData(heatmapJson)
         }
@@ -239,7 +258,7 @@ export default function Dashboard() {
     }
 
     fetchData()
-  }, [selectedYear, selectedMonth, viewMode])
+  }, [selectedYear, selectedMonth, viewMode, selectedBuckets])
 
   // Check if a widget type is visible
   const isWidgetVisible = useCallback((widgetType: string) => {
@@ -973,6 +992,87 @@ export default function Dashboard() {
               Year
             </button>
           </div>
+
+          {/* Bucket Filter */}
+          {availableBuckets.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setBucketFilterOpen(!bucketFilterOpen)}
+                className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md border transition-colors ${
+                  selectedBuckets.length > 0
+                    ? 'border-blue-500 bg-blue-500/10 text-blue-500'
+                    : 'border-theme hover:bg-[var(--color-bg-hover)]'
+                }`}
+                title="Filter by bucket"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                <span>
+                  {selectedBuckets.length === 0
+                    ? 'All Buckets'
+                    : selectedBuckets.length === 1
+                    ? selectedBuckets[0]
+                    : `${selectedBuckets.length} buckets`}
+                </span>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {bucketFilterOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setBucketFilterOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-56 bg-theme-elevated border border-theme rounded-lg shadow-xl z-50">
+                    <div className="p-2 border-b border-theme">
+                      <button
+                        onClick={() => {
+                          setSelectedBuckets([])
+                          setBucketFilterOpen(false)
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm rounded hover:bg-[var(--color-bg-hover)] text-theme-muted"
+                      >
+                        Clear filter (show all)
+                      </button>
+                    </div>
+                    <div className="p-2 max-h-60 overflow-y-auto">
+                      {availableBuckets.map((bucket) => (
+                        <label
+                          key={bucket.id}
+                          className="flex items-center gap-2 px-3 py-2 rounded hover:bg-[var(--color-bg-hover)] cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedBuckets.includes(bucket.value)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedBuckets([...selectedBuckets, bucket.value])
+                              } else {
+                                setSelectedBuckets(selectedBuckets.filter(b => b !== bucket.value))
+                              }
+                            }}
+                            className="rounded border-theme text-blue-500 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-theme capitalize">{bucket.value}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <div className="p-2 border-t border-theme text-center">
+                      <button
+                        onClick={() => setBucketFilterOpen(false)}
+                        className="text-sm text-theme-muted hover:text-theme"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           <DashboardConfig
             widgets={widgets}
