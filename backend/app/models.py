@@ -30,11 +30,12 @@ class BaseModel(SQLModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class TransactionTag(SQLModel, table=True):
-    """Junction table linking transactions to tags"""
+    """Junction table linking transactions to tags with optional split amounts"""
     __tablename__ = "transaction_tags"
 
     transaction_id: int = Field(foreign_key="transactions.id", primary_key=True)
     tag_id: int = Field(foreign_key="tags.id", primary_key=True)
+    amount: Optional[float] = None  # Split amount - None means full transaction amount
 
 
 class Tag(BaseModel, table=True):
@@ -422,3 +423,58 @@ class SavedFilterUpdate(SQLModel):
     start_date: Optional[date_type] = None
     end_date: Optional[date_type] = None
     is_pinned: Optional[bool] = None
+
+
+# Split Transaction Models
+class SplitItem(SQLModel):
+    """A single split allocation for a transaction"""
+    tag: str  # Format: "bucket:groceries" or just bucket value
+    amount: float
+
+
+class TransactionSplits(SQLModel):
+    """Request model for setting transaction splits"""
+    splits: List[SplitItem]
+
+
+class TransactionSplitResponse(SQLModel):
+    """Response model showing transaction splits"""
+    transaction_id: int
+    total_amount: float
+    splits: List[SplitItem]
+    unallocated: float  # Amount not assigned to any bucket
+
+
+# Dashboard Widget Configuration Models
+class DashboardWidget(BaseModel, table=True):
+    """User's dashboard widget configuration"""
+    __tablename__ = "dashboard_widgets"
+
+    widget_type: str = Field(index=True)  # "summary", "velocity", "anomalies", "bucket_pie", "top_merchants", "trends"
+    title: Optional[str] = None  # Custom title override
+    position: int = Field(default=0)  # Order on dashboard
+    width: str = Field(default="half")  # "full", "half", "third"
+    is_visible: bool = Field(default=True)
+    config: Optional[str] = None  # JSON string for widget-specific settings
+
+
+class DashboardWidgetCreate(SQLModel):
+    widget_type: str
+    title: Optional[str] = None
+    position: int = 0
+    width: str = "half"
+    is_visible: bool = True
+    config: Optional[str] = None
+
+
+class DashboardWidgetUpdate(SQLModel):
+    title: Optional[str] = None
+    position: Optional[int] = None
+    width: Optional[str] = None
+    is_visible: Optional[bool] = None
+    config: Optional[str] = None
+
+
+class DashboardLayoutUpdate(SQLModel):
+    """Batch update for widget positions"""
+    widgets: List[dict]  # [{"id": 1, "position": 0}, {"id": 2, "position": 1}, ...]

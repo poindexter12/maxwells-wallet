@@ -5,6 +5,7 @@
 .PHONY: test-backend test-unit test-coverage test-reports test-tags test-import test-budgets
 .PHONY: test-e2e-install test-e2e test-e2e-headed test-e2e-debug test-e2e-import test-e2e-full
 .PHONY: test-all lint-frontend
+.PHONY: lint lint-backend vulture dead-code typecheck quality security-audit
 
 # -----------------------------------------------------------------------------
 # Unit & Integration Tests
@@ -115,3 +116,34 @@ lint-frontend: ## Lint frontend code
 	@echo "$(BLUE)Linting frontend...$(NC)"
 	@cd $(FRONTEND_DIR) && npm run lint
 	@echo "$(GREEN)✓ Linting complete$(NC)"
+
+# -----------------------------------------------------------------------------
+# Code Quality (Backend)
+# -----------------------------------------------------------------------------
+
+lint-backend: ## Lint backend code with ruff
+	@echo "$(BLUE)Linting backend with ruff...$(NC)"
+	@cd $(BACKEND_DIR) && uv run ruff check .
+	@echo "$(GREEN)✓ Linting complete$(NC)"
+
+lint: lint-backend lint-frontend ## Lint all code
+
+vulture: ## Find dead code with vulture
+	@echo "$(BLUE)Scanning for dead code...$(NC)"
+	@cd $(BACKEND_DIR) && uv run vulture app/ --min-confidence 80
+	@echo "$(GREEN)✓ No dead code found$(NC)"
+
+dead-code: vulture ## Alias for vulture
+
+typecheck: ## Run type checking with mypy
+	@echo "$(BLUE)Type checking with mypy...$(NC)"
+	@cd $(BACKEND_DIR) && uv run mypy app --ignore-missing-imports
+	@echo "$(GREEN)✓ Type checking complete$(NC)"
+
+quality: lint-backend vulture typecheck ## Run all code quality checks
+	@echo "$(GREEN)✓ All quality checks passed$(NC)"
+
+security-audit: ## Scan dependencies for known vulnerabilities
+	@echo "$(BLUE)Scanning for security vulnerabilities...$(NC)"
+	@cd $(BACKEND_DIR) && uv run pip-audit
+	@echo "$(GREEN)✓ No known vulnerabilities$(NC)"

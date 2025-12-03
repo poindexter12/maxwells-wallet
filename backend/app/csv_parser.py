@@ -20,12 +20,10 @@ Example (legacy way, still works):
     transactions, detected_format = parse_csv(csv_content, account_source)
 """
 
-import warnings
 from typing import Dict, List, Optional, Tuple
 
 from app.models import ImportFormatType
 from app.parsers import ParserRegistry
-from app.parsers.formats.amex_cc import AmexCCParser
 
 
 def detect_format(csv_content: str) -> ImportFormatType:
