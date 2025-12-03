@@ -56,6 +56,31 @@
     #e8e7e3 31px,
     #e8e7e3 32px
   );
+
+  /* Chart colors - muted, professional palette */
+  --chart-1: #4f6d7a;
+  --chart-2: #6b8f71;
+  --chart-3: #8b7355;
+  --chart-4: #7a6b8a;
+  --chart-5: #5c8a97;
+  --chart-6: #8a7b6b;
+  --chart-7: #6b7a8a;
+  --chart-8: #7a8b6b;
+  --chart-link: rgba(90, 90, 110, 0.3);
+  --chart-text: #1a1a2e;
+  --chart-text-light: rgba(255, 255, 255, 0.95);
+
+  /* Heatmap intensity - greens */
+  --heatmap-0: #f0f0f0;
+  --heatmap-1: #c6e48b;
+  --heatmap-2: #7bc96f;
+  --heatmap-3: #449d44;
+  --heatmap-4: #2d6a4f;
+  --heatmap-5: #1e4d3a;
+
+  /* Tooltip */
+  --tooltip-bg: rgba(26, 26, 46, 0.95);
+  --tooltip-text: #ffffff;
 }
 
 /* ============================================
@@ -103,6 +128,31 @@
   /* No special effects for clean look */
   --glow-positive: none;
   --glow-negative: none;
+
+  /* Chart colors - vibrant for dark bg */
+  --chart-1: #60a5fa;
+  --chart-2: #34d399;
+  --chart-3: #fbbf24;
+  --chart-4: #a78bfa;
+  --chart-5: #f472b6;
+  --chart-6: #fb923c;
+  --chart-7: #38bdf8;
+  --chart-8: #4ade80;
+  --chart-link: rgba(148, 163, 184, 0.4);
+  --chart-text: #ffffff;
+  --chart-text-light: rgba(255, 255, 255, 0.95);
+
+  /* Heatmap intensity - blues for dark mode */
+  --heatmap-0: #1e293b;
+  --heatmap-1: #1e3a5f;
+  --heatmap-2: #1d4ed8;
+  --heatmap-3: #3b82f6;
+  --heatmap-4: #60a5fa;
+  --heatmap-5: #93c5fd;
+
+  /* Tooltip */
+  --tooltip-bg: rgba(30, 41, 59, 0.95);
+  --tooltip-text: #ffffff;
 }
 
 /* ============================================
@@ -153,6 +203,31 @@
   --glow-accent: 0 0 20px rgba(255, 0, 255, 0.6), 0 0 40px rgba(255, 0, 255, 0.3);
   --grid-pattern: linear-gradient(rgba(255, 0, 255, 0.06) 1px, transparent 1px),
                   linear-gradient(90deg, rgba(255, 0, 255, 0.06) 1px, transparent 1px);
+
+  /* Chart colors - neon cyberpunk palette */
+  --chart-1: #ff00ff;
+  --chart-2: #00ffff;
+  --chart-3: #ff0066;
+  --chart-4: #00ff66;
+  --chart-5: #ffff00;
+  --chart-6: #ff6600;
+  --chart-7: #6600ff;
+  --chart-8: #00ff00;
+  --chart-link: rgba(255, 0, 255, 0.3);
+  --chart-text: #ffffff;
+  --chart-text-light: rgba(255, 255, 255, 0.95);
+
+  /* Heatmap intensity - magenta/pink for cyberpunk */
+  --heatmap-0: #1a0a1a;
+  --heatmap-1: #4a1a4a;
+  --heatmap-2: #8b2a8b;
+  --heatmap-3: #cc44cc;
+  --heatmap-4: #ff00ff;
+  --heatmap-5: #ff66ff;
+
+  /* Tooltip */
+  --tooltip-bg: rgba(0, 0, 0, 0.9);
+  --tooltip-text: #ff00ff;
 }
 
 /* ============================================
@@ -199,6 +274,31 @@
 
   /* Special effects */
   --grain: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+
+  /* Chart colors - earthy, natural tones */
+  --chart-1: #5a8f66;
+  --chart-2: #7d9f85;
+  --chart-3: #c67b5c;
+  --chart-4: #a89078;
+  --chart-5: #6b8c73;
+  --chart-6: #9b7c5c;
+  --chart-7: #7a9a82;
+  --chart-8: #b08968;
+  --chart-link: rgba(90, 143, 102, 0.3);
+  --chart-text: #2d2d2d;
+  --chart-text-light: rgba(255, 255, 255, 0.95);
+
+  /* Heatmap intensity - warm amber/green */
+  --heatmap-0: #f5f0e6;
+  --heatmap-1: #d4e6d4;
+  --heatmap-2: #a8d4a8;
+  --heatmap-3: #7bc47b;
+  --heatmap-4: #5a8f66;
+  --heatmap-5: #3d6b47;
+
+  /* Tooltip */
+  --tooltip-bg: rgba(45, 45, 45, 0.95);
+  --tooltip-text: #ffffff;
 }
 
 /* ============================================

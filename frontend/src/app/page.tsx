@@ -3,12 +3,23 @@
 import { useEffect, useState, useCallback } from 'react'
 import { format } from 'date-fns'
 import Link from 'next/link'
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts'
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, Sankey, Treemap } from 'recharts'
 import { formatCurrency } from '@/lib/format'
 import { PageHelp } from '@/components/PageHelp'
 import { DashboardConfig } from '@/components/DashboardConfig'
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D']
+// Fallback colors if CSS variables aren't available
+const COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#f97316', '#eab308']
+
+// CSS variable names for chart colors (used directly in styles for theme reactivity)
+const CHART_VARS = [
+  'var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)',
+  'var(--chart-5)', 'var(--chart-6)', 'var(--chart-7)', 'var(--chart-8)'
+]
+const HEATMAP_VARS = [
+  'var(--heatmap-0)', 'var(--heatmap-1)', 'var(--heatmap-2)',
+  'var(--heatmap-3)', 'var(--heatmap-4)', 'var(--heatmap-5)'
+]
 
 interface Widget {
   id: number
@@ -28,6 +39,9 @@ export default function Dashboard() {
   const [monthOverMonth, setMonthOverMonth] = useState<any>(null)
   const [spendingVelocity, setSpendingVelocity] = useState<any>(null)
   const [anomalies, setAnomalies] = useState<any>(null)
+  const [sankeyData, setSankeyData] = useState<any>(null)
+  const [treemapData, setTreemapData] = useState<any>(null)
+  const [heatmapData, setHeatmapData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   const now = new Date()
@@ -154,6 +168,21 @@ export default function Dashboard() {
         const anomaliesRes = await fetch(`/api/v1/reports/anomalies?year=${selectedYear}&month=${selectedMonth}&threshold=2.0`)
         const anomaliesData = await anomaliesRes.json()
         setAnomalies(anomaliesData)
+
+        // Fetch Sankey flow data
+        const sankeyRes = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}&month=${selectedMonth}`)
+        const sankeyJson = await sankeyRes.json()
+        setSankeyData(sankeyJson)
+
+        // Fetch Treemap data
+        const treemapRes = await fetch(`/api/v1/reports/treemap?year=${selectedYear}&month=${selectedMonth}`)
+        const treemapJson = await treemapRes.json()
+        setTreemapData(treemapJson)
+
+        // Fetch Heatmap data
+        const heatmapRes = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}&month=${selectedMonth}`)
+        const heatmapJson = await heatmapRes.json()
+        setHeatmapData(heatmapJson)
 
         setLoading(false)
       } catch (error) {
@@ -430,6 +459,273 @@ export default function Dashboard() {
     )
   }
 
+  const renderSankeyWidget = () => {
+    if (!sankeyData || !sankeyData.nodes || sankeyData.nodes.length === 0) {
+      return (
+        <div key="sankey" className="card p-6">
+          <h2 className="text-lg font-semibold text-theme mb-4">Money Flow</h2>
+          <p className="text-theme-muted text-center py-12">No flow data available for this month</p>
+        </div>
+      )
+    }
+
+    // Custom node component with labels - uses CSS variables directly for theme reactivity
+    const SankeyNode = ({ x, y, width, height, index, payload }: any) => {
+      const name = payload?.name || sankeyData.nodes[index]?.name || ''
+      const isLeftSide = x < 200
+      const colorVar = CHART_VARS[index % CHART_VARS.length]
+      return (
+        <g>
+          <rect
+            x={x}
+            y={y}
+            width={width}
+            height={height}
+            style={{ fill: colorVar, stroke: colorVar }}
+          />
+          <text
+            x={isLeftSide ? x - 6 : x + width + 6}
+            y={y + height / 2}
+            textAnchor={isLeftSide ? 'end' : 'start'}
+            dominantBaseline="middle"
+            fontSize={12}
+            style={{ fill: 'var(--chart-text)' }}
+          >
+            {name}
+          </text>
+        </g>
+      )
+    }
+
+    return (
+      <div key="sankey" className="card p-6">
+        <h2 className="text-lg font-semibold text-theme mb-4">Money Flow</h2>
+        <p className="text-sm text-theme-muted mb-4">Income → Accounts → Spending Categories</p>
+        <ResponsiveContainer width="100%" height={450}>
+          <Sankey
+            data={sankeyData}
+            nodePadding={40}
+            nodeWidth={12}
+            linkCurvature={0.5}
+            margin={{ top: 20, right: 150, bottom: 20, left: 150 }}
+            node={<SankeyNode />}
+            link={{
+              stroke: 'var(--chart-link)'
+            }}
+          >
+            <Tooltip
+              formatter={(value: any) => formatCurrency(value)}
+              contentStyle={{
+                backgroundColor: 'var(--tooltip-bg)',
+                border: 'none',
+                borderRadius: '6px',
+                color: 'var(--tooltip-text)'
+              }}
+            />
+          </Sankey>
+        </ResponsiveContainer>
+      </div>
+    )
+  }
+
+  const renderTreemapWidget = () => {
+    if (!treemapData || !treemapData.data || treemapData.data.children.length === 0) {
+      return (
+        <div key="treemap" className="card p-6">
+          <h2 className="text-lg font-semibold text-theme mb-4">Spending Breakdown</h2>
+          <p className="text-theme-muted text-center py-12">No spending data available for this month</p>
+        </div>
+      )
+    }
+
+    // Truncate text to fit within available width
+    const truncateText = (text: string, maxWidth: number, fontSize: number) => {
+      const avgCharWidth = fontSize * 0.6
+      const maxChars = Math.floor((maxWidth - 16) / avgCharWidth) // 16px padding
+      if (text.length <= maxChars) return text
+      return maxChars > 3 ? text.slice(0, maxChars - 1) + '…' : ''
+    }
+
+    return (
+      <div key="treemap" className="card p-6">
+        <h2 className="text-lg font-semibold text-theme mb-4">Spending Breakdown</h2>
+        <p className="text-sm text-theme-muted mb-4">Spending by category and merchant</p>
+        <ResponsiveContainer width="100%" height={400}>
+          <Treemap
+            data={treemapData.data.children}
+            dataKey="value"
+            aspectRatio={4/3}
+            stroke="#fff"
+            fill="#8884d8"
+            content={({ x, y, width, height, name, value, index }: any) => {
+              const showLabels = width >= 60 && height >= 40
+              const fontSize = Math.min(14, Math.max(10, width / 8))
+              const truncatedName = truncateText(name || '', width, fontSize)
+              const colorVar = CHART_VARS[index % CHART_VARS.length]
+
+              return (
+                <g>
+                  <rect
+                    x={x}
+                    y={y}
+                    width={width}
+                    height={height}
+                    style={{
+                      fill: colorVar,
+                      stroke: 'rgba(255,255,255,0.3)',
+                      strokeWidth: 1
+                    }}
+                    rx={3}
+                    ry={3}
+                  />
+                  {showLabels && truncatedName && (
+                    <>
+                      <text
+                        x={x + 8}
+                        y={y + 20}
+                        textAnchor="start"
+                        fontSize={fontSize}
+                        fontWeight="600"
+                        style={{ fill: 'var(--chart-text-light)', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
+                      >
+                        {truncatedName}
+                      </text>
+                      {height >= 55 && (
+                        <text
+                          x={x + 8}
+                          y={y + 38}
+                          textAnchor="start"
+                          fontSize={fontSize - 2}
+                          style={{ fill: 'var(--chart-text-light)', opacity: 0.8 }}
+                        >
+                          {formatCurrency(value)}
+                        </text>
+                      )}
+                    </>
+                  )}
+                </g>
+              )
+            }}
+          >
+            <Tooltip
+              formatter={(value: any) => formatCurrency(value)}
+              contentStyle={{
+                backgroundColor: 'var(--tooltip-bg)',
+                border: 'none',
+                borderRadius: '6px',
+                color: 'var(--tooltip-text)'
+              }}
+            />
+          </Treemap>
+        </ResponsiveContainer>
+      </div>
+    )
+  }
+
+  const renderHeatmapWidget = () => {
+    if (!heatmapData || !heatmapData.days) {
+      return (
+        <div key="heatmap" className="card p-6">
+          <h2 className="text-lg font-semibold text-theme mb-4">Spending Calendar</h2>
+          <p className="text-theme-muted text-center py-12">No spending data available</p>
+        </div>
+      )
+    }
+
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+    // Organize days into weeks (7 columns)
+    const firstDayWeekday = heatmapData.days[0]?.weekday ?? 0
+    const paddedDays = [
+      ...Array(firstDayWeekday).fill(null),
+      ...heatmapData.days
+    ]
+    const weeks: any[][] = []
+    for (let i = 0; i < paddedDays.length; i += 7) {
+      weeks.push(paddedDays.slice(i, i + 7))
+    }
+
+    return (
+      <div key="heatmap" className="card p-6">
+        <h2 className="text-lg font-semibold text-theme mb-4">Spending Calendar</h2>
+        {heatmapData.summary && (
+          <div className="flex gap-6 mb-4 text-sm">
+            <div>
+              <span className="text-theme-muted">Total: </span>
+              <span className="font-semibold text-theme">{formatCurrency(heatmapData.summary.total_spending)}</span>
+            </div>
+            <div>
+              <span className="text-theme-muted">Max Day: </span>
+              <span className="font-semibold text-theme">{formatCurrency(heatmapData.summary.max_daily)}</span>
+            </div>
+            <div>
+              <span className="text-theme-muted">Active Days: </span>
+              <span className="font-semibold text-theme">{heatmapData.summary.days_with_spending}</span>
+            </div>
+          </div>
+        )}
+        <div className="overflow-x-auto">
+          <div className="inline-block">
+            {/* Weekday headers */}
+            <div className="grid grid-cols-7 gap-1 mb-1">
+              {weekdays.map(day => (
+                <div key={day} className="text-xs text-theme-muted text-center w-10">
+                  {day}
+                </div>
+              ))}
+            </div>
+            {/* Calendar grid */}
+            {weeks.map((week, weekIndex) => (
+              <div key={weekIndex} className="grid grid-cols-7 gap-1 mb-1">
+                {week.map((day: any, dayIndex: number) => {
+                  const colorVar = day ? HEATMAP_VARS[Math.min(day.intensity, 5)] : 'transparent'
+                  // For higher intensities (3+), use light text; for lower, use theme text
+                  const useLightText = day && day.intensity >= 3
+
+                  return (
+                    <div
+                      key={dayIndex}
+                      className="w-10 h-10 rounded flex flex-col items-center justify-center text-xs"
+                      style={{ backgroundColor: colorVar }}
+                      title={day ? `${format(new Date(selectedYear, selectedMonth - 1, day.day), 'MMM d')}: ${formatCurrency(day.amount)} (${day.count} transactions)` : ''}
+                    >
+                      {day && (
+                        <>
+                          <span
+                            className="font-medium"
+                            style={{ color: useLightText ? 'var(--chart-text-light)' : 'var(--chart-text)' }}
+                          >
+                            {day.day}
+                          </span>
+                          {day.amount > 0 && (
+                            <span
+                              className="text-[8px]"
+                              style={{ color: useLightText ? 'rgba(255,255,255,0.8)' : 'var(--color-text-muted)' }}
+                            >
+                              ${Math.round(day.amount)}
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Legend */}
+        <div className="flex items-center gap-2 mt-4 text-xs text-theme-muted">
+          <span>Less</span>
+          {HEATMAP_VARS.map((colorVar, i) => (
+            <div key={i} className="w-4 h-4 rounded" style={{ backgroundColor: colorVar }} />
+          ))}
+          <span>More</span>
+        </div>
+      </div>
+    )
+  }
+
   // Render widget by type
   const renderWidget = (widget: Widget) => {
     switch (widget.widget_type) {
@@ -445,6 +741,12 @@ export default function Dashboard() {
         return renderTopMerchantsWidget()
       case 'trends':
         return renderTrendsWidget()
+      case 'sankey':
+        return renderSankeyWidget()
+      case 'treemap':
+        return renderTreemapWidget()
+      case 'heatmap':
+        return renderHeatmapWidget()
       default:
         return null
     }
