@@ -291,14 +291,16 @@ export default function Dashboard() {
     fetchData()
   }, [selectedYear, selectedMonth, viewMode])
 
-  // Fetch data for widgets with bucket filters
+  // Fetch data for widgets with filters (buckets, accounts, or merchants)
   useEffect(() => {
     async function fetchFilteredWidgetData() {
       const filteredWidgets = widgets.filter(w => {
         if (!w.config) return false
         try {
           const config = JSON.parse(w.config)
-          return config.buckets && config.buckets.length > 0
+          return (config.buckets && config.buckets.length > 0) ||
+                 (config.accounts && config.accounts.length > 0) ||
+                 (config.merchants && config.merchants.length > 0)
         } catch {
           return false
         }
@@ -313,7 +315,19 @@ export default function Dashboard() {
 
       for (const widget of filteredWidgets) {
         const config = JSON.parse(widget.config!)
-        const bucketParam = `&buckets=${encodeURIComponent(config.buckets.join(','))}`
+
+        // Build filter params
+        const filterParams: string[] = []
+        if (config.buckets?.length > 0) {
+          filterParams.push(`buckets=${encodeURIComponent(config.buckets.join(','))}`)
+        }
+        if (config.accounts?.length > 0) {
+          filterParams.push(`accounts=${encodeURIComponent(config.accounts.join(','))}`)
+        }
+        if (config.merchants?.length > 0) {
+          filterParams.push(`merchants=${encodeURIComponent(config.merchants.join(','))}`)
+        }
+        const filterQuery = filterParams.length > 0 ? `&${filterParams.join('&')}` : ''
         const monthParam = viewMode === 'month' ? `&month=${selectedMonth}` : ''
 
         try {
@@ -321,7 +335,16 @@ export default function Dashboard() {
           switch (widget.widget_type) {
             case 'bucket_pie':
             case 'top_merchants': {
-              const res = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}${monthParam}${bucketParam}`)
+              // top_merchants doesn't support merchants filter (it groups by merchant)
+              const tmFilterParams: string[] = []
+              if (config.buckets?.length > 0) {
+                tmFilterParams.push(`buckets=${encodeURIComponent(config.buckets.join(','))}`)
+              }
+              if (config.accounts?.length > 0) {
+                tmFilterParams.push(`accounts=${encodeURIComponent(config.accounts.join(','))}`)
+              }
+              const tmFilterQuery = tmFilterParams.length > 0 ? `&${tmFilterParams.join('&')}` : ''
+              const res = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}${monthParam}${tmFilterQuery}`)
               data = await res.json()
               break
             }
@@ -336,23 +359,23 @@ export default function Dashboard() {
                 : new Date(selectedYear, 0, 1)
               const groupBy = viewMode === 'month' ? 'week' : 'month'
               const res = await fetch(
-                `/api/v1/reports/trends?start_date=${format(startDate, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=${groupBy}${bucketParam}`
+                `/api/v1/reports/trends?start_date=${format(startDate, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=${groupBy}${filterQuery}`
               )
               data = await res.json()
               break
             }
             case 'sankey': {
-              const res = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}${monthParam}${bucketParam}`)
+              const res = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}${monthParam}${filterQuery}`)
               data = await res.json()
               break
             }
             case 'treemap': {
-              const res = await fetch(`/api/v1/reports/treemap?year=${selectedYear}${monthParam}${bucketParam}`)
+              const res = await fetch(`/api/v1/reports/treemap?year=${selectedYear}${monthParam}${filterQuery}`)
               data = await res.json()
               break
             }
             case 'heatmap': {
-              const res = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}${monthParam}${bucketParam}`)
+              const res = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}${monthParam}${filterQuery}`)
               data = await res.json()
               break
             }

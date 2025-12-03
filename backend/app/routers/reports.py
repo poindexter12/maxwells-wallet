@@ -53,6 +53,107 @@ async def get_transaction_ids_by_buckets(
     )
     return {row[0] for row in result.all()}
 
+
+def filter_transactions_by_accounts(
+    transactions: List[Transaction],
+    accounts: List[str]
+) -> List[Transaction]:
+    """Filter transactions to only those from specified accounts."""
+    if not accounts:
+        return transactions
+    return [txn for txn in transactions if txn.account_source in accounts]
+
+
+def filter_transactions_by_merchants(
+    transactions: List[Transaction],
+    merchants: List[str]
+) -> List[Transaction]:
+    """Filter transactions to only those from specified merchants."""
+    if not merchants:
+        return transactions
+    # Case-insensitive match
+    merchants_lower = [m.lower() for m in merchants]
+    return [
+        txn for txn in transactions
+        if txn.merchant and txn.merchant.lower() in merchants_lower
+    ]
+
+
+def parse_filter_param(param: Optional[str]) -> List[str]:
+    """Parse comma-separated filter parameter into a list."""
+    if not param:
+        return []
+    return [v.strip() for v in param.split(',') if v.strip()]
+
+
+async def apply_transaction_filters(
+    transactions: List[Transaction],
+    session: AsyncSession,
+    buckets: Optional[str] = None,
+    accounts: Optional[str] = None,
+    merchants: Optional[str] = None
+) -> List[Transaction]:
+    """Apply bucket, account, and merchant filters to a list of transactions."""
+    # Filter by buckets
+    bucket_list = parse_filter_param(buckets)
+    if bucket_list:
+        valid_txn_ids = await get_transaction_ids_by_buckets(session, bucket_list)
+        transactions = [txn for txn in transactions if txn.id in valid_txn_ids]
+
+    # Filter by accounts
+    account_list = parse_filter_param(accounts)
+    if account_list:
+        transactions = filter_transactions_by_accounts(transactions, account_list)
+
+    # Filter by merchants
+    merchant_list = parse_filter_param(merchants)
+    if merchant_list:
+        transactions = filter_transactions_by_merchants(transactions, merchant_list)
+
+    return transactions
+
+
+@router.get("/filter-options")
+async def get_filter_options(
+    session: AsyncSession = Depends(get_session)
+):
+    """Get available filter options for widgets (accounts, merchants)."""
+    # Get distinct account sources
+    accounts_result = await session.execute(
+        select(
+            Transaction.account_source,
+            func.count(Transaction.id).label("count")
+        )
+        .group_by(Transaction.account_source)
+        .order_by(func.count(Transaction.id).desc())
+    )
+    accounts = [
+        {"value": row.account_source, "count": row.count}
+        for row in accounts_result.all()
+    ]
+
+    # Get top merchants (limit to most used)
+    merchants_result = await session.execute(
+        select(
+            Transaction.merchant,
+            func.count(Transaction.id).label("count")
+        )
+        .where(Transaction.merchant.isnot(None))
+        .group_by(Transaction.merchant)
+        .order_by(func.count(Transaction.id).desc())
+        .limit(100)
+    )
+    merchants = [
+        {"value": row.merchant, "count": row.count}
+        for row in merchants_result.all()
+    ]
+
+    return {
+        "accounts": accounts,
+        "merchants": merchants
+    }
+
+
 @router.get("/monthly-summary")
 async def monthly_summary(
     year: int = Query(..., description="Year (e.g., 2024)"),
@@ -288,6 +389,8 @@ async def spending_trends(
     end_date: date = Query(..., description="End date (YYYY-MM-DD)"),
     group_by: str = Query("month", pattern="^(month|week|category|account|tag)$", description="Grouping: month, week, category, account, or tag"),
     buckets: Optional[str] = Query(None, description="Comma-separated bucket tags to filter by"),
+    accounts: Optional[str] = Query(None, description="Comma-separated account sources to filter by"),
+    merchants: Optional[str] = Query(None, description="Comma-separated merchants to filter by"),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -312,12 +415,10 @@ async def spending_trends(
     )
     transactions = list(result.scalars().all())
 
-    # Filter by bucket tags if specified
-    if buckets:
-        bucket_list = [b.strip() for b in buckets.split(',') if b.strip()]
-        if bucket_list:
-            valid_txn_ids = await get_transaction_ids_by_buckets(session, bucket_list)
-            transactions = [txn for txn in transactions if txn.id in valid_txn_ids]
+    # Apply filters
+    transactions = await apply_transaction_filters(
+        transactions, session, buckets=buckets, accounts=accounts, merchants=merchants
+    )
 
     if group_by == "month":
         # Group by month
@@ -433,6 +534,7 @@ async def top_merchants(
     year: Optional[int] = Query(None, description="Specific year (overrides period)"),
     month: Optional[int] = Query(None, ge=1, le=12, description="Specific month (overrides period)"),
     buckets: Optional[str] = Query(None, description="Comma-separated bucket tags to filter by"),
+    accounts: Optional[str] = Query(None, description="Comma-separated account sources to filter by"),
     session: AsyncSession = Depends(get_session)
 ):
     """Get top merchants by spending"""
@@ -479,12 +581,10 @@ async def top_merchants(
     result = await session.execute(query)
     transactions = list(result.scalars().all())
 
-    # Filter by bucket tags if specified
-    if buckets:
-        bucket_list = [b.strip() for b in buckets.split(',') if b.strip()]
-        if bucket_list:
-            valid_txn_ids = await get_transaction_ids_by_buckets(session, bucket_list)
-            transactions = [txn for txn in transactions if txn.id in valid_txn_ids]
+    # Apply filters (no merchants filter - this endpoint groups by merchant)
+    transactions = await apply_transaction_filters(
+        transactions, session, buckets=buckets, accounts=accounts
+    )
 
     # Aggregate by merchant
     merchant_totals = defaultdict(lambda: {'amount': 0, 'count': 0})
@@ -1096,6 +1196,8 @@ async def sankey_flow(
     year: int = Query(..., description="Year (e.g., 2024)"),
     month: Optional[int] = Query(None, ge=1, le=12, description="Month (1-12), omit for full year"),
     buckets: Optional[str] = Query(None, description="Comma-separated bucket tags to filter by"),
+    accounts: Optional[str] = Query(None, description="Comma-separated account sources to filter by"),
+    merchants: Optional[str] = Query(None, description="Comma-separated merchants to filter by"),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -1126,12 +1228,10 @@ async def sankey_flow(
     )
     transactions = list(result.scalars().all())
 
-    # Filter by bucket tags if specified
-    if buckets:
-        bucket_list = [b.strip() for b in buckets.split(',') if b.strip()]
-        if bucket_list:
-            valid_txn_ids = await get_transaction_ids_by_buckets(session, bucket_list)
-            transactions = [txn for txn in transactions if txn.id in valid_txn_ids]
+    # Apply filters
+    transactions = await apply_transaction_filters(
+        transactions, session, buckets=buckets, accounts=accounts, merchants=merchants
+    )
 
     if not transactions:
         return {"nodes": [], "links": []}
@@ -1206,6 +1306,8 @@ async def treemap_data(
     year: int = Query(..., description="Year (e.g., 2024)"),
     month: Optional[int] = Query(None, ge=1, le=12, description="Month (1-12), omit for full year"),
     buckets: Optional[str] = Query(None, description="Comma-separated bucket tags to filter by"),
+    accounts: Optional[str] = Query(None, description="Comma-separated account sources to filter by"),
+    merchants: Optional[str] = Query(None, description="Comma-separated merchants to filter by"),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -1235,12 +1337,10 @@ async def treemap_data(
     )
     transactions = list(result.scalars().all())
 
-    # Filter by bucket tags if specified
-    if buckets:
-        bucket_list = [b.strip() for b in buckets.split(',') if b.strip()]
-        if bucket_list:
-            valid_txn_ids = await get_transaction_ids_by_buckets(session, bucket_list)
-            transactions = [txn for txn in transactions if txn.id in valid_txn_ids]
+    # Apply filters
+    transactions = await apply_transaction_filters(
+        transactions, session, buckets=buckets, accounts=accounts, merchants=merchants
+    )
 
     if not transactions:
         return {
@@ -1293,6 +1393,8 @@ async def spending_heatmap(
     year: int = Query(..., description="Year (e.g., 2024)"),
     month: Optional[int] = Query(None, ge=1, le=12, description="Month (1-12), omit for full year"),
     buckets: Optional[str] = Query(None, description="Comma-separated bucket tags to filter by"),
+    accounts: Optional[str] = Query(None, description="Comma-separated account sources to filter by"),
+    merchants: Optional[str] = Query(None, description="Comma-separated merchants to filter by"),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -1317,14 +1419,12 @@ async def spending_heatmap(
                 )
             )
         )
-        transactions = result.scalars().all()
+        transactions = list(result.scalars().all())
 
-        # Filter by bucket tags if specified
-        if buckets:
-            bucket_list = [b.strip() for b in buckets.split(',') if b.strip()]
-            if bucket_list:
-                valid_txn_ids = await get_transaction_ids_by_buckets(session, bucket_list)
-                transactions = [txn for txn in transactions if txn.id in valid_txn_ids]
+        # Apply filters
+        transactions = await apply_transaction_filters(
+            transactions, session, buckets=buckets, accounts=accounts, merchants=merchants
+        )
 
         daily_spending = defaultdict(float)
         daily_count = defaultdict(int)
@@ -1370,14 +1470,12 @@ async def spending_heatmap(
                 )
             )
         )
-        transactions = result.scalars().all()
+        transactions = list(result.scalars().all())
 
-        # Filter by bucket tags if specified
-        if buckets:
-            bucket_list = [b.strip() for b in buckets.split(',') if b.strip()]
-            if bucket_list:
-                valid_txn_ids = await get_transaction_ids_by_buckets(session, bucket_list)
-                transactions = [txn for txn in transactions if txn.id in valid_txn_ids]
+        # Apply filters
+        transactions = await apply_transaction_filters(
+            transactions, session, buckets=buckets, accounts=accounts, merchants=merchants
+        )
 
         monthly_spending = defaultdict(float)
         monthly_count = defaultdict(int)

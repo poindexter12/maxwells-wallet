@@ -19,8 +19,15 @@ interface Bucket {
   value: string
 }
 
+interface FilterOption {
+  value: string
+  count: number
+}
+
 interface WidgetConfig {
   buckets?: string[]
+  accounts?: string[]
+  merchants?: string[]
 }
 
 // Widget metadata for descriptions and help
@@ -99,15 +106,20 @@ const WIDGET_INFO: Record<string, {
 export default function DashboardConfigurePage() {
   const [widgets, setWidgets] = useState<Widget[]>([])
   const [availableBuckets, setAvailableBuckets] = useState<Bucket[]>([])
+  const [availableAccounts, setAvailableAccounts] = useState<FilterOption[]>([])
+  const [availableMerchants, setAvailableMerchants] = useState<FilterOption[]>([])
   const [loading, setLoading] = useState(true)
   const [editingWidget, setEditingWidget] = useState<Widget | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editBuckets, setEditBuckets] = useState<string[]>([])
+  const [editAccounts, setEditAccounts] = useState<string[]>([])
+  const [editMerchants, setEditMerchants] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     fetchWidgets()
     fetchBuckets()
+    fetchFilterOptions()
   }, [])
 
   async function fetchWidgets() {
@@ -133,6 +145,19 @@ export default function DashboardConfigurePage() {
       }
     } catch (error) {
       console.error('Error fetching buckets:', error)
+    }
+  }
+
+  async function fetchFilterOptions() {
+    try {
+      const res = await fetch('/api/v1/reports/filter-options')
+      if (res.ok) {
+        const data = await res.json()
+        setAvailableAccounts(data.accounts || [])
+        setAvailableMerchants(data.merchants || [])
+      }
+    } catch (error) {
+      console.error('Error fetching filter options:', error)
     }
   }
 
@@ -223,13 +248,19 @@ export default function DashboardConfigurePage() {
     setEditTitle(widget.title || '')
     const config: WidgetConfig = widget.config ? JSON.parse(widget.config) : {}
     setEditBuckets(config.buckets || [])
+    setEditAccounts(config.accounts || [])
+    setEditMerchants(config.merchants || [])
   }
 
   async function saveWidgetConfig() {
     if (!editingWidget) return
     setSaving(true)
     try {
-      const config: WidgetConfig = editBuckets.length > 0 ? { buckets: editBuckets } : {}
+      const config: WidgetConfig = {}
+      if (editBuckets.length > 0) config.buckets = editBuckets
+      if (editAccounts.length > 0) config.accounts = editAccounts
+      if (editMerchants.length > 0) config.merchants = editMerchants
+
       await fetch(`/api/v1/dashboard/widgets/${editingWidget.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -303,19 +334,26 @@ export default function DashboardConfigurePage() {
       {/* Help Section */}
       <div className="card p-6 bg-blue-500/5 border-blue-500/20">
         <h2 className="text-lg font-semibold text-theme mb-3">How Widget Filtering Works</h2>
-        <div className="grid md:grid-cols-2 gap-4 text-sm text-theme-muted">
+        <div className="grid md:grid-cols-3 gap-4 text-sm text-theme-muted">
           <div>
             <h3 className="font-medium text-theme mb-1">Creating Filtered Views</h3>
             <p>
-              Some widgets can be duplicated to create focused views. For example, duplicate the
-              "Spending Breakdown" treemap and filter it to show only "Groceries" spending.
+              Duplicate widgets to create focused views. For example, duplicate the treemap
+              and filter it to show only "Groceries" spending.
+            </p>
+          </div>
+          <div>
+            <h3 className="font-medium text-theme mb-1">Filter Types</h3>
+            <p>
+              Filter by <strong>bucket</strong> (spending category), <strong>account</strong> (credit card, bank),
+              or <strong>merchant</strong> (specific stores).
             </p>
           </div>
           <div>
             <h3 className="font-medium text-theme mb-1">Supported Widgets</h3>
             <p>
-              Widgets marked with a <span className="text-blue-500">filter icon</span> support bucket
-              filtering. Click the settings button to configure title and bucket filters.
+              Widgets marked with a <span className="text-blue-500">filter icon</span> support filtering.
+              Click the settings button to configure.
             </p>
           </div>
         </div>
@@ -338,7 +376,10 @@ export default function DashboardConfigurePage() {
               canDuplicate: false
             }
             const config = parseConfig(widget.config)
-            const hasFilter = config.buckets && config.buckets.length > 0
+            const hasBucketFilter = config.buckets && config.buckets.length > 0
+            const hasAccountFilter = config.accounts && config.accounts.length > 0
+            const hasMerchantFilter = config.merchants && config.merchants.length > 0
+            const hasFilter = hasBucketFilter || hasAccountFilter || hasMerchantFilter
             const isDuplicate = widget.title?.includes('(copy)') || hasFilter
 
             return (
@@ -408,9 +449,23 @@ export default function DashboardConfigurePage() {
                   </div>
                   <p className="text-sm text-theme-muted mt-0.5">{info.description}</p>
                   {hasFilter && (
-                    <p className="text-sm text-blue-500 mt-1">
-                      Filtered: {config.buckets!.join(', ')}
-                    </p>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {hasBucketFilter && (
+                        <span className="text-xs px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded">
+                          Buckets: {config.buckets!.join(', ')}
+                        </span>
+                      )}
+                      {hasAccountFilter && (
+                        <span className="text-xs px-2 py-0.5 bg-green-500/10 text-green-500 rounded">
+                          Accounts: {config.accounts!.join(', ')}
+                        </span>
+                      )}
+                      {hasMerchantFilter && (
+                        <span className="text-xs px-2 py-0.5 bg-purple-500/10 text-purple-500 rounded">
+                          Merchants: {config.merchants!.join(', ')}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -494,7 +549,7 @@ export default function DashboardConfigurePage() {
             className="fixed inset-0 bg-black/50 z-50"
             onClick={() => setEditingWidget(null)}
           />
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-theme-elevated border border-theme rounded-lg shadow-xl z-50 p-6">
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-theme-elevated border border-theme rounded-lg shadow-xl z-50 p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold text-theme mb-4">
               Configure {WIDGET_INFO[editingWidget.widget_type]?.icon} {WIDGET_INFO[editingWidget.widget_type]?.name || editingWidget.widget_type}
             </h3>
@@ -517,37 +572,116 @@ export default function DashboardConfigurePage() {
                 </p>
               </div>
 
-              {/* Bucket Filter */}
-              {WIDGET_INFO[editingWidget.widget_type]?.supportsFilter && availableBuckets.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-theme mb-1">
-                    Filter by Buckets
-                  </label>
-                  <p className="text-xs text-theme-muted mb-2">
-                    Select buckets to show only transactions in those categories. Leave empty to show all.
-                  </p>
-                  <div className="max-h-48 overflow-y-auto border border-theme rounded-md p-2">
-                    {availableBuckets.map((bucket) => (
-                      <label
-                        key={bucket.id}
-                        className="flex items-center gap-2 p-2 rounded hover:bg-[var(--color-bg-hover)] cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={editBuckets.includes(bucket.value)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setEditBuckets([...editBuckets, bucket.value])
-                            } else {
-                              setEditBuckets(editBuckets.filter(b => b !== bucket.value))
-                            }
-                          }}
-                          className="rounded border-theme text-blue-500 focus:ring-blue-500"
-                        />
-                        <span className="text-sm text-theme capitalize">{bucket.value}</span>
+              {/* Filter Sections - only show for filterable widgets */}
+              {WIDGET_INFO[editingWidget.widget_type]?.supportsFilter && (
+                <div className="space-y-4">
+                  {/* Bucket Filter */}
+                  {availableBuckets.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-theme mb-1">
+                        Filter by Buckets
                       </label>
-                    ))}
-                  </div>
+                      <p className="text-xs text-theme-muted mb-2">
+                        Show only transactions in selected categories.
+                      </p>
+                      <div className="max-h-32 overflow-y-auto border border-theme rounded-md p-2">
+                        {availableBuckets.map((bucket) => (
+                          <label
+                            key={bucket.id}
+                            className="flex items-center gap-2 p-1.5 rounded hover:bg-[var(--color-bg-hover)] cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={editBuckets.includes(bucket.value)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setEditBuckets([...editBuckets, bucket.value])
+                                } else {
+                                  setEditBuckets(editBuckets.filter(b => b !== bucket.value))
+                                }
+                              }}
+                              className="rounded border-theme text-blue-500 focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-theme capitalize">{bucket.value}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Account Filter */}
+                  {availableAccounts.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-theme mb-1">
+                        Filter by Accounts
+                      </label>
+                      <p className="text-xs text-theme-muted mb-2">
+                        Show only transactions from selected accounts.
+                      </p>
+                      <div className="max-h-32 overflow-y-auto border border-theme rounded-md p-2">
+                        {availableAccounts.map((account) => (
+                          <label
+                            key={account.value}
+                            className="flex items-center justify-between gap-2 p-1.5 rounded hover:bg-[var(--color-bg-hover)] cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={editAccounts.includes(account.value)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setEditAccounts([...editAccounts, account.value])
+                                  } else {
+                                    setEditAccounts(editAccounts.filter(a => a !== account.value))
+                                  }
+                                }}
+                                className="rounded border-theme text-green-500 focus:ring-green-500"
+                              />
+                              <span className="text-sm text-theme">{account.value}</span>
+                            </div>
+                            <span className="text-xs text-theme-muted">{account.count}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Merchant Filter */}
+                  {availableMerchants.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-theme mb-1">
+                        Filter by Merchants
+                      </label>
+                      <p className="text-xs text-theme-muted mb-2">
+                        Show only transactions from selected merchants.
+                      </p>
+                      <div className="max-h-32 overflow-y-auto border border-theme rounded-md p-2">
+                        {availableMerchants.slice(0, 50).map((merchant) => (
+                          <label
+                            key={merchant.value}
+                            className="flex items-center justify-between gap-2 p-1.5 rounded hover:bg-[var(--color-bg-hover)] cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={editMerchants.includes(merchant.value)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setEditMerchants([...editMerchants, merchant.value])
+                                  } else {
+                                    setEditMerchants(editMerchants.filter(m => m !== merchant.value))
+                                  }
+                                }}
+                                className="rounded border-theme text-purple-500 focus:ring-purple-500"
+                              />
+                              <span className="text-sm text-theme">{merchant.value}</span>
+                            </div>
+                            <span className="text-xs text-theme-muted">{merchant.count}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
