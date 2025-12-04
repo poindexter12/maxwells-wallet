@@ -1,6 +1,6 @@
 [project]
 name = "maxwells-wallet-backend"
-version = "0.6.0"
+version = "0.6.1"
 description = "Personal finance tracker with CSV import, smart categorization, and spending trend analysis."
 requires-python = ">=3.11"
 dependencies = [
