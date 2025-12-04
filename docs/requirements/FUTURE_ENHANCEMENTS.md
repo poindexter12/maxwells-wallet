@@ -80,6 +80,13 @@ Ideas for future versions beyond v0.
 - Onboarding tutorial
 - In-app help documentation
 
+### Internationalization (i18n)
+- Multi-language support infrastructure
+- Developer testing language (l33t speak) for validating translations
+- Priority languages: English (US/UK), German, French, Italian, Spanish
+- Currency formatting per locale
+- Date formatting per locale
+
 ## Low Priority
 
 ### Mobile App

@@ -1,9 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
 import { PageHelp } from '@/components/PageHelp'
+
+interface AccountTag {
+  id: number
+  namespace: string
+  value: string
+}
 
 const FORMAT_NAMES: Record<string, string> = {
   'bofa_bank': 'Bank of America (Checking/Savings)',
@@ -36,11 +42,29 @@ export default function ImportPage() {
   const [importing, setImporting] = useState(false)
   const [result, setResult] = useState<any>(null)
 
+  // Account selection state
+  const [accounts, setAccounts] = useState<AccountTag[]>([])
+  const [accountMode, setAccountMode] = useState<'existing' | 'new'>('existing')
+
   // Legacy single file mode states (kept for backwards compatibility)
   const [file, setFile] = useState<File | null>(null)
   const [accountSource, setAccountSource] = useState('')
   const [formatHint, setFormatHint] = useState('')
   const [preview, setPreview] = useState<any>(null)
+
+  // Fetch existing account tags on mount
+  useEffect(() => {
+    async function fetchAccounts() {
+      try {
+        const res = await fetch('/api/v1/tags?namespace=account')
+        const data = await res.json()
+        setAccounts(data)
+      } catch (error) {
+        console.error('Error fetching accounts:', error)
+      }
+    }
+    fetchAccounts()
+  }, [])
 
   async function handlePreview() {
     if (!file) return
@@ -349,14 +373,35 @@ export default function ImportPage() {
                         </div>
 
                         <div>
-                          <label className="block text-xs text-gray-600 mb-1">Account Source (Optional)</label>
-                          <input
-                            type="text"
-                            value={filePreview.accountSourceOverride || filePreview.account_source || ''}
-                            onChange={(e) => updateAccountSource(filePreview.filename, e.target.value)}
-                            placeholder="e.g., BOFA-Checking"
-                            className="w-full px-3 py-1 text-sm border rounded-md"
-                          />
+                          <label className="block text-xs text-gray-600 mb-1">
+                            Account Source <span className="text-red-500">*</span>
+                          </label>
+                          <div className="flex gap-2">
+                            {accounts.length > 0 && (
+                              <select
+                                value={filePreview.accountSourceOverride || filePreview.account_source || ''}
+                                onChange={(e) => updateAccountSource(filePreview.filename, e.target.value)}
+                                className={`flex-1 px-3 py-1 text-sm border rounded-md ${!(filePreview.accountSourceOverride || filePreview.account_source) ? 'border-yellow-400' : ''}`}
+                              >
+                                <option value="">-- Select Account --</option>
+                                {accounts.map((acct) => (
+                                  <option key={acct.id} value={acct.value}>
+                                    {acct.value}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                            <input
+                              type="text"
+                              value={filePreview.accountSourceOverride || filePreview.account_source || ''}
+                              onChange={(e) => updateAccountSource(filePreview.filename, e.target.value)}
+                              placeholder={accounts.length > 0 ? "or type new" : "e.g., BOFA-Checking"}
+                              className={`${accounts.length > 0 ? 'w-32' : 'flex-1'} px-3 py-1 text-sm border rounded-md ${!(filePreview.accountSourceOverride || filePreview.account_source) ? 'border-yellow-400' : ''}`}
+                            />
+                          </div>
+                          {!(filePreview.accountSourceOverride || filePreview.account_source) && (
+                            <p className="text-xs text-yellow-600 mt-1">⚠️ Required for duplicate detection</p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -365,13 +410,24 @@ export default function ImportPage() {
               </div>
 
               <div className="flex gap-4">
-                <button
-                  onClick={handleBatchConfirm}
-                  disabled={importing || batchPreviews.filter(p => p.selected).length === 0}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                >
-                  {importing ? 'Importing...' : `Import ${batchPreviews.filter(p => p.selected).length} Selected File${batchPreviews.filter(p => p.selected).length !== 1 ? 's' : ''}`}
-                </button>
+                {(() => {
+                  const selectedFiles = batchPreviews.filter(p => p.selected)
+                  const filesWithoutAccount = selectedFiles.filter(p => !(p.accountSourceOverride || p.account_source))
+                  const allHaveAccounts = filesWithoutAccount.length === 0
+                  const isDisabled = importing || selectedFiles.length === 0 || !allHaveAccounts
+
+                  return (
+                    <button
+                      onClick={handleBatchConfirm}
+                      disabled={isDisabled}
+                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    >
+                      {importing ? 'Importing...' :
+                       !allHaveAccounts ? `${filesWithoutAccount.length} File${filesWithoutAccount.length !== 1 ? 's' : ''} Missing Account` :
+                       `Import ${selectedFiles.length} Selected File${selectedFiles.length !== 1 ? 's' : ''}`}
+                    </button>
+                  )
+                })()}
                 <button
                   onClick={() => setBatchPreviews([])}
                   className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
@@ -403,18 +459,61 @@ export default function ImportPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Account Source (Optional)
+              Account Source <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              placeholder="e.g., BOFA-Checking, AMEX-53004"
-              value={accountSource}
-              onChange={(e) => setAccountSource(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md"
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              Required for Bank of America files
-            </p>
+            <div className="space-y-2">
+              {accounts.length > 0 && (
+                <div className="flex gap-2 mb-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAccountMode('existing')
+                      setAccountSource('')
+                    }}
+                    className={`px-3 py-1 text-xs rounded-md ${accountMode === 'existing' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                  >
+                    Use Existing
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAccountMode('new')
+                      setAccountSource('')
+                    }}
+                    className={`px-3 py-1 text-xs rounded-md ${accountMode === 'new' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                  >
+                    Create New
+                  </button>
+                </div>
+              )}
+              {accountMode === 'existing' && accounts.length > 0 ? (
+                <select
+                  value={accountSource}
+                  onChange={(e) => setAccountSource(e.target.value)}
+                  className={`w-full px-4 py-2 border rounded-md ${!accountSource ? 'border-yellow-400' : ''}`}
+                >
+                  <option value="">-- Select Account --</option>
+                  {accounts.map((acct) => (
+                    <option key={acct.id} value={acct.value}>
+                      {acct.value}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  placeholder="e.g., BOFA-Checking, AMEX-53004"
+                  value={accountSource}
+                  onChange={(e) => setAccountSource(e.target.value)}
+                  className={`w-full px-4 py-2 border rounded-md ${!accountSource ? 'border-yellow-400' : ''}`}
+                />
+              )}
+              {!accountSource && (
+                <p className="text-xs text-yellow-600">
+                  ⚠️ Account is required for accurate duplicate detection
+                </p>
+              )}
+            </div>
           </div>
 
           <div>
@@ -438,10 +537,10 @@ export default function ImportPage() {
 
             <button
               onClick={handlePreview}
-              disabled={!file}
+              disabled={!file || !accountSource}
               className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
-              Preview Import
+              {!accountSource ? 'Select an Account to Preview' : 'Preview Import'}
             </button>
           </div>
 
@@ -563,6 +662,31 @@ export default function ImportPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Cross-account warnings */}
+          {result.cross_account_warning_count > 0 && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-2">
+              <h3 className="font-semibold text-yellow-800">
+                Cross-Account Matches ({result.cross_account_warning_count})
+              </h3>
+              <p className="text-sm text-yellow-700">
+                These transactions appear to match existing transactions in other accounts.
+                This could indicate transfers between accounts or potential duplicate imports.
+              </p>
+              <div className="space-y-1 max-h-40 overflow-y-auto">
+                {result.cross_account_warnings?.map((warning: string, idx: number) => (
+                  <p key={idx} className="text-xs text-yellow-600 font-mono">
+                    {warning}
+                  </p>
+                ))}
+                {result.cross_account_warning_count > 10 && (
+                  <p className="text-xs text-yellow-600 italic">
+                    ...and {result.cross_account_warning_count - 10} more
+                  </p>
+                )}
               </div>
             </div>
           )}
