@@ -11,13 +11,13 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 
 **[Documentation](https://docs.maxwellswallet.com)** · **[Requirements](docs/requirements/)**
 
-## What's New
+## What's New in v0.6
 
-- **Quicken QIF/QFX/OFX Import** - Import from Quicken, Microsoft Money, and other financial software
-- **Credit Card Accounts** - Track due dates, credit limits, and utilization
-- **Advanced Search** - Quick filters, saved filters, CSV export
-- **Dynamic Thresholds** - "Large" transactions calculated from your spending history (2σ above average)
-- **Clickable Insights** - Dashboard anomaly counts link directly to filtered transactions
+- **Multi-Dashboard Support** - Create multiple dashboards with different layouts and filters
+- **Advanced Visualizations** - Sankey diagrams, treemaps, and calendar heatmaps
+- **Dashboard Year/Month Toggle** - Switch between monthly and yearly views
+- **Widget Filtering** - Filter individual widgets by bucket, account, or merchant
+- **Improved Duplicate Detection** - Cross-account duplicate warnings during import
 
 See [CHANGELOG.md](CHANGELOG.md) for full release history.
 

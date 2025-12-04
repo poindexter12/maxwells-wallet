@@ -11,6 +11,7 @@ erDiagram
     Budget }o--|| Tag : "tracks"
     TagRule }o--o| Tag : "assigns"
     RecurringPattern }o--o| Tag : "tracks"
+    Dashboard ||--o{ DashboardWidget : contains
 
     ImportSession {
         int id PK
@@ -41,7 +42,8 @@ erDiagram
         enum reconciliation_status "unreconciled|matched|manually_entered|ignored"
         string notes
         string reference_id "bank reference ID"
-        string content_hash "SHA256 for deduplication"
+        string content_hash "SHA256 with account"
+        string content_hash_no_account "SHA256 without account"
         int import_session_id FK
     }
 
@@ -118,6 +120,36 @@ erDiagram
         enum format_type
         string custom_mappings "JSON"
     }
+
+    Dashboard {
+        int id PK
+        datetime created_at
+        datetime updated_at
+        string name
+        string description
+        string view_mode "month|year"
+        int pinned_year
+        int pinned_month
+        string filter_buckets "JSON array"
+        string filter_accounts "JSON array"
+        string filter_merchants "JSON array"
+        bool is_default
+        int position "sidebar order"
+    }
+
+    DashboardWidget {
+        int id PK
+        datetime created_at
+        datetime updated_at
+        int dashboard_id FK
+        string widget_type
+        int position
+        bool visible
+        string config "JSON"
+        string filter_buckets "JSON array"
+        string filter_accounts "JSON array"
+        string filter_merchants "JSON array"
+    }
 ```
 
 ## Model Descriptions
@@ -132,8 +164,13 @@ Core entity representing financial transactions from bank/credit card statements
 - **merchant**: Cleaned/extracted merchant name for tagging
 - **account_source**: Identifies the source account (e.g., "BOFA-CC", "AMEX-53004")
 - **account_tag_id**: FK to the account Tag (for budgets and filtering by account)
-- **content_hash**: SHA256 hash of transaction content for reliable deduplication
+- **content_hash**: SHA256 hash including account for same-account deduplication
+- **content_hash_no_account**: SHA256 hash excluding account for cross-account detection
 - **reference_id**: Bank's unique transaction identifier for duplicate detection
+
+The dual-hash approach enables:
+1. Primary dedup using `content_hash` (exact match within same account)
+2. Cross-account detection using `content_hash_no_account` (warns if same transaction in different account)
 
 Transactions have two types of tag relationships:
 - **account_tag**: Single FK to an account namespace tag (1:1)
@@ -168,6 +205,29 @@ Detected recurring transactions (subscriptions, bills). Used to predict upcoming
 
 ### ImportFormat
 Saved preferences for import sources. Remembers which CSV format to use for each account source.
+
+### Dashboard
+Named dashboard configurations that group widgets with shared settings. Key features:
+- **name**: Display name shown in sidebar and selector
+- **view_mode**: Default view ("month" or "year") for all widgets
+- **pinned_year/pinned_month**: Optional fixed date defaults (otherwise uses current date)
+- **filter_***: Dashboard-level filters applied to all widgets (JSON arrays of tag values)
+- **is_default**: One dashboard is marked default and loads on homepage
+- **position**: Order in sidebar navigation
+
+Dashboards support filtering at two levels:
+1. Dashboard-level filters apply to all widgets as defaults
+2. Widget-level filters override dashboard filters when set
+
+### DashboardWidget
+Individual widgets within a dashboard. Each widget displays a specific visualization:
+- **widget_type**: Type of chart/display (spending_chart, budget_progress, sankey, etc.)
+- **position**: Order within the dashboard
+- **visible**: Whether widget is shown
+- **config**: Widget-specific configuration as JSON
+- **filter_***: Widget-specific filters that override dashboard defaults
+
+Widget types include: spending_chart, budget_progress, top_merchants, recent_transactions, month_over_month, anomalies, recurring, credit_cards, insights, sankey_chart, treemap_chart, calendar_heatmap.
 
 ## Import Format Types
 
