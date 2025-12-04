@@ -92,24 +92,7 @@ Full documentation is available at **[docs.maxwellswallet.com](https://docs.maxw
 
 ## Roadmap
 
-Planned features for future releases:
-
-### v0.7
-- **Configurable CSV Importer** - User-defined column mappings for any CSV format
-- **Scheduled Reports** - Email digests and automated reports
-- **Performance Optimization** - Faster queries and caching
-
-### Future Ideas
-- **Mobile App** - iOS/Android companion app
-- **Bank Sync** - Direct bank connections via Plaid/Yodlee
-- **Investment Tracking** - Portfolio and asset tracking
-- **Multi-Currency** - Support for international transactions
-- **Internationalization** - Multi-language support
-- **Receipt Scanning** - OCR for paper receipts
-- **Shared Households** - Multi-user expense sharing
-- **AI Insights** - Smart spending recommendations
-
-See [FUTURE_ENHANCEMENTS.md](docs/requirements/FUTURE_ENHANCEMENTS.md) for the complete backlog.
+See [GitHub Discussions - Ideas](https://github.com/poindexter12/maxwells-wallet/discussions/categories/ideas) for planned features. Vote and comment on the features you want!
 
 ## License
 
