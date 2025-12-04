@@ -205,6 +205,12 @@ These features are interesting but not currently prioritized:
 - Required Account Selection - Import requires account selection for reliable dedup
 
 ### v0.7 (Planned)
+- **Configurable CSV Importer** - User-defined column mappings for any CSV format
+  - Map columns to fields (date, amount, description, etc.)
+  - Skip header/footer rows
+  - Custom date formats
+  - Amount sign handling (positive/negative)
+  - Save configurations for reuse
 - Scheduled reports & email digests
 - Observability & OpenTelemetry integration
 - Performance optimization

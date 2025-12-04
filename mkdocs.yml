@@ -40,6 +40,7 @@ nav:
     - Import: features/import.md
     - Transactions: features/transactions.md
     - Budgets: features/budgets.md
+    - Dashboards: features/dashboards.md
     - Analytics: features/analytics.md
   - API Reference:
     - Overview: api/overview.md
