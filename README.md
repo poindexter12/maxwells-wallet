@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/gh/poindexter12/maxwells-wallet/graph/badge.svg)](https://codecov.io/gh/poindexter12/maxwells-wallet)
 [![Release](https://img.shields.io/github/v/release/poindexter12/maxwells-wallet?label=release)](https://github.com/poindexter12/maxwells-wallet/releases)
 [![Python](https://img.shields.io/badge/python-3.11+-3776ab?logo=python&logoColor=white)](https://www.python.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
 [![Docker](https://img.shields.io/badge/docker-ghcr.io-2496ed?logo=docker&logoColor=white)](https://github.com/poindexter12/maxwells-wallet/pkgs/container/maxwells-wallet)
 
 Personal finance tracker with CSV import, smart categorization, and spending trend analysis.
@@ -89,6 +89,27 @@ Full documentation is available at **[docs.maxwellswallet.com](https://docs.maxw
 - [Features Guide](https://docs.maxwellswallet.com/features/import/)
 - [API Reference](https://docs.maxwellswallet.com/api/overview/)
 - [Developer Guide](https://docs.maxwellswallet.com/developer/architecture/)
+
+## Roadmap
+
+Planned features for future releases:
+
+### v0.7
+- **Configurable CSV Importer** - User-defined column mappings for any CSV format
+- **Scheduled Reports** - Email digests and automated reports
+- **Performance Optimization** - Faster queries and caching
+
+### Future Ideas
+- **Mobile App** - iOS/Android companion app
+- **Bank Sync** - Direct bank connections via Plaid/Yodlee
+- **Investment Tracking** - Portfolio and asset tracking
+- **Multi-Currency** - Support for international transactions
+- **Internationalization** - Multi-language support
+- **Receipt Scanning** - OCR for paper receipts
+- **Shared Households** - Multi-user expense sharing
+- **AI Insights** - Smart spending recommendations
+
+See [FUTURE_ENHANCEMENTS.md](docs/requirements/FUTURE_ENHANCEMENTS.md) for the complete backlog.
 
 ## License
 
