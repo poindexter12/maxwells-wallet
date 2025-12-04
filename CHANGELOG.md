@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.0] - 2025-12-03
 
 ### Added
+- add dual-hash deduplication for cross-account detection (#48)
+- add widget bucket tag filtering (#28)
+- dashboard year/month view toggle (#27)
+- add advanced visualization widgets (Sankey, Treemap, Heatmap) (#26)
+- add split transactions and customizable dashboard (#25)
+
+### Changed
+- test: add comprehensive router tests, configure codecov (#24)
+## [0.6.0] - 2025-12-03
+
+### Added
 - **Multi-Dashboard Support** - Create multiple named dashboards with different layouts and filters
   - Dashboard sidebar for quick switching between dashboards
   - Clone, delete, and set default dashboard
