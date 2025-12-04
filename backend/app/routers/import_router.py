@@ -10,9 +10,15 @@ from app.models import (
     Transaction, ImportFormat,
     ImportFormatType, ReconciliationStatus, ImportSession,
     Tag, TransactionTag, BatchImportSession,
-    MerchantAlias, MerchantAliasMatchType
+    MerchantAlias, MerchantAliasMatchType,
+    CustomFormatConfig, CustomFormatConfigCreate, CustomFormatConfigUpdate
 )
 from app.csv_parser import parse_csv, detect_format
+from app.parsers import (
+    CustomCsvParser,
+    CustomCsvConfig,
+    analyze_csv_columns,
+)
 from app.tag_inference import infer_bucket_tag
 from app.utils.hashing import compute_transaction_hash_from_dict
 import re as regex_module
@@ -891,3 +897,382 @@ async def batch_confirm_import(
         "files": results,
         "format_saved": request_obj.save_format
     }
+
+
+# ============================================================================
+# Custom CSV Format Endpoints
+# ============================================================================
+
+class AnalyzeResponse(PydanticBaseModel):
+    """Response from CSV analysis endpoint"""
+    headers: List[str]
+    sample_rows: List[List[str]]
+    column_hints: Dict[str, Any]
+    row_count: int
+
+
+class CustomPreviewRequest(PydanticBaseModel):
+    """Request for custom format preview"""
+    config: Dict[str, Any]  # CustomCsvConfig as dict
+
+
+class CustomPreviewResponse(PydanticBaseModel):
+    """Response from custom format preview"""
+    transaction_count: int
+    transactions: List[Dict[str, Any]]
+    total_amount: float
+    errors: List[str]
+
+
+@router.post("/analyze", response_model=AnalyzeResponse)
+async def analyze_csv_file(
+    file: UploadFile = File(..., description="CSV file to analyze"),
+    skip_rows: int = Form(0, description="Number of rows to skip before header"),
+):
+    """
+    Analyze a CSV file and return column information with auto-detection hints.
+
+    Use this before creating a custom format configuration to understand
+    the structure of the CSV file.
+
+    Returns:
+    - **headers**: Column names from the CSV
+    - **sample_rows**: First 5 data rows for preview
+    - **column_hints**: Auto-detected column types and formats
+    - **row_count**: Total number of data rows
+    """
+    if not file.filename.lower().endswith('.csv'):
+        raise HTTPException(
+            status_code=400,
+            detail="Only CSV files can be analyzed for custom format creation"
+        )
+
+    content = await file.read()
+    csv_content = content.decode('utf-8')
+
+    analysis = analyze_csv_columns(csv_content, skip_rows)
+
+    # Count total rows
+    lines = csv_content.strip().split('\n')
+    row_count = max(0, len(lines) - 1 - skip_rows)  # Subtract header and skipped rows
+
+    return AnalyzeResponse(
+        headers=analysis["headers"],
+        sample_rows=analysis["sample_rows"],
+        column_hints=analysis["column_hints"],
+        row_count=row_count
+    )
+
+
+@router.post("/custom/preview", response_model=CustomPreviewResponse)
+async def preview_custom_import(
+    file: UploadFile = File(..., description="CSV file to preview"),
+    config_json: str = Form(..., description="CustomCsvConfig as JSON string"),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Preview import using a custom CSV format configuration.
+
+    This lets you test your column mappings before saving the configuration.
+    The config_json should be a JSON object matching the CustomCsvConfig structure.
+
+    Returns:
+    - **transaction_count**: Number of transactions parsed
+    - **transactions**: Preview of first 100 transactions
+    - **total_amount**: Sum of all transaction amounts
+    - **errors**: Any parsing errors encountered
+    """
+    if not file.filename.lower().endswith('.csv'):
+        raise HTTPException(
+            status_code=400,
+            detail="Custom format preview only supports CSV files"
+        )
+
+    content = await file.read()
+    csv_content = content.decode('utf-8')
+
+    errors = []
+    try:
+        config = CustomCsvConfig.from_json(config_json)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid config JSON: {str(e)}"
+        )
+
+    try:
+        parser = CustomCsvParser(config)
+        parsed_transactions = parser.parse(csv_content)
+    except Exception as e:
+        errors.append(f"Parse error: {str(e)}")
+        return CustomPreviewResponse(
+            transaction_count=0,
+            transactions=[],
+            total_amount=0.0,
+            errors=errors
+        )
+
+    # Convert ParsedTransaction objects to dicts
+    transactions = [t.to_dict() for t in parsed_transactions]
+
+    # Add bucket tag suggestions
+    all_txns_result = await session.execute(
+        select(Transaction).where(Transaction.category.isnot(None))
+    )
+    all_txns = all_txns_result.scalars().all()
+    user_history = {}
+    for txn in all_txns:
+        if txn.merchant and txn.category:
+            merchant = txn.merchant.lower()
+            bucket_value = txn.category.lower().replace(' ', '-').replace('&', 'and')
+            user_history[merchant] = f"bucket:{bucket_value}"
+
+    for txn in transactions:
+        suggestions = infer_bucket_tag(
+            txn.get('merchant', ''),
+            txn.get('description', ''),
+            txn.get('amount', 0),
+            user_history
+        )
+        if suggestions:
+            tag = suggestions[0][0]
+            bucket_value = tag.split(':', 1)[1] if ':' in tag else tag
+            txn['bucket'] = bucket_value
+            txn['bucket_tag'] = tag
+
+    total_amount = sum(t.amount for t in parsed_transactions)
+
+    return CustomPreviewResponse(
+        transaction_count=len(transactions),
+        transactions=transactions[:100],
+        total_amount=total_amount,
+        errors=errors
+    )
+
+
+# ============================================================================
+# Custom Format Configuration CRUD
+# ============================================================================
+
+@router.post("/custom/configs")
+async def create_custom_config(
+    config: CustomFormatConfigCreate,
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Save a custom CSV format configuration.
+
+    The config_json should be a JSON string containing:
+    - name: Display name for the format
+    - account_source: Default account source for imports
+    - date_column, amount_column, description_column: Required column mappings
+    - Optional: merchant_column, reference_column, category_column, card_member_column
+    - date_format: strptime format string (default: "%m/%d/%Y")
+    - amount_sign_convention: "negative_prefix", "parentheses", or "plus_minus"
+    - row_handling: { skip_header_rows, skip_footer_rows, skip_patterns }
+    """
+    # Validate the config JSON
+    try:
+        CustomCsvConfig.from_json(config.config_json)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid config JSON: {str(e)}"
+        )
+
+    # Check for duplicate name
+    result = await session.execute(
+        select(CustomFormatConfig).where(CustomFormatConfig.name == config.name)
+    )
+    if result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=400,
+            detail=f"A configuration named '{config.name}' already exists"
+        )
+
+    db_config = CustomFormatConfig(
+        name=config.name,
+        description=config.description,
+        config_json=config.config_json
+    )
+    session.add(db_config)
+    await session.commit()
+    await session.refresh(db_config)
+
+    return db_config
+
+
+@router.get("/custom/configs")
+async def list_custom_configs(
+    session: AsyncSession = Depends(get_session)
+):
+    """List all saved custom CSV format configurations, ordered by usage count."""
+    result = await session.execute(
+        select(CustomFormatConfig).order_by(CustomFormatConfig.use_count.desc())
+    )
+    return result.scalars().all()
+
+
+@router.get("/custom/configs/{config_id}")
+async def get_custom_config(
+    config_id: int,
+    session: AsyncSession = Depends(get_session)
+):
+    """Get a specific custom CSV format configuration."""
+    result = await session.execute(
+        select(CustomFormatConfig).where(CustomFormatConfig.id == config_id)
+    )
+    config = result.scalar_one_or_none()
+    if not config:
+        raise HTTPException(status_code=404, detail="Configuration not found")
+    return config
+
+
+@router.put("/custom/configs/{config_id}")
+async def update_custom_config(
+    config_id: int,
+    update: CustomFormatConfigUpdate,
+    session: AsyncSession = Depends(get_session)
+):
+    """Update a custom CSV format configuration."""
+    result = await session.execute(
+        select(CustomFormatConfig).where(CustomFormatConfig.id == config_id)
+    )
+    config = result.scalar_one_or_none()
+    if not config:
+        raise HTTPException(status_code=404, detail="Configuration not found")
+
+    # Validate config_json if provided
+    if update.config_json:
+        try:
+            CustomCsvConfig.from_json(update.config_json)
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid config JSON: {str(e)}"
+            )
+
+    # Check for duplicate name
+    if update.name and update.name != config.name:
+        existing = await session.execute(
+            select(CustomFormatConfig).where(CustomFormatConfig.name == update.name)
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(
+                status_code=400,
+                detail=f"A configuration named '{update.name}' already exists"
+            )
+
+    update_data = update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(config, field, value)
+
+    config.updated_at = datetime.utcnow()
+    await session.commit()
+    await session.refresh(config)
+
+    return config
+
+
+@router.delete("/custom/configs/{config_id}")
+async def delete_custom_config(
+    config_id: int,
+    session: AsyncSession = Depends(get_session)
+):
+    """Delete a custom CSV format configuration."""
+    result = await session.execute(
+        select(CustomFormatConfig).where(CustomFormatConfig.id == config_id)
+    )
+    config = result.scalar_one_or_none()
+    if not config:
+        raise HTTPException(status_code=404, detail="Configuration not found")
+
+    await session.delete(config)
+    await session.commit()
+    return {"deleted": True}
+
+
+@router.get("/custom/configs/{config_id}/export")
+async def export_custom_config(
+    config_id: int,
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Export a custom CSV format configuration as JSON.
+
+    The returned JSON can be imported on another instance using the import endpoint.
+    """
+    result = await session.execute(
+        select(CustomFormatConfig).where(CustomFormatConfig.id == config_id)
+    )
+    config = result.scalar_one_or_none()
+    if not config:
+        raise HTTPException(status_code=404, detail="Configuration not found")
+
+    import json
+    return {
+        "name": config.name,
+        "description": config.description,
+        "config": json.loads(config.config_json)
+    }
+
+
+class ImportConfigRequest(PydanticBaseModel):
+    """Request to import a custom format configuration"""
+    name: Optional[str] = None  # Override name (optional)
+    description: Optional[str] = None  # Override description (optional)
+    config: Dict[str, Any]  # The config to import
+
+
+@router.post("/custom/configs/import")
+async def import_custom_config(
+    request: ImportConfigRequest,
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Import a custom CSV format configuration from JSON.
+
+    Optionally override the name and description during import.
+    """
+    import json
+
+    # Build config object and validate
+    config_json = json.dumps(request.config)
+    try:
+        parsed_config = CustomCsvConfig.from_json(config_json)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid config: {str(e)}"
+        )
+
+    # Use provided name or extract from config
+    name = request.name or request.config.get("name", "Imported Config")
+
+    # Check for duplicate name
+    result = await session.execute(
+        select(CustomFormatConfig).where(CustomFormatConfig.name == name)
+    )
+    if result.scalar_one_or_none():
+        # Auto-generate unique name
+        base_name = name
+        counter = 1
+        while True:
+            name = f"{base_name} ({counter})"
+            result = await session.execute(
+                select(CustomFormatConfig).where(CustomFormatConfig.name == name)
+            )
+            if not result.scalar_one_or_none():
+                break
+            counter += 1
+
+    db_config = CustomFormatConfig(
+        name=name,
+        description=request.description or request.config.get("description"),
+        config_json=config_json
+    )
+    session.add(db_config)
+    await session.commit()
+    await session.refresh(db_config)
+
+    return db_config

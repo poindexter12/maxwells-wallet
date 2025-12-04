@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
 import { PageHelp } from '@/components/PageHelp'
+import { CustomFormatMapper } from '@/components/CustomFormatMapper'
 
 interface AccountTag {
   id: number
@@ -17,6 +18,7 @@ const FORMAT_NAMES: Record<string, string> = {
   'amex_cc': 'American Express',
   'inspira_hsa': 'Inspira HSA',
   'venmo': 'Venmo',
+  'custom': 'Custom Format',
   'unknown': 'Unknown'
 }
 
@@ -52,6 +54,10 @@ export default function ImportPage() {
   const [formatHint, setFormatHint] = useState('')
   const [preview, setPreview] = useState<any>(null)
 
+  // Custom format state
+  const [showCustomMapper, setShowCustomMapper] = useState(false)
+  const [customConfig, setCustomConfig] = useState<any>(null)
+
   // Fetch existing account tags on mount
   useEffect(() => {
     async function fetchAccounts() {
@@ -68,6 +74,38 @@ export default function ImportPage() {
 
   async function handlePreview() {
     if (!file) return
+
+    // Use custom format endpoint if custom config is set
+    if (formatHint === 'custom' && customConfig) {
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('config_json', JSON.stringify({
+          ...customConfig,
+          account_source: accountSource || customConfig.account_source
+        }))
+
+        const res = await fetch('/api/v1/import/custom/preview', {
+          method: 'POST',
+          body: formData
+        })
+        const data = await res.json()
+
+        // Transform custom preview to match standard preview format
+        setPreview({
+          detected_format: 'custom',
+          transaction_count: data.transaction_count,
+          total_amount: data.total_amount,
+          transactions: data.transactions,
+          errors: data.errors
+        })
+        setResult(null)
+      } catch (error) {
+        console.error('Error previewing custom import:', error)
+        alert('Error previewing file with custom format')
+      }
+      return
+    }
 
     const formData = new FormData()
     formData.append('file', file)
@@ -522,7 +560,12 @@ export default function ImportPage() {
             </label>
             <select
               value={formatHint}
-              onChange={(e) => setFormatHint(e.target.value)}
+              onChange={(e) => {
+                setFormatHint(e.target.value)
+                if (e.target.value === 'custom') {
+                  setCustomConfig(null)
+                }
+              }}
               className="w-full px-4 py-2 border rounded-md"
             >
               <option value="">Auto-detect</option>
@@ -531,16 +574,43 @@ export default function ImportPage() {
               <option value="amex_cc">American Express</option>
               <option value="inspira_hsa">Inspira HSA</option>
               <option value="venmo">Venmo</option>
+              <option value="custom">Custom Format...</option>
             </select>
+            {formatHint === 'custom' && !customConfig && (
+              <button
+                onClick={() => setShowCustomMapper(true)}
+                disabled={!file}
+                className="mt-2 w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                Configure Custom Format
+              </button>
+            )}
+            {formatHint === 'custom' && customConfig && (
+              <div className="mt-2 p-2 bg-purple-50 rounded border border-purple-200">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-purple-800">
+                    Configured: {customConfig.name}
+                  </span>
+                  <button
+                    onClick={() => setShowCustomMapper(true)}
+                    className="text-xs text-purple-600 hover:text-purple-800"
+                  >
+                    Edit
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
             <button
               onClick={handlePreview}
-              disabled={!file || !accountSource}
+              disabled={!file || !accountSource || (formatHint === 'custom' && !customConfig)}
               className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
-              {!accountSource ? 'Select an Account to Preview' : 'Preview Import'}
+              {!accountSource ? 'Select an Account to Preview' :
+               (formatHint === 'custom' && !customConfig) ? 'Configure Custom Format First' :
+               'Preview Import'}
             </button>
           </div>
 
@@ -691,6 +761,19 @@ export default function ImportPage() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Custom Format Mapper Modal */}
+      {showCustomMapper && file && (
+        <CustomFormatMapper
+          file={file}
+          onConfigured={(config) => {
+            setCustomConfig(config)
+            setAccountSource(config.account_source || accountSource)
+            setShowCustomMapper(false)
+          }}
+          onCancel={() => setShowCustomMapper(false)}
+        />
       )}
     </div>
   )

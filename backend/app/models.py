@@ -21,6 +21,7 @@ class ImportFormatType(str, Enum):
     venmo = "venmo"           # Venmo (ID,Datetime,Type,Status,Note,From,To,Amount...)
     qif = "qif"               # Quicken Interchange Format (text-based)
     qfx = "qfx"               # Quicken Financial Exchange / OFX (XML-based)
+    custom = "custom"         # User-defined custom CSV format with configurable mappings
     unknown = "unknown"
 
 class BaseModel(SQLModel):
@@ -156,6 +157,29 @@ class ImportFormatCreate(SQLModel):
 class ImportFormatUpdate(SQLModel):
     format_type: Optional[ImportFormatType] = None
     custom_mappings: Optional[str] = None
+
+
+class CustomFormatConfig(BaseModel, table=True):
+    """Named custom CSV format configurations for reuse across accounts"""
+    __tablename__ = "custom_format_configs"
+
+    name: str = Field(index=True, unique=True)  # User-friendly name
+    description: Optional[str] = None
+    config_json: str  # JSON string containing CustomCsvConfig
+    use_count: int = Field(default=0)  # Track usage for sorting
+
+
+class CustomFormatConfigCreate(SQLModel):
+    name: str
+    description: Optional[str] = None
+    config_json: str  # JSON string containing CustomCsvConfig
+
+
+class CustomFormatConfigUpdate(SQLModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    config_json: Optional[str] = None
+
 
 class ImportSession(BaseModel, table=True):
     """Tracks import batches for audit and rollback"""
