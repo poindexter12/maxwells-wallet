@@ -909,6 +909,9 @@ class AnalyzeResponse(PydanticBaseModel):
     sample_rows: List[List[str]]
     column_hints: Dict[str, Any]
     row_count: int
+    detected_format: Optional[str] = None
+    format_confidence: Optional[float] = None
+    suggested_config: Optional[Dict[str, Any]] = None
 
 
 class CustomPreviewRequest(PydanticBaseModel):
@@ -940,6 +943,8 @@ async def analyze_csv_file(
     - **sample_rows**: First 5 data rows for preview
     - **column_hints**: Auto-detected column types and formats
     - **row_count**: Total number of data rows
+    - **detected_format**: Auto-detected file format (if recognized)
+    - **format_confidence**: Confidence score for detected format (0-1)
     """
     if not file.filename.lower().endswith('.csv'):
         raise HTTPException(
@@ -956,11 +961,22 @@ async def analyze_csv_file(
     lines = csv_content.strip().split('\n')
     row_count = max(0, len(lines) - 1 - skip_rows)  # Subtract header and skipped rows
 
+    # Try to detect known format
+    detected_format = None
+    format_confidence = None
+    try:
+        detected_format, format_confidence = detect_format(csv_content)
+    except Exception:
+        pass  # Format detection failed, leave as None
+
     return AnalyzeResponse(
         headers=analysis["headers"],
         sample_rows=analysis["sample_rows"],
         column_hints=analysis["column_hints"],
-        row_count=row_count
+        row_count=row_count,
+        detected_format=detected_format,
+        format_confidence=format_confidence,
+        suggested_config=analysis.get("suggested_config")
     )
 
 
@@ -1048,6 +1064,232 @@ async def preview_custom_import(
         total_amount=total_amount,
         errors=errors
     )
+
+
+@router.post("/custom/confirm")
+async def confirm_custom_import(
+    file: UploadFile = File(..., description="CSV file to import"),
+    config_json: str = Form(..., description="CustomCsvConfig as JSON string"),
+    save_config: bool = Form(False, description="Save the config for future use"),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Confirm and import transactions using a custom CSV format configuration.
+
+    This is the final step after previewing with /custom/preview.
+    Parses the CSV file with the custom config and saves transactions to database.
+
+    Returns:
+    - **imported**: Number of new transactions imported
+    - **duplicates**: Number of duplicates skipped
+    - **config_saved**: Whether the config was saved for future use
+    - **import_session_id**: ID for tracking this import batch
+    """
+    if not file.filename.lower().endswith('.csv'):
+        raise HTTPException(
+            status_code=400,
+            detail="Custom format import only supports CSV files"
+        )
+
+    content = await file.read()
+    csv_content = content.decode('utf-8')
+
+    # Parse and validate config
+    try:
+        config = CustomCsvConfig.from_json(config_json)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid config JSON: {str(e)}"
+        )
+
+    # Parse transactions
+    try:
+        parser = CustomCsvParser(config)
+        parsed_transactions = parser.parse(csv_content)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Parse error: {str(e)}"
+        )
+
+    if not parsed_transactions:
+        raise HTTPException(status_code=400, detail="No transactions found in file")
+
+    # Build user history for bucket tag suggestions
+    all_txns_result = await session.execute(
+        select(Transaction).where(Transaction.category.isnot(None))
+    )
+    all_txns = all_txns_result.scalars().all()
+    user_history = {}
+    for txn in all_txns:
+        if txn.merchant and txn.category:
+            merchant = txn.merchant.lower()
+            bucket_value = txn.category.lower().replace(' ', '-').replace('&', 'and')
+            user_history[merchant] = f"bucket:{bucket_value}"
+
+    # Load merchant aliases for normalization
+    merchant_aliases = await get_merchant_aliases(session)
+
+    # Create import session
+    import_session = ImportSession(
+        filename=file.filename,
+        format_type=ImportFormatType.custom,
+        account_source=config.account_source,
+        transaction_count=0,
+        duplicate_count=0,
+        total_amount=0.0,
+        status="in_progress"
+    )
+    session.add(import_session)
+    await session.flush()
+
+    # Import transactions
+    imported_count = 0
+    duplicate_count = 0
+    total_amount = 0.0
+    dates = []
+    cross_account_warnings = []
+
+    for parsed_txn in parsed_transactions:
+        txn_data = parsed_txn.to_dict()
+
+        # Generate hashes for deduplication
+        content_hash = compute_transaction_hash_from_dict(txn_data, include_account=True)
+        content_hash_no_account = compute_transaction_hash_from_dict(txn_data, include_account=False)
+
+        # Check for exact duplicate
+        if content_hash:
+            dup_query = select(Transaction).where(
+                Transaction.content_hash == content_hash
+            )
+            result = await session.execute(dup_query)
+            existing = result.scalar_one_or_none()
+
+            if existing:
+                duplicate_count += 1
+                continue
+
+            # Check for cross-account duplicate
+            if content_hash_no_account:
+                cross_query = select(Transaction).where(
+                    Transaction.content_hash_no_account == content_hash_no_account,
+                    Transaction.account_source != txn_data['account_source']
+                )
+                result = await session.execute(cross_query)
+                cross_match = result.scalar_one_or_none()
+
+                if cross_match:
+                    cross_account_warnings.append({
+                        "date": str(txn_data['date']),
+                        "amount": txn_data['amount'],
+                        "description": txn_data['description'][:50],
+                        "existing_account": cross_match.account_source,
+                        "importing_account": txn_data['account_source']
+                    })
+
+        # Infer bucket tag
+        suggestions = infer_bucket_tag(
+            txn_data.get('merchant', ''),
+            txn_data.get('description', ''),
+            txn_data.get('amount', 0),
+            user_history
+        )
+
+        if suggestions:
+            bucket_tag = suggestions[0][0]
+            bucket_value = bucket_tag.split(':', 1)[1] if ':' in bucket_tag else 'none'
+        else:
+            bucket_value = 'none'
+
+        category_display = bucket_value.replace('-', ' ').title() if bucket_value != 'none' else None
+
+        # Apply merchant alias
+        merchant_name = txn_data.get('merchant')
+        if merchant_aliases:
+            aliased_merchant = apply_merchant_alias(txn_data['description'], merchant_aliases)
+            if aliased_merchant:
+                merchant_name = aliased_merchant
+
+        # Create transaction
+        db_transaction = Transaction(
+            date=txn_data['date'],
+            amount=txn_data['amount'],
+            description=txn_data['description'],
+            merchant=merchant_name,
+            account_source=txn_data['account_source'],
+            card_member=txn_data.get('card_member'),
+            category=category_display,
+            reconciliation_status=ReconciliationStatus.unreconciled,
+            reference_id=txn_data.get('reference_id'),
+            import_session_id=import_session.id,
+            content_hash=content_hash,
+            content_hash_no_account=content_hash_no_account
+        )
+
+        # Set account_tag_id
+        if txn_data['account_source']:
+            account_tag = await get_or_create_account_tag(session, txn_data['account_source'])
+            db_transaction.account_tag_id = account_tag.id
+
+        session.add(db_transaction)
+        await session.flush()
+
+        # Apply bucket tag
+        await apply_bucket_tag(session, db_transaction.id, bucket_value)
+
+        imported_count += 1
+        total_amount += txn_data['amount']
+        dates.append(txn_data['date'])
+
+    # Update import session
+    import_session.transaction_count = imported_count
+    import_session.duplicate_count = duplicate_count
+    import_session.total_amount = total_amount
+    import_session.status = "completed"
+    if dates:
+        import_session.date_range_start = min(dates)
+        import_session.date_range_end = max(dates)
+
+    # Save config if requested
+    config_saved = False
+    if save_config:
+        # Check if config with same name exists
+        result = await session.execute(
+            select(CustomFormatConfig).where(CustomFormatConfig.name == config.name)
+        )
+        existing_config = result.scalar_one_or_none()
+
+        if existing_config:
+            # Update existing config
+            existing_config.config_json = config_json
+            existing_config.use_count += 1
+            existing_config.updated_at = datetime.utcnow()
+        else:
+            # Create new config
+            new_config = CustomFormatConfig(
+                name=config.name,
+                config_json=config_json,
+                use_count=1
+            )
+            session.add(new_config)
+
+        config_saved = True
+
+    await session.commit()
+
+    response = {
+        "imported": imported_count,
+        "duplicates": duplicate_count,
+        "config_saved": config_saved,
+        "import_session_id": import_session.id
+    }
+
+    if cross_account_warnings:
+        response["cross_account_warnings"] = cross_account_warnings[:10]
+        response["cross_account_warning_count"] = len(cross_account_warnings)
+
+    return response
 
 
 # ============================================================================

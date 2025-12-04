@@ -458,6 +458,36 @@ class TestAnalyzeCsvColumns:
         assert result["headers"] == ["Date", "Amount", "Description", "Category"]
         assert len(result["sample_rows"]) == 2
 
+    def test_suggested_config(self):
+        """Analysis should include suggested config"""
+        result = analyze_csv_columns(SIMPLE_CSV)
+
+        assert "suggested_config" in result
+        suggested = result["suggested_config"]
+
+        # Should have detected the required columns
+        assert suggested["date_column"] == "Date"
+        assert suggested["amount_column"] == "Amount"
+        assert suggested["description_column"] in ["Description", "Merchant"]
+
+        # Should have detected date format
+        assert suggested["date_format"] == "%m/%d/%Y"
+
+        # Should have completeness score
+        assert suggested["_completeness"] == 1.0
+
+    def test_suggested_config_unknown_format(self):
+        """Suggested config handles unknown columns gracefully"""
+        unknown_csv = """Col1,Col2,Col3
+abc,def,ghi
+jkl,mno,pqr
+"""
+        result = analyze_csv_columns(unknown_csv)
+        suggested = result["suggested_config"]
+
+        # Should have low completeness when columns not recognized
+        assert suggested["_completeness"] < 1.0
+
 
 # =============================================================================
 # API Endpoint Tests

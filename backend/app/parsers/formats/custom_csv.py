@@ -29,10 +29,12 @@ from ..base import (
 @dataclass
 class RowHandling:
     """Configuration for row filtering and skipping."""
-    skip_header_rows: int = 0  # Rows to skip before CSV header
+    skip_header_rows: int = 0  # Rows to skip before CSV header (if find_header_row is False)
     skip_footer_rows: int = 0  # Rows to skip at end of file
     skip_patterns: List[str] = field(default_factory=list)  # Skip rows matching these patterns
     skip_empty_rows: bool = True  # Skip rows with empty date/amount
+    find_header_row: bool = False  # Auto-find header row containing expected columns
+    header_indicators: List[str] = field(default_factory=list)  # Columns that must be present in header
 
 
 @dataclass
@@ -73,6 +75,8 @@ class CustomCsvConfig:
     # Merchant extraction
     merchant_split_chars: str = ""  # Split description on these chars, take first part
     merchant_max_length: int = 50
+    merchant_regex: str = ""  # Regex to extract merchant (group 1 is used)
+    merchant_first_words: int = 0  # Take first N words from description (0 = disabled)
 
     @classmethod
     def from_json(cls, json_str: str) -> "CustomCsvConfig":
@@ -107,9 +111,13 @@ class CustomCsvConfig:
                 "skip_footer_rows": self.row_handling.skip_footer_rows,
                 "skip_patterns": self.row_handling.skip_patterns,
                 "skip_empty_rows": self.row_handling.skip_empty_rows,
+                "find_header_row": self.row_handling.find_header_row,
+                "header_indicators": self.row_handling.header_indicators,
             },
             "merchant_split_chars": self.merchant_split_chars,
             "merchant_max_length": self.merchant_max_length,
+            "merchant_regex": self.merchant_regex,
+            "merchant_first_words": self.merchant_first_words,
         }
         return json.dumps(data, indent=2)
 
@@ -192,11 +200,19 @@ class CustomCsvParser(CSVFormatParser):
         return False, 0.0
 
     def preprocess_content(self, csv_content: str) -> str:
-        """Skip header and footer rows."""
+        """Skip header and footer rows, optionally auto-detecting header row."""
         lines = csv_content.split('\n')
 
-        # Skip header rows
-        start = self.config.row_handling.skip_header_rows
+        # Find header row if configured
+        if self.config.row_handling.find_header_row and self.config.row_handling.header_indicators:
+            start = 0
+            for i, line in enumerate(lines):
+                # Check if this line contains all header indicators
+                if all(indicator in line for indicator in self.config.row_handling.header_indicators):
+                    start = i
+                    break
+        else:
+            start = self.config.row_handling.skip_header_rows
 
         # Skip footer rows (calculate as positive index from end)
         if self.config.row_handling.skip_footer_rows > 0:
@@ -239,6 +255,19 @@ class CustomCsvParser(CSVFormatParser):
 
         # Otherwise, extract from description
         merchant = description
+
+        # Try regex extraction first
+        if self.config.merchant_regex:
+            match = re.search(self.config.merchant_regex, description)
+            if match:
+                merchant = match.group(1) if match.groups() else match.group(0)
+                return merchant[:self.config.merchant_max_length].strip()
+
+        # Try first N words extraction
+        if self.config.merchant_first_words > 0:
+            words = description.split()
+            merchant = ' '.join(words[:self.config.merchant_first_words])
+            return merchant[:self.config.merchant_max_length].strip()
 
         # Split on configured characters
         if self.config.merchant_split_chars:
@@ -468,10 +497,14 @@ def analyze_csv_columns(csv_content: str, skip_rows: int = 0) -> Dict[str, Any]:
         hint = _analyze_column(header, samples)
         column_hints[header] = hint
 
+    # Generate suggested config based on analysis
+    suggested_config = suggest_config(headers, column_hints)
+
     return {
         "headers": headers,
         "sample_rows": data_rows[:5],  # Return first 5 for preview
         "column_hints": column_hints,
+        "suggested_config": suggested_config,
     }
 
 
@@ -479,11 +512,13 @@ def _analyze_column(header: str, samples: List[str]) -> Dict[str, Any]:
     """Analyze a single column and return type hints."""
     header_lower = header.lower()
 
-    # Check header name for hints
-    date_keywords = ["date", "posted", "transaction date", "trans date"]
-    amount_keywords = ["amount", "debit", "credit", "total", "sum", "balance"]
-    desc_keywords = ["description", "memo", "payee", "merchant", "name", "narrative"]
-    ref_keywords = ["reference", "ref", "id", "transaction id", "check", "confirmation"]
+    # Check header name for hints - more comprehensive keyword lists
+    date_keywords = ["date", "posted", "transaction date", "trans date", "datetime", "time"]
+    amount_keywords = ["amount", "debit", "credit", "total", "sum", "balance", "price", "cost", "value"]
+    desc_keywords = ["description", "memo", "payee", "merchant", "name", "narrative", "note", "details", "transaction"]
+    ref_keywords = ["reference", "ref", "id", "transaction id", "check", "confirmation", "number", "conf"]
+    category_keywords = ["category", "type", "classification", "expense type", "spending category"]
+    account_keywords = ["account", "card", "member", "cardholder"]
 
     hint = {"likely_type": "unknown", "confidence": 0.0}
 
@@ -500,8 +535,14 @@ def _analyze_column(header: str, samples: List[str]) -> Dict[str, Any]:
     elif any(kw in header_lower for kw in ref_keywords):
         hint["likely_type"] = "reference"
         hint["confidence"] = 0.6
+    elif any(kw in header_lower for kw in category_keywords):
+        hint["likely_type"] = "category"
+        hint["confidence"] = 0.6
+    elif any(kw in header_lower for kw in account_keywords):
+        hint["likely_type"] = "account"
+        hint["confidence"] = 0.5
 
-    # Try to detect date format
+    # Try to detect date format from sample data
     date_result = detect_date_format(samples)
     if date_result:
         hint["likely_type"] = "date"
@@ -509,8 +550,9 @@ def _analyze_column(header: str, samples: List[str]) -> Dict[str, Any]:
         hint["format_display"] = date_result[1]
         hint["confidence"] = max(hint.get("confidence", 0), 0.85)
 
-    # Try to detect amount format
+    # Try to detect amount format from sample data
     if hint["likely_type"] in ("amount", "unknown"):
+        non_empty = [s for s in samples if s.strip()]
         numeric_count = 0
         for s in samples:
             cleaned = re.sub(r'[,$\s\(\)\+\-]', '', s)
@@ -520,10 +562,105 @@ def _analyze_column(header: str, samples: List[str]) -> Dict[str, Any]:
             except ValueError:
                 pass
 
-        if numeric_count >= len([s for s in samples if s.strip()]) * 0.8:
+        if non_empty and numeric_count >= len(non_empty) * 0.8:
             amount_settings = detect_amount_format(samples)
             hint["likely_type"] = "amount"
             hint["detected_settings"] = amount_settings
             hint["confidence"] = max(hint.get("confidence", 0), 0.8)
 
+    # If still unknown, analyze text characteristics for description detection
+    if hint["likely_type"] == "unknown":
+        non_empty = [s for s in samples if s.strip()]
+        if non_empty:
+            avg_len = sum(len(s) for s in non_empty) / len(non_empty)
+            unique_ratio = len(set(non_empty)) / len(non_empty)
+
+            # Description columns tend to have longer, varied text
+            if avg_len > 15 and unique_ratio > 0.7:
+                hint["likely_type"] = "description"
+                hint["confidence"] = 0.5
+            # Shorter varied text might be merchant
+            elif avg_len > 3 and avg_len <= 30 and unique_ratio > 0.5:
+                hint["likely_type"] = "merchant"
+                hint["confidence"] = 0.4
+
     return hint
+
+
+def suggest_config(headers: List[str], column_hints: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Suggest a CustomCsvConfig based on analyzed column hints.
+
+    Returns a dict that can be used to create a CustomCsvConfig.
+    """
+    config = {
+        "name": "Custom CSV Format",
+        "account_source": "Custom",
+        "date_column": None,
+        "amount_column": None,
+        "description_column": None,
+        "date_format": "%m/%d/%Y",
+        "amount_sign_convention": "negative_prefix",
+    }
+
+    # Find best candidates for each required column type
+    date_candidates = []
+    amount_candidates = []
+    desc_candidates = []
+
+    for header in headers:
+        hint = column_hints.get(header, {})
+        likely_type = hint.get("likely_type", "unknown")
+        confidence = hint.get("confidence", 0)
+
+        if likely_type == "date":
+            date_candidates.append((header, confidence, hint))
+        elif likely_type == "amount":
+            amount_candidates.append((header, confidence, hint))
+        elif likely_type in ("description", "merchant"):
+            desc_candidates.append((header, confidence, hint))
+
+    # Sort by confidence and pick best
+    date_candidates.sort(key=lambda x: x[1], reverse=True)
+    amount_candidates.sort(key=lambda x: x[1], reverse=True)
+    desc_candidates.sort(key=lambda x: x[1], reverse=True)
+
+    if date_candidates:
+        config["date_column"] = date_candidates[0][0]
+        date_hint = date_candidates[0][2]
+        if "detected_format" in date_hint:
+            config["date_format"] = date_hint["detected_format"]
+
+    if amount_candidates:
+        config["amount_column"] = amount_candidates[0][0]
+        amount_hint = amount_candidates[0][2]
+        if "detected_settings" in amount_hint:
+            settings = amount_hint["detected_settings"]
+            config["amount_sign_convention"] = settings.get("sign_convention", "negative_prefix")
+            if settings.get("currency_prefix"):
+                config["amount_currency_prefix"] = settings["currency_prefix"]
+
+    if desc_candidates:
+        config["description_column"] = desc_candidates[0][0]
+
+    # Find optional columns
+    for header in headers:
+        hint = column_hints.get(header, {})
+        likely_type = hint.get("likely_type", "unknown")
+
+        if likely_type == "reference" and "reference_column" not in config:
+            config["reference_column"] = header
+        elif likely_type == "category" and "category_column" not in config:
+            config["category_column"] = header
+        elif likely_type == "account" and "card_member_column" not in config:
+            config["card_member_column"] = header
+
+    # Calculate completeness score
+    required_found = sum([
+        config["date_column"] is not None,
+        config["amount_column"] is not None,
+        config["description_column"] is not None,
+    ])
+    config["_completeness"] = required_found / 3.0
+
+    return config
