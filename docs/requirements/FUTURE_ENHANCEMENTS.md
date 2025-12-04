@@ -10,9 +10,9 @@ Ideas for future versions beyond v0.
 - ✅ ~~More chart types (sankey, treemap, heatmaps)~~ - Implemented v0.6 (PR #26)
 - ✅ ~~Dashboard year/month view toggle~~ - Implemented v0.6 (PR #27)
 - ✅ ~~Widget tag filtering (filter by bucket/account/merchant)~~ - Implemented v0.6 (PR #28)
+- ✅ ~~Multiple dashboards (create/switch between different layouts)~~ - Implemented v0.6
 - Data drill-down (click chart to filter transactions)
 - Interactive filters on charts
-- Multiple dashboards (create/switch between different dashboard layouts)
 - Widget width configuration (full/half/third)
 
 ### Observability & Monitoring
@@ -79,6 +79,13 @@ Ideas for future versions beyond v0.
 - Accessibility improvements (WCAG compliance)
 - Onboarding tutorial
 - In-app help documentation
+
+### Internationalization (i18n)
+- Multi-language support infrastructure
+- Developer testing language (l33t speak) for validating translations
+- Priority languages: English (US/UK), German, French, Italian, Spanish
+- Currency formatting per locale
+- Date formatting per locale
 
 ## Low Priority
 
@@ -185,12 +192,19 @@ These features are interesting but not currently prioritized:
 - Customizable Dashboard - Show/hide and reorder widgets
 - Nightly Code Quality - Vulture, ruff, mypy, pip-audit automation
 
-### v0.6 (In Progress)
-- ✅ Advanced visualizations (sankey, treemap, heatmaps) - PR #26
-- ✅ Dashboard year/month view toggle - PR #27
-- ✅ Widget tag filtering - PR #28
-- Scheduled reports & email digests
+### v0.6 ✅ (Completed - 2025-12-03)
+- Multi-Dashboard Support - Create named dashboards with different layouts
+  - Dashboard selector in navigation
+  - Clone, delete, set default dashboard
+  - Per-dashboard date defaults (month/year view mode)
+  - Dashboard-level filters (bucket/account/merchant)
+- Advanced Visualizations - Sankey diagrams, treemaps, calendar heatmaps
+- Dashboard Year/Month Toggle - Switch between monthly and yearly views
+- Widget Tag Filtering - Filter individual widgets by bucket, account, or merchant
+- Dual-Hash Deduplication - Improved cross-account duplicate detection
+- Required Account Selection - Import requires account selection for reliable dedup
 
 ### v0.7 (Planned)
+- Scheduled reports & email digests
 - Observability & OpenTelemetry integration
 - Performance optimization

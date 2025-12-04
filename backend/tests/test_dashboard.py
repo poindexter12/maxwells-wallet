@@ -220,3 +220,47 @@ class TestDashboardWidgets:
         stored_config = json.loads(data["config"])
         assert stored_config["dateRange"] == "30d"
         assert stored_config["showLabels"] is True
+
+    @pytest.mark.asyncio
+    async def test_duplicate_widget(self, client: AsyncClient):
+        """Duplicate a widget creates a copy with new position"""
+        # Get a widget to duplicate
+        list_response = await client.get("/api/v1/dashboard/widgets")
+        widget_id = list_response.json()[0]["id"]
+        original_title = list_response.json()[0]["title"]
+
+        # Duplicate it
+        response = await client.post(f"/api/v1/dashboard/widgets/{widget_id}/duplicate")
+        assert response.status_code == 201
+        data = response.json()
+
+        # Should have "(copy)" in title
+        assert "(copy)" in data["title"]
+        assert data["id"] != widget_id
+        assert data["is_visible"] is True
+
+    @pytest.mark.asyncio
+    async def test_duplicate_nonexistent_widget(self, client: AsyncClient):
+        """Duplicate non-existent widget returns 404"""
+        response = await client.post("/api/v1/dashboard/widgets/99999/duplicate")
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_list_widgets_adds_missing_types(self, client: AsyncClient):
+        """Listing widgets adds any missing default widget types"""
+        # First get widgets - this initializes defaults
+        response1 = await client.get("/api/v1/dashboard/widgets")
+        widgets1 = response1.json()
+        initial_count = len(widgets1)
+
+        # Delete one widget type
+        widget_to_delete = next(w for w in widgets1 if w["widget_type"] == "velocity")
+        await client.delete(f"/api/v1/dashboard/widgets/{widget_to_delete['id']}")
+
+        # List again - should add the missing type back
+        response2 = await client.get("/api/v1/dashboard/widgets")
+        widgets2 = response2.json()
+
+        # Should have added the missing velocity widget back
+        widget_types = [w["widget_type"] for w in widgets2]
+        assert "velocity" in widget_types

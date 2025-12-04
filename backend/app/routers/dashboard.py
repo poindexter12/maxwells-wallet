@@ -2,6 +2,8 @@
 Dashboard Widget Configuration API
 
 Manages user's dashboard layout and widget settings.
+These endpoints work with the default dashboard for backwards compatibility.
+For multi-dashboard support, use /api/v1/dashboards/* endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import select
@@ -11,9 +13,32 @@ from datetime import datetime
 
 from app.database import get_session
 from app.models import (
-    DashboardWidget, DashboardWidgetCreate, DashboardWidgetUpdate,
+    Dashboard, DashboardWidget, DashboardWidgetCreate, DashboardWidgetUpdate,
     DashboardLayoutUpdate
 )
+
+
+async def get_default_dashboard_id(session: AsyncSession) -> int:
+    """Get the default dashboard ID, creating one if needed."""
+    result = await session.execute(
+        select(Dashboard).where(Dashboard.is_default == True)
+    )
+    dashboard = result.scalar_one_or_none()
+
+    if not dashboard:
+        # Create default dashboard
+        dashboard = Dashboard(
+            name="Default",
+            description="Default dashboard",
+            view_mode="month",
+            is_default=True,
+            position=0
+        )
+        session.add(dashboard)
+        await session.commit()
+        await session.refresh(dashboard)
+
+    return dashboard.id
 
 router = APIRouter(prefix="/api/v1/dashboard", tags=["dashboard"])
 
@@ -33,26 +58,32 @@ DEFAULT_WIDGETS = [
 
 @router.get("/widgets", response_model=List[DashboardWidget])
 async def list_widgets(session: AsyncSession = Depends(get_session)):
-    """Get all dashboard widgets ordered by position.
+    """Get all dashboard widgets for the default dashboard, ordered by position.
 
     If no widgets exist, initializes with default configuration.
     Also adds any new widget types that don't exist yet.
     """
+    dashboard_id = await get_default_dashboard_id(session)
+
     result = await session.execute(
-        select(DashboardWidget).order_by(DashboardWidget.position)
+        select(DashboardWidget)
+        .where(DashboardWidget.dashboard_id == dashboard_id)
+        .order_by(DashboardWidget.position)
     )
     widgets = list(result.scalars().all())
 
     # Initialize with defaults if empty
     if not widgets:
         for widget_data in DEFAULT_WIDGETS:
-            widget = DashboardWidget(**widget_data)
+            widget = DashboardWidget(dashboard_id=dashboard_id, **widget_data)
             session.add(widget)
         await session.commit()
 
         # Re-fetch after initialization
         result = await session.execute(
-            select(DashboardWidget).order_by(DashboardWidget.position)
+            select(DashboardWidget)
+            .where(DashboardWidget.dashboard_id == dashboard_id)
+            .order_by(DashboardWidget.position)
         )
         widgets = list(result.scalars().all())
     else:
@@ -65,6 +96,7 @@ async def list_widgets(session: AsyncSession = Depends(get_session)):
             if widget_data["widget_type"] not in existing_types:
                 max_position += 1
                 widget = DashboardWidget(
+                    dashboard_id=dashboard_id,
                     **{**widget_data, "position": max_position}
                 )
                 session.add(widget)
@@ -73,7 +105,9 @@ async def list_widgets(session: AsyncSession = Depends(get_session)):
         if added:
             await session.commit()
             result = await session.execute(
-                select(DashboardWidget).order_by(DashboardWidget.position)
+                select(DashboardWidget)
+                .where(DashboardWidget.dashboard_id == dashboard_id)
+                .order_by(DashboardWidget.position)
             )
             widgets = list(result.scalars().all())
 
@@ -97,8 +131,12 @@ async def create_widget(
     widget: DashboardWidgetCreate,
     session: AsyncSession = Depends(get_session)
 ):
-    """Create a new dashboard widget."""
-    db_widget = DashboardWidget(**widget.model_dump())
+    """Create a new dashboard widget on the default dashboard."""
+    dashboard_id = widget.dashboard_id or await get_default_dashboard_id(session)
+    db_widget = DashboardWidget(
+        dashboard_id=dashboard_id,
+        **widget.model_dump(exclude={"dashboard_id"})
+    )
     session.add(db_widget)
     await session.commit()
     await session.refresh(db_widget)
@@ -151,6 +189,8 @@ async def update_layout(
 
     Expects a list of widget IDs with their new positions.
     """
+    dashboard_id = await get_default_dashboard_id(session)
+
     for widget_update in layout.widgets:
         widget_id = widget_update.get("id")
         new_position = widget_update.get("position")
@@ -175,32 +215,40 @@ async def update_layout(
 
     # Return updated layout
     result = await session.execute(
-        select(DashboardWidget).order_by(DashboardWidget.position)
+        select(DashboardWidget)
+        .where(DashboardWidget.dashboard_id == dashboard_id)
+        .order_by(DashboardWidget.position)
     )
     return result.scalars().all()
 
 
 @router.post("/reset", response_model=List[DashboardWidget])
 async def reset_dashboard(session: AsyncSession = Depends(get_session)):
-    """Reset dashboard to default widget configuration.
+    """Reset default dashboard to default widget configuration.
 
     Deletes all existing widgets and recreates defaults.
     """
-    # Delete all existing widgets
-    result = await session.execute(select(DashboardWidget))
+    dashboard_id = await get_default_dashboard_id(session)
+
+    # Delete all existing widgets for this dashboard
+    result = await session.execute(
+        select(DashboardWidget).where(DashboardWidget.dashboard_id == dashboard_id)
+    )
     for widget in result.scalars().all():
         await session.delete(widget)
 
     # Create defaults
     for widget_data in DEFAULT_WIDGETS:
-        widget = DashboardWidget(**widget_data)
+        widget = DashboardWidget(dashboard_id=dashboard_id, **widget_data)
         session.add(widget)
 
     await session.commit()
 
     # Return new layout
     result = await session.execute(
-        select(DashboardWidget).order_by(DashboardWidget.position)
+        select(DashboardWidget)
+        .where(DashboardWidget.dashboard_id == dashboard_id)
+        .order_by(DashboardWidget.position)
     )
     return result.scalars().all()
 
@@ -243,13 +291,17 @@ async def duplicate_widget(
     if not original:
         raise HTTPException(status_code=404, detail="Widget not found")
 
-    # Find max position
-    max_result = await session.execute(select(DashboardWidget))
+    # Find max position for the same dashboard
+    dashboard_id = original.dashboard_id or await get_default_dashboard_id(session)
+    max_result = await session.execute(
+        select(DashboardWidget).where(DashboardWidget.dashboard_id == dashboard_id)
+    )
     all_widgets = list(max_result.scalars().all())
     max_position = max(w.position for w in all_widgets) if all_widgets else -1
 
     # Create duplicate
     new_widget = DashboardWidget(
+        dashboard_id=dashboard_id,
         widget_type=original.widget_type,
         title=f"{original.title or original.widget_type} (copy)",
         position=max_position + 1,

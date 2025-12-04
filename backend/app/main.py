@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db
-from app.routers import transactions, import_router, reports, budgets, tag_rules, recurring, admin, tags, transfers, merchants, accounts, filters, dashboard
+from app.routers import transactions, import_router, reports, budgets, tag_rules, recurring, admin, tags, transfers, merchants, accounts, filters, dashboard, dashboards
 
 
 @asynccontextmanager
@@ -26,6 +26,7 @@ tags_metadata = [
     {"name": "accounts", "description": "Account management including credit cards"},
     {"name": "filters", "description": "Saved search filters"},
     {"name": "dashboard", "description": "Dashboard widget configuration and layout"},
+    {"name": "dashboards", "description": "Multi-dashboard management (create, edit, delete dashboards)"},
     {"name": "admin", "description": "Administrative operations and data management"},
 ]
 
@@ -81,6 +82,7 @@ app.include_router(merchants.router)
 app.include_router(accounts.router)
 app.include_router(filters.router)
 app.include_router(dashboard.router)
+app.include_router(dashboards.router)
 
 @app.get("/", tags=["health"])
 async def root():

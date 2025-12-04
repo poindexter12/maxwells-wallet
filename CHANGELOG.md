@@ -5,16 +5,32 @@ All notable changes to Maxwell's Wallet will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.0] - 2025-12-02
+## [0.6.0] - 2025-12-03
 
 ### Added
-- add advanced search with saved filters and CSV export (#21)
-- add credit card account summary with due dates and limits (#20)
-- add Quicken QIF and QFX/OFX import support (#19)
+- **Multi-Dashboard Support** - Create multiple named dashboards with different layouts and filters
+  - Dashboard sidebar for quick switching between dashboards
+  - Clone, delete, and set default dashboard
+  - Per-dashboard date defaults (month/year view mode)
+  - Dashboard-level filters (bucket/account/merchant)
+- **Advanced Visualizations** - New chart types for deeper spending insights (#26)
+  - Sankey diagram showing money flow from income to spending categories
+  - Treemap for hierarchical spending breakdown
+  - Calendar heatmap showing daily spending patterns
+- **Dashboard Year/Month Toggle** - Switch between monthly and yearly view modes (#27)
+- **Widget Tag Filtering** - Filter individual widgets by bucket, account, or merchant (#28)
+- **Dual-Hash Deduplication** - Improved duplicate detection across accounts
+  - Cross-account duplicate warnings during import
+  - Detects same transaction imported to different accounts
+- **Required Account Selection** - Import now requires account selection for reliable deduplication
+  - Dropdown of existing accounts with option to create new
+  - Clear validation and warning messages
 
 ### Changed
-- Refactor: Split Makefile into modular components (#18)
-## [Unreleased]
+- Dashboard widgets now belong to specific dashboards (migration preserves existing widgets)
+- Import page UX improved with account dropdown and validation
+
+## [0.5.0] - 2025-12-02
 
 ### Added
 - **Credit card account support** - Track credit cards with due dates, credit limits, and available credit (#20)
@@ -26,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Quick filter buttons** - One-click filters for common queries (This Month, Last Month, Large, Unreconciled)
 - **Dynamic large transaction threshold** - "Large" is calculated per-user based on spending history (2σ above average)
 - **Clickable anomaly links** - Dashboard anomaly counts link directly to filtered transactions
+- **Split Transactions** - Allocate transactions across multiple buckets
+- **Customizable Dashboard** - Show/hide and reorder widgets
 
 ### Changed
 - Refactored Makefile into modular components under `make/` directory (#18)
