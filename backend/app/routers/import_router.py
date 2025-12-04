@@ -293,12 +293,14 @@ async def confirm_import(
     skipped_count = 0
     total_amount = 0.0
     dates = []
+    cross_account_warnings = []  # Warnings for transactions that exist in other accounts
 
     for txn_data in transactions:
-        # Generate content_hash for reliable deduplication
-        content_hash = compute_transaction_hash_from_dict(txn_data)
+        # Generate both hashes for deduplication
+        content_hash = compute_transaction_hash_from_dict(txn_data, include_account=True)
+        content_hash_no_account = compute_transaction_hash_from_dict(txn_data, include_account=False)
 
-        # Check for duplicate using content_hash (primary method)
+        # Check for exact duplicate using content_hash (primary method)
         if content_hash:
             dup_query = select(Transaction).where(
                 Transaction.content_hash == content_hash
@@ -309,12 +311,30 @@ async def confirm_import(
             if existing:
                 duplicate_count += 1
                 continue
+
+            # Check for cross-account duplicate (same transaction in different account)
+            if content_hash_no_account:
+                cross_account_query = select(Transaction).where(
+                    Transaction.content_hash_no_account == content_hash_no_account,
+                    Transaction.account_source != txn_data['account_source']
+                )
+                result = await session.execute(cross_account_query)
+                cross_match = result.scalar_one_or_none()
+
+                if cross_match:
+                    cross_account_warnings.append({
+                        "date": str(txn_data['date']),
+                        "amount": txn_data['amount'],
+                        "description": txn_data['description'][:50],
+                        "existing_account": cross_match.account_source,
+                        "importing_account": txn_data['account_source']
+                    })
         else:
             # Fallback to old deduplication logic if hash generation fails
             dup_query = select(Transaction).where(
                 Transaction.date == txn_data['date'],
                 Transaction.amount == txn_data['amount'],
-                Transaction.reference_id == txn_data.get('reference_id')
+                Transaction.merchant == txn_data.get('merchant')
             )
             result = await session.execute(dup_query)
             existing = result.scalar_one_or_none()
@@ -360,7 +380,8 @@ async def confirm_import(
             reconciliation_status=ReconciliationStatus.unreconciled,
             reference_id=txn_data.get('reference_id'),
             import_session_id=import_session.id,
-            content_hash=content_hash  # Store computed hash
+            content_hash=content_hash,  # Store computed hash
+            content_hash_no_account=content_hash_no_account  # Store hash without account for cross-account detection
         )
 
         # Set account_tag_id foreign key for data integrity
@@ -407,13 +428,20 @@ async def confirm_import(
 
     await session.commit()
 
-    return {
+    response = {
         "imported": imported_count,
         "duplicates": duplicate_count,
         "skipped": skipped_count,
         "format_saved": save_format,
         "import_session_id": import_session.id
     }
+
+    # Include cross-account warnings if any transactions match in other accounts
+    if cross_account_warnings:
+        response["cross_account_warnings"] = cross_account_warnings[:10]  # Limit to first 10
+        response["cross_account_warning_count"] = len(cross_account_warnings)
+
+    return response
 
 
 @router.get("/formats")

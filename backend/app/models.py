@@ -96,6 +96,7 @@ class Transaction(BaseModel, table=True):
     reference_id: Optional[str] = Field(default=None, index=True)  # original bank reference/transaction ID
     import_session_id: Optional[int] = Field(default=None, foreign_key="import_sessions.id", index=True)
     content_hash: Optional[str] = Field(default=None, index=True)  # SHA256 hash for reliable deduplication
+    content_hash_no_account: Optional[str] = Field(default=None, index=True)  # Hash without account for cross-account detection
     is_transfer: bool = Field(default=False, index=True)  # True if internal transfer (excluded from spending)
     linked_transaction_id: Optional[int] = Field(default=None, foreign_key="transactions.id", index=True)  # Link paired transfers
 
