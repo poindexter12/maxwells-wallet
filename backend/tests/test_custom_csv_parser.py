@@ -540,6 +540,68 @@ class TestCustomCsvApiEndpoints:
         assert response.status_code == 400
         assert "Invalid config JSON" in response.json()["detail"]
 
+    async def test_custom_confirm_endpoint(self, client: AsyncClient):
+        """Test POST /api/v1/import/custom/confirm"""
+        config = {
+            "name": "Test Bank Import",
+            "account_source": "TEST-CHECKING",
+            "date_column": "Date",
+            "amount_column": "Amount",
+            "description_column": "Description",
+        }
+
+        files = {"file": ("test.csv", SIMPLE_CSV, "text/csv")}
+        data = {
+            "config_json": json.dumps(config),
+            "save_config": "false",
+        }
+
+        response = await client.post("/api/v1/import/custom/confirm", files=files, data=data)
+
+        assert response.status_code == 200
+        result = response.json()
+        assert result["imported"] == 3
+        assert result["duplicates"] == 0
+        assert result["config_saved"] is False
+        assert "import_session_id" in result
+
+    async def test_custom_confirm_with_save_config(self, client: AsyncClient):
+        """Test custom confirm saves config when requested"""
+        config = {
+            "name": "Saved Bank Format",
+            "account_source": "TEST-SAVINGS",
+            "date_column": "Date",
+            "amount_column": "Amount",
+            "description_column": "Description",
+        }
+
+        files = {"file": ("test.csv", SIMPLE_CSV, "text/csv")}
+        data = {
+            "config_json": json.dumps(config),
+            "save_config": "true",
+        }
+
+        response = await client.post("/api/v1/import/custom/confirm", files=files, data=data)
+
+        assert response.status_code == 200
+        result = response.json()
+        assert result["config_saved"] is True
+
+        # Verify config was saved
+        configs_response = await client.get("/api/v1/import/custom/configs")
+        configs = configs_response.json()
+        assert any(c["name"] == "Saved Bank Format" for c in configs)
+
+    async def test_custom_confirm_invalid_config(self, client: AsyncClient):
+        """Test confirm with invalid config returns error"""
+        files = {"file": ("test.csv", SIMPLE_CSV, "text/csv")}
+        data = {"config_json": "not valid json"}
+
+        response = await client.post("/api/v1/import/custom/confirm", files=files, data=data)
+
+        assert response.status_code == 400
+        assert "Invalid config JSON" in response.json()["detail"]
+
     async def test_create_custom_config(self, client: AsyncClient):
         """Test POST /api/v1/import/custom/configs"""
         config = {
@@ -708,3 +770,73 @@ class TestCustomCsvApiEndpoints:
         imported = import_response.json()
         assert imported["name"] == "Imported Config"
         assert imported["id"] != config_id
+
+
+# =============================================================================
+# Builtin Config Tests
+# =============================================================================
+
+class TestBuiltinConfigs:
+    """Test builtin CSV format configurations"""
+
+    def test_all_builtin_configs_exist(self):
+        """Verify all expected builtin configs are defined"""
+        from app.parsers.builtin_configs import BUILTIN_CONFIGS, get_all_builtin_configs
+
+        configs = get_all_builtin_configs()
+        assert "bofa_bank" in configs
+        assert "bofa_cc" in configs
+        assert "amex_cc" in configs
+        assert "inspira_hsa" in configs
+        assert "venmo" in configs
+        assert len(configs) == 5
+
+    def test_builtin_configs_are_valid(self):
+        """Verify all builtin configs can be used with CustomCsvParser"""
+        from app.parsers.builtin_configs import get_all_builtin_configs
+
+        for name, config in get_all_builtin_configs().items():
+            # Should be able to create parser without error
+            parser = CustomCsvParser(config)
+            assert parser is not None
+            assert parser.config.name is not None
+            assert parser.config.account_source is not None
+
+    def test_builtin_config_by_key(self):
+        """Test retrieving config by format key"""
+        from app.parsers.builtin_configs import get_builtin_config
+
+        amex = get_builtin_config("amex_cc")
+        assert amex is not None
+        assert amex.name == "American Express"
+        assert amex.account_source == "AMEX"
+
+        unknown = get_builtin_config("unknown_format")
+        assert unknown is None
+
+    def test_builtin_config_names(self):
+        """Test getting display names for all configs"""
+        from app.parsers.builtin_configs import get_builtin_config_names
+
+        names = get_builtin_config_names()
+        assert names["bofa_bank"] == "Bank of America (Checking/Savings)"
+        assert names["amex_cc"] == "American Express"
+        assert names["venmo"] == "Venmo"
+
+    def test_bofa_bank_config_settings(self):
+        """Verify Bank of America checking config has correct settings"""
+        from app.parsers.builtin_configs import BOFA_BANK_CONFIG
+
+        assert BOFA_BANK_CONFIG.date_column == "Date"
+        assert BOFA_BANK_CONFIG.amount_column == "Amount"
+        assert BOFA_BANK_CONFIG.description_column == "Description"
+        assert BOFA_BANK_CONFIG.date_format == "%m/%d/%Y"
+        assert BOFA_BANK_CONFIG.amount_sign_convention == "negative_prefix"
+        assert BOFA_BANK_CONFIG.row_handling.find_header_row is True
+
+    def test_amex_config_inverts_sign(self):
+        """Verify AMEX config inverts sign (positive = charge)"""
+        from app.parsers.builtin_configs import AMEX_CC_CONFIG
+
+        assert AMEX_CC_CONFIG.amount_invert_sign is True
+        assert AMEX_CC_CONFIG.category_column == "Category"
