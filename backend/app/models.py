@@ -96,6 +96,7 @@ class Transaction(BaseModel, table=True):
     reference_id: Optional[str] = Field(default=None, index=True)  # original bank reference/transaction ID
     import_session_id: Optional[int] = Field(default=None, foreign_key="import_sessions.id", index=True)
     content_hash: Optional[str] = Field(default=None, index=True)  # SHA256 hash for reliable deduplication
+    content_hash_no_account: Optional[str] = Field(default=None, index=True)  # Hash without account for cross-account detection
     is_transfer: bool = Field(default=False, index=True)  # True if internal transfer (excluded from spending)
     linked_transaction_id: Optional[int] = Field(default=None, foreign_key="transactions.id", index=True)  # Link paired transfers
 
@@ -445,10 +446,60 @@ class TransactionSplitResponse(SQLModel):
     unallocated: float  # Amount not assigned to any bucket
 
 
+# Dashboard Models
+class Dashboard(BaseModel, table=True):
+    """Named dashboard configuration with filters and date defaults"""
+    __tablename__ = "dashboards"
+
+    name: str = Field(index=True)
+    description: Optional[str] = None
+    view_mode: str = Field(default="month")  # "month" or "year"
+    pinned_year: Optional[int] = None  # If set, dashboard always shows this year
+    pinned_month: Optional[int] = None  # If set, dashboard always shows this month (1-12)
+    filter_buckets: Optional[str] = None  # JSON array of bucket values
+    filter_accounts: Optional[str] = None  # JSON array of account values
+    filter_merchants: Optional[str] = None  # JSON array of merchant values
+    is_default: bool = Field(default=False, index=True)  # Only one dashboard can be default
+    position: int = Field(default=0)  # Order in sidebar
+
+    # Relationship to widgets
+    widgets: List["DashboardWidget"] = Relationship(back_populates="dashboard")
+
+
+class DashboardCreate(SQLModel):
+    name: str
+    description: Optional[str] = None
+    view_mode: str = "month"
+    pinned_year: Optional[int] = None
+    pinned_month: Optional[int] = None
+    filter_buckets: Optional[str] = None
+    filter_accounts: Optional[str] = None
+    filter_merchants: Optional[str] = None
+    is_default: bool = False
+    position: int = 0
+
+
+class DashboardUpdate(SQLModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    view_mode: Optional[str] = None
+    pinned_year: Optional[int] = None
+    pinned_month: Optional[int] = None
+    filter_buckets: Optional[str] = None
+    filter_accounts: Optional[str] = None
+    filter_merchants: Optional[str] = None
+    is_default: Optional[bool] = None
+    position: Optional[int] = None
+
+
 # Dashboard Widget Configuration Models
 class DashboardWidget(BaseModel, table=True):
     """User's dashboard widget configuration"""
     __tablename__ = "dashboard_widgets"
+
+    # Foreign key to dashboard (nullable for migration - will be required after migration)
+    dashboard_id: Optional[int] = Field(default=None, foreign_key="dashboards.id", index=True)
+    dashboard: Optional["Dashboard"] = Relationship(back_populates="widgets")
 
     widget_type: str = Field(index=True)  # "summary", "velocity", "anomalies", "bucket_pie", "top_merchants", "trends"
     title: Optional[str] = None  # Custom title override
@@ -459,6 +510,7 @@ class DashboardWidget(BaseModel, table=True):
 
 
 class DashboardWidgetCreate(SQLModel):
+    dashboard_id: Optional[int] = None  # If not provided, uses default dashboard
     widget_type: str
     title: Optional[str] = None
     position: int = 0
