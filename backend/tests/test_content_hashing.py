@@ -203,3 +203,97 @@ class TestHashFromDict:
         result = compute_transaction_hash_from_dict(txn_data)
         assert result is not None
         assert len(result) == 64
+
+
+class TestCrossAccountHashing:
+    """Tests for cross-account duplicate detection hashing"""
+
+    def test_hash_without_account_excludes_account(self):
+        """Hash without account should be same for different accounts"""
+        hash_acct1 = compute_transaction_content_hash(
+            date=date(2025, 11, 15),
+            amount=199.99,
+            description="AMAZON PURCHASE",
+            account_source="AMEX-53004",
+            include_account=False
+        )
+        hash_acct2 = compute_transaction_content_hash(
+            date=date(2025, 11, 15),
+            amount=199.99,
+            description="AMAZON PURCHASE",
+            account_source="BOFA-Checking",
+            include_account=False
+        )
+        assert hash_acct1 == hash_acct2
+
+    def test_hash_with_account_differs_by_account(self):
+        """Hash with account should differ for different accounts"""
+        hash_acct1 = compute_transaction_content_hash(
+            date=date(2025, 11, 15),
+            amount=199.99,
+            description="AMAZON PURCHASE",
+            account_source="AMEX-53004",
+            include_account=True
+        )
+        hash_acct2 = compute_transaction_content_hash(
+            date=date(2025, 11, 15),
+            amount=199.99,
+            description="AMAZON PURCHASE",
+            account_source="BOFA-Checking",
+            include_account=True
+        )
+        assert hash_acct1 != hash_acct2
+
+    def test_dict_hash_without_account(self):
+        """Dict method should support include_account parameter"""
+        txn_data = {
+            "date": date(2025, 11, 15),
+            "amount": 199.99,
+            "description": "AMAZON PURCHASE",
+            "account_source": "amex",
+        }
+        hash_with = compute_transaction_hash_from_dict(txn_data, include_account=True)
+        hash_without = compute_transaction_hash_from_dict(txn_data, include_account=False)
+        assert hash_with != hash_without
+        assert len(hash_with) == 64
+        assert len(hash_without) == 64
+
+    def test_hash_without_account_still_differs_by_content(self):
+        """Hash without account should still differ by date/amount/description"""
+        base_hash = compute_transaction_content_hash(
+            date=date(2025, 11, 15),
+            amount=199.99,
+            description="AMAZON PURCHASE",
+            account_source="any",
+            include_account=False
+        )
+
+        # Different date
+        diff_date = compute_transaction_content_hash(
+            date=date(2025, 11, 16),
+            amount=199.99,
+            description="AMAZON PURCHASE",
+            account_source="any",
+            include_account=False
+        )
+        assert diff_date != base_hash
+
+        # Different amount
+        diff_amount = compute_transaction_content_hash(
+            date=date(2025, 11, 15),
+            amount=200.00,
+            description="AMAZON PURCHASE",
+            account_source="any",
+            include_account=False
+        )
+        assert diff_amount != base_hash
+
+        # Different description
+        diff_desc = compute_transaction_content_hash(
+            date=date(2025, 11, 15),
+            amount=199.99,
+            description="WALMART PURCHASE",
+            account_source="any",
+            include_account=False
+        )
+        assert diff_desc != base_hash
