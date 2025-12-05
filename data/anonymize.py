@@ -6,15 +6,15 @@ Uses scrubadub for PII detection with custom detectors for bank-specific pattern
 Uses Faker with seeding for consistent fake data generation.
 
 Default workflow:
-    python scripts/anonymize_import.py
-    # Processes data/raw/*.csv -> data/anonymized/
-    # Tracks processed files in data/anonymized/manifest.json
+    cd data && python anonymize.py
+    # Processes raw/*.csv -> anonymized/
+    # Tracks processed files in anonymized/manifest.json
 
 Usage:
-    python scripts/anonymize_import.py                  # Process all new files in data/raw/
-    python scripts/anonymize_import.py --force          # Reprocess all files
-    python scripts/anonymize_import.py --status         # Show what's processed/pending
-    python scripts/anonymize_import.py input.csv out.csv  # Single file mode
+    python data/anonymize.py                  # Process all new files in raw/
+    python data/anonymize.py --force          # Reprocess all files
+    python data/anonymize.py --status         # Show what's processed/pending
+    python data/anonymize.py input.csv out.csv  # Single file mode
 """
 
 import argparse
@@ -32,10 +32,10 @@ from scrubadub.filth import Filth, RegexFilth
 from faker import Faker
 
 
-# Default paths relative to project root
-PROJECT_ROOT = Path(__file__).parent.parent
-RAW_DIR = PROJECT_ROOT / "data" / "raw"
-ANON_DIR = PROJECT_ROOT / "data" / "anonymized"
+# Default paths relative to this file (data/ directory)
+DATA_DIR = Path(__file__).parent
+RAW_DIR = DATA_DIR / "raw"
+ANON_DIR = DATA_DIR / "anonymized"
 MANIFEST_FILE = ANON_DIR / "manifest.json"
 
 

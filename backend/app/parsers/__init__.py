@@ -48,6 +48,20 @@ from .base import (
 )
 from .registry import ParserRegistry
 
+# Custom CSV parser (user-defined mappings)
+from .formats.custom_csv import (
+    CustomCsvParser,
+    CustomCsvConfig,
+    RowHandling,
+    analyze_csv_columns,
+    detect_date_format,
+    detect_amount_format,
+    find_header_row,
+    auto_detect_csv_format,
+    compute_header_signature,
+    compute_signature_from_csv,
+)
+
 # Import all format parsers to trigger registration
 from . import formats
 
@@ -59,4 +73,15 @@ __all__ = [
     "AmountSign",
     "ParsedTransaction",
     "ParserRegistry",
+    # Custom CSV
+    "CustomCsvParser",
+    "CustomCsvConfig",
+    "RowHandling",
+    "analyze_csv_columns",
+    "detect_date_format",
+    "detect_amount_format",
+    "find_header_row",
+    "auto_detect_csv_format",
+    "compute_header_signature",
+    "compute_signature_from_csv",
 ]

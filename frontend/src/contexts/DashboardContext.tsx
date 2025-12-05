@@ -2,18 +2,25 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
-interface Dashboard {
+// Date range types supported by dashboards
+export type DateRangeType = 'mtd' | 'qtd' | 'ytd' | 'last_30_days' | 'last_90_days' | 'last_year'
+
+export interface DateRange {
+  start_date: string  // ISO date string (YYYY-MM-DD)
+  end_date: string    // ISO date string (YYYY-MM-DD)
+  label: string       // Human-readable label
+}
+
+export interface Dashboard {
   id: number
   name: string
   description: string | null
-  view_mode: string
-  pinned_year: number | null
-  pinned_month: number | null
-  filter_buckets: string | null
-  filter_accounts: string | null
-  filter_merchants: string | null
+  date_range_type: DateRangeType
+  date_range: DateRange  // Calculated dates from backend
   is_default: boolean
   position: number
+  created_at: string
+  updated_at: string
 }
 
 interface DashboardContextType {

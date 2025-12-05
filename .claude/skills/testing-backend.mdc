@@ -1,0 +1,19 @@
+---
+id: skill-testing-backend
+name: Backend Testing Skill
+description: "Testing guidance for FastAPI/Postgres backend."
+role: system
+color: orange
+tags:
+  - skill
+  - testing
+  - backend
+---
+
+- Use async-friendly clients (httpx AsyncClient) against FastAPI app instances; avoid hitting real external services.
+- Keep DB tests isolated: transaction rollbacks/fixtures; seed data via factories; avoid cross-test coupling.
+- Cover happy paths, validation failures (400/422), auth/permissions if present, and edge cases (not found, concurrency conflicts).
+- Prefer contract-level tests hitting real routes over unit-mocking internals; assert status codes, payload shapes, and side effects.
+- Run with `make test-backend`; keep output lean; mark slow/integration tests explicitly.
+- Performance and determinism: freeze time or seed randomness as needed; parallelize cautiously with isolated DB state; avoid flaky timing assertions.
+- Observability: assert logs/metrics only when stable; avoid coupling to log text unless necessary.

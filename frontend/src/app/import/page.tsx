@@ -11,12 +11,23 @@ interface AccountTag {
   value: string
 }
 
+interface SavedCustomFormat {
+  id: number
+  name: string
+  description: string | null
+  config_json: string
+  use_count: number
+}
+
 const FORMAT_NAMES: Record<string, string> = {
   'bofa_bank': 'Bank of America (Checking/Savings)',
   'bofa_cc': 'Bank of America (Credit Card)',
   'amex_cc': 'American Express',
   'inspira_hsa': 'Inspira HSA',
   'venmo': 'Venmo',
+  'qif': 'Quicken (QIF)',
+  'qfx': 'Quicken/OFX (QFX)',
+  'custom': 'Custom Format',
   'unknown': 'Unknown'
 }
 
@@ -46,28 +57,70 @@ export default function ImportPage() {
   const [accounts, setAccounts] = useState<AccountTag[]>([])
   const [accountMode, setAccountMode] = useState<'existing' | 'new'>('existing')
 
-  // Legacy single file mode states (kept for backwards compatibility)
+  // Single file mode states
   const [file, setFile] = useState<File | null>(null)
   const [accountSource, setAccountSource] = useState('')
   const [formatHint, setFormatHint] = useState('')
   const [preview, setPreview] = useState<any>(null)
 
-  // Fetch existing account tags on mount
+  // Custom format state
+  const [savedFormats, setSavedFormats] = useState<SavedCustomFormat[]>([])
+  const [selectedCustomFormat, setSelectedCustomFormat] = useState<SavedCustomFormat | null>(null)
+
+  // Fetch existing account tags and saved formats on mount
   useEffect(() => {
-    async function fetchAccounts() {
+    async function fetchData() {
       try {
-        const res = await fetch('/api/v1/tags?namespace=account')
-        const data = await res.json()
-        setAccounts(data)
+        const [accountsRes, formatsRes] = await Promise.all([
+          fetch('/api/v1/tags?namespace=account'),
+          fetch('/api/v1/import/custom/configs')
+        ])
+        const accountsData = await accountsRes.json()
+        const formatsData = await formatsRes.json()
+        setAccounts(accountsData)
+        setSavedFormats(formatsData)
       } catch (error) {
-        console.error('Error fetching accounts:', error)
+        console.error('Error fetching data:', error)
       }
     }
-    fetchAccounts()
+    fetchData()
   }, [])
 
   async function handlePreview() {
     if (!file) return
+
+    // Use custom format endpoint if a saved custom format is selected
+    if (selectedCustomFormat) {
+      try {
+        const config = JSON.parse(selectedCustomFormat.config_json)
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('config_json', JSON.stringify({
+          ...config,
+          account_source: accountSource || config.account_source
+        }))
+
+        const res = await fetch('/api/v1/import/custom/preview', {
+          method: 'POST',
+          body: formData
+        })
+        const data = await res.json()
+
+        setPreview({
+          detected_format: 'custom',
+          transaction_count: data.transaction_count,
+          total_amount: data.total_amount,
+          transactions: data.transactions,
+          errors: data.errors,
+          _customConfigId: selectedCustomFormat.id
+        })
+        setResult(null)
+      } catch (error) {
+        console.error('Error previewing custom import:', error)
+        alert('Error previewing file with custom format')
+      }
+      return
+    }
 
     const formData = new FormData()
     formData.append('file', file)
@@ -93,22 +146,45 @@ export default function ImportPage() {
 
     setImporting(true)
 
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('format_type', preview.detected_format)
-    if (accountSource) formData.append('account_source', accountSource)
-    formData.append('save_format', 'true')
-
     try {
-      const res = await fetch('/api/v1/import/confirm', {
-        method: 'POST',
-        body: formData
-      })
-      const data = await res.json()
-      setResult(data)
+      // Use custom confirm endpoint if custom format was used
+      if (preview._customConfigId && selectedCustomFormat) {
+        const config = JSON.parse(selectedCustomFormat.config_json)
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('config_json', JSON.stringify({
+          ...config,
+          account_source: accountSource || config.account_source
+        }))
+        formData.append('save_config', 'false') // Already saved
+
+        const res = await fetch('/api/v1/import/custom/confirm', {
+          method: 'POST',
+          body: formData
+        })
+        const data = await res.json()
+        setResult(data)
+      } else {
+        // Standard confirm
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('format_type', preview.detected_format)
+        if (accountSource) formData.append('account_source', accountSource)
+        formData.append('save_format', 'true')
+
+        const res = await fetch('/api/v1/import/confirm', {
+          method: 'POST',
+          body: formData
+        })
+        const data = await res.json()
+        setResult(data)
+      }
+
       setPreview(null)
       setFile(null)
       setAccountSource('')
+      setSelectedCustomFormat(null)
+      setFormatHint('')
     } catch (error) {
       console.error('Error importing:', error)
       alert('Error importing transactions')
@@ -132,7 +208,6 @@ export default function ImportPage() {
       })
       const data = await res.json()
 
-      // Mark all files as selected by default
       const previews = data.files.map((filePreview: any) => ({
         ...filePreview,
         selected: true
@@ -156,7 +231,6 @@ export default function ImportPage() {
     setImporting(true)
 
     try {
-      // Build the request payload
       const requestBody = {
         files: selectedFiles.map(preview => ({
           filename: preview.filename,
@@ -166,10 +240,8 @@ export default function ImportPage() {
         save_format: true
       }
 
-      // Build form data with files and request JSON
       const formData = new FormData()
 
-      // Add all selected files
       selectedFiles.forEach(preview => {
         const file = files.find(f => f.name === preview.filename)
         if (file) {
@@ -177,7 +249,6 @@ export default function ImportPage() {
         }
       })
 
-      // Add the request JSON as a form field
       formData.append('request', JSON.stringify(requestBody))
 
       const res = await fetch('/api/v1/import/batch/confirm', {
@@ -213,23 +284,35 @@ export default function ImportPage() {
     )
   }
 
+  function handleFormatChange(value: string) {
+    if (value.startsWith('custom:')) {
+      const formatId = parseInt(value.split(':')[1])
+      const format = savedFormats.find(f => f.id === formatId)
+      setSelectedCustomFormat(format || null)
+      setFormatHint('')
+    } else {
+      setSelectedCustomFormat(null)
+      setFormatHint(value)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <PageHelp
         pageId="import"
         title="Import Help"
-        description="Import transactions from your bank's CSV export files. Supported formats include Bank of America (checking and credit cards) and American Express."
+        description="Import transactions from your bank's CSV, QIF, or QFX export files."
         steps={[
-          "Download a CSV export from your bank's website",
+          "Download an export file from your bank's website",
           "Select the file using the file picker below",
-          "Optionally specify an account name to help organize your data",
+          "Specify an account name to organize your data",
           "Click 'Preview Import' to see what will be imported",
           "Review the preview, then click 'Confirm Import' to save"
         ]}
         tips={[
-          "The system auto-detects your bank's CSV format",
+          "The system auto-detects your bank's file format",
           "Duplicate transactions are automatically skipped",
-          "You can view and rollback imports from the Admin page"
+          "Create custom CSV formats in Tools > CSV Formats"
         ]}
       />
 
@@ -265,11 +348,11 @@ export default function ImportPage() {
           <div className="bg-white rounded-lg shadow p-6 space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                CSV Files (Multiple)
+                Import Files (Multiple)
               </label>
               <input
                 type="file"
-                accept=".csv"
+                accept=".csv,.qif,.qfx,.ofx"
                 multiple
                 onChange={(e) => setFiles(Array.from(e.target.files || []))}
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -400,7 +483,7 @@ export default function ImportPage() {
                             />
                           </div>
                           {!(filePreview.accountSourceOverride || filePreview.account_source) && (
-                            <p className="text-xs text-yellow-600 mt-1">⚠️ Required for duplicate detection</p>
+                            <p className="text-xs text-yellow-600 mt-1">Required for duplicate detection</p>
                           )}
                         </div>
                       </div>
@@ -446,94 +529,107 @@ export default function ImportPage() {
           <div className="bg-white rounded-lg shadow p-6 space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                CSV File
+                Import File
               </label>
               <input
                 type="file"
-                accept=".csv"
+                accept=".csv,.qif,.qfx,.ofx"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
               />
             </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Account Source <span className="text-red-500">*</span>
-            </label>
-            <div className="space-y-2">
-              {accounts.length > 0 && (
-                <div className="flex gap-2 mb-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAccountMode('existing')
-                      setAccountSource('')
-                    }}
-                    className={`px-3 py-1 text-xs rounded-md ${accountMode === 'existing' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                  >
-                    Use Existing
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAccountMode('new')
-                      setAccountSource('')
-                    }}
-                    className={`px-3 py-1 text-xs rounded-md ${accountMode === 'new' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                  >
-                    Create New
-                  </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Account Source <span className="text-red-500">*</span>
+                  </label>
+                  {accounts.length > 0 && (
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAccountMode('existing')
+                          setAccountSource('')
+                        }}
+                        className={`px-2 py-0.5 text-xs rounded ${accountMode === 'existing' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                      >
+                        Existing
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAccountMode('new')
+                          setAccountSource('')
+                        }}
+                        className={`px-2 py-0.5 text-xs rounded ${accountMode === 'new' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                      >
+                        New
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-              {accountMode === 'existing' && accounts.length > 0 ? (
-                <select
-                  value={accountSource}
-                  onChange={(e) => setAccountSource(e.target.value)}
-                  className={`w-full px-4 py-2 border rounded-md ${!accountSource ? 'border-yellow-400' : ''}`}
-                >
-                  <option value="">-- Select Account --</option>
-                  {accounts.map((acct) => (
-                    <option key={acct.id} value={acct.value}>
-                      {acct.value}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type="text"
-                  placeholder="e.g., BOFA-Checking, AMEX-53004"
-                  value={accountSource}
-                  onChange={(e) => setAccountSource(e.target.value)}
-                  className={`w-full px-4 py-2 border rounded-md ${!accountSource ? 'border-yellow-400' : ''}`}
-                />
-              )}
-              {!accountSource && (
-                <p className="text-xs text-yellow-600">
-                  ⚠️ Account is required for accurate duplicate detection
-                </p>
-              )}
-            </div>
-          </div>
+                {accountMode === 'existing' && accounts.length > 0 ? (
+                  <select
+                    value={accountSource}
+                    onChange={(e) => setAccountSource(e.target.value)}
+                    className={`w-full px-4 py-2 border rounded-md ${!accountSource ? 'border-yellow-400' : ''}`}
+                  >
+                    <option value="">-- Select Account --</option>
+                    {accounts.map((acct) => (
+                      <option key={acct.id} value={acct.value}>
+                        {acct.value}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    placeholder="e.g., BOFA-Checking, AMEX-53004"
+                    value={accountSource}
+                    onChange={(e) => setAccountSource(e.target.value)}
+                    className={`w-full px-4 py-2 border rounded-md ${!accountSource ? 'border-yellow-400' : ''}`}
+                  />
+                )}
+                {!accountSource && (
+                  <p className="text-xs text-yellow-600 mt-1">
+                    Required for accurate duplicate detection
+                  </p>
+                )}
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Format Hint (Optional)
-            </label>
-            <select
-              value={formatHint}
-              onChange={(e) => setFormatHint(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md"
-            >
-              <option value="">Auto-detect</option>
-              <option value="bofa_bank">Bank of America (Checking/Savings)</option>
-              <option value="bofa_cc">Bank of America (Credit Card)</option>
-              <option value="amex_cc">American Express</option>
-              <option value="inspira_hsa">Inspira HSA</option>
-              <option value="venmo">Venmo</option>
-            </select>
-          </div>
-        </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Format (Optional)
+                </label>
+                <select
+                  value={selectedCustomFormat ? `custom:${selectedCustomFormat.id}` : formatHint}
+                  onChange={(e) => handleFormatChange(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-md"
+                >
+                  <option value="">Auto-detect</option>
+                  <optgroup label="Standard File Formats">
+                    <option value="qif">Quicken (QIF)</option>
+                    <option value="qfx">Quicken/OFX (QFX)</option>
+                  </optgroup>
+                  {savedFormats.length > 0 && (
+                    <optgroup label="Saved Custom Formats">
+                      {savedFormats.map(fmt => (
+                        <option key={fmt.id} value={`custom:${fmt.id}`}>
+                          {fmt.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
+                {selectedCustomFormat && (
+                  <p className="mt-1 text-xs text-purple-600">
+                    Using saved format: {selectedCustomFormat.name}
+                  </p>
+                )}
+              </div>
+            </div>
 
             <button
               onClick={handlePreview}
@@ -546,73 +642,86 @@ export default function ImportPage() {
 
           {/* Preview */}
           {preview && (
-        <div className="bg-white rounded-lg shadow p-6 space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Preview</h2>
-            <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-              {FORMAT_NAMES[preview.detected_format] || preview.detected_format} format detected
-            </span>
-          </div>
+            <div className="bg-white rounded-lg shadow p-6 space-y-4">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Preview</h2>
+                <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                  {selectedCustomFormat
+                    ? selectedCustomFormat.name
+                    : FORMAT_NAMES[preview.detected_format] || preview.detected_format}
+                </span>
+              </div>
 
-          <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded">
-            <div>
-              <p className="text-sm text-gray-600">Transactions</p>
-              <p className="text-2xl font-bold">{preview.transaction_count}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Total Amount</p>
-              <p className={`text-2xl font-bold ${preview.total_amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatCurrency(preview.total_amount)}
-              </p>
-            </div>
-          </div>
+              {preview.errors && preview.errors.length > 0 && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded">
+                  <p className="text-sm font-medium text-red-800">Parsing Errors:</p>
+                  <ul className="mt-1 text-sm text-red-600 list-disc list-inside">
+                    {preview.errors.slice(0, 3).map((err: string, idx: number) => (
+                      <li key={idx}>{err}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Merchant</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Bucket</th>
-                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {preview.transactions.slice(0, 10).map((txn: any, idx: number) => (
-                  <tr key={idx}>
-                    <td className="px-4 py-2 text-sm">{format(new Date(txn.date), 'MM/dd/yyyy')}</td>
-                    <td className="px-4 py-2 text-sm">{txn.merchant}</td>
-                    <td className="px-4 py-2 text-sm">
-                      <span className="px-2 py-1 bg-gray-100 rounded text-xs">{txn.bucket || 'No Bucket'}</span>
-                    </td>
-                    <td className={`px-4 py-2 text-sm text-right ${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatCurrency(txn.amount, true)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {preview.transactions.length > 10 && (
-              <p className="text-center text-sm text-gray-500 mt-4">
-                Showing first 10 of {preview.transaction_count} transactions
-              </p>
-            )}
-          </div>
+              <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded">
+                <div>
+                  <p className="text-sm text-gray-600">Transactions</p>
+                  <p className="text-2xl font-bold">{preview.transaction_count}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Total Amount</p>
+                  <p className={`text-2xl font-bold ${preview.total_amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(preview.total_amount)}
+                  </p>
+                </div>
+              </div>
 
-          <div className="flex gap-4">
-            <button
-              onClick={handleConfirm}
-              disabled={importing}
-              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              {importing ? 'Importing...' : 'Confirm Import'}
-            </button>
-            <button
-              onClick={() => setPreview(null)}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-            >
-              Cancel
-            </button>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Merchant</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Bucket</th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {preview.transactions.slice(0, 10).map((txn: any, idx: number) => (
+                      <tr key={idx}>
+                        <td className="px-4 py-2 text-sm">{format(new Date(txn.date), 'MM/dd/yyyy')}</td>
+                        <td className="px-4 py-2 text-sm">{txn.merchant}</td>
+                        <td className="px-4 py-2 text-sm">
+                          <span className="px-2 py-1 bg-gray-100 rounded text-xs">{txn.bucket || 'No Bucket'}</span>
+                        </td>
+                        <td className={`px-4 py-2 text-sm text-right ${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {formatCurrency(txn.amount, true)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {preview.transactions.length > 10 && (
+                  <p className="text-center text-sm text-gray-500 mt-4">
+                    Showing first 10 of {preview.transaction_count} transactions
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={handleConfirm}
+                  disabled={importing}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  {importing ? 'Importing...' : 'Confirm Import'}
+                </button>
+                <button
+                  onClick={() => setPreview(null)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           )}
@@ -624,7 +733,6 @@ export default function ImportPage() {
         <div className="bg-green-50 border border-green-200 rounded-lg p-6 space-y-4">
           <h2 className="text-xl font-semibold text-green-900">Import Complete!</h2>
 
-          {/* Summary stats for both single and batch */}
           <div className="grid grid-cols-3 gap-4">
             <div>
               <p className="text-sm text-green-700">Imported</p>
@@ -643,7 +751,7 @@ export default function ImportPage() {
                 {result.files ? 'Files Imported' : 'Format Saved'}
               </p>
               <p className="text-2xl font-bold text-green-900">
-                {result.files ? result.files.length : (result.format_saved ? 'Yes' : 'No')}
+                {result.files ? result.files.length : (result.format_saved || result.config_saved ? 'Yes' : 'No')}
               </p>
             </div>
           </div>
@@ -674,20 +782,8 @@ export default function ImportPage() {
               </h3>
               <p className="text-sm text-yellow-700">
                 These transactions appear to match existing transactions in other accounts.
-                This could indicate transfers between accounts or potential duplicate imports.
+                This could indicate transfers between accounts.
               </p>
-              <div className="space-y-1 max-h-40 overflow-y-auto">
-                {result.cross_account_warnings?.map((warning: string, idx: number) => (
-                  <p key={idx} className="text-xs text-yellow-600 font-mono">
-                    {warning}
-                  </p>
-                ))}
-                {result.cross_account_warning_count > 10 && (
-                  <p className="text-xs text-yellow-600 italic">
-                    ...and {result.cross_account_warning_count - 10} more
-                  </p>
-                )}
-              </div>
             </div>
           )}
         </div>

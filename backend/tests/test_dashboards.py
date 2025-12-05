@@ -51,7 +51,8 @@ class TestDashboardGet:
 
         assert data["is_default"] is True
         assert "name" in data
-        assert "view_mode" in data
+        assert "date_range_type" in data
+        assert "date_range" in data
 
     @pytest.mark.asyncio
     async def test_get_dashboard_by_id(self, client: AsyncClient):
@@ -82,7 +83,7 @@ class TestDashboardCreate:
         dashboard_data = {
             "name": "My Dashboard",
             "description": "A test dashboard",
-            "view_mode": "year"
+            "date_range_type": "ytd"
         }
 
         response = await client.post("/api/v1/dashboards", json=dashboard_data)
@@ -91,28 +92,29 @@ class TestDashboardCreate:
 
         assert data["name"] == "My Dashboard"
         assert data["description"] == "A test dashboard"
-        assert data["view_mode"] == "year"
+        assert data["date_range_type"] == "ytd"
+        assert "date_range" in data
         assert data["is_default"] is False
 
     @pytest.mark.asyncio
-    async def test_create_dashboard_with_filters(self, client: AsyncClient):
-        """Create dashboard with JSON filter arrays"""
-        import json
+    async def test_create_dashboard_with_date_range(self, client: AsyncClient):
+        """Create dashboard with various date range types"""
+        for range_type in ["mtd", "qtd", "ytd", "last_30_days", "last_90_days", "last_year"]:
+            dashboard_data = {
+                "name": f"Dashboard {range_type}",
+                "date_range_type": range_type
+            }
 
-        dashboard_data = {
-            "name": "Filtered Dashboard",
-            "filter_buckets": json.dumps(["groceries", "dining"]),
-            "filter_accounts": json.dumps(["bofa-checking"])
-        }
+            response = await client.post("/api/v1/dashboards", json=dashboard_data)
+            assert response.status_code == 201
+            data = response.json()
 
-        response = await client.post("/api/v1/dashboards", json=dashboard_data)
-        assert response.status_code == 201
-        data = response.json()
-
-        assert data["name"] == "Filtered Dashboard"
-        filter_buckets = json.loads(data["filter_buckets"])
-        assert "groceries" in filter_buckets
-        assert "dining" in filter_buckets
+            assert data["name"] == f"Dashboard {range_type}"
+            assert data["date_range_type"] == range_type
+            assert "date_range" in data
+            assert "start_date" in data["date_range"]
+            assert "end_date" in data["date_range"]
+            assert "label" in data["date_range"]
 
     @pytest.mark.asyncio
     async def test_create_dashboard_as_default(self, client: AsyncClient):
@@ -175,17 +177,18 @@ class TestDashboardUpdate:
         assert data["name"] == "Updated Name"
 
     @pytest.mark.asyncio
-    async def test_update_dashboard_view_mode(self, client: AsyncClient):
-        """Update dashboard view mode"""
+    async def test_update_dashboard_date_range_type(self, client: AsyncClient):
+        """Update dashboard date range type"""
         # Get default dashboard
         list_response = await client.get("/api/v1/dashboards")
         dashboard_id = list_response.json()[0]["id"]
 
         response = await client.patch(f"/api/v1/dashboards/{dashboard_id}", json={
-            "view_mode": "year"
+            "date_range_type": "qtd"
         })
         assert response.status_code == 200
-        assert response.json()["view_mode"] == "year"
+        assert response.json()["date_range_type"] == "qtd"
+        assert "date_range" in response.json()
 
     @pytest.mark.asyncio
     async def test_update_dashboard_to_default(self, client: AsyncClient):
@@ -298,12 +301,10 @@ class TestDashboardClone:
     async def test_clone_dashboard(self, client: AsyncClient):
         """Clone a dashboard with its settings"""
         # Create a dashboard with specific settings
-        import json
         create_response = await client.post("/api/v1/dashboards", json={
             "name": "Original",
             "description": "Test description",
-            "view_mode": "year",
-            "filter_buckets": json.dumps(["groceries"])
+            "date_range_type": "ytd"
         })
         original_id = create_response.json()["id"]
 
@@ -314,7 +315,7 @@ class TestDashboardClone:
 
         assert clone["name"] == "Original (copy)"
         assert clone["description"] == "Test description"
-        assert clone["view_mode"] == "year"
+        assert clone["date_range_type"] == "ytd"
         assert clone["is_default"] is False  # Clone should not be default
 
     @pytest.mark.asyncio
