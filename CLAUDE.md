@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI coding agents when working with code in this repository.
 
 ## Project Overview
 
-**Maxwell's Wallet** - Full-stack personal finance tracker built with FORGE Kit:
+**Maxwell's Wallet** - Full-stack personal finance tracker:
 - **Frontend**: Next.js 14 + TypeScript (App Router)
 - **Backend**: FastAPI + Python (async)
 - **Database**: SQLite (dev) with SQLModel ORM (Postgres-ready for prod)
@@ -15,13 +15,15 @@ Project scaffolding: Next.js frontend + FastAPI backend with CRUD "items" (title
 ## Repository Structure
 
 ```
-.claude/
-  agents/           # Agent definitions (e.g., techlead.mdc)
-  skills/           # Per-topic skill cards (Next.js, FastAPI, Postgres, TS, Python, DB/T-SQL)
-dev/forge-kit/    # FORGE Kit submodule (toolkit source)
-forge.config.yaml # Project configuration (stack, features, constraints)
-frontend/         # Next.js app (when generated)
-backend/          # FastAPI app (when generated)
+.waypoint/
+  agents/           # Canonical agent definitions
+  skills/           # Canonical skill cards (Next.js, FastAPI, Postgres, TS, Python, DB/T-SQL, testing)
+.claude/README.md   # Symlink to .waypoint/README.md (shared AI config instructions)
+.claude/            # Symlinks to .waypoint for Claude Code
+.codex/             # Symlinks to .waypoint for Codex
+.cursor/            # Symlinks to .waypoint for Cursor
+frontend/         # Next.js app
+backend/          # FastAPI app
 ```
 
 ## Available Agent
@@ -80,17 +82,6 @@ pnpm dev
 pnpm build
 ```
 
-## forge.config.yaml
-
-Single source of truth defining:
-- Stack: Next.js + FastAPI + SQLite/SQLModel
-- Directories: `frontend/` and `backend/`
-- Initial features: CRUD items (title, description, timestamps)
-- Non-goals: no auth, no deployment pipeline, no multi-tenant
-- Runtime commands specified in `constraints` section
-
-Edit this file to change project scope, then run `@forge` to implement changes.
-
 ## Architecture Notes
 
 **Backend**:
@@ -113,10 +104,9 @@ Edit this file to change project scope, then run `@forge` to implement changes.
 
 ## Typical Workflow
 
-1. Modify `forge.config.yaml` to add features or change stack if you want to regenerate scaffolding.
-2. Use `make` targets for setup, dev, tests, and migrations (see commands above).
-3. Run backend (`uv run uvicorn ...`) and frontend (`pnpm dev`) servers for local development.
-4. Iterate by editing code/config directly; regenerate scaffolding only when necessary.
+1. Use `make` targets for setup, dev, tests, and migrations (see commands above).
+2. Run backend (`uv run uvicorn ...`) and frontend (`pnpm dev`) servers for local development.
+3. Iterate by editing code/config directly.
 
 ## Agent Skills and Tooling Guidance
 
