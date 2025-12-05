@@ -17,21 +17,18 @@ data/
 
 ## When you find a new raw file that needs testing
 
-1. **Always anonymize it first** using the script:
+1. **Always anonymize it first** using the Makefile:
    ```bash
-   # Install dependencies (one-time)
-   pip install scrubadub faker
-
-   # Then run
    cd data
-   python anonymize.py --status         # See what's pending
-   python anonymize.py                   # Process all pending files
-   python anonymize.py --force           # Reprocess everything
+   make install-deps                     # One-time: install scrubadub, faker
+   make status                           # See what's pending
+   make anonymize                        # Process all pending files
+   make anonymize-force                  # Reprocess everything
    ```
 
 2. **Or anonymize a single file:**
    ```bash
-   python anonymize.py raw/MyBank/statement.csv anonymized/mybank_anon.csv
+   make anonymize FILE=raw/MyBank/statement.csv OUT=anonymized/mybank_anon.csv
    ```
 
 3. **Update tests to use the anonymized version**, e.g.:
