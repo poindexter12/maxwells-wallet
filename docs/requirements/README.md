@@ -124,4 +124,3 @@ When requirements change:
 - `/QUICKSTART.md` - Quick start guide
 - `/MAKEFILE_GUIDE.md` - Makefile command reference
 - `/FIXES.md` - Issues fixed during development
-- `/forge.config.yaml` - FORGE configuration used to build this

@@ -124,4 +124,3 @@ make status
 
 - Check `README.md` for full documentation
 - Check `MAKEFILE_GUIDE.md` for all Makefile commands
-- Check `forge.config.yaml` to see the project configuration

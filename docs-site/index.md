@@ -43,4 +43,4 @@ make dev
 
 - [GitHub Repository](https://github.com/poindexter12/maxwells-wallet)
 - [API Documentation](/api/overview/)
-- [Docker Hub](https://github.com/poindexter12/maxwells-wallet/pkgs/container/maxwells-wallet)
+- [Docker Image](https://github.com/poindexter12/maxwells-wallet/pkgs/container/maxwells-wallet)
