@@ -101,7 +101,7 @@ class TestAutoDetectHeaderRow:
 
     def test_inspira_hsa_header_is_first_row(self):
         """Inspira HSA CSV has header as the first row."""
-        content = get_sample_file("Health_Savings_Account20250101_20251130_Transactions.csv")
+        content = get_sample_file("inspira_hsa_anon.csv")
 
         result = find_header_row(content)
         assert result is not None
@@ -115,7 +115,7 @@ class TestAutoDetectHeaderRow:
 
     def test_venmo_finds_header_after_account_info(self):
         """Venmo CSV has account info rows before the header."""
-        content = get_sample_file("VenmoStatement_January_2025.csv")
+        content = get_sample_file("venmo_anon.csv")
 
         # Row 1: "Account Statement - (@teamseymour)"
         # Row 2: "Account Activity"
@@ -179,7 +179,7 @@ class TestColumnTypeDetection:
 
     def test_inspira_hsa_column_hints(self):
         """Test column type detection for Inspira HSA CSV."""
-        content = get_sample_file("Health_Savings_Account20250101_20251130_Transactions.csv")
+        content = get_sample_file("inspira_hsa_anon.csv")
 
         result = analyze_csv_columns(content, skip_rows=0)
         hints = result["column_hints"]
@@ -192,7 +192,7 @@ class TestColumnTypeDetection:
 
     def test_venmo_column_hints(self):
         """Test column type detection for Venmo CSV."""
-        content = get_sample_file("VenmoStatement_January_2025.csv")
+        content = get_sample_file("venmo_anon.csv")
 
         # Venmo header is at row 3 (0-indexed: 2)
         result = analyze_csv_columns(content, skip_rows=2)
@@ -361,7 +361,7 @@ class TestSuggestedConfig:
 
     def test_inspira_hsa_suggested_config(self):
         """Inspira HSA should generate a working config."""
-        content = get_sample_file("Health_Savings_Account20250101_20251130_Transactions.csv")
+        content = get_sample_file("inspira_hsa_anon.csv")
 
         result = analyze_csv_columns(content, skip_rows=0)
         suggested = result.get("suggested_config", {})
@@ -378,7 +378,7 @@ class TestSuggestedConfig:
 
     def test_venmo_suggested_config(self):
         """Venmo should generate a working config."""
-        content = get_sample_file("VenmoStatement_January_2025.csv")
+        content = get_sample_file("venmo_anon.csv")
 
         # Auto-detect header row
         header_result = find_header_row(content)
@@ -408,8 +408,8 @@ class TestEndToEndAutoDetect:
         ("bofa_bank_anon.csv", 100),
         ("bofa_cc_anon.csv", 50),
         ("amex_cc_anon.csv", 30),
-        ("Health_Savings_Account20250101_20251130_Transactions.csv", 50),
-        ("VenmoStatement_January_2025.csv", 1),
+        ("inspira_hsa_anon.csv", 50),
+        ("venmo_anon.csv", 1),
     ])
     def test_auto_detect_and_parse(self, filename, expected_min_transactions):
         """Test that we can auto-detect format and parse the file."""
