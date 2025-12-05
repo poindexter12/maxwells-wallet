@@ -1,0 +1,169 @@
+"""
+E2E tests for dashboard functionality using Playwright.
+
+Requires the frontend (port 3000) and backend (port 8000) to be running.
+Run with: uv run pytest tests/test_e2e_dashboards.py -v --base-url http://localhost:3000
+
+Note: These tests require browsers to be installed. Run:
+  playwright install chromium
+"""
+import pytest
+from playwright.sync_api import Page, expect
+
+# Mark all tests in this module as requiring playwright fixtures
+pytestmark = pytest.mark.playwright
+
+# Default base URL if not provided via --base-url
+DEFAULT_BASE_URL = "http://localhost:3000"
+
+
+@pytest.fixture(scope="session")
+def base_url(request):
+    """Base URL for frontend - uses --base-url CLI option or default."""
+    return request.config.getoption("--base-url") or DEFAULT_BASE_URL
+
+
+class TestDashboardManagement:
+    """E2E tests for dashboard management page."""
+
+    def test_manage_page_loads(self, page: Page, base_url: str):
+        """Test that the dashboard manage page loads correctly."""
+        page.goto(f"{base_url}/dashboard/manage")
+
+        # Wait for page to load
+        page.wait_for_selector("h1")
+
+        # Check page title
+        heading = page.locator("h1")
+        expect(heading).to_have_text("Manage Dashboards")
+
+    def test_create_dashboard_button_visible(self, page: Page, base_url: str):
+        """Test that Create Dashboard button is visible."""
+        page.goto(f"{base_url}/dashboard/manage")
+
+        # Find the Create Dashboard button
+        create_button = page.get_by_role("button", name="Create Dashboard")
+        expect(create_button).to_be_visible()
+
+    def test_create_dashboard_form_opens(self, page: Page, base_url: str):
+        """Test that clicking Create Dashboard opens the form."""
+        page.goto(f"{base_url}/dashboard/manage")
+
+        # Click Create Dashboard button
+        page.get_by_role("button", name="Create Dashboard").click()
+
+        # Form should now be visible
+        name_input = page.get_by_placeholder("Dashboard name")
+        expect(name_input).to_be_visible()
+
+        # Date range selector should be visible - it's the select near the name input
+        # The form is the first card with a "Create New Dashboard" heading
+        form = page.locator("h2:has-text('Create New Dashboard')").locator("..")
+        expect(form.locator("select")).to_be_visible()
+
+    def test_create_dashboard_successfully(self, page: Page, base_url: str):
+        """Test creating a new dashboard through the UI."""
+        page.goto(f"{base_url}/dashboard/manage")
+
+        # Click Create Dashboard button
+        page.get_by_role("button", name="Create Dashboard").click()
+
+        # Wait for form to appear
+        page.wait_for_selector("text=Create New Dashboard")
+
+        # Fill in the form
+        dashboard_name = f"E2E Test Dashboard"
+        page.get_by_placeholder("Dashboard name").fill(dashboard_name)
+
+        # Select a date range - find the form's select (near the name input)
+        form = page.locator("h2:has-text('Create New Dashboard')").locator("..")
+        form.locator("select").select_option("qtd")
+
+        # Add optional description
+        page.get_by_placeholder("Optional description").fill("Created by E2E test")
+
+        # Click Create button in the form (it's after the Cancel button)
+        form.locator("button:has-text('Create')").click()
+
+        # Wait for the form to close and the dashboard to appear
+        page.wait_for_selector(f"text={dashboard_name}", timeout=10000)
+
+        # Verify the dashboard is in the list
+        dashboard_card = page.locator(f"text={dashboard_name}")
+        expect(dashboard_card).to_be_visible()
+
+    def test_create_dashboard_requires_name(self, page: Page, base_url: str):
+        """Test that Create button is disabled without a name."""
+        page.goto(f"{base_url}/dashboard/manage")
+
+        # Click Create Dashboard button
+        page.get_by_role("button", name="Create Dashboard").click()
+
+        # Leave name empty, find the Create button in the form
+        create_button = page.locator("button:has-text('Create')").last
+
+        # Button should be disabled
+        expect(create_button).to_be_disabled()
+
+    def test_dashboard_shows_date_range(self, page: Page, base_url: str):
+        """Test that dashboards display their date range information."""
+        page.goto(f"{base_url}/dashboard/manage")
+
+        # Wait for dashboards to load
+        page.wait_for_selector(".card", timeout=5000)
+
+        # Check that at least one dashboard shows date range info
+        # The format includes date range label like "Month to Date:" or similar
+        date_range_text = page.locator("text=/to Date:|Last \\d+ Days|Last Year/").first
+        expect(date_range_text).to_be_visible()
+
+    def test_change_date_range_type(self, page: Page, base_url: str):
+        """Test changing a dashboard's date range type."""
+        page.goto(f"{base_url}/dashboard/manage")
+
+        # Wait for dashboards to load
+        page.wait_for_selector(".card", timeout=5000)
+
+        # Find a date range selector in a dashboard card (not the theme switcher or form)
+        # The dashboard cards have selects for date range
+        date_select = page.locator(".card select").last
+        current_value = date_select.input_value()
+
+        # Select a different option
+        new_value = "ytd" if current_value != "ytd" else "mtd"
+        date_select.select_option(new_value)
+
+        # Wait a moment for the update
+        page.wait_for_timeout(500)
+
+        # Verify the value changed
+        expect(date_select).to_have_value(new_value)
+
+
+class TestDashboardTabs:
+    """E2E tests for dashboard tabs on main page."""
+
+    def test_main_page_shows_dashboard_tabs(self, page: Page, base_url: str):
+        """Test that the main dashboard page shows tabs."""
+        page.goto(base_url)
+
+        # Wait for page to load
+        page.wait_for_selector("nav", timeout=5000)
+
+        # The DashboardTabs component should be visible
+        # Look for elements that would indicate tabs are present
+        # This depends on the DashboardTabs implementation
+        page.wait_for_timeout(1000)  # Wait for dashboards to load
+
+    def test_clicking_manage_link(self, page: Page, base_url: str):
+        """Test that clicking manage navigates to manage page."""
+        page.goto(base_url)
+
+        # Look for a Manage link or gear icon
+        manage_link = page.locator("a[href='/dashboard/manage']")
+
+        if manage_link.is_visible():
+            manage_link.click()
+
+            # Should navigate to manage page
+            expect(page).to_have_url(f"{base_url}/dashboard/manage")

@@ -2,12 +2,23 @@
 
 import Link from 'next/link'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
-import { DashboardSelector } from '@/components/DashboardSelector'
 import { usePathname } from 'next/navigation'
 
 export function NavBar() {
   const pathname = usePathname()
-  const isDashboard = pathname === '/' || pathname.startsWith('/dashboard')
+
+  // Helper to determine if a link is active
+  function isActive(href: string): boolean {
+    if (href === '/') {
+      return pathname === '/' || pathname.startsWith('/dashboard')
+    }
+    return pathname.startsWith(href)
+  }
+
+  function linkClass(href: string): string {
+    const base = 'nav-link inline-flex items-center px-1 pt-1'
+    return isActive(href) ? `${base} nav-link-active` : base
+  }
 
   return (
     <nav className="nav-container">
@@ -19,21 +30,22 @@ export function NavBar() {
               Maxwell&apos;s Wallet
             </Link>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-6 sm:items-center">
-              {/* Dashboard selector (only show on dashboard pages or always) */}
-              <DashboardSelector />
-              <Link href="/transactions" className="nav-link inline-flex items-center px-1 pt-1">
+              <Link href="/" className={linkClass('/')}>
+                Dashboard
+              </Link>
+              <Link href="/transactions" className={linkClass('/transactions')}>
                 Transactions
               </Link>
-              <Link href="/budgets" className="nav-link inline-flex items-center px-1 pt-1">
+              <Link href="/budgets" className={linkClass('/budgets')}>
                 Budgets
               </Link>
-              <Link href="/organize" className="nav-link inline-flex items-center px-1 pt-1">
+              <Link href="/organize" className={linkClass('/organize')}>
                 Organize
               </Link>
-              <Link href="/tools" className="nav-link inline-flex items-center px-1 pt-1">
+              <Link href="/tools" className={linkClass('/tools')}>
                 Tools
               </Link>
-              <Link href="/admin" className="nav-link inline-flex items-center px-1 pt-1">
+              <Link href="/admin" className={linkClass('/admin')}>
                 Admin
               </Link>
             </div>
