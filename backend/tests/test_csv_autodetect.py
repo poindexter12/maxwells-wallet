@@ -31,7 +31,10 @@ ANON_DIR = DATA_DIR / "anonymized"
 
 
 def get_sample_file(name: str) -> str:
-    """Load a sample CSV file content."""
+    """Load a sample CSV file content.
+
+    Skips the test if sample file is not found (sample data is gitignored).
+    """
     paths_to_try = [
         ANON_DIR / name,
         RAW_DIR / name,
@@ -46,7 +49,7 @@ def get_sample_file(name: str) -> str:
         if path.exists():
             return path.read_text()
 
-    raise FileNotFoundError(f"Sample file not found: {name}")
+    pytest.skip(f"Sample file not found (data/ is gitignored): {name}")
 
 
 class TestAutoDetectHeaderRow:
@@ -410,10 +413,7 @@ class TestEndToEndAutoDetect:
     ])
     def test_auto_detect_and_parse(self, filename, expected_min_transactions):
         """Test that we can auto-detect format and parse the file."""
-        try:
-            content = get_sample_file(filename)
-        except FileNotFoundError:
-            pytest.skip(f"Sample file not found: {filename}")
+        content = get_sample_file(filename)  # Skips if file not found
 
         # Full auto-detection pipeline
         config = auto_detect_csv_format(content)
