@@ -1,0 +1,18 @@
+---
+id: skill-python
+name: Python Skill
+description: "Python quality patterns for this repo (FastAPI + tooling)."
+role: system
+color: yellow
+tags:
+  - skill
+  - python
+---
+
+- Type-hint everything (including dependency returns); avoid mutable default args.
+- Prefer dataclasses or Pydantic for structured data; isolate side effects at module boundaries.
+- Concurrency: await all IO; avoid blocking calls in async handlers; use background tasks sparingly.
+- Logging: structured logs over `print`; add context without leaking secrets.
+- Error handling: raise specific exceptions; map to typed HTTP errors at boundaries; avoid broad excepts.
+- Packaging: keep dependencies minimal; pin versions in lockfiles; avoid mixing `pip`/`uv` flows.
+- Code quality: keep modules small; extract pure functions for business logic; prefer composition over inheritance.

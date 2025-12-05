@@ -11,24 +11,45 @@ data/
 ├── raw/              # Gitignored - real financial CSVs go here
 ├── anonymized/       # Tracked in git - anonymized versions for testing
 ├── anonymize.py      # Script to create anonymized versions
-├── .gitignore        # Ignores raw/ directory
+├── pyproject.toml    # Dependencies (scrubadub, faker)
+├── Makefile          # All commands for anonymization
+├── .gitignore        # Ignores raw/ and .venv/
 └── CLAUDE.md         # This file
+```
+
+## Setup (first time)
+
+From project root:
+```bash
+make data-setup    # Creates venv in data/.venv and installs deps
+```
+
+Or from data directory:
+```bash
+cd data
+make setup
 ```
 
 ## When you find a new raw file that needs testing
 
-1. **Always anonymize it first** using the Makefile:
+1. **Always anonymize it first** using make:
    ```bash
+   # From project root:
+   make data-status                      # See what's pending
+   make data-anonymize                   # Process all pending files
+   make data-force                       # Reprocess everything
+
+   # Or from data directory:
    cd data
-   make install-deps                     # One-time: install scrubadub, faker
-   make status                           # See what's pending
-   make anonymize                        # Process all pending files
-   make anonymize-force                  # Reprocess everything
+   make status
+   make anonymize
+   make force
    ```
 
-2. **Or anonymize a single file:**
+2. **Anonymize a single file:**
    ```bash
-   make anonymize FILE=raw/MyBank/statement.csv OUT=anonymized/mybank_anon.csv
+   cd data
+   make anonymize raw/MyBank/statement.csv   # Auto-generates output name
    ```
 
 3. **Update tests to use the anonymized version**, e.g.:

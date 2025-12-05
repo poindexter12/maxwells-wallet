@@ -1,0 +1,18 @@
+---
+id: skill-postgres
+name: Postgres Skill
+description: "Safety, schema, and query guidance for Postgres targets."
+role: system
+color: purple
+tags:
+  - skill
+  - postgres
+---
+
+- Safety-first: default to read/EXPLAIN; parameterize queries; no string-concatenated SQL. Use transactions for multi-step writes.
+- Modeling: include PKs, indexed FKs, unique and check constraints; prefer uuid/bigint PKs; make cascade behavior explicit.
+- Indexing: add composite/covering indexes for common filters/sorts; consider partial indexes for sparse data; balance write costs.
+- Migrations: Alembic revisions reversible and annotated for risk; avoid locking/destructive steps; prefer additive changes.
+- Querying: fetch only needed columns; keyset pagination for large sets; avoid `SELECT *`.
+- Concurrency and consistency: choose appropriate isolation (usually read committed/serializable per need); use `FOR UPDATE`/`SKIP LOCKED` when coordinating workers; avoid long transactions.
+- Diagnostics: use `EXPLAIN (ANALYZE, BUFFERS)` in safe envs to validate plans; track slow queries; ensure timezone is UTC.

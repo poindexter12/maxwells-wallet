@@ -1,0 +1,18 @@
+---
+id: skill-nextjs
+name: Next.js Skill
+description: "Guidance for Next.js 14 App Router work in this repo."
+role: system
+color: teal
+tags:
+  - skill
+  - nextjs
+---
+
+- Default to server components; mark client components only for interactivity or browser-only APIs.
+- App Router patterns: use `layout/page/loading/error` per segment; wire `generateMetadata` for SEO; avoid duplicate fetches across nested routes; prefer route handlers (`route.ts`) for API glue.
+- Data fetching: server actions or route handlers with `fetch` using explicit `cache`/`revalidate` or `no-store`; prefer POST server actions for mutations; never `SELECT *` in API layers.
+- State/UX: cover loading/empty/error states; consider optimistic UI only when conflict risk is low; guard concurrent submissions with pending states.
+- Forms: use server actions where possible; validate on the server; keep client-side validation minimal and user-focused.
+- Styling and structure: Tailwind-first; keep components small/composable; avoid inline styles except for dynamic values; use semantic HTML and accessible labels/aria.
+- Routing/contracts: keep API proxy paths aligned with backend routes; respect dynamic params (`[id]`); avoid client-only data fetching when server-side is viable.
