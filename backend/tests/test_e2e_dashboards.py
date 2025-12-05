@@ -2,33 +2,50 @@
 E2E tests for dashboard functionality using Playwright.
 
 Requires the frontend (port 3000) and backend (port 8000) to be running.
-Run with: uv run pytest tests/test_e2e_dashboards.py -v --base-url http://localhost:3000
+Run with: make test-e2e (starts servers) or with servers already running:
+  uv run pytest tests/test_e2e_dashboards.py -v
 
 Note: These tests require browsers to be installed. Run:
   playwright install chromium
 """
 import pytest
+import httpx
 from playwright.sync_api import Page, expect
 
-# Mark all tests in this module as requiring playwright fixtures
-pytestmark = pytest.mark.playwright
-
-# Default base URL if not provided via --base-url
-DEFAULT_BASE_URL = "http://localhost:3000"
+FRONTEND_URL = "http://localhost:3000"
+BACKEND_URL = "http://localhost:8000"
 
 
-@pytest.fixture(scope="session")
-def base_url(request):
-    """Base URL for frontend - uses --base-url CLI option or default."""
-    return request.config.getoption("--base-url") or DEFAULT_BASE_URL
+def servers_available() -> bool:
+    """Check if frontend and backend servers are running."""
+    try:
+        # Check backend
+        backend_ok = httpx.get(f"{BACKEND_URL}/api/v1/transactions", timeout=2).status_code in (200, 307, 404)
+    except Exception:
+        backend_ok = False
+
+    try:
+        # Check frontend
+        frontend_ok = httpx.get(FRONTEND_URL, timeout=2).status_code == 200
+    except Exception:
+        frontend_ok = False
+
+    return backend_ok and frontend_ok
+
+
+# Skip all tests in this module if servers aren't running
+pytestmark = pytest.mark.skipif(
+    not servers_available(),
+    reason="Frontend and/or backend servers not running. Start with: make dev"
+)
 
 
 class TestDashboardManagement:
     """E2E tests for dashboard management page."""
 
-    def test_manage_page_loads(self, page: Page, base_url: str):
+    def test_manage_page_loads(self, page: Page):
         """Test that the dashboard manage page loads correctly."""
-        page.goto(f"{base_url}/dashboard/manage")
+        page.goto(f"{FRONTEND_URL}/dashboard/manage")
 
         # Wait for page to load
         page.wait_for_selector("h1")
@@ -37,17 +54,17 @@ class TestDashboardManagement:
         heading = page.locator("h1")
         expect(heading).to_have_text("Manage Dashboards")
 
-    def test_create_dashboard_button_visible(self, page: Page, base_url: str):
+    def test_create_dashboard_button_visible(self, page: Page):
         """Test that Create Dashboard button is visible."""
-        page.goto(f"{base_url}/dashboard/manage")
+        page.goto(f"{FRONTEND_URL}/dashboard/manage")
 
         # Find the Create Dashboard button
         create_button = page.get_by_role("button", name="Create Dashboard")
         expect(create_button).to_be_visible()
 
-    def test_create_dashboard_form_opens(self, page: Page, base_url: str):
+    def test_create_dashboard_form_opens(self, page: Page):
         """Test that clicking Create Dashboard opens the form."""
-        page.goto(f"{base_url}/dashboard/manage")
+        page.goto(f"{FRONTEND_URL}/dashboard/manage")
 
         # Click Create Dashboard button
         page.get_by_role("button", name="Create Dashboard").click()
@@ -61,9 +78,9 @@ class TestDashboardManagement:
         form = page.locator("h2:has-text('Create New Dashboard')").locator("..")
         expect(form.locator("select")).to_be_visible()
 
-    def test_create_dashboard_successfully(self, page: Page, base_url: str):
+    def test_create_dashboard_successfully(self, page: Page):
         """Test creating a new dashboard through the UI."""
-        page.goto(f"{base_url}/dashboard/manage")
+        page.goto(f"{FRONTEND_URL}/dashboard/manage")
 
         # Click Create Dashboard button
         page.get_by_role("button", name="Create Dashboard").click()
@@ -72,7 +89,7 @@ class TestDashboardManagement:
         page.wait_for_selector("text=Create New Dashboard")
 
         # Fill in the form
-        dashboard_name = f"E2E Test Dashboard"
+        dashboard_name = "E2E Test Dashboard"
         page.get_by_placeholder("Dashboard name").fill(dashboard_name)
 
         # Select a date range - find the form's select (near the name input)
@@ -92,9 +109,9 @@ class TestDashboardManagement:
         dashboard_card = page.locator(f"text={dashboard_name}")
         expect(dashboard_card).to_be_visible()
 
-    def test_create_dashboard_requires_name(self, page: Page, base_url: str):
+    def test_create_dashboard_requires_name(self, page: Page):
         """Test that Create button is disabled without a name."""
-        page.goto(f"{base_url}/dashboard/manage")
+        page.goto(f"{FRONTEND_URL}/dashboard/manage")
 
         # Click Create Dashboard button
         page.get_by_role("button", name="Create Dashboard").click()
@@ -105,9 +122,9 @@ class TestDashboardManagement:
         # Button should be disabled
         expect(create_button).to_be_disabled()
 
-    def test_dashboard_shows_date_range(self, page: Page, base_url: str):
+    def test_dashboard_shows_date_range(self, page: Page):
         """Test that dashboards display their date range information."""
-        page.goto(f"{base_url}/dashboard/manage")
+        page.goto(f"{FRONTEND_URL}/dashboard/manage")
 
         # Wait for dashboards to load
         page.wait_for_selector(".card", timeout=5000)
@@ -117,9 +134,9 @@ class TestDashboardManagement:
         date_range_text = page.locator("text=/to Date:|Last \\d+ Days|Last Year/").first
         expect(date_range_text).to_be_visible()
 
-    def test_change_date_range_type(self, page: Page, base_url: str):
+    def test_change_date_range_type(self, page: Page):
         """Test changing a dashboard's date range type."""
-        page.goto(f"{base_url}/dashboard/manage")
+        page.goto(f"{FRONTEND_URL}/dashboard/manage")
 
         # Wait for dashboards to load
         page.wait_for_selector(".card", timeout=5000)
@@ -143,9 +160,9 @@ class TestDashboardManagement:
 class TestDashboardTabs:
     """E2E tests for dashboard tabs on main page."""
 
-    def test_main_page_shows_dashboard_tabs(self, page: Page, base_url: str):
+    def test_main_page_shows_dashboard_tabs(self, page: Page):
         """Test that the main dashboard page shows tabs."""
-        page.goto(base_url)
+        page.goto(FRONTEND_URL)
 
         # Wait for page to load
         page.wait_for_selector("nav", timeout=5000)
@@ -155,9 +172,9 @@ class TestDashboardTabs:
         # This depends on the DashboardTabs implementation
         page.wait_for_timeout(1000)  # Wait for dashboards to load
 
-    def test_clicking_manage_link(self, page: Page, base_url: str):
+    def test_clicking_manage_link(self, page: Page):
         """Test that clicking manage navigates to manage page."""
-        page.goto(base_url)
+        page.goto(FRONTEND_URL)
 
         # Look for a Manage link or gear icon
         manage_link = page.locator("a[href='/dashboard/manage']")
@@ -166,4 +183,4 @@ class TestDashboardTabs:
             manage_link.click()
 
             # Should navigate to manage page
-            expect(page).to_have_url(f"{base_url}/dashboard/manage")
+            expect(page).to_have_url(f"{FRONTEND_URL}/dashboard/manage")
