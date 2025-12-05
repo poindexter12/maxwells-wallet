@@ -1,0 +1,13 @@
+[project]
+name = "data-anonymizer"
+version = "0.1.0"
+description = "Data anonymization tools for Maxwell's Wallet"
+requires-python = ">=3.11"
+dependencies = [
+    "scrubadub>=2.0.0",
+    "faker>=18.0.0",
+]
+
+[tool.uv]
+# This is a script/tool, not an installable package
+package = false

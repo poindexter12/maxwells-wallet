@@ -7,6 +7,17 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { formatCurrency } from '@/lib/format'
 import { PageHelp } from '@/components/PageHelp'
 import { DashboardConfig } from '@/components/DashboardConfig'
+import DashboardTabs from '@/components/DashboardTabs'
+import { useDashboard, DateRangeType } from '@/contexts/DashboardContext'
+
+const DATE_RANGE_OPTIONS: { value: DateRangeType; label: string }[] = [
+  { value: 'mtd', label: 'Month to Date' },
+  { value: 'qtd', label: 'Quarter to Date' },
+  { value: 'ytd', label: 'Year to Date' },
+  { value: 'last_30_days', label: 'Last 30 Days' },
+  { value: 'last_90_days', label: 'Last 90 Days' },
+  { value: 'last_year', label: 'Last Year' },
+]
 
 // Fallback colors if CSS variables aren't available
 const COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#f97316', '#eab308']
@@ -31,9 +42,8 @@ interface Widget {
   config: string | null
 }
 
-type ViewMode = 'month' | 'year'
-
 export default function Dashboard() {
+  const { currentDashboard, loading: dashboardLoading, updateDashboard } = useDashboard()
   const [widgets, setWidgets] = useState<Widget[]>([])
   const [summary, setSummary] = useState<any>(null)
   const [trends, setTrends] = useState<any>(null)
@@ -46,19 +56,24 @@ export default function Dashboard() {
   const [heatmapData, setHeatmapData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
-  const now = new Date()
-  const [viewMode, setViewMode] = useState<ViewMode>('month')
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear())
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
   const [availableBuckets, setAvailableBuckets] = useState<{ id: number; value: string }[]>([])
   // Per-widget data for widgets with bucket filters
   const [widgetData, setWidgetData] = useState<Record<number, any>>({})
 
+  // Extract date info from current dashboard
+  const startDate = currentDashboard?.date_range?.start_date || ''
+  const endDate = currentDashboard?.date_range?.end_date || ''
+  // Parse year/month from end date for APIs that still use them
+  const selectedYear = endDate ? parseInt(endDate.split('-')[0]) : new Date().getFullYear()
+  const selectedMonth = endDate ? parseInt(endDate.split('-')[1]) : new Date().getMonth() + 1
+
   // Fetch widget configuration and bucket tags
   useEffect(() => {
-    fetchWidgets()
-    fetchBuckets()
-  }, [])
+    if (currentDashboard) {
+      fetchWidgets()
+      fetchBuckets()
+    }
+  }, [currentDashboard?.id])
 
   async function fetchBuckets() {
     try {
@@ -184,32 +199,28 @@ export default function Dashboard() {
     }
   }
 
+  async function handleDateRangeChange(dateRangeType: DateRangeType) {
+    if (!currentDashboard) return
+    await updateDashboard(currentDashboard.id, { date_range_type: dateRangeType })
+  }
+
   useEffect(() => {
     async function fetchData() {
+      if (!currentDashboard || !startDate || !endDate) return
+
       setLoading(true)
       try {
-        if (viewMode === 'month') {
-          // Monthly view - fetch month-specific data
+        // Determine if this is a monthly-scale or yearly-scale view based on date range type
+        const rangeType = currentDashboard.date_range_type
+        const isMonthlyScale = rangeType === 'mtd' || rangeType === 'last_30_days'
+        const isYearlyScale = rangeType === 'ytd' || rangeType === 'last_year' || rangeType === 'last_90_days'
+        const groupBy = isYearlyScale ? 'month' : 'week'
+
+        // Fetch summary based on date range
+        if (isMonthlyScale) {
           const summaryRes = await fetch(`/api/v1/reports/monthly-summary?year=${selectedYear}&month=${selectedMonth}`)
           const summaryData = await summaryRes.json()
           setSummary(summaryData)
-
-          // Fetch 12-week trends ending at current date in selected month
-          const endOfMonth = new Date(selectedYear, selectedMonth, 0) // Last day of selected month
-          const today = new Date()
-          const effectiveEnd = endOfMonth > today ? today : endOfMonth
-          const twelveWeeksAgo = new Date(effectiveEnd)
-          twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - 84) // 12 weeks = 84 days
-          const trendsRes = await fetch(
-            `/api/v1/reports/trends?start_date=${format(twelveWeeksAgo, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=week`
-          )
-          const trendsData = await trendsRes.json()
-          setTrends(trendsData)
-
-          // Fetch top merchants for selected month
-          const merchantsRes = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}&month=${selectedMonth}`)
-          const merchantsData = await merchantsRes.json()
-          setTopMerchants(merchantsData)
 
           // Fetch month-over-month comparison
           const momRes = await fetch(`/api/v1/reports/month-over-month?current_year=${selectedYear}&current_month=${selectedMonth}`)
@@ -225,61 +236,44 @@ export default function Dashboard() {
           const anomaliesRes = await fetch(`/api/v1/reports/anomalies?year=${selectedYear}&month=${selectedMonth}&threshold=2.0`)
           const anomaliesData = await anomaliesRes.json()
           setAnomalies(anomaliesData)
-
-          // Fetch Sankey flow data
-          const sankeyRes = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}&month=${selectedMonth}`)
-          const sankeyJson = await sankeyRes.json()
-          setSankeyData(sankeyJson)
-
-          // Fetch Treemap data
-          const treemapRes = await fetch(`/api/v1/reports/treemap?year=${selectedYear}&month=${selectedMonth}`)
-          const treemapJson = await treemapRes.json()
-          setTreemapData(treemapJson)
-
-          // Fetch Heatmap data
-          const heatmapRes = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}&month=${selectedMonth}`)
-          const heatmapJson = await heatmapRes.json()
-          setHeatmapData(heatmapJson)
         } else {
-          // Year view - fetch annual data
           const summaryRes = await fetch(`/api/v1/reports/annual-summary?year=${selectedYear}`)
           const summaryData = await summaryRes.json()
           setSummary(summaryData)
 
-          // Fetch 12-month trends for the year
-          const yearStart = new Date(selectedYear, 0, 1)
-          const yearEnd = new Date(selectedYear, 11, 31)
-          const today = new Date()
-          const effectiveEnd = yearEnd > today ? today : yearEnd
-          const trendsRes = await fetch(
-            `/api/v1/reports/trends?start_date=${format(yearStart, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=month`
-          )
-          const trendsData = await trendsRes.json()
-          setTrends(trendsData)
-
-          // Fetch top merchants for the year
-          const merchantsRes = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}`)
-          const merchantsData = await merchantsRes.json()
-          setTopMerchants(merchantsData)
-
-          // Clear month-specific data
+          // Clear month-specific data for year view
           setMonthOverMonth(null)
           setSpendingVelocity(null)
           setAnomalies(null)
-
-          // Fetch year-level Sankey, Treemap, Heatmap
-          const sankeyRes = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}`)
-          const sankeyJson = await sankeyRes.json()
-          setSankeyData(sankeyJson)
-
-          const treemapRes = await fetch(`/api/v1/reports/treemap?year=${selectedYear}`)
-          const treemapJson = await treemapRes.json()
-          setTreemapData(treemapJson)
-
-          const heatmapRes = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}`)
-          const heatmapJson = await heatmapRes.json()
-          setHeatmapData(heatmapJson)
         }
+
+        // Fetch trends using dashboard's date range
+        const trendsRes = await fetch(
+          `/api/v1/reports/trends?start_date=${startDate}&end_date=${endDate}&group_by=${groupBy}`
+        )
+        const trendsData = await trendsRes.json()
+        setTrends(trendsData)
+
+        // Fetch top merchants for the date range
+        const monthParam = isMonthlyScale ? `&month=${selectedMonth}` : ''
+        const merchantsRes = await fetch(`/api/v1/reports/top-merchants?limit=10&year=${selectedYear}${monthParam}`)
+        const merchantsData = await merchantsRes.json()
+        setTopMerchants(merchantsData)
+
+        // Fetch Sankey flow data
+        const sankeyRes = await fetch(`/api/v1/reports/sankey-flow?year=${selectedYear}${monthParam}`)
+        const sankeyJson = await sankeyRes.json()
+        setSankeyData(sankeyJson)
+
+        // Fetch Treemap data
+        const treemapRes = await fetch(`/api/v1/reports/treemap?year=${selectedYear}${monthParam}`)
+        const treemapJson = await treemapRes.json()
+        setTreemapData(treemapJson)
+
+        // Fetch Heatmap data
+        const heatmapRes = await fetch(`/api/v1/reports/spending-heatmap?year=${selectedYear}${monthParam}`)
+        const heatmapJson = await heatmapRes.json()
+        setHeatmapData(heatmapJson)
 
         setLoading(false)
       } catch (error) {
@@ -289,11 +283,13 @@ export default function Dashboard() {
     }
 
     fetchData()
-  }, [selectedYear, selectedMonth, viewMode])
+  }, [currentDashboard?.id, startDate, endDate, selectedYear, selectedMonth])
 
   // Fetch data for widgets with filters (buckets, accounts, or merchants)
   useEffect(() => {
     async function fetchFilteredWidgetData() {
+      if (!currentDashboard || !startDate || !endDate) return
+
       const filteredWidgets = widgets.filter(w => {
         if (!w.config) return false
         try {
@@ -310,6 +306,11 @@ export default function Dashboard() {
         setWidgetData({})
         return
       }
+
+      const rangeType = currentDashboard.date_range_type
+      const isMonthlyScale = rangeType === 'mtd' || rangeType === 'last_30_days'
+      const groupBy = isMonthlyScale ? 'week' : 'month'
+      const monthParam = isMonthlyScale ? `&month=${selectedMonth}` : ''
 
       const newWidgetData: Record<number, any> = {}
 
@@ -328,7 +329,6 @@ export default function Dashboard() {
           filterParams.push(`merchants=${encodeURIComponent(config.merchants.join(','))}`)
         }
         const filterQuery = filterParams.length > 0 ? `&${filterParams.join('&')}` : ''
-        const monthParam = viewMode === 'month' ? `&month=${selectedMonth}` : ''
 
         try {
           let data = null
@@ -349,17 +349,8 @@ export default function Dashboard() {
               break
             }
             case 'trends': {
-              const endDate = viewMode === 'month'
-                ? new Date(selectedYear, selectedMonth, 0)
-                : new Date(selectedYear, 11, 31)
-              const today = new Date()
-              const effectiveEnd = endDate > today ? today : endDate
-              const startDate = viewMode === 'month'
-                ? new Date(effectiveEnd.getTime() - 84 * 24 * 60 * 60 * 1000)
-                : new Date(selectedYear, 0, 1)
-              const groupBy = viewMode === 'month' ? 'week' : 'month'
               const res = await fetch(
-                `/api/v1/reports/trends?start_date=${format(startDate, 'yyyy-MM-dd')}&end_date=${format(effectiveEnd, 'yyyy-MM-dd')}&group_by=${groupBy}${filterQuery}`
+                `/api/v1/reports/trends?start_date=${startDate}&end_date=${endDate}&group_by=${groupBy}${filterQuery}`
               )
               data = await res.json()
               break
@@ -394,7 +385,7 @@ export default function Dashboard() {
     if (widgets.length > 0 && !loading) {
       fetchFilteredWidgetData()
     }
-  }, [widgets, selectedYear, selectedMonth, viewMode, loading])
+  }, [widgets, currentDashboard?.id, startDate, endDate, selectedYear, selectedMonth, loading])
 
   // Check if a widget type is visible
   const isWidgetVisible = useCallback((widgetType: string) => {
@@ -407,13 +398,21 @@ export default function Dashboard() {
     .filter(w => w.is_visible)
     .sort((a, b) => a.position - b.position)
 
-  if (loading) {
+  if (dashboardLoading || loading) {
     return <div className="text-center py-12">Loading...</div>
+  }
+
+  if (!currentDashboard) {
+    return <div className="text-center py-12">No dashboard available</div>
   }
 
   if (!summary) {
     return <div className="text-center py-12">No data available</div>
   }
+
+  // Determine if this is a monthly-scale view for rendering
+  const rangeType = currentDashboard.date_range_type
+  const isMonthlyScale = rangeType === 'mtd' || rangeType === 'last_30_days'
 
   // Prepare bucket data for pie chart
   const bucketData = Object.entries(summary.bucket_breakdown || {}).map(([name, data]: [string, any]) => ({
@@ -462,8 +461,9 @@ export default function Dashboard() {
   )
 
   const renderVelocityWidget = () => {
-    // Year view: show annual velocity from summary
-    if (viewMode === 'year' && summary) {
+    const now = new Date()
+    // Yearly-scale view: show annual velocity from summary
+    if (!isMonthlyScale && summary) {
       const daysInYear = selectedYear === now.getFullYear()
         ? Math.floor((now.getTime() - new Date(selectedYear, 0, 1).getTime()) / (1000 * 60 * 60 * 24)) + 1
         : (selectedYear % 4 === 0 ? 366 : 365)
@@ -682,7 +682,7 @@ export default function Dashboard() {
     if (!data || !data.data || data.data.length === 0) return null
 
     const isWeekly = data.group_by === 'week'
-    const title = widget?.title || (viewMode === 'year' ? '12-Month Trend' : '12-Week Trend')
+    const title = widget?.title || (isMonthlyScale ? '12-Week Trend' : '12-Month Trend')
 
     // Format period labels for display
     const formatPeriodLabel = (period: string) => {
@@ -890,7 +890,7 @@ export default function Dashboard() {
 
   const renderHeatmapWidget = (widget?: Widget, customData?: any) => {
     const data = customData || heatmapData
-    const title = widget?.title || (viewMode === 'year' ? 'Monthly Spending Overview' : 'Spending Calendar')
+    const title = widget?.title || (isMonthlyScale ? 'Spending Calendar' : 'Monthly Spending Overview')
 
     if (!data || !data.days) {
       return (
@@ -901,8 +901,8 @@ export default function Dashboard() {
       )
     }
 
-    // Year view: show monthly grid
-    if (viewMode === 'year') {
+    // Yearly-scale view: show monthly grid
+    if (!isMonthlyScale) {
       return (
         <div key={widget?.id ?? "heatmap"} className="card p-6">
           <h2 className="text-lg font-semibold text-theme mb-4">{title}</h2>
@@ -930,13 +930,9 @@ export default function Dashboard() {
               return (
                 <div
                   key={month.month}
-                  className="rounded-lg p-3 flex flex-col items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                  className="rounded-lg p-3 flex flex-col items-center justify-center"
                   style={{ backgroundColor: colorVar }}
                   title={`${month.month_name}: ${formatCurrency(month.amount)} (${month.count} transactions)`}
-                  onClick={() => {
-                    setViewMode('month')
-                    setSelectedMonth(month.month)
-                  }}
                 >
                   <span
                     className="font-semibold text-sm"
@@ -1115,96 +1111,34 @@ export default function Dashboard() {
         ]}
       />
 
+      {/* Dashboard Tabs */}
+      <DashboardTabs />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-theme">Dashboard</h1>
+          <p className="text-sm text-theme-muted mt-1">
+            {startDate} to {endDate}
+          </p>
         </div>
         <div className="flex items-center gap-4">
-          {/* View Mode Toggle */}
-          <div className="flex items-center rounded-lg border border-theme overflow-hidden">
-            <button
-              onClick={() => setViewMode('month')}
-              className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                viewMode === 'month'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-theme-muted hover:text-theme hover:bg-[var(--color-bg-hover)]'
-              }`}
-            >
-              Month
-            </button>
-            <button
-              onClick={() => setViewMode('year')}
-              className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                viewMode === 'year'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-theme-muted hover:text-theme hover:bg-[var(--color-bg-hover)]'
-              }`}
-            >
-              Year
-            </button>
-          </div>
-
+          <select
+            value={currentDashboard.date_range_type}
+            onChange={(e) => handleDateRangeChange(e.target.value as DateRangeType)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          >
+            {DATE_RANGE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
           <DashboardConfig
             widgets={widgets}
             onToggleVisibility={handleToggleVisibility}
             onMoveUp={handleMoveUp}
             onMoveDown={handleMoveDown}
           />
-
-          {/* Time Navigation */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                if (viewMode === 'month') {
-                  if (selectedMonth === 1) {
-                    setSelectedYear(selectedYear - 1)
-                    setSelectedMonth(12)
-                  } else {
-                    setSelectedMonth(selectedMonth - 1)
-                  }
-                } else {
-                  setSelectedYear(selectedYear - 1)
-                }
-              }}
-              className="p-2 rounded-md hover:bg-[var(--color-bg-hover)] text-theme-muted hover:text-theme"
-              title={viewMode === 'month' ? 'Previous month' : 'Previous year'}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <span className="text-lg font-medium text-theme min-w-[140px] text-center">
-              {viewMode === 'month'
-                ? format(new Date(selectedYear, selectedMonth - 1), 'MMMM yyyy')
-                : String(selectedYear)
-              }
-            </span>
-            <button
-              onClick={() => {
-                if (viewMode === 'month') {
-                  if (selectedMonth === 12) {
-                    setSelectedYear(selectedYear + 1)
-                    setSelectedMonth(1)
-                  } else {
-                    setSelectedMonth(selectedMonth + 1)
-                  }
-                } else {
-                  setSelectedYear(selectedYear + 1)
-                }
-              }}
-              disabled={
-                viewMode === 'month'
-                  ? selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1
-                  : selectedYear === now.getFullYear()
-              }
-              className="p-2 rounded-md hover:bg-[var(--color-bg-hover)] text-theme-muted hover:text-theme disabled:opacity-30 disabled:cursor-not-allowed"
-              title={viewMode === 'month' ? 'Next month' : 'Next year'}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
         </div>
       </div>
 

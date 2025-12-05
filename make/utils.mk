@@ -3,7 +3,7 @@
 # =============================================================================
 
 .PHONY: clean clean-all status info check-deps
-.PHONY: anonymize anonymize-status anonymize-force
+.PHONY: data-setup data-anonymize data-status data-force data-clean
 
 # -----------------------------------------------------------------------------
 # Cleaning
@@ -71,18 +71,20 @@ check-deps: ## Check if required dependencies are installed
 	@echo "$(GREEN)✓ All dependencies found$(NC)"
 
 # -----------------------------------------------------------------------------
-# Test Data Anonymization
+# Test Data Anonymization (delegates to data/Makefile)
 # -----------------------------------------------------------------------------
 
-anonymize: ## Anonymize CSV files in data/raw/ -> data/anonymized/
-	@echo "$(BLUE)Anonymizing test data...$(NC)"
-	@cd $(BACKEND_DIR) && . .venv/bin/activate && python ../scripts/anonymize_import.py
-	@echo "$(GREEN)✓ Anonymization complete$(NC)"
+data-setup: ## Setup data anonymization environment (venv + deps)
+	@$(MAKE) -C data setup
 
-anonymize-status: ## Show status of anonymized test data
-	@cd $(BACKEND_DIR) && . .venv/bin/activate && python ../scripts/anonymize_import.py --status
+data-status: ## Show status of anonymized test data
+	@$(MAKE) -C data status
 
-anonymize-force: ## Force re-anonymize all test data files
-	@echo "$(BLUE)Force re-anonymizing all test data...$(NC)"
-	@cd $(BACKEND_DIR) && . .venv/bin/activate && python ../scripts/anonymize_import.py --force
-	@echo "$(GREEN)✓ Anonymization complete$(NC)"
+data-anonymize: ## Anonymize CSV files in data/raw/ -> data/anonymized/
+	@$(MAKE) -C data anonymize
+
+data-force: ## Force re-anonymize all test data files
+	@$(MAKE) -C data force
+
+data-clean: ## Remove data anonymization venv
+	@$(MAKE) -C data clean

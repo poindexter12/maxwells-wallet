@@ -1,0 +1,18 @@
+---
+id: skill-fastapi
+name: FastAPI Skill
+description: "Async FastAPI patterns and safety for this repo."
+role: system
+color: orange
+tags:
+  - skill
+  - fastapi
+---
+
+- Handlers stay async end-to-end; avoid blocking calls in request paths.
+- Use Pydantic models for request/response; set explicit status codes and typed error payloads. Keep response models lean; avoid leaking internal fields.
+- Dependency injection: DB session from a single `get_session`; no global sessions or implicit state. Inject services/clients via dependencies for testability.
+- Validation: constrain lengths/enums/ranges; normalize/parse input early; return 400/404 for expected failures; raise `HTTPException` with structured detail codes.
+- Security/cors: ensure CORS configured for frontend origin; prefer dependency-based auth when added; avoid storing secrets in code.
+- Performance: batch queries when possible; avoid N+1; paginate lists; prefer streaming only when necessary.
+- Testing: use `make test-backend`; fixture-driven DB/session setup around routers/services; use httpx AsyncClient with lifespan management for app startup/shutdown.

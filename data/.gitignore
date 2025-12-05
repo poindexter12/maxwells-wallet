@@ -1,2 +1,5 @@
 # Ignore raw (real) data - contains sensitive financial info
 raw/
+
+# Virtual environment (created by make setup)
+.venv/

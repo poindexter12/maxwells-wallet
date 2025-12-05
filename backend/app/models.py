@@ -13,6 +13,16 @@ class ReconciliationStatus(str, Enum):
     manually_entered = "manually_entered"
     ignored = "ignored"
 
+
+class DateRangeType(str, Enum):
+    """Relative date range types for dashboards"""
+    mtd = "mtd"                     # Month to Date - start of current month to today
+    qtd = "qtd"                     # Quarter to Date - start of current quarter to today
+    ytd = "ytd"                     # Year to Date - Jan 1 to today
+    last_30_days = "last_30_days"   # Rolling 30 days ending today
+    last_90_days = "last_90_days"   # Rolling 90 days ending today
+    last_year = "last_year"         # Previous calendar year (Jan 1 - Dec 31)
+
 class ImportFormatType(str, Enum):
     bofa_bank = "bofa_bank"   # BofA Checking (Date,Description,Amount,Running Bal.)
     bofa_cc = "bofa_cc"       # BofA Credit Card (Posted Date,Reference Number,Payee,Address,Amount)
@@ -21,6 +31,7 @@ class ImportFormatType(str, Enum):
     venmo = "venmo"           # Venmo (ID,Datetime,Type,Status,Note,From,To,Amount...)
     qif = "qif"               # Quicken Interchange Format (text-based)
     qfx = "qfx"               # Quicken Financial Exchange / OFX (XML-based)
+    custom = "custom"         # User-defined custom CSV format with configurable mappings
     unknown = "unknown"
 
 class BaseModel(SQLModel):
@@ -156,6 +167,32 @@ class ImportFormatCreate(SQLModel):
 class ImportFormatUpdate(SQLModel):
     format_type: Optional[ImportFormatType] = None
     custom_mappings: Optional[str] = None
+
+
+class CustomFormatConfig(BaseModel, table=True):
+    """Named custom CSV format configurations for reuse across accounts"""
+    __tablename__ = "custom_format_configs"
+
+    name: str = Field(index=True, unique=True)  # User-friendly name
+    description: Optional[str] = None
+    config_json: str  # JSON string containing CustomCsvConfig
+    use_count: int = Field(default=0)  # Track usage for sorting
+    header_signature: Optional[str] = Field(default=None, index=True)  # Hash of CSV headers for auto-matching
+
+
+class CustomFormatConfigCreate(SQLModel):
+    name: str
+    description: Optional[str] = None
+    config_json: str  # JSON string containing CustomCsvConfig
+    header_signature: Optional[str] = None
+
+
+class CustomFormatConfigUpdate(SQLModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    config_json: Optional[str] = None
+    header_signature: Optional[str] = None
+
 
 class ImportSession(BaseModel, table=True):
     """Tracks import batches for audit and rollback"""
@@ -448,19 +485,23 @@ class TransactionSplitResponse(SQLModel):
 
 # Dashboard Models
 class Dashboard(BaseModel, table=True):
-    """Named dashboard configuration with filters and date defaults"""
+    """Named dashboard configuration with date range and widgets"""
     __tablename__ = "dashboards"
 
     name: str = Field(index=True)
     description: Optional[str] = None
-    view_mode: str = Field(default="month")  # "month" or "year"
-    pinned_year: Optional[int] = None  # If set, dashboard always shows this year
-    pinned_month: Optional[int] = None  # If set, dashboard always shows this month (1-12)
-    filter_buckets: Optional[str] = None  # JSON array of bucket values
-    filter_accounts: Optional[str] = None  # JSON array of account values
-    filter_merchants: Optional[str] = None  # JSON array of merchant values
+    date_range_type: DateRangeType = Field(default=DateRangeType.mtd)  # Relative date range
     is_default: bool = Field(default=False, index=True)  # Only one dashboard can be default
-    position: int = Field(default=0)  # Order in sidebar
+    position: int = Field(default=0)  # Order in tabs
+
+    # DEPRECATED: Keep for backwards compatibility with existing databases
+    # Note: Some databases have this as NOT NULL, so we need a default value
+    view_mode: str = Field(default="month")
+    pinned_year: Optional[int] = None
+    pinned_month: Optional[int] = None
+    filter_buckets: Optional[str] = None
+    filter_accounts: Optional[str] = None
+    filter_merchants: Optional[str] = None
 
     # Relationship to widgets
     widgets: List["DashboardWidget"] = Relationship(back_populates="dashboard")
@@ -469,12 +510,7 @@ class Dashboard(BaseModel, table=True):
 class DashboardCreate(SQLModel):
     name: str
     description: Optional[str] = None
-    view_mode: str = "month"
-    pinned_year: Optional[int] = None
-    pinned_month: Optional[int] = None
-    filter_buckets: Optional[str] = None
-    filter_accounts: Optional[str] = None
-    filter_merchants: Optional[str] = None
+    date_range_type: DateRangeType = DateRangeType.mtd
     is_default: bool = False
     position: int = 0
 
@@ -482,12 +518,7 @@ class DashboardCreate(SQLModel):
 class DashboardUpdate(SQLModel):
     name: Optional[str] = None
     description: Optional[str] = None
-    view_mode: Optional[str] = None
-    pinned_year: Optional[int] = None
-    pinned_month: Optional[int] = None
-    filter_buckets: Optional[str] = None
-    filter_accounts: Optional[str] = None
-    filter_merchants: Optional[str] = None
+    date_range_type: Optional[DateRangeType] = None
     is_default: Optional[bool] = None
     position: Optional[int] = None
 
