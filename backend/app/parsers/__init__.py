@@ -56,6 +56,10 @@ from .formats.custom_csv import (
     analyze_csv_columns,
     detect_date_format,
     detect_amount_format,
+    find_header_row,
+    auto_detect_csv_format,
+    compute_header_signature,
+    compute_signature_from_csv,
 )
 
 # Import all format parsers to trigger registration
@@ -76,4 +80,8 @@ __all__ = [
     "analyze_csv_columns",
     "detect_date_format",
     "detect_amount_format",
+    "find_header_row",
+    "auto_detect_csv_format",
+    "compute_header_signature",
+    "compute_signature_from_csv",
 ]

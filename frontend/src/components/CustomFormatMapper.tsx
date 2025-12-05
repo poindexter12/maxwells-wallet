@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { formatCurrency } from '@/lib/format'
 
 interface ColumnHint {
@@ -19,7 +19,23 @@ interface AnalysisResult {
   headers: string[]
   sample_rows: string[][]
   column_hints: Record<string, ColumnHint>
+  suggested_config: SuggestedConfig
   row_count: number
+}
+
+interface SuggestedConfig {
+  name: string
+  account_source: string
+  date_column: string
+  amount_column: string
+  description_column: string
+  reference_column?: string
+  category_column?: string
+  date_format: string
+  amount_sign_convention: string
+  amount_currency_prefix?: string
+  amount_invert_sign?: boolean
+  _completeness: number
 }
 
 interface CustomConfig {
@@ -56,117 +72,257 @@ interface PreviewTransaction {
   reference_id: string
 }
 
-interface SavedConfig {
-  id: number
-  name: string
-  description?: string
-  config_json: string
-  use_count: number
-}
-
 interface CustomFormatMapperProps {
   file: File
   onConfigured: (config: CustomConfig) => void
   onCancel: () => void
+  initialConfig?: Partial<CustomConfig> & { description?: string }
 }
 
-const DATE_FORMATS = [
-  { value: '%m/%d/%Y', label: 'MM/DD/YYYY (01/15/2025)' },
-  { value: '%d/%m/%Y', label: 'DD/MM/YYYY (15/01/2025)' },
-  { value: '%Y-%m-%d', label: 'YYYY-MM-DD (2025-01-15)' },
-  { value: '%m-%d-%Y', label: 'MM-DD-YYYY (01-15-2025)' },
-  { value: '%d-%m-%Y', label: 'DD-MM-YYYY (15-01-2025)' },
-  { value: '%m/%d/%y', label: 'MM/DD/YY (01/15/25)' },
-  { value: '%d/%m/%y', label: 'DD/MM/YY (15/01/25)' },
-  { value: 'iso', label: 'ISO Format (2025-01-15T00:00:00)' },
-]
+const DATE_FORMAT_LABELS: Record<string, string> = {
+  '%m/%d/%Y': 'MM/DD/YYYY',
+  '%d/%m/%Y': 'DD/MM/YYYY',
+  '%Y-%m-%d': 'YYYY-MM-DD',
+  '%m-%d-%Y': 'MM-DD-YYYY',
+  '%m/%d/%y': 'MM/DD/YY',
+  'iso': 'ISO DateTime',
+}
 
-const AMOUNT_CONVENTIONS = [
-  { value: 'negative_prefix', label: 'Negative prefix (-50.00)' },
-  { value: 'parentheses', label: 'Parentheses for negative (($50.00))' },
-  { value: 'plus_minus', label: 'Plus/minus prefix (+ $50 / - $50)' },
-]
+const AMOUNT_CONVENTION_LABELS: Record<string, string> = {
+  'negative_prefix': 'Negative prefix (-50.00)',
+  'parentheses': 'Parentheses (($50.00))',
+  'plus_minus': 'Plus/minus (- $50.00)',
+}
 
-export function CustomFormatMapper({ file, onConfigured, onCancel }: CustomFormatMapperProps) {
-  const [step, setStep] = useState(1)
-  const [loading, setLoading] = useState(false)
+// Helper to get colors based on confidence level
+function getConfidenceColors(confidence: number): { textColor: string; barColor: string; bgColor: string; borderColor: string } {
+  if (confidence >= 0.8) {
+    return {
+      textColor: 'text-green-600 dark:text-green-400',
+      barColor: 'bg-green-500',
+      bgColor: 'bg-green-50 dark:bg-green-900/20',
+      borderColor: 'border-green-200 dark:border-green-800'
+    }
+  } else if (confidence >= 0.6) {
+    return {
+      textColor: 'text-yellow-600 dark:text-yellow-400',
+      barColor: 'bg-yellow-500',
+      bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
+      borderColor: 'border-yellow-200 dark:border-yellow-800'
+    }
+  }
+  return {
+    textColor: 'text-red-600 dark:text-red-400',
+    barColor: 'bg-red-500',
+    bgColor: 'bg-red-50 dark:bg-red-900/20',
+    borderColor: 'border-red-200 dark:border-red-800'
+  }
+}
+
+// Helper to get icon based on confidence level
+function ConfidenceIcon({ confidence, size = 'sm' }: { confidence: number; size?: 'sm' | 'lg' }) {
+  const sizeClass = size === 'lg' ? 'w-5 h-5' : 'w-4 h-4'
+
+  if (confidence >= 0.8) {
+    return (
+      <svg className={`${sizeClass} text-green-500`} fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+      </svg>
+    )
+  } else if (confidence >= 0.6) {
+    return (
+      <svg className={`${sizeClass} text-yellow-500`} fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+      </svg>
+    )
+  }
+  return (
+    <svg className={`${sizeClass} text-red-500`} fill="currentColor" viewBox="0 0 20 20">
+      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+    </svg>
+  )
+}
+
+// Component to show confidence for detected columns
+function ColumnConfidenceRow({
+  label,
+  column,
+  hint,
+  isSet
+}: {
+  label: string
+  column: string
+  hint?: ColumnHint
+  isSet: boolean
+}) {
+  if (!isSet) {
+    return (
+      <div className="flex items-center gap-2 text-sm">
+        <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+        </svg>
+        <span className="w-24 font-medium text-theme-muted">{label}:</span>
+        <span className="text-red-600 dark:text-red-400">Not detected</span>
+      </div>
+    )
+  }
+
+  const confidence = hint?.confidence ?? 0
+  const confidencePercent = Math.round(confidence * 100)
+  const { textColor, barColor } = getConfidenceColors(confidence)
+
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <ConfidenceIcon confidence={confidence} />
+      <span className="w-24 font-medium text-theme-muted">{label}:</span>
+      <span className="font-mono text-theme">{column}</span>
+      <div className="flex items-center gap-1 ml-2">
+        <div className="w-16 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div
+            className={`h-full ${barColor} transition-all`}
+            style={{ width: `${confidencePercent}%` }}
+          />
+        </div>
+        <span className={`text-xs ${textColor}`}>{confidencePercent}%</span>
+      </div>
+      {hint?.format_display && (
+        <span className="text-xs text-theme-muted ml-1">({hint.format_display})</span>
+      )}
+    </div>
+  )
+}
+
+interface AccountTag {
+  id: number
+  namespace: string
+  value: string
+  description?: string
+}
+
+export function CustomFormatMapper({ file, onConfigured, onCancel, initialConfig }: CustomFormatMapperProps) {
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
-  // Analysis results
+  // Account tags for dropdown
+  const [accountTags, setAccountTags] = useState<AccountTag[]>([])
+  const [showNewAccount, setShowNewAccount] = useState(false)
+  const [newAccountName, setNewAccountName] = useState('')
+
+  // Auto-detection results
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null)
+  const [suggested, setSuggested] = useState<SuggestedConfig | null>(null)
   const [skipRows, setSkipRows] = useState(0)
 
-  // Column mappings
+  // User inputs (only name and account are required in basic mode)
+  const [configName, setConfigName] = useState(initialConfig?.name || '')
+  const [configDescription, setConfigDescription] = useState(initialConfig?.description || '')
+  const [accountSource, setAccountSource] = useState(initialConfig?.account_source || '')
+
+  // Advanced overrides (populated from auto-detection, editable in advanced mode)
   const [dateColumn, setDateColumn] = useState<string>('')
   const [amountColumn, setAmountColumn] = useState<string>('')
   const [descriptionColumn, setDescriptionColumn] = useState<string>('')
-  const [merchantColumn, setMerchantColumn] = useState<string>('')
   const [referenceColumn, setReferenceColumn] = useState<string>('')
   const [categoryColumn, setCategoryColumn] = useState<string>('')
-
-  // Format settings
   const [dateFormat, setDateFormat] = useState('%m/%d/%Y')
   const [amountConvention, setAmountConvention] = useState('negative_prefix')
   const [amountPrefix, setAmountPrefix] = useState('')
   const [invertSign, setInvertSign] = useState(false)
-
-  // Row handling
   const [skipFooterRows, setSkipFooterRows] = useState(0)
-  const [skipPatterns, setSkipPatterns] = useState<string[]>([])
-  const [newPattern, setNewPattern] = useState('')
 
-  // Config metadata
-  const [configName, setConfigName] = useState('')
-  const [accountSource, setAccountSource] = useState('')
-
-  // Preview results
+  // Preview
   const [previewTransactions, setPreviewTransactions] = useState<PreviewTransaction[]>([])
   const [previewErrors, setPreviewErrors] = useState<string[]>([])
+  const [showPreview, setShowPreview] = useState(false)
 
-  // Saved configs
-  const [savedConfigs, setSavedConfigs] = useState<SavedConfig[]>([])
-  const [showLoadConfig, setShowLoadConfig] = useState(false)
+  // Auto-detect and fetch accounts on mount
+  useEffect(() => {
+    autoDetect()
+    fetchAccountTags()
+  }, [])
 
-  // Analyze file when it changes or skip rows changes
-  const analyzeFile = useCallback(async () => {
+  async function fetchAccountTags() {
+    try {
+      const res = await fetch('/api/v1/tags?namespace=account')
+      if (res.ok) {
+        const data = await res.json()
+        setAccountTags(data)
+      }
+    } catch (err) {
+      console.error('Error fetching account tags:', err)
+    }
+  }
+
+  async function createAccountTag(name: string): Promise<string | null> {
+    try {
+      // Normalize to tag value format
+      const tagValue = name.toLowerCase().replace(/\s+/g, '-')
+
+      const res = await fetch('/api/v1/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          namespace: 'account',
+          value: tagValue,
+          description: name  // Use original name as display name
+        })
+      })
+
+      if (res.ok) {
+        const newTag = await res.json()
+        setAccountTags(prev => [...prev, newTag])
+        return tagValue
+      }
+      return null
+    } catch (err) {
+      console.error('Error creating account tag:', err)
+      return null
+    }
+  }
+
+  async function autoDetect() {
     setLoading(true)
     setError(null)
 
     try {
+      // Call backend auto-detect endpoint
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('skip_rows', skipRows.toString())
 
-      const res = await fetch('/api/v1/import/analyze', {
+      const res = await fetch('/api/v1/import/custom/auto-detect', {
         method: 'POST',
         body: formData
       })
 
       if (!res.ok) {
-        throw new Error('Failed to analyze file')
-      }
+        // Fall back to analyze endpoint
+        const analyzeRes = await fetch('/api/v1/import/analyze', {
+          method: 'POST',
+          body: formData
+        })
 
-      const data = await res.json()
-      setAnalysis(data)
+        if (!analyzeRes.ok) {
+          throw new Error('Failed to analyze file')
+        }
 
-      // Auto-select columns based on hints
-      for (const [header, hint] of Object.entries(data.column_hints)) {
-        const h = hint as ColumnHint
-        if (h.likely_type === 'date' && h.confidence >= 0.7 && !dateColumn) {
-          setDateColumn(header)
-          if (h.detected_format) {
-            setDateFormat(h.detected_format)
-          }
-        } else if (h.likely_type === 'amount' && h.confidence >= 0.7 && !amountColumn) {
-          setAmountColumn(header)
-          if (h.detected_settings) {
-            setAmountConvention(h.detected_settings.sign_convention)
-            setAmountPrefix(h.detected_settings.currency_prefix)
-          }
-        } else if (h.likely_type === 'description' && h.confidence >= 0.6 && !descriptionColumn) {
-          setDescriptionColumn(header)
-        } else if (h.likely_type === 'reference' && h.confidence >= 0.5 && !referenceColumn) {
-          setReferenceColumn(header)
+        const data = await analyzeRes.json()
+        setAnalysis(data)
+
+        if (data.suggested_config) {
+          setSuggested(data.suggested_config)
+          applyAutoDetection(data.suggested_config, 0)
+        }
+      } else {
+        const data = await res.json()
+        setAnalysis(data.analysis)
+        setSuggested(data.config)
+        setSkipRows(data.skip_rows || 0)
+        applyAutoDetection(data.config, data.skip_rows || 0)
+
+        // Auto-preview if detection was successful
+        if (data.config && data.config._completeness >= 1.0) {
+          await runPreview(data.config, data.skip_rows || 0)
         }
       }
     } catch (err) {
@@ -174,63 +330,28 @@ export function CustomFormatMapper({ file, onConfigured, onCancel }: CustomForma
     } finally {
       setLoading(false)
     }
-  }, [file, skipRows, dateColumn, amountColumn, descriptionColumn, referenceColumn])
-
-  useEffect(() => {
-    analyzeFile()
-  }, [analyzeFile])
-
-  // Load saved configs
-  useEffect(() => {
-    async function loadConfigs() {
-      try {
-        const res = await fetch('/api/v1/import/custom/configs')
-        if (res.ok) {
-          const data = await res.json()
-          setSavedConfigs(data)
-        }
-      } catch (err) {
-        console.error('Error loading saved configs:', err)
-      }
-    }
-    loadConfigs()
-  }, [])
-
-  const handleLoadConfig = (config: SavedConfig) => {
-    try {
-      const parsed = JSON.parse(config.config_json)
-      setConfigName(parsed.name || config.name)
-      setAccountSource(parsed.account_source || '')
-      setDateColumn(parsed.date_column?.toString() || '')
-      setAmountColumn(parsed.amount_column?.toString() || '')
-      setDescriptionColumn(parsed.description_column?.toString() || '')
-      setMerchantColumn(parsed.merchant_column?.toString() || '')
-      setReferenceColumn(parsed.reference_column?.toString() || '')
-      setCategoryColumn(parsed.category_column?.toString() || '')
-      setDateFormat(parsed.date_format || '%m/%d/%Y')
-      setAmountConvention(parsed.amount_sign_convention || 'negative_prefix')
-      setAmountPrefix(parsed.amount_currency_prefix || '')
-      setInvertSign(parsed.amount_invert_sign || false)
-      if (parsed.row_handling) {
-        setSkipRows(parsed.row_handling.skip_header_rows || 0)
-        setSkipFooterRows(parsed.row_handling.skip_footer_rows || 0)
-        setSkipPatterns(parsed.row_handling.skip_patterns || [])
-      }
-      setShowLoadConfig(false)
-      setStep(2) // Go to column mapping step
-    } catch (err) {
-      setError('Failed to load configuration')
-    }
   }
 
-  const buildConfig = (): CustomConfig => {
+  function applyAutoDetection(config: SuggestedConfig, skipRowsCount: number) {
+    setDateColumn(config.date_column || '')
+    setAmountColumn(config.amount_column || '')
+    setDescriptionColumn(config.description_column || '')
+    setReferenceColumn(config.reference_column || '')
+    setCategoryColumn(config.category_column || '')
+    setDateFormat(config.date_format || '%m/%d/%Y')
+    setAmountConvention(config.amount_sign_convention || 'negative_prefix')
+    setAmountPrefix(config.amount_currency_prefix || '')
+    setInvertSign(config.amount_invert_sign || false)
+    setSkipRows(skipRowsCount)
+  }
+
+  function buildConfig(): CustomConfig {
     return {
       name: configName || `${file.name} Format`,
       account_source: accountSource,
       date_column: dateColumn,
       amount_column: amountColumn,
       description_column: descriptionColumn,
-      merchant_column: merchantColumn || undefined,
       reference_column: referenceColumn || undefined,
       category_column: categoryColumn || undefined,
       date_format: dateFormat,
@@ -241,7 +362,7 @@ export function CustomFormatMapper({ file, onConfigured, onCancel }: CustomForma
       row_handling: {
         skip_header_rows: skipRows,
         skip_footer_rows: skipFooterRows,
-        skip_patterns: skipPatterns,
+        skip_patterns: [],
         skip_empty_rows: true,
       },
       merchant_split_chars: '',
@@ -249,13 +370,30 @@ export function CustomFormatMapper({ file, onConfigured, onCancel }: CustomForma
     }
   }
 
-  const handlePreview = async () => {
+  async function runPreview(configOverride?: SuggestedConfig, skipRowsOverride?: number) {
     setLoading(true)
-    setError(null)
     setPreviewErrors([])
 
     try {
-      const config = buildConfig()
+      const config = configOverride ? {
+        ...buildConfig(),
+        date_column: configOverride.date_column,
+        amount_column: configOverride.amount_column,
+        description_column: configOverride.description_column,
+        reference_column: configOverride.reference_column,
+        category_column: configOverride.category_column,
+        date_format: configOverride.date_format,
+        amount_sign_convention: configOverride.amount_sign_convention,
+        amount_currency_prefix: configOverride.amount_currency_prefix || '',
+        amount_invert_sign: configOverride.amount_invert_sign || false,
+        row_handling: {
+          skip_header_rows: skipRowsOverride ?? skipRows,
+          skip_footer_rows: 0,
+          skip_patterns: [],
+          skip_empty_rows: true,
+        }
+      } : buildConfig()
+
       const formData = new FormData()
       formData.append('file', file)
       formData.append('config_json', JSON.stringify(config))
@@ -268,592 +406,432 @@ export function CustomFormatMapper({ file, onConfigured, onCancel }: CustomForma
       const data = await res.json()
 
       if (!res.ok) {
-        throw new Error(data.detail || 'Failed to preview')
+        throw new Error(data.detail || 'Preview failed')
       }
 
       setPreviewTransactions(data.transactions || [])
       setPreviewErrors(data.errors || [])
-      setStep(4)
+      setShowPreview(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to preview')
+      setError(err instanceof Error ? err.message : 'Preview failed')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleConfirm = () => {
+  function handleConfirm() {
     const config = buildConfig()
-    onConfigured(config)
+    onConfigured({ ...config, description: configDescription } as any)
   }
 
-  const addSkipPattern = () => {
-    if (newPattern.trim() && !skipPatterns.includes(newPattern.trim())) {
-      setSkipPatterns([...skipPatterns, newPattern.trim()])
-      setNewPattern('')
-    }
-  }
+  const isReady = dateColumn && amountColumn && descriptionColumn && accountSource
+  const detectionComplete = suggested && suggested._completeness >= 1.0
 
-  const removeSkipPattern = (pattern: string) => {
-    setSkipPatterns(skipPatterns.filter(p => p !== pattern))
+  if (loading && !analysis) {
+    return (
+      <div className="p-8 text-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+        <p className="text-theme-muted">Analyzing {file.name}...</p>
+      </div>
+    )
   }
-
-  const canProceedToStep2 = analysis && analysis.headers.length > 0
-  const canProceedToStep3 = dateColumn && amountColumn && descriptionColumn
-  const canProceedToStep4 = canProceedToStep3 && accountSource
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-          <h2 className="text-xl font-semibold">Configure Custom CSV Format</h2>
-          <button onClick={onCancel} className="text-gray-500 hover:text-gray-700">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+    <div className="space-y-6">
+      {error && (
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
+          {error}
         </div>
+      )}
 
-        {/* Progress Steps */}
-        <div className="px-6 py-3 border-b bg-gray-50">
-          <div className="flex items-center justify-center space-x-4">
-            {[1, 2, 3, 4].map((s) => (
-              <div key={s} className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  step === s ? 'bg-blue-600 text-white' :
-                  step > s ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {step > s ? '✓' : s}
+      {/* Detection Status with Confidence */}
+      {suggested && analysis && (() => {
+        // Calculate overall confidence as average of detected columns
+        const columnConfidences: number[] = []
+        if (dateColumn && analysis.column_hints?.[dateColumn]) {
+          columnConfidences.push(analysis.column_hints[dateColumn].confidence)
+        }
+        if (amountColumn && analysis.column_hints?.[amountColumn]) {
+          columnConfidences.push(analysis.column_hints[amountColumn].confidence)
+        }
+        if (descriptionColumn && analysis.column_hints?.[descriptionColumn]) {
+          columnConfidences.push(analysis.column_hints[descriptionColumn].confidence)
+        }
+        const overallConfidence = columnConfidences.length > 0
+          ? columnConfidences.reduce((a, b) => a + b, 0) / columnConfidences.length
+          : 0
+        const overallPercent = Math.round(overallConfidence * 100)
+        const { bgColor, borderColor, textColor, barColor } = getConfidenceColors(overallConfidence)
+
+        return (
+          <div className={`p-4 rounded-lg border ${bgColor} ${borderColor}`}>
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-3">
+                  <ConfidenceIcon confidence={overallConfidence} size="lg" />
+                  <h3 className={`font-semibold ${textColor}`}>
+                    {detectionComplete ? 'Format Auto-Detected' : 'Partial Detection'}
+                  </h3>
+                  <div className="flex items-center gap-2 ml-2">
+                    <div className="w-20 h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${barColor} transition-all`}
+                        style={{ width: `${overallPercent}%` }}
+                      />
+                    </div>
+                    <span className={`text-sm font-medium ${textColor}`}>{overallPercent}%</span>
+                  </div>
                 </div>
-                <span className={`ml-2 text-sm ${step === s ? 'font-medium' : 'text-gray-500'}`}>
-                  {s === 1 ? 'Analyze' : s === 2 ? 'Map Columns' : s === 3 ? 'Settings' : 'Preview'}
-                </span>
-                {s < 4 && <div className="w-8 h-0.5 mx-2 bg-gray-300" />}
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-auto p-6">
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700">
-              {error}
-            </div>
-          )}
-
-          {/* Step 1: Analyze */}
-          {step === 1 && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-lg font-medium">File Analysis</h3>
-                  <p className="text-sm text-gray-600">
-                    Analyzing: <span className="font-mono">{file.name}</span>
-                  </p>
-                </div>
-                {savedConfigs.length > 0 && (
-                  <button
-                    onClick={() => setShowLoadConfig(!showLoadConfig)}
-                    className="text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    Load saved config
-                  </button>
-                )}
-              </div>
-
-              {showLoadConfig && savedConfigs.length > 0 && (
-                <div className="p-4 bg-blue-50 rounded-lg space-y-2">
-                  <p className="text-sm font-medium">Saved Configurations:</p>
-                  {savedConfigs.map((cfg) => (
-                    <button
-                      key={cfg.id}
-                      onClick={() => handleLoadConfig(cfg)}
-                      className="block w-full text-left px-3 py-2 bg-white rounded border hover:bg-gray-50"
-                    >
-                      <span className="font-medium">{cfg.name}</span>
-                      {cfg.description && (
-                        <span className="text-sm text-gray-500 ml-2">{cfg.description}</span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Skip Header Rows
-                </label>
-                <p className="text-xs text-gray-500 mb-2">
-                  Number of rows before the column header (metadata, account info, etc.)
-                </p>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min="0"
-                    value={skipRows}
-                    onChange={(e) => setSkipRows(parseInt(e.target.value) || 0)}
-                    className="w-20 px-3 py-2 border rounded-md"
+                {/* Column Detection with Confidence */}
+                <div className="mt-3 space-y-2">
+                  <ColumnConfidenceRow
+                    label="Date"
+                    column={dateColumn}
+                    hint={analysis.column_hints?.[dateColumn]}
+                    isSet={!!dateColumn}
                   />
-                  <button
-                    onClick={() => analyzeFile()}
-                    disabled={loading}
-                    className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-sm"
-                  >
-                    Re-analyze
-                  </button>
-                </div>
-              </div>
-
-              {loading && (
-                <div className="text-center py-8 text-gray-500">
-                  Analyzing file...
-                </div>
-              )}
-
-              {analysis && !loading && (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="text-gray-600">
-                      <strong>{analysis.headers.length}</strong> columns detected
-                    </span>
-                    <span className="text-gray-600">
-                      <strong>{analysis.row_count}</strong> data rows
-                    </span>
-                  </div>
-
-                  {/* Column hints */}
-                  <div>
-                    <p className="text-sm font-medium mb-2">Detected Columns:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {analysis.headers.map((header) => {
-                        const hint = analysis.column_hints[header]
-                        const typeColor =
-                          hint?.likely_type === 'date' ? 'bg-purple-100 text-purple-800' :
-                          hint?.likely_type === 'amount' ? 'bg-green-100 text-green-800' :
-                          hint?.likely_type === 'description' ? 'bg-blue-100 text-blue-800' :
-                          hint?.likely_type === 'reference' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-
-                        return (
-                          <span
-                            key={header}
-                            className={`px-2 py-1 rounded text-xs ${typeColor}`}
-                            title={hint?.likely_type !== 'unknown'
-                              ? `Detected as: ${hint.likely_type} (${Math.round(hint.confidence * 100)}% confidence)`
-                              : 'Unknown type'}
-                          >
-                            {header}
-                            {hint?.likely_type !== 'unknown' && (
-                              <span className="ml-1 opacity-70">({hint.likely_type})</span>
-                            )}
-                          </span>
-                        )
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Sample data preview */}
-                  <div>
-                    <p className="text-sm font-medium mb-2">Sample Data:</p>
-                    <div className="overflow-x-auto border rounded">
-                      <table className="min-w-full text-xs">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            {analysis.headers.map((h) => (
-                              <th key={h} className="px-3 py-2 text-left font-medium text-gray-700 border-b">
-                                {h}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {analysis.sample_rows.slice(0, 3).map((row, i) => (
-                            <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                              {row.map((cell, j) => (
-                                <td key={j} className="px-3 py-2 border-b truncate max-w-[200px]">
-                                  {cell}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Step 2: Map Columns */}
-          {step === 2 && analysis && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium">Map Columns to Fields</h3>
-                <p className="text-sm text-gray-600">Select which CSV column contains each field.</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Date Column <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={dateColumn}
-                    onChange={(e) => setDateColumn(e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md ${!dateColumn ? 'border-yellow-400' : ''}`}
-                  >
-                    <option value="">-- Select --</option>
-                    {analysis.headers.map((h) => (
-                      <option key={h} value={h}>{h}</option>
-                    ))}
-                  </select>
+                  <ColumnConfidenceRow
+                    label="Amount"
+                    column={amountColumn}
+                    hint={analysis.column_hints?.[amountColumn]}
+                    isSet={!!amountColumn}
+                  />
+                  <ColumnConfidenceRow
+                    label="Description"
+                    column={descriptionColumn}
+                    hint={analysis.column_hints?.[descriptionColumn]}
+                    isSet={!!descriptionColumn}
+                  />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Amount Column <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={amountColumn}
-                    onChange={(e) => setAmountColumn(e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md ${!amountColumn ? 'border-yellow-400' : ''}`}
-                  >
-                    <option value="">-- Select --</option>
-                    {analysis.headers.map((h) => (
-                      <option key={h} value={h}>{h}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description Column <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={descriptionColumn}
-                    onChange={(e) => setDescriptionColumn(e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md ${!descriptionColumn ? 'border-yellow-400' : ''}`}
-                  >
-                    <option value="">-- Select --</option>
-                    {analysis.headers.map((h) => (
-                      <option key={h} value={h}>{h}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Merchant Column <span className="text-gray-400">(optional)</span>
-                  </label>
-                  <select
-                    value={merchantColumn}
-                    onChange={(e) => setMerchantColumn(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md"
-                  >
-                    <option value="">-- None (extract from description) --</option>
-                    {analysis.headers.map((h) => (
-                      <option key={h} value={h}>{h}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Reference/ID Column <span className="text-gray-400">(optional)</span>
-                  </label>
-                  <select
-                    value={referenceColumn}
-                    onChange={(e) => setReferenceColumn(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md"
-                  >
-                    <option value="">-- None --</option>
-                    {analysis.headers.map((h) => (
-                      <option key={h} value={h}>{h}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category Column <span className="text-gray-400">(optional)</span>
-                  </label>
-                  <select
-                    value={categoryColumn}
-                    onChange={(e) => setCategoryColumn(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md"
-                  >
-                    <option value="">-- None --</option>
-                    {analysis.headers.map((h) => (
-                      <option key={h} value={h}>{h}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Format Settings */}
-          {step === 3 && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium">Format Settings</h3>
-                <p className="text-sm text-gray-600">Configure how dates and amounts are parsed.</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                {/* Date Format */}
-                <div className="space-y-4">
-                  <h4 className="font-medium">Date Format</h4>
-                  <select
-                    value={dateFormat}
-                    onChange={(e) => setDateFormat(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md"
-                  >
-                    {DATE_FORMATS.map((f) => (
-                      <option key={f.value} value={f.value}>{f.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Amount Format */}
-                <div className="space-y-4">
-                  <h4 className="font-medium">Amount Format</h4>
-                  <select
-                    value={amountConvention}
-                    onChange={(e) => setAmountConvention(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md"
-                  >
-                    {AMOUNT_CONVENTIONS.map((f) => (
-                      <option key={f.value} value={f.value}>{f.label}</option>
-                    ))}
-                  </select>
-
-                  <div>
-                    <label className="block text-sm text-gray-700 mb-1">Currency Prefix</label>
-                    <input
-                      type="text"
-                      value={amountPrefix}
-                      onChange={(e) => setAmountPrefix(e.target.value)}
-                      placeholder="e.g., $"
-                      className="w-full px-3 py-2 border rounded-md"
-                    />
-                  </div>
-
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={invertSign}
-                      onChange={(e) => setInvertSign(e.target.checked)}
-                      className="rounded"
-                    />
-                    <span className="text-sm">
-                      Invert sign (for credit card statements where positive = expense)
-                    </span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Row Handling */}
-              <div className="border-t pt-6 space-y-4">
-                <h4 className="font-medium">Row Handling</h4>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-gray-700 mb-1">Skip Footer Rows</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={skipFooterRows}
-                      onChange={(e) => setSkipFooterRows(parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border rounded-md"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Rows to skip at end (totals, etc.)</p>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-700 mb-1">Skip Rows Containing</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={newPattern}
-                      onChange={(e) => setNewPattern(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && addSkipPattern()}
-                      placeholder="e.g., PENDING, BALANCE"
-                      className="flex-1 px-3 py-2 border rounded-md"
-                    />
-                    <button
-                      onClick={addSkipPattern}
-                      className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  {skipPatterns.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {skipPatterns.map((p) => (
-                        <span key={p} className="px-2 py-1 bg-gray-100 rounded text-sm flex items-center gap-1">
-                          {p}
-                          <button onClick={() => removeSkipPattern(p)} className="text-gray-500 hover:text-red-500">
-                            &times;
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Config Metadata */}
-              <div className="border-t pt-6 space-y-4">
-                <h4 className="font-medium">Configuration</h4>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-gray-700 mb-1">
-                      Configuration Name
-                    </label>
-                    <input
-                      type="text"
-                      value={configName}
-                      onChange={(e) => setConfigName(e.target.value)}
-                      placeholder={`${file.name} Format`}
-                      className="w-full px-3 py-2 border rounded-md"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-700 mb-1">
-                      Account Source <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={accountSource}
-                      onChange={(e) => setAccountSource(e.target.value)}
-                      placeholder="e.g., Chase-Checking"
-                      className={`w-full px-3 py-2 border rounded-md ${!accountSource ? 'border-yellow-400' : ''}`}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Preview */}
-          {step === 4 && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium">Preview Results</h3>
-                <p className="text-sm text-gray-600">
-                  {previewTransactions.length} transactions parsed successfully
+                <p className="text-sm text-theme-muted mt-3">
+                  Date format: {DATE_FORMAT_LABELS[dateFormat] || dateFormat}
+                  {invertSign && ' • Sign inverted'}
+                  {amountPrefix && ` • Currency: ${amountPrefix}`}
                 </p>
               </div>
-
-              {previewErrors.length > 0 && (
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
-                  <p className="font-medium text-yellow-800">Warnings:</p>
-                  <ul className="list-disc list-inside text-sm text-yellow-700">
-                    {previewErrors.map((err, i) => (
-                      <li key={i}>{err}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {previewTransactions.length > 0 && (
-                <div className="border rounded overflow-hidden">
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-2 text-left">Date</th>
-                        <th className="px-4 py-2 text-left">Merchant</th>
-                        <th className="px-4 py-2 text-left">Description</th>
-                        <th className="px-4 py-2 text-right">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {previewTransactions.slice(0, 10).map((txn, i) => (
-                        <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                          <td className="px-4 py-2">{txn.date}</td>
-                          <td className="px-4 py-2">{txn.merchant}</td>
-                          <td className="px-4 py-2 truncate max-w-[200px]">{txn.description}</td>
-                          <td className={`px-4 py-2 text-right ${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {formatCurrency(txn.amount)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {previewTransactions.length > 10 && (
-                    <div className="px-4 py-2 bg-gray-50 text-sm text-gray-600">
-                      Showing first 10 of {previewTransactions.length} transactions
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="p-4 bg-gray-50 rounded">
-                <p className="font-medium">Configuration Summary:</p>
-                <ul className="text-sm text-gray-600 mt-2 space-y-1">
-                  <li>Name: {configName || `${file.name} Format`}</li>
-                  <li>Account: {accountSource}</li>
-                  <li>Date format: {DATE_FORMATS.find(f => f.value === dateFormat)?.label}</li>
-                  <li>Amount format: {AMOUNT_CONVENTIONS.find(f => f.value === amountConvention)?.label}</li>
-                  {invertSign && <li>Sign inverted</li>}
-                </ul>
-              </div>
+              <button
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
+              >
+                {showAdvanced ? 'Hide Details' : 'Edit Details'}
+              </button>
             </div>
-          )}
-        </div>
+          </div>
+        )
+      })()}
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t bg-gray-50 flex justify-between">
-          <button
-            onClick={step === 1 ? onCancel : () => setStep(step - 1)}
-            className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
-          >
-            {step === 1 ? 'Cancel' : 'Back'}
-          </button>
+      {/* Basic Configuration */}
+      <div className="card p-4 space-y-4">
+        <h3 className="font-semibold text-theme">Configuration</h3>
 
-          <div className="flex gap-2">
-            {step === 1 && (
-              <button
-                onClick={() => setStep(2)}
-                disabled={!canProceedToStep2 || loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-              >
-                Next: Map Columns
-              </button>
-            )}
-            {step === 2 && (
-              <button
-                onClick={() => setStep(3)}
-                disabled={!canProceedToStep3}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-              >
-                Next: Settings
-              </button>
-            )}
-            {step === 3 && (
-              <button
-                onClick={handlePreview}
-                disabled={!canProceedToStep4 || loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Loading...' : 'Preview Import'}
-              </button>
-            )}
-            {step === 4 && (
-              <button
-                onClick={handleConfirm}
-                disabled={previewTransactions.length === 0}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-              >
-                Use This Configuration
-              </button>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm text-theme-muted mb-1">
+              Format Name
+            </label>
+            <input
+              type="text"
+              value={configName}
+              onChange={(e) => setConfigName(e.target.value)}
+              placeholder={`${file.name} Format`}
+              className="w-full px-3 py-2 border rounded-md bg-theme text-theme"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-theme-muted mb-1">
+              Account <span className="text-red-500">*</span>
+            </label>
+            {showNewAccount ? (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newAccountName}
+                  onChange={(e) => setNewAccountName(e.target.value)}
+                  placeholder="New account name"
+                  className="flex-1 px-3 py-2 border rounded-md bg-theme text-theme"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (newAccountName.trim()) {
+                      const tagValue = await createAccountTag(newAccountName.trim())
+                      if (tagValue) {
+                        setAccountSource(tagValue)
+                        setShowNewAccount(false)
+                        setNewAccountName('')
+                      }
+                    }
+                  }}
+                  className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNewAccount(false)
+                    setNewAccountName('')
+                  }}
+                  className="px-3 py-2 border border-theme rounded-md hover:bg-theme-elevated"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <select
+                  value={accountSource}
+                  onChange={(e) => setAccountSource(e.target.value)}
+                  className={`flex-1 px-3 py-2 border rounded-md bg-theme text-theme ${!accountSource ? 'border-yellow-400' : ''}`}
+                >
+                  <option value="">-- Select Account --</option>
+                  {accountTags.map((tag) => (
+                    <option key={tag.id} value={tag.value}>
+                      {tag.description || tag.value}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowNewAccount(true)}
+                  className="px-3 py-2 border border-theme rounded-md hover:bg-theme-elevated text-sm whitespace-nowrap"
+                  title="Create new account"
+                >
+                  + New
+                </button>
+              </div>
             )}
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm text-theme-muted mb-1">
+            Description <span className="text-theme-muted">(optional)</span>
+          </label>
+          <input
+            type="text"
+            value={configDescription}
+            onChange={(e) => setConfigDescription(e.target.value)}
+            placeholder="e.g., Monthly statement export from Chase"
+            className="w-full px-3 py-2 border rounded-md bg-theme text-theme"
+          />
+        </div>
+      </div>
+
+      {/* Advanced Settings (collapsed by default) */}
+      {showAdvanced && analysis && (
+        <div className="card p-4 space-y-4">
+          <h3 className="font-semibold text-theme">Advanced Settings</h3>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm text-theme-muted mb-1">Date Column *</label>
+              <select
+                value={dateColumn}
+                onChange={(e) => setDateColumn(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md bg-theme text-theme"
+              >
+                <option value="">-- Select --</option>
+                {analysis.headers.filter(h => h).map((h) => (
+                  <option key={h} value={h}>{h}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm text-theme-muted mb-1">Amount Column *</label>
+              <select
+                value={amountColumn}
+                onChange={(e) => setAmountColumn(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md bg-theme text-theme"
+              >
+                <option value="">-- Select --</option>
+                {analysis.headers.filter(h => h).map((h) => (
+                  <option key={h} value={h}>{h}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm text-theme-muted mb-1">Description Column *</label>
+              <select
+                value={descriptionColumn}
+                onChange={(e) => setDescriptionColumn(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md bg-theme text-theme"
+              >
+                <option value="">-- Select --</option>
+                {analysis.headers.filter(h => h).map((h) => (
+                  <option key={h} value={h}>{h}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm text-theme-muted mb-1">Reference Column</label>
+              <select
+                value={referenceColumn}
+                onChange={(e) => setReferenceColumn(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md bg-theme text-theme"
+              >
+                <option value="">-- None --</option>
+                {analysis.headers.filter(h => h).map((h) => (
+                  <option key={h} value={h}>{h}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm text-theme-muted mb-1">Category Column</label>
+              <select
+                value={categoryColumn}
+                onChange={(e) => setCategoryColumn(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md bg-theme text-theme"
+              >
+                <option value="">-- None --</option>
+                {analysis.headers.filter(h => h).map((h) => (
+                  <option key={h} value={h}>{h}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm text-theme-muted mb-1">Skip Header Rows</label>
+              <input
+                type="number"
+                min="0"
+                value={skipRows}
+                onChange={(e) => setSkipRows(parseInt(e.target.value) || 0)}
+                className="w-full px-3 py-2 border rounded-md bg-theme text-theme"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm text-theme-muted mb-1">Date Format</label>
+              <select
+                value={dateFormat}
+                onChange={(e) => setDateFormat(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md bg-theme text-theme"
+              >
+                {Object.entries(DATE_FORMAT_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm text-theme-muted mb-1">Amount Format</label>
+              <select
+                value={amountConvention}
+                onChange={(e) => setAmountConvention(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md bg-theme text-theme"
+              >
+                {Object.entries(AMOUNT_CONVENTION_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-end pb-2">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={invertSign}
+                  onChange={(e) => setInvertSign(e.target.checked)}
+                  className="rounded"
+                />
+                <span className="text-sm">Invert sign</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Preview */}
+      {showPreview && previewTransactions.length > 0 && (
+        <div className="card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-theme">
+              Preview: {previewTransactions.length} transactions
+            </h3>
+            <button
+              onClick={() => setShowPreview(false)}
+              className="text-sm text-theme-muted hover:text-theme"
+            >
+              Hide
+            </button>
+          </div>
+
+          {previewErrors.length > 0 && (
+            <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded text-sm text-yellow-800 dark:text-yellow-300">
+              {previewErrors.map((err, i) => <div key={i}>{err}</div>)}
+            </div>
+          )}
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-theme-elevated">
+                <tr>
+                  <th className="px-3 py-2 text-left">Date</th>
+                  <th className="px-3 py-2 text-left">Merchant</th>
+                  <th className="px-3 py-2 text-left">Description</th>
+                  <th className="px-3 py-2 text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {previewTransactions.slice(0, 5).map((txn, i) => (
+                  <tr key={i} className="border-t border-theme">
+                    <td className="px-3 py-2">{txn.date}</td>
+                    <td className="px-3 py-2">{txn.merchant}</td>
+                    <td className="px-3 py-2 truncate max-w-[200px]">{txn.description}</td>
+                    <td className={`px-3 py-2 text-right ${txn.amount >= 0 ? 'text-positive' : 'text-negative'}`}>
+                      {formatCurrency(txn.amount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {previewTransactions.length > 5 && (
+              <p className="px-3 py-2 text-sm text-theme-muted">
+                + {previewTransactions.length - 5} more transactions
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex justify-between items-center pt-4 border-t border-theme">
+        <button
+          onClick={onCancel}
+          className="px-4 py-2 text-theme-muted hover:text-theme"
+        >
+          Cancel
+        </button>
+
+        <div className="flex gap-3">
+          {!showPreview && (
+            <button
+              onClick={() => runPreview()}
+              disabled={!isReady || loading}
+              className="px-4 py-2 border border-theme rounded-md hover:bg-theme-elevated disabled:opacity-50"
+            >
+              {loading ? 'Loading...' : 'Preview'}
+            </button>
+          )}
+          <button
+            onClick={handleConfirm}
+            disabled={!isReady || previewTransactions.length === 0}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            Save Format
+          </button>
         </div>
       </div>
     </div>

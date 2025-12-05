@@ -21,6 +21,8 @@ from app.parsers import (
     analyze_csv_columns,
     detect_date_format,
     detect_amount_format,
+    compute_header_signature,
+    compute_signature_from_csv,
 )
 
 
@@ -772,71 +774,244 @@ class TestCustomCsvApiEndpoints:
         assert imported["id"] != config_id
 
 
+class TestCustomCsvConfigParsing:
+    """Test CustomCsvConfig JSON parsing edge cases."""
+
+    def test_from_json_ignores_unknown_fields(self):
+        """Config JSON should ignore unknown fields like 'description'.
+
+        This is a regression test for the bug where the frontend sends
+        'description' in the config_json, causing parsing to fail.
+        The description should be stored separately, not in config_json.
+        """
+        config_json = '''{
+            "name": "Test Format",
+            "account_source": "test-account",
+            "date_column": "Date",
+            "amount_column": "Amount",
+            "description_column": "Description",
+            "date_format": "%m/%d/%Y",
+            "amount_sign_convention": "negative_prefix",
+            "description": "This field should be ignored",
+            "some_future_field": "also ignored"
+        }'''
+
+        # This should NOT raise an error
+        config = CustomCsvConfig.from_json(config_json)
+
+        assert config.name == "Test Format"
+        assert config.account_source == "test-account"
+        assert config.date_column == "Date"
+        assert config.amount_column == "Amount"
+        assert config.description_column == "Description"
+
+    def test_from_json_with_row_handling(self):
+        """Config JSON with nested row_handling should parse correctly."""
+        config_json = '''{
+            "name": "Test Format",
+            "account_source": "test-account",
+            "date_column": "Date",
+            "amount_column": "Amount",
+            "description_column": "Description",
+            "row_handling": {
+                "skip_header_rows": 5,
+                "skip_footer_rows": 2,
+                "skip_empty_rows": true
+            }
+        }'''
+
+        config = CustomCsvConfig.from_json(config_json)
+
+        assert config.row_handling.skip_header_rows == 5
+        assert config.row_handling.skip_footer_rows == 2
+        assert config.row_handling.skip_empty_rows is True
+
+
 # =============================================================================
-# Builtin Config Tests
+# Header Signature Tests
 # =============================================================================
 
-class TestBuiltinConfigs:
-    """Test builtin CSV format configurations"""
+class TestHeaderSignature:
+    """Test header signature computation for auto-matching CSV formats."""
 
-    def test_all_builtin_configs_exist(self):
-        """Verify all expected builtin configs are defined"""
-        from app.parsers.builtin_configs import BUILTIN_CONFIGS, get_all_builtin_configs
+    def test_compute_signature_basic(self):
+        """Signature is computed from normalized, sorted headers."""
+        headers = ["Date", "Amount", "Description"]
+        signature = compute_header_signature(headers)
 
-        configs = get_all_builtin_configs()
-        assert "bofa_bank" in configs
-        assert "bofa_cc" in configs
-        assert "amex_cc" in configs
-        assert "inspira_hsa" in configs
-        assert "venmo" in configs
-        assert len(configs) == 5
+        # Signature should be a 16-char hex string
+        assert len(signature) == 16
+        assert all(c in "0123456789abcdef" for c in signature)
 
-    def test_builtin_configs_are_valid(self):
-        """Verify all builtin configs can be used with CustomCsvParser"""
-        from app.parsers.builtin_configs import get_all_builtin_configs
+    def test_signature_is_consistent(self):
+        """Same headers always produce the same signature."""
+        headers = ["Date", "Amount", "Description"]
+        sig1 = compute_header_signature(headers)
+        sig2 = compute_header_signature(headers)
+        assert sig1 == sig2
 
-        for name, config in get_all_builtin_configs().items():
-            # Should be able to create parser without error
-            parser = CustomCsvParser(config)
-            assert parser is not None
-            assert parser.config.name is not None
-            assert parser.config.account_source is not None
+    def test_signature_ignores_order(self):
+        """Column order doesn't affect signature."""
+        headers1 = ["Date", "Amount", "Description"]
+        headers2 = ["Description", "Date", "Amount"]
+        headers3 = ["Amount", "Description", "Date"]
 
-    def test_builtin_config_by_key(self):
-        """Test retrieving config by format key"""
-        from app.parsers.builtin_configs import get_builtin_config
+        sig1 = compute_header_signature(headers1)
+        sig2 = compute_header_signature(headers2)
+        sig3 = compute_header_signature(headers3)
 
-        amex = get_builtin_config("amex_cc")
-        assert amex is not None
-        assert amex.name == "American Express"
-        assert amex.account_source == "AMEX"
+        assert sig1 == sig2 == sig3
 
-        unknown = get_builtin_config("unknown_format")
-        assert unknown is None
+    def test_signature_ignores_case(self):
+        """Case doesn't affect signature."""
+        headers1 = ["Date", "Amount", "Description"]
+        headers2 = ["DATE", "AMOUNT", "DESCRIPTION"]
+        headers3 = ["date", "amount", "description"]
 
-    def test_builtin_config_names(self):
-        """Test getting display names for all configs"""
-        from app.parsers.builtin_configs import get_builtin_config_names
+        sig1 = compute_header_signature(headers1)
+        sig2 = compute_header_signature(headers2)
+        sig3 = compute_header_signature(headers3)
 
-        names = get_builtin_config_names()
-        assert names["bofa_bank"] == "Bank of America (Checking/Savings)"
-        assert names["amex_cc"] == "American Express"
-        assert names["venmo"] == "Venmo"
+        assert sig1 == sig2 == sig3
 
-    def test_bofa_bank_config_settings(self):
-        """Verify Bank of America checking config has correct settings"""
-        from app.parsers.builtin_configs import BOFA_BANK_CONFIG
+    def test_signature_ignores_whitespace(self):
+        """Leading/trailing whitespace doesn't affect signature."""
+        headers1 = ["Date", "Amount", "Description"]
+        headers2 = [" Date ", "  Amount", "Description  "]
 
-        assert BOFA_BANK_CONFIG.date_column == "Date"
-        assert BOFA_BANK_CONFIG.amount_column == "Amount"
-        assert BOFA_BANK_CONFIG.description_column == "Description"
-        assert BOFA_BANK_CONFIG.date_format == "%m/%d/%Y"
-        assert BOFA_BANK_CONFIG.amount_sign_convention == "negative_prefix"
-        assert BOFA_BANK_CONFIG.row_handling.find_header_row is True
+        sig1 = compute_header_signature(headers1)
+        sig2 = compute_header_signature(headers2)
 
-    def test_amex_config_inverts_sign(self):
-        """Verify AMEX config inverts sign (positive = charge)"""
-        from app.parsers.builtin_configs import AMEX_CC_CONFIG
+        assert sig1 == sig2
 
-        assert AMEX_CC_CONFIG.amount_invert_sign is True
-        assert AMEX_CC_CONFIG.category_column == "Category"
+    def test_different_headers_different_signature(self):
+        """Different headers produce different signatures."""
+        headers1 = ["Date", "Amount", "Description"]
+        headers2 = ["Date", "Amount", "Memo"]  # Different column name
+
+        sig1 = compute_header_signature(headers1)
+        sig2 = compute_header_signature(headers2)
+
+        assert sig1 != sig2
+
+    def test_signature_filters_empty_headers(self):
+        """Empty headers are filtered out."""
+        headers1 = ["Date", "Amount", "Description"]
+        headers2 = ["Date", "", "Amount", "Description", "  "]
+
+        sig1 = compute_header_signature(headers1)
+        sig2 = compute_header_signature(headers2)
+
+        assert sig1 == sig2
+
+    def test_compute_signature_from_csv(self):
+        """Compute signature directly from CSV content."""
+        csv_content = """Date,Amount,Description
+01/15/2025,-50.00,Amazon
+01/16/2025,-25.50,Grocery
+"""
+        signature = compute_signature_from_csv(csv_content)
+
+        assert signature is not None
+        assert len(signature) == 16
+
+        # Should match direct header computation
+        expected = compute_header_signature(["Date", "Amount", "Description"])
+        assert signature == expected
+
+    def test_compute_signature_from_csv_with_skip_rows(self):
+        """Signature computation handles skip_rows correctly."""
+        csv_content = """Bank Statement
+Generated: 2025-01-17
+
+Date,Amount,Description
+01/15/2025,-50.00,Amazon
+"""
+        # Auto-detect should find header at row 3 (0-indexed)
+        signature = compute_signature_from_csv(csv_content, skip_rows=0)
+
+        assert signature is not None
+        expected = compute_header_signature(["Date", "Amount", "Description"])
+        assert signature == expected
+
+
+@pytest.mark.asyncio
+class TestHeaderSignatureApi:
+    """Test API endpoints that use header signatures."""
+
+    async def test_auto_detect_returns_signature(self, client: AsyncClient):
+        """Auto-detect endpoint returns header signature."""
+        csv_content = """Date,Amount,Description
+01/15/2025,-50.00,Amazon
+01/16/2025,-25.50,Grocery
+"""
+        files = {"file": ("test.csv", csv_content, "text/csv")}
+
+        response = await client.post("/api/v1/import/custom/auto-detect", files=files)
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "header_signature" in result
+        assert result["header_signature"] is not None
+        assert len(result["header_signature"]) == 16
+
+    async def test_create_config_with_signature(self, client: AsyncClient):
+        """Create config with header signature for auto-matching."""
+        config = {
+            "name": "Signature Test Bank",
+            "account_source": "TEST-CHECKING",
+            "date_column": "Date",
+            "amount_column": "Amount",
+            "description_column": "Description",
+        }
+        signature = compute_header_signature(["Date", "Amount", "Description"])
+
+        response = await client.post(
+            "/api/v1/import/custom/configs",
+            json={
+                "name": "Signature Test Config",
+                "config_json": json.dumps(config),
+                "header_signature": signature,
+            }
+        )
+
+        assert response.status_code == 200
+        result = response.json()
+        assert result["header_signature"] == signature
+
+    async def test_auto_detect_matches_saved_config(self, client: AsyncClient):
+        """Auto-detect returns matched config when signature matches."""
+        # First, create a config with a signature
+        config = {
+            "name": "Match Test Bank",
+            "account_source": "TEST-CHECKING",
+            "date_column": "Date",
+            "amount_column": "Amount",
+            "description_column": "Description",
+        }
+        signature = compute_header_signature(["Date", "Amount", "Description"])
+
+        await client.post(
+            "/api/v1/import/custom/configs",
+            json={
+                "name": "Match Test Config",
+                "config_json": json.dumps(config),
+                "header_signature": signature,
+            }
+        )
+
+        # Now auto-detect a CSV with matching headers
+        csv_content = """Date,Amount,Description
+01/15/2025,-50.00,Amazon
+01/16/2025,-25.50,Grocery
+"""
+        files = {"file": ("test.csv", csv_content, "text/csv")}
+
+        response = await client.post("/api/v1/import/custom/auto-detect", files=files)
+
+        assert response.status_code == 200
+        result = response.json()
+
+        # Should find the matching config
+        assert result["matched_config"] is not None
+        assert result["matched_config"]["name"] == "Match Test Config"

@@ -9,10 +9,11 @@ Instead, it's instantiated dynamically with a CustomCsvConfig object.
 """
 
 import csv
+import hashlib
 import io
 import json
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -87,7 +88,11 @@ class CustomCsvConfig:
         row_handling_data = data.pop("row_handling", {})
         row_handling = RowHandling(**row_handling_data)
 
-        return cls(row_handling=row_handling, **data)
+        # Filter out unknown fields (e.g., description is stored separately in the DB)
+        valid_fields = {f.name for f in fields(cls)}
+        filtered_data = {k: v for k, v in data.items() if k in valid_fields}
+
+        return cls(row_handling=row_handling, **filtered_data)
 
     def to_json(self) -> str:
         """Serialize config to JSON string."""
@@ -395,15 +400,17 @@ class CustomCsvParser(CSVFormatParser):
 # ============================================================================
 
 # Common date formats to try during auto-detection
+# Format: (strptime_format, display_name, is_iso)
 DATE_FORMATS = [
-    ("%m/%d/%Y", "MM/DD/YYYY"),
-    ("%d/%m/%Y", "DD/MM/YYYY"),
-    ("%Y-%m-%d", "YYYY-MM-DD"),
-    ("%m-%d-%Y", "MM-DD-YYYY"),
-    ("%d-%m-%Y", "DD-MM-YYYY"),
-    ("%Y/%m/%d", "YYYY/MM/DD"),
-    ("%m/%d/%y", "MM/DD/YY"),
-    ("%d/%m/%y", "DD/MM/YY"),
+    ("%m/%d/%Y", "MM/DD/YYYY", False),
+    ("%d/%m/%Y", "DD/MM/YYYY", False),
+    ("%Y-%m-%d", "YYYY-MM-DD", False),
+    ("%Y-%m-%dT%H:%M:%S", "ISO DateTime", True),  # 2025-01-05T00:13:58
+    ("%m-%d-%Y", "MM-DD-YYYY", False),
+    ("%d-%m-%Y", "DD-MM-YYYY", False),
+    ("%Y/%m/%d", "YYYY/MM/DD", False),
+    ("%m/%d/%y", "MM/DD/YY", False),
+    ("%d/%m/%y", "DD/MM/YY", False),
 ]
 
 
@@ -411,9 +418,10 @@ def detect_date_format(sample_values: List[str]) -> Optional[Tuple[str, str]]:
     """
     Detect date format from sample values.
 
-    Returns tuple of (strptime_format, display_name) or None.
+    Returns tuple of (strptime_format_or_iso, display_name) or None.
+    For ISO datetime formats, returns ("iso", display_name).
     """
-    for strptime_fmt, display_name in DATE_FORMATS:
+    for strptime_fmt, display_name, is_iso in DATE_FORMATS:
         matches = 0
         for value in sample_values:
             value = value.strip()
@@ -427,7 +435,8 @@ def detect_date_format(sample_values: List[str]) -> Optional[Tuple[str, str]]:
 
         # If most samples match, we found the format
         if matches >= len([v for v in sample_values if v.strip()]) * 0.8:
-            return (strptime_fmt, display_name)
+            # Return "iso" for ISO datetime formats so parser uses fromisoformat()
+            return ("iso" if is_iso else strptime_fmt, display_name)
 
     return None
 
@@ -456,6 +465,38 @@ def detect_amount_format(sample_values: List[str]) -> Dict[str, Any]:
 
     if has_dollar:
         result["currency_prefix"] = "$"
+
+    # Detect if sign inversion is needed (AMEX-style: positive = expense)
+    # Parse amounts and check if most are positive
+    positive_count = 0
+    negative_count = 0
+    for v in sample_values:
+        v = v.strip()
+        if not v:
+            continue
+        # Check for negative indicators
+        is_negative = (
+            v.startswith("-") or
+            v.startswith("- ") or
+            (v.startswith("(") and v.endswith(")"))
+        )
+        if is_negative:
+            negative_count += 1
+        else:
+            # Check if it's actually a number (not empty or zero)
+            cleaned = re.sub(r'[,$\s\+]', '', v)
+            try:
+                val = float(cleaned)
+                if val != 0:
+                    positive_count += 1
+            except ValueError:
+                pass
+
+    # If 80%+ of non-zero amounts are positive, likely needs inversion
+    # (typical expense files should have mostly negative/expense transactions)
+    total = positive_count + negative_count
+    if total >= 3 and positive_count / total >= 0.8:
+        result["invert_sign"] = True
 
     return result
 
@@ -513,17 +554,23 @@ def _analyze_column(header: str, samples: List[str]) -> Dict[str, Any]:
     header_lower = header.lower()
 
     # Check header name for hints - more comprehensive keyword lists
-    date_keywords = ["date", "posted", "transaction date", "trans date", "datetime", "time"]
+    date_keywords = ["date", "posted", "transaction date", "trans date", "datetime", "time", "origination"]
     amount_keywords = ["amount", "debit", "credit", "total", "sum", "balance", "price", "cost", "value"]
-    desc_keywords = ["description", "memo", "payee", "merchant", "name", "narrative", "note", "details", "transaction"]
-    ref_keywords = ["reference", "ref", "id", "transaction id", "check", "confirmation", "number", "conf"]
-    category_keywords = ["category", "type", "classification", "expense type", "spending category"]
+    desc_keywords = ["description", "memo", "payee", "merchant", "name", "narrative", "note", "details"]
+    ref_keywords = ["reference", "ref", "check", "confirmation", "conf"]
+    # Separate ID keywords - only match "ID" or "Transaction ID", not "Description" containing "id"
+    id_keywords = ["transaction id", " id"]  # space before id to avoid matching "paid"
+    category_keywords = ["category", "classification", "expense type", "spending category", "expense category"]
     account_keywords = ["account", "card", "member", "cardholder"]
 
     hint = {"likely_type": "unknown", "confidence": 0.0}
 
     # Check header keywords
-    if any(kw in header_lower for kw in date_keywords):
+    # Check ID first (must be exact or "transaction id")
+    if header_lower == "id" or any(kw in header_lower for kw in id_keywords):
+        hint["likely_type"] = "reference"
+        hint["confidence"] = 0.7
+    elif any(kw in header_lower for kw in date_keywords):
         hint["likely_type"] = "date"
         hint["confidence"] = 0.7
     elif any(kw in header_lower for kw in amount_keywords):
@@ -548,13 +595,20 @@ def _analyze_column(header: str, samples: List[str]) -> Dict[str, Any]:
         hint["likely_type"] = "date"
         hint["detected_format"] = date_result[0]
         hint["format_display"] = date_result[1]
-        hint["confidence"] = max(hint.get("confidence", 0), 0.85)
+        # Priority date keywords get boosted confidence
+        if any(kw in header_lower for kw in ["posted", "transaction"]):
+            hint["confidence"] = 1.0  # Exact match for settlement date
+        elif any(kw in header_lower for kw in ["settlement", "effective", "cleared", "processed", "value"]):
+            hint["confidence"] = 0.95  # Strong match for settlement date
+        else:
+            hint["confidence"] = max(hint.get("confidence", 0), 0.85)
 
     # Try to detect amount format from sample data
+    # This runs if keyword suggested "amount" OR if still "unknown"
     if hint["likely_type"] in ("amount", "unknown"):
         non_empty = [s for s in samples if s.strip()]
         numeric_count = 0
-        for s in samples:
+        for s in non_empty:
             cleaned = re.sub(r'[,$\s\(\)\+\-]', '', s)
             try:
                 float(cleaned)
@@ -562,11 +616,36 @@ def _analyze_column(header: str, samples: List[str]) -> Dict[str, Any]:
             except ValueError:
                 pass
 
+        # If 80%+ of non-empty values are numeric, confirm as amount
         if non_empty and numeric_count >= len(non_empty) * 0.8:
             amount_settings = detect_amount_format(samples)
             hint["likely_type"] = "amount"
             hint["detected_settings"] = amount_settings
             hint["confidence"] = max(hint.get("confidence", 0), 0.8)
+        elif hint["likely_type"] == "amount" and non_empty:
+            # Keyword suggested "amount" but data is NOT numeric
+            # Downgrade to "unknown" - data should drive the decision
+            hint["likely_type"] = "unknown"
+            hint["confidence"] = 0.0
+
+    # Boost description confidence if keyword suggested it AND data confirms
+    # (varied text values that aren't numeric or dates)
+    if hint["likely_type"] == "description":
+        non_empty = [s for s in samples if s.strip()]
+        if non_empty:
+            # Check that values are varied (unique) and text-like
+            unique_ratio = len(set(non_empty)) / len(non_empty)
+            # Count how many look like pure numbers
+            numeric_count = sum(
+                1
+                for s in non_empty
+                if re.match(r'^[\d,.$\s\(\)\+\-]+$', s.strip())
+            )
+            numeric_ratio = numeric_count / len(non_empty)
+
+            # If mostly non-numeric and varied, boost confidence
+            if numeric_ratio < 0.3 and unique_ratio > 0.3:
+                hint["confidence"] = max(hint.get("confidence", 0), 0.85)
 
     # If still unknown, analyze text characteristics for description detection
     if hint["likely_type"] == "unknown":
@@ -603,22 +682,53 @@ def suggest_config(headers: List[str], column_hints: Dict[str, Any]) -> Dict[str
         "amount_sign_convention": "negative_prefix",
     }
 
+    # Keywords that should boost confidence when in header name
+    # Priority keywords get extra boost (prefer "posted date" over "origination date")
+    date_keywords = ["date", "datetime", "time"]
+    # Settlement/posted dates are preferred - these indicate when the transaction was recorded
+    date_top_keywords = ["posted", "transaction"]  # 100% confidence
+    date_high_keywords = ["settlement", "effective", "cleared", "processed", "value"]  # 95% confidence
+    amount_keywords = ["amount", "total", "debit", "credit"]
+    desc_keywords = ["description", "memo", "note", "payee", "name"]
+
     # Find best candidates for each required column type
     date_candidates = []
     amount_candidates = []
     desc_candidates = []
 
     for header in headers:
+        # Skip empty column names
+        if not header or not header.strip():
+            continue
+
         hint = column_hints.get(header, {})
         likely_type = hint.get("likely_type", "unknown")
         confidence = hint.get("confidence", 0)
 
+        # Boost confidence for columns with matching header keywords
+        header_lower = header.lower()
+        keyword_boost = 0.0
         if likely_type == "date":
-            date_candidates.append((header, confidence, hint))
+            if any(kw in header_lower for kw in date_top_keywords):
+                keyword_boost = 0.35  # Highest boost for "posted"/"transaction"
+            elif any(kw in header_lower for kw in date_high_keywords):
+                keyword_boost = 0.30  # High boost for settlement-related
+            elif any(kw in header_lower for kw in date_keywords):
+                keyword_boost = 0.20  # Standard boost for generic date
+        elif likely_type == "amount" and any(kw in header_lower for kw in amount_keywords):
+            keyword_boost = 0.2
+        elif likely_type in ("description", "merchant") and any(kw in header_lower for kw in desc_keywords):
+            keyword_boost = 0.2
+
+        # Don't cap for sorting - allows priority keywords to actually win
+        effective_confidence = confidence + keyword_boost
+
+        if likely_type == "date":
+            date_candidates.append((header, effective_confidence, hint))
         elif likely_type == "amount":
-            amount_candidates.append((header, confidence, hint))
+            amount_candidates.append((header, effective_confidence, hint))
         elif likely_type in ("description", "merchant"):
-            desc_candidates.append((header, confidence, hint))
+            desc_candidates.append((header, effective_confidence, hint))
 
     # Sort by confidence and pick best
     date_candidates.sort(key=lambda x: x[1], reverse=True)
@@ -639,6 +749,8 @@ def suggest_config(headers: List[str], column_hints: Dict[str, Any]) -> Dict[str
             config["amount_sign_convention"] = settings.get("sign_convention", "negative_prefix")
             if settings.get("currency_prefix"):
                 config["amount_currency_prefix"] = settings["currency_prefix"]
+            if settings.get("invert_sign"):
+                config["amount_invert_sign"] = True
 
     if desc_candidates:
         config["description_column"] = desc_candidates[0][0]
@@ -664,3 +776,216 @@ def suggest_config(headers: List[str], column_hints: Dict[str, Any]) -> Dict[str
     config["_completeness"] = required_found / 3.0
 
     return config
+
+
+def find_header_row(csv_content: str) -> Optional[Tuple[int, List[str]]]:
+    """
+    Auto-detect the header row in a CSV file.
+
+    Returns (skip_rows, headers) or None if not found.
+
+    Strategy:
+    1. Look for rows that look like headers (multiple text columns, no numbers)
+    2. Check if subsequent rows have data matching expected patterns
+    3. Score each candidate row and pick the best
+    """
+    lines = csv_content.split('\n')
+
+    # Keywords commonly found in financial CSV headers
+    header_keywords = {
+        "date", "posted", "transaction", "datetime", "time",
+        "amount", "debit", "credit", "total", "balance",
+        "description", "memo", "payee", "merchant", "name", "note",
+        "reference", "ref", "id", "number", "check",
+        "category", "type", "status",
+        "account", "card", "member",
+    }
+
+    best_score = 0
+    best_row = None
+    best_headers = None
+
+    # Check first 10 rows as potential headers
+    for i, line in enumerate(lines[:10]):
+        if not line.strip():
+            continue
+
+        try:
+            reader = csv.reader(io.StringIO(line))
+            row = next(reader)
+        except Exception:
+            continue
+
+        if len(row) < 3:  # Need at least 3 columns for a valid header
+            continue
+
+        # Score this row as a potential header
+        score = 0
+
+        # Check for header keywords
+        for cell in row:
+            cell_lower = cell.lower().strip()
+            for keyword in header_keywords:
+                if keyword in cell_lower:
+                    score += 2
+                    break
+
+        # Penalize rows that look like data (contain numbers, currency, dates)
+        for cell in row:
+            cell = cell.strip()
+            # Check for numeric values
+            if re.match(r'^[\$\-\+\(\)]?[\d,]+\.?\d*[\)]?$', cell.replace(',', '')):
+                score -= 3
+            # Check for date patterns
+            if re.match(r'^\d{1,2}[/\-]\d{1,2}[/\-]\d{2,4}$', cell):
+                score -= 3
+
+        # Prefer rows with more non-empty columns
+        non_empty = sum(1 for c in row if c.strip())
+        score += non_empty * 0.5
+
+        # Check if next row looks like data
+        if i + 1 < len(lines):
+            try:
+                next_reader = csv.reader(io.StringIO(lines[i + 1]))
+                next_row = next(next_reader)
+
+                # Next row should have numbers (amounts) or dates
+                has_numeric = any(
+                    re.match(r'^[\$\-\+\(\)]?[\d,]+\.?\d*[\)]?$', c.strip().replace(',', '').replace('$', ''))
+                    for c in next_row if c.strip()
+                )
+                has_date = any(
+                    re.match(r'^\d{1,4}[/\-]\d{1,2}[/\-]\d{1,4}', c.strip())
+                    for c in next_row if c.strip()
+                )
+
+                if has_numeric or has_date:
+                    score += 3
+            except Exception:
+                pass
+
+        if score > best_score:
+            best_score = score
+            best_row = i
+            best_headers = row
+
+    if best_row is not None and best_score > 3:
+        return (best_row, best_headers)
+
+    return None
+
+
+def auto_detect_csv_format(csv_content: str) -> Optional[CustomCsvConfig]:
+    """
+    Full auto-detection pipeline: detect format and return a working config.
+
+    This is the main entry point for auto-detection. It:
+    1. Finds the header row (skipping metadata)
+    2. Analyzes column types
+    3. Generates a config that can parse the file
+
+    Returns CustomCsvConfig or None if detection failed.
+    """
+    # Step 1: Find header row
+    header_result = find_header_row(csv_content)
+    if header_result is None:
+        return None
+
+    skip_rows, headers = header_result
+
+    # Step 2: Analyze columns
+    analysis = analyze_csv_columns(csv_content, skip_rows=skip_rows)
+    suggested = analysis.get("suggested_config", {})
+
+    # Ensure required fields
+    if not all([
+        suggested.get("date_column"),
+        suggested.get("amount_column"),
+        suggested.get("description_column"),
+    ]):
+        return None
+
+    # Step 3: Build config
+    return CustomCsvConfig(
+        name=suggested.get("name", "Auto-detected Format"),
+        account_source=suggested.get("account_source", "Unknown"),
+        date_column=suggested.get("date_column"),
+        amount_column=suggested.get("amount_column"),
+        description_column=suggested.get("description_column"),
+        reference_column=suggested.get("reference_column"),
+        category_column=suggested.get("category_column"),
+        card_member_column=suggested.get("card_member_column"),
+        date_format=suggested.get("date_format", "%m/%d/%Y"),
+        amount_sign_convention=suggested.get("amount_sign_convention", "negative_prefix"),
+        amount_currency_prefix=suggested.get("amount_currency_prefix", ""),
+        amount_invert_sign=suggested.get("amount_invert_sign", False),
+        row_handling=RowHandling(
+            skip_header_rows=skip_rows,
+            skip_empty_rows=True,
+        ),
+    )
+
+
+def compute_header_signature(headers: List[str]) -> str:
+    """
+    Compute a unique signature for a set of CSV headers.
+
+    The signature is computed by:
+    1. Normalizing headers (lowercase, strip whitespace)
+    2. Sorting alphabetically
+    3. Joining with a delimiter
+    4. Hashing to create a fixed-length signature
+
+    This allows matching CSV files with the same columns regardless of column order.
+
+    Args:
+        headers: List of column header names from the CSV
+
+    Returns:
+        A hex string signature (SHA256 truncated to 16 chars for readability)
+    """
+    # Normalize and filter empty headers
+    normalized = sorted(h.lower().strip() for h in headers if h.strip())
+
+    # Create a consistent string representation
+    header_string = "|".join(normalized)
+
+    # Hash it
+    hash_obj = hashlib.sha256(header_string.encode("utf-8"))
+
+    # Return first 16 chars of hex digest (64 bits, plenty for uniqueness)
+    return hash_obj.hexdigest()[:16]
+
+
+def compute_signature_from_csv(csv_content: str, skip_rows: int = 0) -> Optional[str]:
+    """
+    Compute header signature directly from CSV content.
+
+    Convenience function that finds the header row and computes the signature.
+
+    Args:
+        csv_content: Raw CSV file content
+        skip_rows: Number of rows to skip before header (0 = auto-detect)
+
+    Returns:
+        Header signature string, or None if headers couldn't be found
+    """
+    # If skip_rows is 0, try to auto-detect header row
+    if skip_rows == 0:
+        header_result = find_header_row(csv_content)
+        if header_result:
+            skip_rows, headers = header_result
+            return compute_header_signature(headers)
+
+    # Otherwise, use the specified skip_rows
+    lines = csv_content.split('\n')
+    if skip_rows >= len(lines):
+        return None
+
+    try:
+        reader = csv.reader(io.StringIO(lines[skip_rows]))
+        headers = next(reader)
+        return compute_header_signature(headers)
+    except (StopIteration, csv.Error):
+        return None

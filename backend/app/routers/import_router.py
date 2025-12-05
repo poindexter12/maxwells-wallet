@@ -18,6 +18,9 @@ from app.parsers import (
     CustomCsvParser,
     CustomCsvConfig,
     analyze_csv_columns,
+    find_header_row,
+    compute_header_signature,
+    compute_signature_from_csv,
 )
 from app.tag_inference import infer_bucket_tag
 from app.utils.hashing import compute_transaction_hash_from_dict
@@ -980,6 +983,100 @@ async def analyze_csv_file(
     )
 
 
+class AutoDetectResponse(PydanticBaseModel):
+    """Response from auto-detect endpoint"""
+    analysis: Dict[str, Any]  # Same as AnalyzeResponse
+    config: Optional[Dict[str, Any]]  # Suggested config
+    skip_rows: int  # Number of header rows to skip
+    detection_successful: bool
+    matched_config: Optional[Dict[str, Any]] = None  # Matched saved config by signature
+    header_signature: Optional[str] = None  # Computed signature for this file
+
+
+@router.post("/custom/auto-detect")
+async def auto_detect_csv_format_endpoint(
+    file: UploadFile = File(..., description="CSV file to auto-detect"),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Auto-detect CSV format including header row location and column mappings.
+
+    This is a convenience endpoint that combines header detection and column analysis.
+    Use this when you don't know anything about the CSV structure.
+
+    The endpoint first checks for a saved custom format with a matching header signature.
+    If found, it returns the saved configuration with matched_config populated.
+
+    Returns:
+    - **analysis**: Column headers, sample rows, and hints (with confidence scores)
+    - **config**: Suggested configuration for parsing
+    - **skip_rows**: Number of rows to skip before the header
+    - **detection_successful**: Whether all required columns were detected
+    - **matched_config**: Saved config that matches this file's header signature (if any)
+    - **header_signature**: Computed signature for this file's headers
+    """
+    if not file.filename.lower().endswith('.csv'):
+        raise HTTPException(
+            status_code=400,
+            detail="Only CSV files can be auto-detected"
+        )
+
+    content = await file.read()
+    csv_content = content.decode('utf-8')
+
+    # Step 1: Find the header row
+    header_result = find_header_row(csv_content)
+    skip_rows = 0
+    headers = []
+    if header_result:
+        skip_rows, headers = header_result
+
+    # Step 2: Compute header signature
+    header_signature = None
+    matched_config = None
+    if headers:
+        header_signature = compute_header_signature(headers)
+
+        # Step 3: Look for saved config with matching signature
+        result = await session.execute(
+            select(CustomFormatConfig).where(
+                CustomFormatConfig.header_signature == header_signature
+            )
+        )
+        saved_config = result.scalar_one_or_none()
+        if saved_config:
+            import json
+            matched_config = {
+                "id": saved_config.id,
+                "name": saved_config.name,
+                "description": saved_config.description,
+                "config": json.loads(saved_config.config_json),
+                "use_count": saved_config.use_count,
+            }
+
+    # Step 4: Analyze columns with the detected header row
+    analysis = analyze_csv_columns(csv_content, skip_rows)
+
+    # Step 5: Get suggested config (fallback if no signature match)
+    suggested = analysis.get("suggested_config", {})
+
+    # Determine if detection was successful
+    detection_successful = (
+        suggested.get("date_column") is not None and
+        suggested.get("amount_column") is not None and
+        suggested.get("description_column") is not None
+    ) or matched_config is not None
+
+    return {
+        "analysis": analysis,
+        "config": suggested,
+        "skip_rows": skip_rows,
+        "detection_successful": detection_successful,
+        "matched_config": matched_config,
+        "header_signature": header_signature,
+    }
+
+
 @router.post("/custom/preview", response_model=CustomPreviewResponse)
 async def preview_custom_import(
     file: UploadFile = File(..., description="CSV file to preview"),
@@ -1071,6 +1168,7 @@ async def confirm_custom_import(
     file: UploadFile = File(..., description="CSV file to import"),
     config_json: str = Form(..., description="CustomCsvConfig as JSON string"),
     save_config: bool = Form(False, description="Save the config for future use"),
+    header_signature: Optional[str] = Form(None, description="Header signature for auto-matching (computed by auto-detect)"),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -1265,12 +1363,16 @@ async def confirm_custom_import(
             existing_config.config_json = config_json
             existing_config.use_count += 1
             existing_config.updated_at = datetime.utcnow()
+            # Update signature if provided
+            if header_signature:
+                existing_config.header_signature = header_signature
         else:
-            # Create new config
+            # Create new config with signature for auto-matching
             new_config = CustomFormatConfig(
                 name=config.name,
                 config_json=config_json,
-                use_count=1
+                use_count=1,
+                header_signature=header_signature,
             )
             session.add(new_config)
 
@@ -1312,6 +1414,9 @@ async def create_custom_config(
     - date_format: strptime format string (default: "%m/%d/%Y")
     - amount_sign_convention: "negative_prefix", "parentheses", or "plus_minus"
     - row_handling: { skip_header_rows, skip_footer_rows, skip_patterns }
+
+    The header_signature is optional but recommended for auto-matching. It should be
+    computed from the CSV headers using the /custom/auto-detect endpoint.
     """
     # Validate the config JSON
     try:
@@ -1335,7 +1440,8 @@ async def create_custom_config(
     db_config = CustomFormatConfig(
         name=config.name,
         description=config.description,
-        config_json=config.config_json
+        config_json=config.config_json,
+        header_signature=config.header_signature,  # Store signature for auto-matching
     )
     session.add(db_config)
     await session.commit()

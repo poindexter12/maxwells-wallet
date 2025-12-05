@@ -41,7 +41,8 @@ def check_servers_running() -> tuple[bool, bool]:
 
     try:
         response = httpx.get(f"{BACKEND_URL}/api/v1/transactions", timeout=2)
-        backend_ok = response.status_code in (200, 404, 500)
+        # 307 is redirect (trailing slash), which means server is running
+        backend_ok = response.status_code in (200, 307, 404, 500)
     except Exception:
         pass
 
