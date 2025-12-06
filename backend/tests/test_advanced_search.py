@@ -87,6 +87,55 @@ class TestSearchIncludesNotes:
 
 
 # =============================================================================
+# Regex Search Validation Tests
+# =============================================================================
+
+class TestRegexSearchValidation:
+    """Test regex pattern validation for search_regex=true"""
+
+    @pytest.mark.asyncio
+    async def test_invalid_regex_returns_400(self, client: AsyncClient):
+        """Invalid regex patterns should return 400 error"""
+        response = await client.get(
+            "/api/v1/transactions/",
+            params={"search": "[invalid(regex", "search_regex": "true"}
+        )
+        assert response.status_code == 400
+        assert "Invalid regex pattern" in response.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_regex_too_long_returns_400(self, client: AsyncClient):
+        """Regex patterns exceeding max length should return 400"""
+        long_pattern = "a" * 201  # Exceeds MAX_REGEX_LENGTH of 200
+        response = await client.get(
+            "/api/v1/transactions/",
+            params={"search": long_pattern, "search_regex": "true"}
+        )
+        assert response.status_code == 400
+        assert "too long" in response.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_valid_regex_accepted(self, client: AsyncClient, seed_categories):
+        """Valid regex patterns should work"""
+        # Create a transaction to search
+        tx = {
+            "date": "2024-12-01",
+            "amount": -50.00,
+            "description": "Test purchase",
+            "merchant": "STORE123",
+            "account_source": "TEST-ACCT"
+        }
+        await client.post("/api/v1/transactions", json=tx)
+
+        # Use valid regex pattern
+        response = await client.get(
+            "/api/v1/transactions/",
+            params={"search": "STORE[0-9]+", "search_regex": "true"}
+        )
+        assert response.status_code == 200
+
+
+# =============================================================================
 # Saved Filters Tests
 # =============================================================================
 

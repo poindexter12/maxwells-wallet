@@ -6,8 +6,9 @@ from alembic import command
 import os
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./wallet.db")
+SQL_ECHO = os.getenv("SQL_ECHO", "").lower() in {"1", "true", "yes", "on", "debug"}
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(DATABASE_URL, echo=SQL_ECHO)
 
 async_session = sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
