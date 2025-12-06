@@ -67,71 +67,27 @@ engine = create_async_engine(DATABASE_URL, echo=echo)
 
 ---
 
-### 2. Synchronous Deletion in Async Context
+### 2. ~~Synchronous Deletion in Async Context~~ (FALSE POSITIVE - RESOLVED)
 
-**Severity:** MEDIUM
-**Impact:** Potential Session Corruption
+**Status:** NOT AN ISSUE
 
-Multiple routers use `await session.delete(obj)` which is not a valid SQLAlchemy async method. The correct pattern is `session.delete(obj)` followed by `await session.commit()`. While this might work in some versions, it's not idiomatic and could cause issues with session state.
+~~Multiple routers use `await session.delete(obj)` which is not a valid SQLAlchemy async method.~~
 
-**Files with issue:**
-- `/backend/app/routers/transactions.py:310` - `await session.delete(transaction)`
-- `/backend/app/routers/transactions.py:388` - `await session.delete(existing)` (in tag management)
-- `/backend/app/routers/import_router.py:95` - `await session.delete(existing)`
-- `/backend/app/routers/admin.py:89` - `await session.delete(txn)` (in loop)
-
-**Incorrect:**
-```python
-await session.delete(transaction)  # delete() is not async
-await session.commit()
-```
-
-**Correct:**
-```python
-session.delete(transaction)  # No await
-await session.commit()
-```
+**Correction:** Testing confirmed that with SQLAlchemy's `AsyncSession`, the `delete()` method IS async and MUST be awaited. Removing the `await` causes `RuntimeWarning: coroutine 'AsyncSession.delete' was never awaited` and breaks delete functionality. The existing code is correct.
 
 ---
 
-### 3. Unvalidated Regex Input in Transaction Search
+### 3. ~~Unvalidated Regex Input in Transaction Search~~ (FIXED)
 
-**Severity:** MEDIUM
-**Impact:** ReDoS Attacks, Crashes
+**Status:** RESOLVED
 
-The transaction search endpoint accepts regex patterns but doesn't validate them before passing to the database. A malicious user could submit a catastrophically backtracking regex (ReDoS) to crash the database or cause excessive CPU usage.
+~~The transaction search endpoint accepts regex patterns but doesn't validate them before passing to the database.~~
 
-**File:** `/backend/app/routers/transactions.py:84-95`
-
-```python
-if search_regex:
-    # Regex search using SQLite REGEXP or PostgreSQL ~*
-    from sqlalchemy import or_
-    query = query.where(
-        or_(
-            Transaction.merchant.op('REGEXP')(search),  # No validation of search pattern
-            Transaction.description.op('REGEXP')(search),
-            Transaction.notes.op('REGEXP')(search)
-        )
-    )
-```
-
-**Issues:**
-- No try/catch for `re.error`
-- Regex compiled at database level without timeout protection
-- SQLite REGEXP operator isn't built-in (requires extension or custom function)
-- Could cause denial of service
-
-**Fix:**
-```python
-import re
-if search_regex:
-    try:
-        re.compile(search)  # Test compile before using
-    except re.error as e:
-        raise HTTPException(status_code=400, detail=f"Invalid regex: {e}")
-    # Then use in query...
-```
+**Fix Applied:** Added `validate_regex_pattern()` function in `transactions.py` that:
+- Validates regex syntax using `re.compile()` before use
+- Enforces max pattern length (200 chars) to prevent ReDoS
+- Returns 400 error with descriptive message for invalid patterns
+- Added test coverage in `test_advanced_search.py::TestRegexSearchValidation`
 
 ---
 
@@ -179,26 +135,26 @@ if search_regex:
 
 ## Issue Reference Table
 
-| File | Line | Issue | Severity |
-|------|------|-------|----------|
-| `database.py` | 10 | `echo=True` unconditional | HIGH |
-| `transactions.py` | 310, 388 | `await session.delete()` misuse | MEDIUM |
-| `transactions.py` | 85-93 | Unvalidated regex input | MEDIUM |
-| `import_router.py` | 95, 200, etc. | `await session.delete()` misuse | MEDIUM |
-| `admin.py` | 89 | `await session.delete()` in loop | MEDIUM |
-| `merchants.py` | 32 | Regex try/catch only in one place | LOW |
-| `tag_rules.py` | 25-36 | Claims regex but only substring match | LOW |
-| `models.py` | 232 | Budget amounts not validated | LOW |
-| `models.py` | 64 | Tag due_day unconstrained | LOW |
+| File | Line | Issue | Severity | Status |
+|------|------|-------|----------|--------|
+| `database.py` | 10 | `echo=True` unconditional | HIGH | FIXED (env-controlled) |
+| ~~`transactions.py`~~ | ~~310, 388~~ | ~~`await session.delete()` misuse~~ | ~~MEDIUM~~ | FALSE POSITIVE |
+| ~~`transactions.py`~~ | ~~85-93~~ | ~~Unvalidated regex input~~ | ~~MEDIUM~~ | FIXED |
+| ~~`import_router.py`~~ | ~~95, 200, etc.~~ | ~~`await session.delete()` misuse~~ | ~~MEDIUM~~ | FALSE POSITIVE |
+| ~~`admin.py`~~ | ~~89~~ | ~~`await session.delete()` in loop~~ | ~~MEDIUM~~ | FALSE POSITIVE |
+| `merchants.py` | 32 | Regex try/catch only in one place | LOW | Open |
+| `tag_rules.py` | 25-36 | Claims regex but only substring match | LOW | Open |
+| `models.py` | 232 | Budget amounts not validated | LOW | Open |
+| `models.py` | 64 | Tag due_day unconstrained | LOW | Open |
 
 ---
 
 ## Recommendations
 
 ### Immediate (P0)
-1. Remove `echo=True` or make it environment-dependent
-2. Fix all `await session.delete()` calls - remove the `await`
-3. Add regex pattern validation before use in search
+1. ~~Remove `echo=True` or make it environment-dependent~~ ✅ DONE
+2. ~~Fix all `await session.delete()` calls~~ ❌ FALSE POSITIVE (code was correct)
+3. ~~Add regex pattern validation before use in search~~ ✅ DONE
 
 ### Soon (P1)
 1. Add validation constraints to Budget amounts (e.g., `gt=0`)

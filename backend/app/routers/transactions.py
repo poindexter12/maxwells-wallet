@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func
 from typing import List, Optional
 from datetime import date, datetime
+import re
 
 from app.database import get_session
 from app.models import (
@@ -25,6 +26,25 @@ class AddTagWithAmountRequest(BaseModel):
     amount: Optional[float] = None  # Split amount
 
 router = APIRouter(prefix="/api/v1/transactions", tags=["transactions"])
+
+# Maximum regex pattern length to prevent ReDoS attacks
+MAX_REGEX_LENGTH = 200
+
+
+def validate_regex_pattern(pattern: str) -> None:
+    """Validate a regex pattern before use. Raises HTTPException on invalid patterns."""
+    if len(pattern) > MAX_REGEX_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Regex pattern too long (max {MAX_REGEX_LENGTH} characters)"
+        )
+    try:
+        re.compile(pattern)
+    except re.error as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid regex pattern: {e}"
+        )
 
 
 def build_transaction_filter_query(
@@ -82,6 +102,8 @@ def build_transaction_filter_query(
         query = query.where(Transaction.date <= end_date)
     if search:
         if search_regex:
+            # Validate regex pattern before use to prevent ReDoS
+            validate_regex_pattern(search)
             # Regex search using SQLite REGEXP or PostgreSQL ~*
             # SQLite requires regexp extension, PostgreSQL has built-in
             # Use op('REGEXP') for SQLite compatibility
