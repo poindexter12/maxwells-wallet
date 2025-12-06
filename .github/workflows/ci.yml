@@ -105,9 +105,17 @@ jobs:
         working-directory: backend
         run: uv sync
 
-      - name: Run migrations
+      - name: Create data directory
         working-directory: backend
-        run: uv run alembic upgrade head
+        run: mkdir -p data
+
+      # For E2E tests, create schema directly from models (skip migrations)
+      # This avoids migration ordering issues and gives us a clean schema
+      - name: Initialize database schema
+        working-directory: backend
+        run: uv run python -m scripts.init_db
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///./data/wallet.db"
 
       - name: Seed database
         working-directory: backend

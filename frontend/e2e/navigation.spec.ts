@@ -37,11 +37,7 @@ test.describe('Navigation', () => {
     });
   });
 
-  test('accounts page loads', async ({ page }) => {
-    await page.goto('/accounts');
-    await expect(page.getByRole('heading', { name: /accounts/i })).toBeVisible();
-  });
-
+  // Note: /accounts route doesn't exist - accounts are managed via /tools
   test('tags page loads', async ({ page }) => {
     await page.goto('/tags');
     await expect(page.getByRole('heading', { name: /tags/i })).toBeVisible();

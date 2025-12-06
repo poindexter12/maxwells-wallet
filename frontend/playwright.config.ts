@@ -35,12 +35,20 @@ export default defineConfig({
       url: 'http://localhost:3001/health',
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
+      env: {
+        DATABASE_URL: 'sqlite+aiosqlite:///./data/wallet.db',
+        // Skip migrations in CI - schema already created by init_db.py
+        SKIP_MIGRATIONS: process.env.CI ? '1' : '',
+      },
     },
     {
       command: 'npm run dev',
       url: 'http://localhost:3000',
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
+      env: {
+        BACKEND_URL: 'http://localhost:3001',
+      },
     },
   ],
 });
