@@ -52,7 +52,7 @@ export default function DashboardTabs({ onDashboardChange }: DashboardTabsProps)
   }
 
   return (
-    <div className="flex items-end gap-1 border-b border-gray-200 mb-4">
+    <div className="flex items-end gap-1 border-b border-gray-200 mb-4" data-testid="dashboard-selector">
       {/* Dashboard tabs */}
       {dashboards.map((dashboard) => {
         const isActive = currentDashboard?.id === dashboard.id
