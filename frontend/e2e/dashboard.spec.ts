@@ -7,11 +7,9 @@ test.describe('Dashboard', () => {
     // Wait for network to settle
     await page.waitForLoadState('networkidle');
 
-    // Wait for dashboard to load - look for any heading or dashboard content
+    // Wait for dashboard to load - look for the dashboard heading
     await expect(
       page.getByRole('heading', { level: 1 })
-        .or(page.getByText('Dashboard'))
-        .or(page.locator('[data-testid="dashboard-selector"]'))
     ).toBeVisible({ timeout: 10000 });
 
     // Summary section should be present (cards show Income, Expenses, Net)
