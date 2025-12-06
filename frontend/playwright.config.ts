@@ -37,8 +37,9 @@ export default defineConfig({
       timeout: 120000,
       env: {
         DATABASE_URL: 'sqlite+aiosqlite:///./data/wallet.db',
-        // Skip migrations in CI - schema already created by init_db.py
-        SKIP_MIGRATIONS: process.env.CI ? '1' : '',
+        // Skip migrations - schema already created by init_db.py
+        // In CI: always skip. Locally: skip if SKIP_MIGRATIONS is set
+        SKIP_MIGRATIONS: process.env.CI || process.env.SKIP_MIGRATIONS ? '1' : '',
       },
     },
     {

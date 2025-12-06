@@ -244,6 +244,202 @@ export const handlers = [
     return HttpResponse.json([])
   }),
 
+  // Transfers
+  http.get(`${API_BASE}/transfers/suggestions`, () => {
+    return HttpResponse.json({
+      suggestions: [
+        {
+          id: 1,
+          date: '2024-12-01',
+          amount: -500,
+          description: 'Transfer to Savings',
+          merchant: null,
+          account_source: 'Checking',
+          match_reason: 'Amount matches opposite transaction',
+        },
+        {
+          id: 2,
+          date: '2024-12-01',
+          amount: 500,
+          description: 'Transfer from Checking',
+          merchant: null,
+          account_source: 'Savings',
+          match_reason: 'Amount matches opposite transaction',
+        },
+      ],
+    })
+  }),
+
+  http.get(`${API_BASE}/transfers/stats`, () => {
+    return HttpResponse.json({
+      transfer_count: 10,
+      transfer_total: 5000,
+      linked_pairs: 5,
+    })
+  }),
+
+  http.post(`${API_BASE}/transfers/mark`, async () => {
+    return HttpResponse.json({ marked_count: 2 })
+  }),
+
+  // Tag Rules
+  http.get(`${API_BASE}/tag-rules`, () => {
+    return HttpResponse.json([
+      {
+        id: 1,
+        name: 'Coffee shops',
+        tag: 'bucket:Food',
+        priority: 10,
+        enabled: true,
+        merchant_pattern: 'Starbucks',
+        description_pattern: null,
+        amount_min: null,
+        amount_max: null,
+        account_source: null,
+        match_all: false,
+        match_count: 25,
+        last_matched_date: '2024-12-05',
+      },
+    ])
+  }),
+
+  http.post(`${API_BASE}/tag-rules`, async () => {
+    return HttpResponse.json({
+      id: 2,
+      name: 'New Rule',
+      tag: 'bucket:Shopping',
+      priority: 0,
+      enabled: true,
+      match_all: false,
+      match_count: 0,
+    }, { status: 201 })
+  }),
+
+  http.patch(`${API_BASE}/tag-rules/:id`, async ({ params }) => {
+    return HttpResponse.json({
+      id: Number(params.id),
+      name: 'Updated Rule',
+      enabled: true,
+    })
+  }),
+
+  http.delete(`${API_BASE}/tag-rules/:id`, () => {
+    return new HttpResponse(null, { status: 204 })
+  }),
+
+  http.post(`${API_BASE}/tag-rules/:id/test`, () => {
+    return HttpResponse.json({ match_count: 5 })
+  }),
+
+  http.post(`${API_BASE}/tag-rules/apply`, () => {
+    return HttpResponse.json({ applied_count: 10 })
+  }),
+
+  // Merchants
+  http.get(`${API_BASE}/merchants`, () => {
+    return HttpResponse.json({
+      merchants: [
+        { name: 'AMZN MKTP US*123ABC', transaction_count: 15 },
+        { name: 'STARBUCKS #12345', transaction_count: 8 },
+        { name: 'UBER *TRIP', transaction_count: 5 },
+      ],
+    })
+  }),
+
+  http.get(`${API_BASE}/merchants/aliases`, () => {
+    return HttpResponse.json([
+      {
+        id: 1,
+        pattern: 'AMZN',
+        canonical_name: 'Amazon',
+        match_type: 'contains',
+        priority: 10,
+        match_count: 15,
+      },
+      {
+        id: 2,
+        pattern: 'STARBUCKS',
+        canonical_name: 'Starbucks',
+        match_type: 'contains',
+        priority: 5,
+        match_count: 8,
+      },
+    ])
+  }),
+
+  http.post(`${API_BASE}/merchants/aliases`, async () => {
+    return HttpResponse.json({
+      id: 3,
+      pattern: 'UBER',
+      canonical_name: 'Uber',
+      match_type: 'contains',
+      priority: 0,
+      match_count: 0,
+    }, { status: 201 })
+  }),
+
+  http.patch(`${API_BASE}/merchants/aliases/:id`, async () => {
+    return HttpResponse.json({ id: 1, pattern: 'AMZN', canonical_name: 'Amazon Updated' })
+  }),
+
+  http.delete(`${API_BASE}/merchants/aliases/:id`, () => {
+    return new HttpResponse(null, { status: 204 })
+  }),
+
+  http.post(`${API_BASE}/merchants/aliases/apply`, ({ request }) => {
+    const url = new URL(request.url)
+    const dryRun = url.searchParams.get('dry_run') === 'true'
+    if (dryRun) {
+      return HttpResponse.json({
+        updates: [
+          { transaction_id: 1, description: 'AMZN MKTP', old_merchant: null, new_merchant: 'Amazon', matched_pattern: 'AMZN' },
+        ],
+      })
+    }
+    return HttpResponse.json({ applied_count: 1 })
+  }),
+
+  // Custom CSV Formats
+  http.get(`${API_BASE}/import/custom/configs`, () => {
+    return HttpResponse.json([
+      {
+        id: 1,
+        name: 'Chase Credit Card',
+        description: 'Chase Sapphire monthly statement',
+        config_json: JSON.stringify({ account_source: 'Chase', date_column: 'Date', amount_column: 'Amount' }),
+        use_count: 5,
+        created_at: '2024-11-01T00:00:00Z',
+        updated_at: '2024-11-15T00:00:00Z',
+      },
+    ])
+  }),
+
+  http.post(`${API_BASE}/import/custom/configs`, async () => {
+    return HttpResponse.json({
+      id: 2,
+      name: 'New Format',
+      use_count: 0,
+      created_at: new Date().toISOString(),
+    }, { status: 201 })
+  }),
+
+  http.put(`${API_BASE}/import/custom/configs/:id`, async () => {
+    return HttpResponse.json({ id: 1, name: 'Updated Format' })
+  }),
+
+  http.delete(`${API_BASE}/import/custom/configs/:id`, () => {
+    return new HttpResponse(null, { status: 204 })
+  }),
+
+  http.post(`${API_BASE}/import/custom/preview`, async () => {
+    return HttpResponse.json({
+      transactions: [
+        { date: '2024-12-01', merchant: 'Test', description: 'Test transaction', amount: -50.00 },
+      ],
+      errors: [],
+    })
+  }),
+
   // Transaction Splits
   http.get(`${API_BASE}/transactions/:id/splits`, ({ params }) => {
     const { id } = params
