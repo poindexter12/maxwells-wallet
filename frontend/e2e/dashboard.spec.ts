@@ -13,7 +13,7 @@ test.describe('Dashboard', () => {
     ).toBeVisible({ timeout: 10000 });
 
     // Summary section should be present (cards show Income, Expenses, Net)
-    await expect(page.getByText(/total income/i).or(page.getByText(/total expenses/i))).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/total income/i).first()).toBeVisible({ timeout: 10000 });
   });
 
   test('shows navigation tabs', async ({ page }) => {
