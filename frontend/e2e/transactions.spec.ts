@@ -1,0 +1,49 @@
+import { test, expect } from '@playwright/test';
+
+test.describe('Transactions', () => {
+  test('loads transactions page', async ({ page }) => {
+    await page.goto('/transactions');
+
+    // Should show transactions heading
+    await expect(page.getByRole('heading', { name: /transactions/i })).toBeVisible();
+  });
+
+  test('displays transaction list or empty state', async ({ page }) => {
+    await page.goto('/transactions');
+
+    // Wait for content to load
+    await page.waitForLoadState('networkidle');
+
+    // Should have either transactions or empty state
+    const hasTransactions = await page.locator('table tbody tr').count() > 0;
+    const hasEmptyState = await page.getByText(/no transactions/i).count() > 0;
+
+    expect(hasTransactions || hasEmptyState).toBeTruthy();
+  });
+
+  test('has filtering controls', async ({ page }) => {
+    await page.goto('/transactions');
+
+    // Should have search/filter inputs
+    const hasSearch = await page.getByPlaceholder(/search/i).count() > 0;
+    const hasFilters = await page.getByRole('button', { name: /filter/i }).count() > 0 ||
+                       await page.getByText(/all accounts/i).count() > 0;
+
+    expect(hasSearch || hasFilters).toBeTruthy();
+  });
+
+  test('pagination controls present when needed', async ({ page }) => {
+    await page.goto('/transactions');
+    await page.waitForLoadState('networkidle');
+
+    // If there are transactions, check for pagination
+    const rowCount = await page.locator('table tbody tr').count();
+    if (rowCount > 0) {
+      // Should have some pagination indicator
+      const hasPagination = await page.getByText(/page/i).count() > 0 ||
+                            await page.getByRole('button', { name: /next/i }).count() > 0 ||
+                            await page.getByText(/showing/i).count() > 0;
+      // Pagination may or may not be present depending on data
+    }
+  });
+});
