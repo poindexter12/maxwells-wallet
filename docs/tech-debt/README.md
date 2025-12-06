@@ -19,13 +19,13 @@
 
 These should be fixed before any production deployment:
 
-| Issue | Location | Risk |
-|-------|----------|------|
-| SQL echo logging enabled | `backend/app/database.py:10` | Performance + security |
-| Invalid async delete pattern | `transactions.py:310`, `import_router.py:95` | Session corruption |
-| Unvalidated regex input | `transactions.py:85-93` | ReDoS vulnerability |
-| Missing FK constraint | `alembic/36d3a72a4e57` | Postgres migration blocker |
-| No frontend tests | `frontend/` | UI regressions undetected |
+| Issue | Location | Risk | Status |
+|-------|----------|------|--------|
+| ~~SQL echo logging enabled~~ | `backend/app/database.py:10` | Performance + security | ✅ FIXED |
+| ~~Invalid async delete pattern~~ | `transactions.py:310`, etc. | ~~Session corruption~~ | ❌ FALSE POSITIVE |
+| ~~Unvalidated regex input~~ | `transactions.py:85-93` | ReDoS vulnerability | ✅ FIXED |
+| ~~Missing FK constraints~~ | `alembic/8ae9be195232` | ~~Postgres migration blocker~~ | ✅ FIXED |
+| No frontend tests | `frontend/` | UI regressions undetected | Open |
 
 ---
 
@@ -46,9 +46,9 @@ These should be fixed before any production deployment:
 
 ### Immediate (This Sprint)
 
-1. **Backend:** Remove `echo=True` or make environment-dependent
-2. **Backend:** Fix all `await session.delete()` → `session.delete()`
-3. **Backend:** Add regex validation before search query execution
+1. ~~**Backend:** Remove `echo=True` or make environment-dependent~~ ✅ DONE
+2. ~~**Backend:** Fix all `await session.delete()` → `session.delete()`~~ ❌ FALSE POSITIVE (existing code was correct)
+3. ~~**Backend:** Add regex validation before search query execution~~ ✅ DONE
 4. **Frontend:** Extract dashboard widgets to separate components
 5. **Frontend:** Type dashboard `useState` hooks
 
