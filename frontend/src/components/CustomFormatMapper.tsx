@@ -38,7 +38,7 @@ interface SuggestedConfig {
   _completeness: number
 }
 
-interface CustomConfig {
+export interface CustomConfig {
   name: string
   account_source: string
   date_column: string | number
