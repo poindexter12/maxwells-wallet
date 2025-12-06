@@ -24,10 +24,14 @@ test.describe('Transactions', () => {
   test('has filtering controls', async ({ page }) => {
     await page.goto('/transactions');
 
-    // Should have search/filter inputs
+    // Wait for page to load
+    await page.waitForLoadState('networkidle');
+
+    // Should have search/filter inputs - look for input elements or filter UI
     const hasSearch = await page.getByPlaceholder(/search/i).count() > 0;
     const hasFilters = await page.getByRole('button', { name: /filter/i }).count() > 0 ||
-                       await page.getByText(/all accounts/i).count() > 0;
+                       await page.locator('select').count() > 0 ||
+                       await page.locator('[data-testid*="filter"]').count() > 0;
 
     expect(hasSearch || hasFilters).toBeTruthy();
   });

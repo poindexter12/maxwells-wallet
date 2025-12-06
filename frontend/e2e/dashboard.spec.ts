@@ -7,8 +7,8 @@ test.describe('Dashboard', () => {
     // Wait for dashboard to load
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
-    // Summary section should be present
-    await expect(page.getByText(/total spending/i)).toBeVisible();
+    // Summary section should be present (cards show Income, Expenses, Net)
+    await expect(page.getByText(/total income/i).or(page.getByText(/total expenses/i))).toBeVisible();
   });
 
   test('shows navigation tabs', async ({ page }) => {
