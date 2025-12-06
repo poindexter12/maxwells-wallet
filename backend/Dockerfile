@@ -32,8 +32,13 @@ RUN mkdir -p /app/data
 ENV PYTHONUNBUFFERED=1
 ENV DATABASE_URL="sqlite+aiosqlite:///./data/wallet.db"
 
+# Copy start script
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
 # Expose port
 EXPOSE 3001
 
-# Run migrations and start server
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 3001"]
+# Use entrypoint script for flexible startup
+ENTRYPOINT ["/app/start.sh"]
+CMD ["serve"]
