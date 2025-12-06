@@ -24,7 +24,7 @@ These should be fixed before any production deployment:
 | ~~SQL echo logging enabled~~ | `backend/app/database.py:10` | Performance + security | ✅ FIXED |
 | ~~Invalid async delete pattern~~ | `transactions.py:310`, etc. | ~~Session corruption~~ | ❌ FALSE POSITIVE |
 | ~~Unvalidated regex input~~ | `transactions.py:85-93` | ReDoS vulnerability | ✅ FIXED |
-| Missing FK constraint | `alembic/36d3a72a4e57` | Postgres migration blocker | Open |
+| ~~Missing FK constraints~~ | `alembic/8ae9be195232` | ~~Postgres migration blocker~~ | ✅ FIXED |
 | No frontend tests | `frontend/` | UI regressions undetected | Open |
 
 ---
