@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { PageHelp } from '@/components/PageHelp'
 import { OverviewTab } from '@/components/admin/OverviewTab'
 import { ImportsTab } from '@/components/admin/ImportsTab'
+import { HealthTab } from '@/components/admin/HealthTab'
 import { TagsTab } from '@/components/admin/TagsTab'
 import { CreateTagModal, EditTagModal } from '@/components/admin/TagModal'
 import {
@@ -275,6 +276,16 @@ export default function AdminPage() {
           >
             Imports
           </button>
+          <button
+            onClick={() => setActiveTab('health')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'health'
+                ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
+                : 'border-transparent text-theme-muted hover:text-theme hover:border-[var(--color-border-strong)]'
+            }`}
+          >
+            Health
+          </button>
           {TAG_TABS.map((tab) => (
             <button
               key={tab.id}
@@ -311,6 +322,8 @@ export default function AdminPage() {
           onCancelDelete={() => setConfirmDelete(null)}
         />
       )}
+
+      {activeTab === 'health' && <HealthTab />}
 
       {currentTagTab && (
         <TagsTab
