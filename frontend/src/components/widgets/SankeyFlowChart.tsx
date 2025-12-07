@@ -23,6 +23,11 @@ export function SankeyFlowChart({ widget, data }: SankeyFlowChartProps) {
 
   // Custom node component with labels - uses CSS variables directly for theme reactivity
   const SankeyNode = ({ x, y, width, height, index, payload }: any) => {
+    // Guard against invalid dimensions from Recharts edge cases
+    const safeWidth = Math.max(0, width || 0)
+    const safeHeight = Math.max(0, height || 0)
+    if (safeWidth === 0 || safeHeight === 0) return <g />
+
     const name = payload?.name || data.nodes[index]?.name || ''
     const isLeftSide = x < 200
     const colorVar = CHART_VARS[index % CHART_VARS.length]
@@ -31,13 +36,13 @@ export function SankeyFlowChart({ widget, data }: SankeyFlowChartProps) {
         <rect
           x={x}
           y={y}
-          width={width}
-          height={height}
+          width={safeWidth}
+          height={safeHeight}
           style={{ fill: colorVar, stroke: colorVar }}
         />
         <text
-          x={isLeftSide ? x - 6 : x + width + 6}
-          y={y + height / 2}
+          x={isLeftSide ? x - 6 : x + safeWidth + 6}
+          y={y + safeHeight / 2}
           textAnchor={isLeftSide ? 'end' : 'start'}
           dominantBaseline="middle"
           fontSize={12}

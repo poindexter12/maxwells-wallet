@@ -146,7 +146,7 @@ export function SpendingHeatmap({
                     key={dayIndex}
                     className="w-10 h-10 rounded flex flex-col items-center justify-center text-xs"
                     style={{ backgroundColor: colorVar }}
-                    title={day ? `${format(new Date(selectedYear, selectedMonth - 1, day.day), 'MMM d')}: ${formatCurrency(day.amount)} (${day.count} transactions)` : ''}
+                    title={day && !isNaN(selectedYear) && !isNaN(selectedMonth) ? `${format(new Date(selectedYear, selectedMonth - 1, day.day), 'MMM d')}: ${formatCurrency(day.amount)} (${day.count} transactions)` : ''}
                   >
                     {day && (
                       <>

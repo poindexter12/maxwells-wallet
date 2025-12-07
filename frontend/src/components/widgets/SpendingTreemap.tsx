@@ -41,9 +41,14 @@ export function SpendingTreemap({ widget, data }: SpendingTreemapProps) {
           stroke="#fff"
           fill="#8884d8"
           content={({ x, y, width, height, name, value, index }: any) => {
-            const showLabels = width >= 60 && height >= 40
-            const fontSize = Math.min(14, Math.max(10, width / 8))
-            const truncatedName = truncateText(name || '', width, fontSize)
+            // Guard against invalid dimensions from Recharts edge cases
+            const safeWidth = Math.max(0, width || 0)
+            const safeHeight = Math.max(0, height || 0)
+            if (safeWidth === 0 || safeHeight === 0) return <g />
+
+            const showLabels = safeWidth >= 60 && safeHeight >= 40
+            const fontSize = Math.min(14, Math.max(10, safeWidth / 8))
+            const truncatedName = truncateText(name || '', safeWidth, fontSize)
             const colorVar = CHART_VARS[index % CHART_VARS.length]
 
             return (
@@ -51,8 +56,8 @@ export function SpendingTreemap({ widget, data }: SpendingTreemapProps) {
                 <rect
                   x={x}
                   y={y}
-                  width={width}
-                  height={height}
+                  width={safeWidth}
+                  height={safeHeight}
                   style={{
                     fill: colorVar,
                     stroke: 'rgba(255,255,255,0.3)',
@@ -73,7 +78,7 @@ export function SpendingTreemap({ widget, data }: SpendingTreemapProps) {
                     >
                       {truncatedName}
                     </text>
-                    {height >= 55 && (
+                    {safeHeight >= 55 && (
                       <text
                         x={x + 8}
                         y={y + 38}
