@@ -13,6 +13,7 @@ from app.models import (
     SplitItem, TransactionSplits, TransactionSplitResponse
 )
 from app.utils.hashing import compute_transaction_content_hash
+from app.utils.pagination import encode_cursor, decode_cursor
 from sqlmodel import and_
 from pydantic import BaseModel
 
@@ -24,6 +25,13 @@ class AddTagRequest(BaseModel):
 class AddTagWithAmountRequest(BaseModel):
     tag: str  # namespace:value format
     amount: Optional[float] = None  # Split amount
+
+
+class PaginatedTransactions(BaseModel):
+    """Response model for cursor-paginated transactions."""
+    items: List[Transaction]
+    next_cursor: Optional[str] = None
+    has_more: bool = False
 
 router = APIRouter(prefix="/api/v1/transactions", tags=["transactions"])
 
@@ -197,6 +205,91 @@ async def count_transactions(
     result = await session.execute(query)
     count = result.scalar()
     return {"count": count}
+
+
+@router.get("/paginated", response_model=PaginatedTransactions)
+async def list_transactions_paginated(
+    cursor: Optional[str] = Query(None, description="Cursor from previous response for pagination"),
+    limit: int = Query(100, ge=1, le=500),
+    account_source: Optional[str] = None,
+    account: Optional[List[str]] = Query(None, description="Filter by account tag values (can specify multiple, OR logic)"),
+    account_exclude: Optional[List[str]] = Query(None, description="Exclude account tag values (can specify multiple)"),
+    category: Optional[str] = None,
+    reconciliation_status: Optional[ReconciliationStatus] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    search: Optional[str] = Query(None, description="Search in merchant, description, and notes fields"),
+    search_regex: bool = Query(False, description="Use regex pattern matching instead of substring search"),
+    amount_min: Optional[float] = None,
+    amount_max: Optional[float] = None,
+    tag: Optional[List[str]] = Query(None, description="Filter by tags in namespace:value format (can specify multiple)"),
+    tag_exclude: Optional[List[str]] = Query(None, description="Exclude tags in namespace:value format (can specify multiple)"),
+    is_transfer: Optional[bool] = Query(None, description="Filter by transfer status (true=transfers only, false=non-transfers only)"),
+    session: AsyncSession = Depends(get_session)
+):
+    """List transactions with cursor-based pagination for efficient deep pagination.
+
+    Uses keyset pagination which maintains O(1) performance regardless of page depth.
+    Pass the `next_cursor` from the response to get the next page.
+
+    Supports all the same filters as the standard list endpoint.
+    """
+    from sqlalchemy import or_
+
+    base_query = select(Transaction)
+    query = build_transaction_filter_query(
+        base_query,
+        account=account,
+        account_exclude=account_exclude,
+        account_source=account_source,
+        category=category,
+        reconciliation_status=reconciliation_status,
+        start_date=start_date,
+        end_date=end_date,
+        search=search,
+        search_regex=search_regex,
+        amount_min=amount_min,
+        amount_max=amount_max,
+        tag=tag,
+        tag_exclude=tag_exclude,
+        is_transfer=is_transfer,
+    )
+
+    # Apply cursor-based pagination (keyset pagination)
+    if cursor:
+        decoded = decode_cursor(cursor)
+        if decoded:
+            cursor_date, cursor_id = decoded
+            # For descending order: get rows where (date, id) < (cursor_date, cursor_id)
+            query = query.where(
+                or_(
+                    Transaction.date < cursor_date,
+                    and_(Transaction.date == cursor_date, Transaction.id < cursor_id)
+                )
+            )
+
+    # Order by date DESC, id DESC for consistent ordering
+    query = query.order_by(Transaction.date.desc(), Transaction.id.desc()).limit(limit + 1)
+
+    result = await session.execute(query)
+    transactions = list(result.scalars().all())
+
+    # Check if there are more results
+    has_more = len(transactions) > limit
+    if has_more:
+        transactions = transactions[:limit]
+
+    # Generate next cursor from last item
+    next_cursor = None
+    if transactions and has_more:
+        last_txn = transactions[-1]
+        next_cursor = encode_cursor(last_txn.date, last_txn.id)
+
+    return PaginatedTransactions(
+        items=transactions,
+        next_cursor=next_cursor,
+        has_more=has_more
+    )
 
 
 @router.get("/", response_model=List[Transaction])

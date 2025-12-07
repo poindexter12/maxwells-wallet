@@ -191,6 +191,129 @@ class TestTransactionSearchPerformance:
 
 
 @pytest.mark.performance
+class TestCursorPaginationPerformance:
+    """Tests for cursor-based pagination."""
+
+    async def test_cursor_pagination_first_page(
+        self, perf_client, seed_large_dataset, query_counter, thresholds
+    ):
+        """First page via cursor pagination should be fast."""
+        async with timed_request(query_counter) as timing:
+            response = await perf_client.get(
+                "/api/v1/transactions/paginated",
+                params={"limit": 50}
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["items"]) == 50
+        assert data["has_more"] is True
+        assert data["next_cursor"] is not None
+
+        timing.assert_under(
+            thresholds.TRANSACTION_LIST_MS,
+            f"Cursor pagination first page too slow ({timing.query_count} queries)"
+        )
+
+    async def test_cursor_pagination_subsequent_pages(
+        self, perf_client, seed_large_dataset, query_counter, thresholds
+    ):
+        """Subsequent pages via cursor should maintain performance."""
+        # Get first page and cursor
+        first_response = await perf_client.get(
+            "/api/v1/transactions/paginated",
+            params={"limit": 50}
+        )
+        assert first_response.status_code == 200
+        cursor = first_response.json()["next_cursor"]
+
+        # Time the second page
+        async with timed_request(query_counter) as timing:
+            response = await perf_client.get(
+                "/api/v1/transactions/paginated",
+                params={"cursor": cursor, "limit": 50}
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["items"]) == 50
+
+        timing.assert_under(
+            thresholds.TRANSACTION_LIST_MS,
+            "Cursor pagination subsequent page too slow"
+        )
+
+    async def test_cursor_vs_offset_deep_pagination(
+        self, perf_client, seed_large_dataset, query_counter, thresholds
+    ):
+        """Cursor pagination should outperform offset for deep pages."""
+        # Offset pagination at page 100 (skip 5000)
+        query_counter.reset()
+        async with timed_request(query_counter) as offset_timing:
+            offset_response = await perf_client.get(
+                "/api/v1/transactions/",
+                params={"limit": 50, "skip": 5000}
+            )
+        assert offset_response.status_code == 200
+        offset_queries = query_counter.count
+
+        # Cursor pagination - navigate to ~page 100 by chaining cursors
+        # (In practice, client would store cursor from previous request)
+        cursor = None
+        for _ in range(100):
+            response = await perf_client.get(
+                "/api/v1/transactions/paginated",
+                params={"cursor": cursor, "limit": 50} if cursor else {"limit": 50}
+            )
+            if not response.json()["has_more"]:
+                break
+            cursor = response.json()["next_cursor"]
+
+        # Time the final cursor-based request at ~page 100
+        query_counter.reset()
+        async with timed_request(query_counter) as cursor_timing:
+            cursor_response = await perf_client.get(
+                "/api/v1/transactions/paginated",
+                params={"cursor": cursor, "limit": 50}
+            )
+        assert cursor_response.status_code == 200
+        cursor_queries = query_counter.count
+
+        # Cursor pagination should be faster or equal for deep pages
+        # (offset has O(skip) complexity, cursor has O(1))
+        assert cursor_timing.duration_ms <= offset_timing.duration_ms * 1.5, (
+            f"Cursor pagination ({cursor_timing.duration_ms:.0f}ms) should not be "
+            f"significantly slower than offset ({offset_timing.duration_ms:.0f}ms)"
+        )
+
+    async def test_cursor_pagination_with_filters(
+        self, perf_client, seed_large_dataset, query_counter, thresholds
+    ):
+        """Cursor pagination should work correctly with filters."""
+        async with timed_request(query_counter) as timing:
+            response = await perf_client.get(
+                "/api/v1/transactions/paginated",
+                params={
+                    "category": "groceries",
+                    "start_date": "2024-01-01",
+                    "end_date": "2024-06-30",
+                    "limit": 50
+                }
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        # Verify filter was applied
+        for item in data["items"]:
+            assert item["category"] == "groceries"
+
+        timing.assert_under(
+            thresholds.TRANSACTION_SEARCH_MS,
+            "Cursor pagination with filters too slow"
+        )
+
+
+@pytest.mark.performance
 class TestTransactionDetailPerformance:
     """Transaction detail and relationship loading tests."""
 
