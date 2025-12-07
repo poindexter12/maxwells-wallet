@@ -732,6 +732,146 @@
   - Click individual anomaly item → transaction detail
 - **Status**: ✅ Implemented (2025-12-02)
 
+## FR-018: Multi-Dashboard Support (v0.6)
+
+### FR-018.1: Dashboard Creation
+- **Requirement**: Create multiple named dashboards
+- **Acceptance Criteria**:
+  - Create dashboards with custom names
+  - Set dashboard as default
+  - Clone existing dashboards
+  - Delete dashboards (except last one)
+- **Status**: ✅ Implemented (2025-12-03)
+
+### FR-018.2: Dashboard Widgets
+- **Requirement**: Configure widgets per dashboard
+- **Acceptance Criteria**:
+  - Add/remove widgets from dashboard
+  - Reorder widgets via drag-and-drop
+  - Per-widget filters (bucket, account, merchant)
+  - Widget visibility toggle
+- **Status**: ✅ Implemented (2025-12-03)
+
+### FR-018.3: Advanced Visualizations
+- **Requirement**: New chart types for spending analysis
+- **Visualizations**:
+  - Sankey diagram (money flow from income to buckets)
+  - Treemap (hierarchical spending breakdown)
+  - Calendar heatmap (daily spending patterns)
+- **Status**: ✅ Implemented (2025-12-03)
+
+## FR-019: CSV Auto-Detection & Custom Format Support (v0.7)
+
+### FR-019.1: Header Signature Detection
+- **Requirement**: Automatically detect CSV format from headers
+- **Acceptance Criteria**:
+  - Match header signatures against built-in formats
+  - Support common bank exports (BofA, Amex, Chase, Venmo, HSA)
+  - Fall back to custom mapping for unknown formats
+  - Confidence scoring for format detection
+- **Status**: ✅ Implemented (2025-12-05)
+
+### FR-019.2: Custom CSV Format Mapper
+- **Requirement**: Interactive column mapping for any CSV format
+- **Purpose**: Support any bank or financial institution's export format
+- **Acceptance Criteria**:
+  - Visual column mapping interface
+  - Map required fields: date, amount, description
+  - Map optional fields: merchant, category, reference
+  - Date format auto-detection with manual override
+  - Amount sign handling (credit/debit convention)
+  - Save custom formats for reuse
+  - Header signature stored for future auto-detection
+- **Status**: ✅ Implemented (2025-12-05)
+
+### FR-019.3: Format Management
+- **Requirement**: Manage saved custom formats
+- **Acceptance Criteria**:
+  - List all saved formats with source identification
+  - Edit existing format mappings
+  - Delete unused formats
+  - Export/import format configurations
+- **Status**: ✅ Implemented (2025-12-05)
+
+## FR-020: Observability (v0.8)
+
+### FR-020.1: OpenTelemetry Tracing
+- **Requirement**: Request tracing for debugging and monitoring
+- **Acceptance Criteria**:
+  - Automatic span creation for HTTP requests
+  - SQLAlchemy query tracing with timing
+  - Custom spans via `@traced()` decorator
+  - Trace context propagation
+- **Configuration**: `OTEL_TRACING_ENABLED`
+- **Status**: ✅ Implemented (2025-12-06)
+
+### FR-020.2: Prometheus Metrics
+- **Requirement**: Metrics endpoint for monitoring
+- **Metrics**:
+  - Request latency histograms (p50, p95, p99)
+  - Request counters by method/endpoint/status
+  - Active request gauge
+  - Database query timing
+- **Endpoint**: `GET /metrics`
+- **Configuration**: `OTEL_METRICS_ENABLED`
+- **Status**: ✅ Implemented (2025-12-06)
+
+### FR-020.3: Health Dashboard
+- **Requirement**: Real-time system health in Admin UI
+- **Features**:
+  - Status indicator (healthy/degraded/unhealthy)
+  - Latency percentiles display
+  - Error rate tracking
+  - Auto-refresh every 10 seconds
+- **Status**: ✅ Implemented (2025-12-06)
+
+### FR-020.4: Alerting
+- **Requirement**: Webhook notifications for anomalies
+- **Thresholds**:
+  - Error rate > 5%
+  - P99 latency > 5000ms
+- **Configuration**: `OTEL_ALERT_WEBHOOK_URL`
+- **Status**: ✅ Implemented (2025-12-06)
+
+## FR-021: Performance Optimization (v0.8)
+
+### FR-021.1: Virtual Scrolling
+- **Requirement**: Efficient rendering of large transaction lists
+- **Acceptance Criteria**:
+  - Handle 50k+ transactions without performance degradation
+  - Dynamic row heights for expanded/collapsed rows
+  - Smooth scrolling experience
+- **Implementation**: TanStack Virtual
+- **Status**: ✅ Implemented (2025-12-07)
+
+### FR-021.2: Cursor Pagination
+- **Requirement**: Efficient pagination for deep scrolling
+- **Acceptance Criteria**:
+  - O(1) performance regardless of page depth
+  - Keyset pagination using (date, id) cursor
+  - Frontend infinite scroll support
+- **API**: `GET /api/v1/transactions/paginated`
+- **Status**: ✅ Implemented (2025-12-07)
+
+### FR-021.3: Database Indexes
+- **Requirement**: Optimized queries for common access patterns
+- **Indexes**:
+  - Composite index on (date DESC, id DESC) for cursor pagination
+  - Covering indexes for filtered queries
+- **Status**: ✅ Implemented (2025-12-06)
+
+## FR-022: E2E Testing (v0.7)
+
+### FR-022.1: Playwright Test Suite
+- **Requirement**: End-to-end tests for critical user flows
+- **Coverage**:
+  - Import workflow (upload, preview, confirm)
+  - Transaction management
+  - Dashboard navigation
+  - Budget management
+- **CI Integration**: GitHub Actions
+- **Status**: ✅ Implemented (2025-12-05)
+
 ## Non-Goals (Out of Scope for v1.0)
 - ❌ Multi-user / multi-tenant
 - ❌ User authentication / login

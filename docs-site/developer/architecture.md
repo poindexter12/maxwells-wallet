@@ -29,6 +29,12 @@ maxwells-wallet/
 │   │   │   └── formats/    # Format-specific parsers
 │   │   ├── utils/
 │   │   │   └── hashing.py  # Content hash utilities
+│   │   ├── observability/  # OpenTelemetry & Prometheus
+│   │   │   ├── config.py   # OTEL_* configuration
+│   │   │   ├── metrics.py  # Prometheus metrics
+│   │   │   ├── tracing.py  # OpenTelemetry setup
+│   │   │   ├── middleware.py # Request instrumentation
+│   │   │   └── alerting.py # Webhook notifications
 │   │   └── routers/        # API route handlers
 │   │       ├── transactions.py
 │   │       ├── tags.py
@@ -109,6 +115,17 @@ The backend follows a router-based architecture with FastAPI:
 - **SQLModel**: Single model definitions serve as both Pydantic schemas and SQLAlchemy ORM models
 - **Alembic**: Database migrations for schema changes
 - **Content hashing**: Dual-hash deduplication for reliable import
+
+### Observability
+
+The backend includes production-ready observability:
+
+- **OpenTelemetry Tracing** - Automatic span creation for requests and database queries
+- **Prometheus Metrics** - `/metrics` endpoint with latency histograms and counters
+- **Health Dashboard** - Real-time health status in Admin UI
+- **Alerting** - Webhook notifications for error rate and latency threshold breaches
+
+Configuration via `OTEL_*` environment variables. See [Observability](observability.md) for details.
 
 ### Database
 
