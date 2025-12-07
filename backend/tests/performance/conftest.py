@@ -25,7 +25,15 @@ from sqlmodel import SQLModel
 
 from app.database import get_session
 from app.main import app
-from app.models import Budget, Dashboard, DashboardWidget, Tag, Transaction
+from app.models import (
+    Budget,
+    Dashboard,
+    DashboardWidget,
+    ReconciliationStatus,
+    Tag,
+    Transaction,
+    TransactionTag,
+)
 
 
 # ============================================================================
@@ -195,29 +203,53 @@ MERCHANTS = [
     ("Trader Joe's", "groceries", -30, -150),
     ("Safeway", "groceries", -40, -180),
     ("Costco", "groceries", -100, -400),
+    ("Kroger", "groceries", -35, -160),
+    ("Sprouts", "groceries", -25, -120),
     ("Target", "shopping", -20, -150),
     ("Amazon", "shopping", -10, -500),
     ("Walmart", "shopping", -15, -200),
     ("Best Buy", "shopping", -50, -1000),
+    ("Home Depot", "shopping", -30, -400),
+    ("Nordstrom", "shopping", -75, -350),
+    ("REI", "shopping", -40, -300),
     ("Shell Gas", "transportation", -30, -80),
     ("Chevron", "transportation", -35, -90),
     ("Uber", "transportation", -10, -50),
     ("Lyft", "transportation", -8, -45),
+    ("BART", "transportation", -5, -20),
+    ("Tesla Supercharger", "transportation", -15, -40),
     ("Netflix", "subscriptions", -15, -20),
     ("Spotify", "subscriptions", -10, -15),
     ("Adobe", "subscriptions", -55, -60),
+    ("Apple iCloud", "subscriptions", -3, -10),
+    ("YouTube Premium", "subscriptions", -12, -15),
+    ("NYT Subscription", "subscriptions", -15, -20),
     ("Chipotle", "dining", -12, -25),
     ("Starbucks", "dining", -5, -15),
     ("Olive Garden", "dining", -30, -80),
     ("McDonald's", "dining", -8, -20),
+    ("In-N-Out", "dining", -10, -25),
+    ("Sweetgreen", "dining", -15, -20),
+    ("Local Restaurant", "dining", -40, -150),
     ("PG&E", "utilities", -100, -300),
     ("Comcast", "utilities", -80, -150),
     ("AT&T", "utilities", -60, -120),
+    ("Water Company", "utilities", -40, -100),
+    ("Waste Management", "utilities", -30, -60),
     ("CVS Pharmacy", "healthcare", -10, -100),
     ("Kaiser", "healthcare", -50, -500),
+    ("Walgreens", "healthcare", -15, -80),
+    ("Dentist Office", "healthcare", -100, -400),
     ("United Airlines", "travel", -200, -800),
     ("Marriott", "travel", -150, -400),
     ("Airbnb", "travel", -100, -500),
+    ("Delta Airlines", "travel", -250, -900),
+    ("Hilton", "travel", -120, -350),
+    ("Expedia", "travel", -150, -600),
+    ("Planet Fitness", "entertainment", -25, -30),
+    ("AMC Theaters", "entertainment", -15, -40),
+    ("Steam Games", "entertainment", -10, -60),
+    ("Concert Tickets", "entertainment", -50, -300),
 ]
 
 INCOME_SOURCES = [
@@ -225,9 +257,51 @@ INCOME_SOURCES = [
     ("Freelance Payment", 500, 2000),
     ("Interest Income", 10, 100),
     ("Dividend", 50, 500),
+    ("Tax Refund", 500, 3000),
+    ("Bonus Payment", 1000, 5000),
+    ("Side Gig Payment", 100, 800),
 ]
 
-ACCOUNTS = ["chase", "bofa", "amex", "sapphire", "hsa"]
+# Extended accounts - mix of checking, credit cards, HSA, investment
+ACCOUNTS = [
+    ("chase_checking", "Chase Checking", None, None),
+    ("chase_sapphire", "Chase Sapphire Reserve", 15, 25000.0),
+    ("chase_freedom", "Chase Freedom", 20, 10000.0),
+    ("bofa_checking", "BofA Checking", None, None),
+    ("bofa_rewards", "BofA Rewards Visa", 25, 15000.0),
+    ("amex_gold", "Amex Gold", 1, None),  # Pay in full
+    ("amex_plat", "Amex Platinum", 1, None),
+    ("citi_double", "Citi Double Cash", 10, 12000.0),
+    ("capital_one", "Capital One Venture", 5, 20000.0),
+    ("discover", "Discover It", 28, 8000.0),
+    ("hsa", "HSA Account", None, None),
+    ("schwab", "Schwab Brokerage", None, None),
+]
+
+# Card member names for multi-user households
+CARD_MEMBERS = [
+    "JOHN DOE",
+    "JANE DOE",
+    "JOHN D DOE JR",
+    None,  # Some transactions don't have card member
+]
+
+# Occasions for tagging special events/trips
+OCCASIONS = [
+    "summer-vacation-2024",
+    "christmas-2024",
+    "birthday-party",
+    "home-renovation",
+    "wedding-gift",
+    "business-trip-q1",
+    "business-trip-q2",
+    "ski-trip",
+    "beach-vacation",
+    "thanksgiving-2024",
+]
+
+# Legacy ACCOUNTS list for backward compatibility with 10k tests
+ACCOUNTS_SIMPLE = ["chase", "bofa", "amex", "sapphire", "hsa"]
 
 
 @pytest_asyncio.fixture
@@ -249,7 +323,7 @@ async def seed_large_dataset(perf_session_factory) -> dict[str, Any]:
             # Already seeded, return metadata
             return {
                 "transaction_count": existing_count,
-                "accounts": ACCOUNTS,
+                "accounts": ACCOUNTS_SIMPLE,
                 "date_range": (date.today() - timedelta(days=365), date.today()),
             }
 
@@ -264,7 +338,7 @@ async def seed_large_dataset(perf_session_factory) -> dict[str, Any]:
             bucket_tags[bucket] = tag
 
         account_tags = {}
-        for acc in ACCOUNTS:
+        for acc in ACCOUNTS_SIMPLE:
             tag = Tag(namespace="account", value=acc)
             session.add(tag)
             account_tags[acc] = tag
@@ -286,7 +360,7 @@ async def seed_large_dataset(perf_session_factory) -> dict[str, Any]:
                 bucket = "income"
                 amount = round(random.uniform(min_amt, max_amt), 2)
 
-            account_name = random.choice(ACCOUNTS)
+            account_name = random.choice(ACCOUNTS_SIMPLE)
             txn_date = start_date + timedelta(days=random.randint(0, 365))
 
             txn = Transaction(
@@ -347,7 +421,7 @@ async def seed_large_dataset(perf_session_factory) -> dict[str, Any]:
 
         return {
             "transaction_count": 10500,
-            "accounts": ACCOUNTS,
+            "accounts": ACCOUNTS_SIMPLE,
             "buckets": buckets,
             "date_range": (start_date, date.today()),
         }
@@ -415,8 +489,13 @@ async def seed_stress_dataset(stress_session_factory) -> dict[str, Any]:
     """
     Seed database with 50,000+ transactions for stress testing.
 
-    This is a separate fixture from seed_large_dataset to avoid polluting
-    the standard performance test database.
+    Creates realistic, complex data with:
+    - 12 different accounts (checking, credit cards, HSA, brokerage)
+    - TransactionTag relationships (bucket tags on every transaction)
+    - Occasion tags on ~10% of transactions
+    - ~2% internal transfers between accounts
+    - Multiple card members for multi-user households
+    - Various reconciliation statuses
     """
     global _stress_seeded
 
@@ -426,35 +505,105 @@ async def seed_stress_dataset(stress_session_factory) -> dict[str, Any]:
         existing_count = result.scalar()
 
         if _stress_seeded or (existing_count and existing_count >= 50000):
+            account_names = [acc[0] for acc in ACCOUNTS]
             return {
                 "transaction_count": existing_count,
-                "accounts": ACCOUNTS,
+                "accounts": account_names,
                 "date_range": (date.today() - timedelta(days=730), date.today()),
             }
 
-        # Create tags
+        # Create bucket tags
         buckets = ["groceries", "dining", "utilities", "entertainment", "transportation",
                    "shopping", "healthcare", "subscriptions", "travel", "personal", "income"]
 
         bucket_tags = {}
-        for bucket in buckets:
-            tag = Tag(namespace="bucket", value=bucket)
+        for i, bucket in enumerate(buckets):
+            tag = Tag(namespace="bucket", value=bucket, sort_order=i)
             session.add(tag)
             bucket_tags[bucket] = tag
 
+        # Create account tags with credit card metadata
         account_tags = {}
-        for acc in ACCOUNTS:
-            tag = Tag(namespace="account", value=acc)
+        for acc_id, acc_name, due_day, credit_limit in ACCOUNTS:
+            tag = Tag(
+                namespace="account",
+                value=acc_id,
+                description=acc_name,
+                due_day=due_day,
+                credit_limit=credit_limit,
+            )
             session.add(tag)
-            account_tags[acc] = tag
+            account_tags[acc_id] = tag
+
+        # Create occasion tags
+        occasion_tags = {}
+        for occasion in OCCASIONS:
+            tag = Tag(namespace="occasion", value=occasion)
+            session.add(tag)
+            occasion_tags[occasion] = tag
 
         await session.flush()
 
-        # Generate 50,000+ transactions over 2 years
-        transactions = []
+        # Generate 52,000+ transactions over 2 years
         start_date = date.today() - timedelta(days=730)
+        transactions_to_insert = []
+        transaction_tag_links = []  # (txn_index, bucket_tag_id, occasion_tag_id or None)
+        transfer_pairs = []  # Track transfers to link later
+
+        account_list = list(account_tags.keys())
+        reconciliation_statuses = [
+            ReconciliationStatus.unreconciled,
+            ReconciliationStatus.matched,
+            ReconciliationStatus.manually_entered,
+        ]
+        status_weights = [0.7, 0.25, 0.05]  # 70% unreconciled, 25% matched, 5% manual
 
         for i in range(52000):
+            txn_date = start_date + timedelta(days=random.randint(0, 730))
+            account_id = random.choice(account_list)
+            account_info = next(a for a in ACCOUNTS if a[0] == account_id)
+            card_member = random.choice(CARD_MEMBERS) if account_info[2] else None  # Credit cards have card members
+            reconciliation = random.choices(reconciliation_statuses, weights=status_weights)[0]
+
+            # 2% transfers between accounts
+            if random.random() < 0.02:
+                # Create transfer pair
+                other_account = random.choice([a for a in account_list if a != account_id])
+                amount = round(random.uniform(100, 2000), 2)
+
+                # Outgoing transfer
+                txn = Transaction(
+                    date=txn_date,
+                    description=f"Transfer to {other_account}",
+                    merchant="Internal Transfer",
+                    amount=-amount,
+                    account_source=account_info[1],
+                    account_tag_id=account_tags[account_id].id,
+                    card_member=card_member,
+                    category="transfer",
+                    reconciliation_status=reconciliation,
+                    is_transfer=True,
+                )
+                transactions_to_insert.append(txn)
+
+                # Incoming transfer (will link later)
+                other_info = next(a for a in ACCOUNTS if a[0] == other_account)
+                txn2 = Transaction(
+                    date=txn_date,
+                    description=f"Transfer from {account_id}",
+                    merchant="Internal Transfer",
+                    amount=amount,
+                    account_source=other_info[1],
+                    account_tag_id=account_tags[other_account].id,
+                    category="transfer",
+                    reconciliation_status=reconciliation,
+                    is_transfer=True,
+                )
+                transactions_to_insert.append(txn2)
+                transfer_pairs.append((len(transactions_to_insert) - 2, len(transactions_to_insert) - 1))
+                continue
+
+            # 90% expenses, 10% income
             if random.random() < 0.9:
                 merchant, bucket, min_amt, max_amt = random.choice(MERCHANTS)
                 amount = round(random.uniform(min_amt, max_amt), 2)
@@ -464,30 +613,73 @@ async def seed_stress_dataset(stress_session_factory) -> dict[str, Any]:
                 bucket = "income"
                 amount = round(random.uniform(min_amt, max_amt), 2)
 
-            account_name = random.choice(ACCOUNTS)
-            txn_date = start_date + timedelta(days=random.randint(0, 730))
-
             txn = Transaction(
                 date=txn_date,
-                description=f"{merchant} purchase",
+                description=f"{merchant} - {random.randint(1000, 9999)}",
                 merchant=merchant,
                 amount=amount,
-                account_source=f"{account_name.upper()}-Checking",
-                account_tag_id=account_tags[account_name].id,
+                account_source=account_info[1],
+                account_tag_id=account_tags[account_id].id,
+                card_member=card_member,
                 category=bucket,
+                reconciliation_status=reconciliation,
             )
-            transactions.append(txn)
+            transactions_to_insert.append(txn)
 
-            if len(transactions) >= 2000:
-                session.add_all(transactions)
+            # Track bucket tag for TransactionTag relationship
+            txn_idx = len(transactions_to_insert) - 1
+            occasion_tag_id = None
+            # ~10% of transactions get an occasion tag
+            if random.random() < 0.10:
+                occasion_tag_id = random.choice(list(occasion_tags.values())).id
+            transaction_tag_links.append((txn_idx, bucket_tags[bucket].id, occasion_tag_id))
+
+            # Batch insert for performance
+            if len(transactions_to_insert) >= 2000:
+                session.add_all(transactions_to_insert)
                 await session.flush()
-                transactions.clear()
 
-        if transactions:
-            session.add_all(transactions)
+                # Create TransactionTag entries
+                for txn_idx, bucket_tag_id, occ_tag_id in transaction_tag_links:
+                    txn = transactions_to_insert[txn_idx]
+                    tt = TransactionTag(transaction_id=txn.id, tag_id=bucket_tag_id)
+                    session.add(tt)
+                    if occ_tag_id:
+                        tt_occ = TransactionTag(transaction_id=txn.id, tag_id=occ_tag_id)
+                        session.add(tt_occ)
+
+                transactions_to_insert.clear()
+                transaction_tag_links.clear()
+                await session.flush()
+
+        # Insert remaining transactions
+        if transactions_to_insert:
+            session.add_all(transactions_to_insert)
             await session.flush()
 
-        # Create dashboard
+            for txn_idx, bucket_tag_id, occ_tag_id in transaction_tag_links:
+                txn = transactions_to_insert[txn_idx]
+                tt = TransactionTag(transaction_id=txn.id, tag_id=bucket_tag_id)
+                session.add(tt)
+                if occ_tag_id:
+                    tt_occ = TransactionTag(transaction_id=txn.id, tag_id=occ_tag_id)
+                    session.add(tt_occ)
+
+        # Create budgets for spending categories
+        budget_amounts = {
+            "groceries": 800, "dining": 400, "entertainment": 200,
+            "shopping": 500, "transportation": 300, "utilities": 400,
+            "healthcare": 200, "subscriptions": 100,
+        }
+        for bucket, amount in budget_amounts.items():
+            budget = Budget(
+                tag=f"bucket:{bucket}",
+                amount=float(amount),
+                period="monthly",
+            )
+            session.add(budget)
+
+        # Create dashboard with widgets
         dashboard = Dashboard(
             name="Stress Test Dashboard",
             date_range_type="ytd",
@@ -512,10 +704,12 @@ async def seed_stress_dataset(stress_session_factory) -> dict[str, Any]:
         await session.commit()
         _stress_seeded = True
 
+        account_names = [acc[0] for acc in ACCOUNTS]
         return {
             "transaction_count": 52000,
-            "accounts": ACCOUNTS,
+            "accounts": account_names,
             "buckets": buckets,
+            "occasions": OCCASIONS,
             "date_range": (start_date, date.today()),
         }
 
