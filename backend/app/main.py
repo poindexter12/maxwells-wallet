@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db
 from app.routers import transactions, import_router, reports, budgets, tag_rules, recurring, admin, tags, transfers, merchants, accounts, filters, dashboard, dashboards, test
+from app.observability import setup_observability, ObservabilitySettings
 
 
 @asynccontextmanager
@@ -53,12 +54,16 @@ This API currently has no authentication. It's designed for single-user local de
 2. Categorize using tags at `/api/v1/transactions/{id}/tags`
 3. View insights at `/api/v1/reports/*`
     """,
-    version="0.4.4",
+    version="0.8.0",
     lifespan=lifespan,
     openapi_tags=tags_metadata,
     docs_url="/docs",
     redoc_url="/redoc",
 )
+
+# Initialize observability (tracing, metrics, logging)
+# Must be called before other middleware is added
+setup_observability(app)
 
 # CORS configuration
 app.add_middleware(
@@ -91,7 +96,7 @@ async def root():
     """API root - returns version and links to documentation."""
     return {
         "name": "Maxwell's Wallet API",
-        "version": "0.4.4",
+        "version": "0.8.0",
         "docs": "/docs",
         "redoc": "/redoc",
         "openapi": "/openapi.json"

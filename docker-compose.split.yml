@@ -18,6 +18,14 @@ services:
       - ./samples:/app/samples:ro
     environment:
       - DATABASE_URL=sqlite+aiosqlite:///./data/wallet.db
+      # Observability (v0.8+)
+      - OTEL_ENABLED=true
+      - OTEL_METRICS_ENABLED=true
+      - OTEL_TRACING_ENABLED=true
+      - OTEL_LOG_FORMAT=json
+      - OTEL_SLOW_QUERY_THRESHOLD_MS=100
+      # Optional: webhook for threshold alerts
+      # - OTEL_ALERT_WEBHOOK_URL=https://hooks.slack.com/...
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
