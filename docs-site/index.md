@@ -5,6 +5,22 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 [![CI](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yml/badge.svg)](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/poindexter12/maxwells-wallet?label=release)](https://github.com/poindexter12/maxwells-wallet/releases)
 
+## What's New in v0.8
+
+### Observability
+- **OpenTelemetry Tracing** - Automatic request tracing with SQLAlchemy query instrumentation
+- **Prometheus Metrics** - `/metrics` endpoint with latency histograms and error rates
+- **Health Dashboard** - Real-time system health in Admin UI
+- **Alerting** - Webhook notifications for threshold breaches
+
+### Performance
+- **Virtual Scrolling** - Smooth handling of 50k+ transactions
+- **Cursor Pagination** - O(1) performance regardless of scroll depth
+
+### v0.7 Highlights
+- **CSV Auto-Detection** - Automatically detect bank CSV formats on import
+- **E2E Testing** - Full Playwright test suite
+
 ## Features
 
 ### Import & Data Management

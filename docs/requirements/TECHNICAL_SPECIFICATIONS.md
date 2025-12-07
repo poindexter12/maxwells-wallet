@@ -12,11 +12,12 @@
 ## Technology Stack
 
 ### Frontend
-- **Framework**: Next.js 14
+- **Framework**: Next.js 16
 - **Language**: TypeScript
 - **Routing**: App Router
-- **Styling**: Tailwind CSS
+- **Styling**: Tailwind CSS 4
 - **Charts**: Recharts
+- **Virtual Scrolling**: TanStack Virtual
 - **HTTP Client**: fetch API
 - **Date Handling**: date-fns
 
@@ -28,12 +29,15 @@
 - **Database**: SQLite (dev), PostgreSQL-ready (prod)
 - **Migrations**: Alembic
 - **Async**: Native async/await
+- **Observability**: OpenTelemetry, Prometheus
 
 ### Development Tools
-- **Frontend Package Manager**: npm
+- **Frontend Package Manager**: pnpm
 - **Backend Package Manager**: uv
 - **Build System**: Makefile
 - **Version Control**: Git
+- **E2E Testing**: Playwright
+- **CI/CD**: GitHub Actions
 
 ## Database Schema
 
@@ -188,6 +192,16 @@ CREATE TABLE import_formats (
   - Query param: confirm=DELETE required
 - `DELETE /api/v1/admin/transactions/purge-all` - Delete ALL transactions and import sessions
   - Query param: confirm=PURGE_ALL required
+
+### Observability
+- `GET /metrics` - Prometheus metrics endpoint
+- `GET /api/v1/observability/health` - Detailed health check
+- `GET /api/v1/observability/stats` - Dashboard stats (latency percentiles, error rates)
+
+### Pagination
+- `GET /api/v1/transactions/paginated` - Cursor-based pagination
+  - Query params: cursor, limit, all standard filters
+  - Returns: items, next_cursor, has_more
 
 ### Reports (Advanced Analytics) - v0.2
 - `GET /api/v1/reports/month-over-month` - Month-over-month comparison
@@ -418,14 +432,19 @@ make db-upgrade    # Apply migrations
 
 ### Database
 - Indexes on frequently queried fields (date, merchant, category, account, status)
-- Pagination on transaction list (100 per page)
+- Composite index on (date DESC, id DESC) for cursor pagination
+- Covering indexes for common filter combinations
 - Async database operations
+- Cursor-based pagination for O(1) deep scrolling
 
 ### Frontend
+- Virtual scrolling with TanStack Virtual (handles 50k+ rows)
+- Dynamic row height measurement for expanded/collapsed rows
+- Cursor-based infinite scroll (replaces offset pagination)
 - Client-side caching of category list
 - Debounced search input
 - Lazy loading of charts
-- Responsive design for mobile (future)
+- Responsive design for mobile
 
 ## Security Considerations (Future)
 
@@ -447,13 +466,14 @@ V0 uses SQLite, but designed for easy migration:
 - Alembic migrations work with both
 - Async architecture supports high concurrency
 
-## Testing Strategy (Future)
+## Testing Strategy
 
-- [ ] Backend unit tests (pytest)
-- [ ] Backend integration tests
-- [ ] Frontend component tests
-- [ ] E2E tests
-- [ ] CSV parser tests with sample files
+- [x] Backend unit tests (pytest) - 90%+ coverage
+- [x] Backend integration tests
+- [x] Frontend component tests (Vitest + React Testing Library)
+- [x] E2E tests (Playwright)
+- [x] CSV parser tests with sample files
+- [x] Performance stress tests (50k+ transactions)
 
 ## Deployment (Future)
 
