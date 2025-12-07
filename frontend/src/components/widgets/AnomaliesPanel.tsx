@@ -12,6 +12,8 @@ interface AnomaliesPanelProps {
 
 export function AnomaliesPanel({ anomalies, selectedYear, selectedMonth }: AnomaliesPanelProps) {
   if (!anomalies) return null
+  // Guard against invalid year/month values
+  if (isNaN(selectedYear) || isNaN(selectedMonth)) return null
 
   const monthStr = String(selectedMonth).padStart(2, '0')
   const lastDay = new Date(selectedYear, selectedMonth, 0).getDate()

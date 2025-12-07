@@ -17,13 +17,15 @@ export function SpendingVelocity({
   selectedYear
 }: SpendingVelocityProps) {
   const now = new Date()
+  // Guard against invalid year values
+  const safeYear = !isNaN(selectedYear) ? selectedYear : now.getFullYear()
 
   // Yearly-scale view: show annual velocity from summary
   if (!isMonthlyScale && summary) {
-    const daysInYear = selectedYear === now.getFullYear()
-      ? Math.floor((now.getTime() - new Date(selectedYear, 0, 1).getTime()) / (1000 * 60 * 60 * 24)) + 1
-      : (selectedYear % 4 === 0 ? 366 : 365)
-    const daysTotal = selectedYear % 4 === 0 ? 366 : 365
+    const daysInYear = safeYear === now.getFullYear()
+      ? Math.floor((now.getTime() - new Date(safeYear, 0, 1).getTime()) / (1000 * 60 * 60 * 24)) + 1
+      : (safeYear % 4 === 0 ? 366 : 365)
+    const daysTotal = safeYear % 4 === 0 ? 366 : 365
 
     return (
       <div className="card p-6">

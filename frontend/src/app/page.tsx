@@ -43,11 +43,14 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [widgetData, setWidgetData] = useState<Record<number, any>>({})
 
-  // Extract date info from current dashboard
+  // Extract date info from current dashboard with fallback validation
   const startDate = currentDashboard?.date_range?.start_date || ''
   const endDate = currentDashboard?.date_range?.end_date || ''
-  const selectedYear = endDate ? parseInt(endDate.split('-')[0]) : new Date().getFullYear()
-  const selectedMonth = endDate ? parseInt(endDate.split('-')[1]) : new Date().getMonth() + 1
+  const now = new Date()
+  const parsedYear = endDate ? parseInt(endDate.split('-')[0]) : NaN
+  const parsedMonth = endDate ? parseInt(endDate.split('-')[1]) : NaN
+  const selectedYear = !isNaN(parsedYear) ? parsedYear : now.getFullYear()
+  const selectedMonth = !isNaN(parsedMonth) ? parsedMonth : now.getMonth() + 1
 
   // Fetch widgets when dashboard changes
   useEffect(() => {
