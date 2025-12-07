@@ -1,0 +1,62 @@
+// Types for admin page
+
+export const FORMAT_NAMES: Record<string, string> = {
+  'bofa_bank': 'BofA Bank',
+  'bofa_cc': 'BofA CC',
+  'amex_cc': 'Amex CC',
+  'inspira_hsa': 'Inspira HSA',
+  'venmo': 'Venmo',
+  'unknown': 'Unknown'
+}
+
+export interface ImportSession {
+  id: number
+  filename: string
+  format_type: string
+  account_source: string | null
+  transaction_count: number
+  duplicate_count: number
+  total_amount: number
+  date_range_start: string | null
+  date_range_end: string | null
+  status: string
+  created_at: string
+}
+
+export interface AdminStats {
+  total_transactions: number
+  account_stats: Array<{ account: string; count: number; total: number }>
+  total_import_sessions: number
+  import_session_status: Record<string, number>
+}
+
+export interface Tag {
+  id: number
+  namespace: string
+  value: string
+  description: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface TagWithUsage extends Tag {
+  usage_count?: number
+}
+
+export type AdminTab = 'overview' | 'imports' | 'all-tags' | 'buckets' | 'accounts' | 'occasions' | 'expense-types'
+
+export interface TagTabConfig {
+  id: AdminTab
+  namespace: string | null
+  label: string
+  description: string
+  showNamespace: boolean
+}
+
+export const TAG_TABS: TagTabConfig[] = [
+  { id: 'all-tags', namespace: null, label: 'All Tags', description: 'View all tags across all namespaces', showNamespace: true },
+  { id: 'buckets', namespace: 'bucket', label: 'Buckets', description: 'Spending categories like groceries, dining, entertainment', showNamespace: false },
+  { id: 'accounts', namespace: 'account', label: 'Accounts', description: 'Bank accounts and credit cards with display names', showNamespace: false },
+  { id: 'occasions', namespace: 'occasion', label: 'Occasions', description: 'Special events like vacation, holidays, birthdays', showNamespace: false },
+  { id: 'expense-types', namespace: 'expense', label: 'Expense Types', description: 'Recurring, one-time, refund classifications', showNamespace: false },
+]
