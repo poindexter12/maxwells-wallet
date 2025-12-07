@@ -43,7 +43,41 @@ export interface TagWithUsage extends Tag {
   usage_count?: number
 }
 
-export type AdminTab = 'overview' | 'imports' | 'all-tags' | 'buckets' | 'accounts' | 'occasions' | 'expense-types'
+export type AdminTab = 'overview' | 'imports' | 'health' | 'all-tags' | 'buckets' | 'accounts' | 'occasions' | 'expense-types'
+
+// Health/Observability types
+export interface LatencyPercentiles {
+  p50: number
+  p95: number
+  p99: number
+}
+
+export interface ErrorRates {
+  last_hour: number
+  last_24h: number
+}
+
+export interface DatabaseHealth {
+  status: 'up' | 'down'
+  latency_ms: number | null
+  error: string | null
+}
+
+export interface HealthStatus {
+  status: 'healthy' | 'degraded' | 'unhealthy'
+  database: DatabaseHealth
+  version: string
+}
+
+export interface HealthStats {
+  status: 'healthy' | 'degraded' | 'unhealthy'
+  request_latency: LatencyPercentiles
+  error_rate: ErrorRates
+  active_requests: number
+  uptime_seconds: number
+  slow_query_count: number
+  total_requests: number
+}
 
 export interface TagTabConfig {
   id: AdminTab

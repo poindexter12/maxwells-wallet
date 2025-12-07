@@ -8,6 +8,11 @@ from httpx import AsyncClient, ASGITransport
 from typing import AsyncGenerator
 import os
 
+# Disable observability during tests BEFORE importing app
+os.environ["OTEL_ENABLED"] = "false"
+os.environ["OTEL_TRACING_ENABLED"] = "false"
+os.environ["OTEL_METRICS_ENABLED"] = "false"
+
 from app.main import app
 from app.database import get_session
 from app.models import Transaction, ImportFormat, Tag, TransactionTag
