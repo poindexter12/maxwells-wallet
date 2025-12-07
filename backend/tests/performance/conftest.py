@@ -353,6 +353,173 @@ async def seed_large_dataset(perf_session_factory) -> dict[str, Any]:
         }
 
 
+# Module-level cache for stress test
+_stress_seeded = False
+STRESS_DB_URL = "sqlite+aiosqlite:///./test_stress.db"
+_stress_engine_cache = None
+_stress_session_factory_cache = None
+
+
+@pytest_asyncio.fixture
+async def stress_engine():
+    """Create a separate database for stress tests (50k+ transactions)."""
+    global _stress_engine_cache
+
+    if _stress_engine_cache is None:
+        _stress_engine_cache = create_async_engine(
+            STRESS_DB_URL,
+            echo=False,
+            future=True,
+        )
+        async with _stress_engine_cache.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
+
+    yield _stress_engine_cache
+
+
+@pytest_asyncio.fixture
+async def stress_session_factory(stress_engine):
+    """Create session factory for stress tests."""
+    global _stress_session_factory_cache
+
+    if _stress_session_factory_cache is None:
+        _stress_session_factory_cache = sessionmaker(
+            stress_engine,
+            class_=AsyncSession,
+            expire_on_commit=False,
+        )
+    return _stress_session_factory_cache
+
+
+@pytest_asyncio.fixture
+async def stress_client(stress_session_factory) -> AsyncGenerator[AsyncClient, None]:
+    """HTTP client for stress tests."""
+
+    async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
+        async with stress_session_factory() as session:
+            yield session
+
+    app.dependency_overrides[get_session] = override_get_session
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+    ) as client:
+        yield client
+
+    app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def seed_stress_dataset(stress_session_factory) -> dict[str, Any]:
+    """
+    Seed database with 50,000+ transactions for stress testing.
+
+    This is a separate fixture from seed_large_dataset to avoid polluting
+    the standard performance test database.
+    """
+    global _stress_seeded
+
+    async with stress_session_factory() as session:
+        from sqlalchemy import select, func
+        result = await session.execute(select(func.count()).select_from(Transaction))
+        existing_count = result.scalar()
+
+        if _stress_seeded or (existing_count and existing_count >= 50000):
+            return {
+                "transaction_count": existing_count,
+                "accounts": ACCOUNTS,
+                "date_range": (date.today() - timedelta(days=730), date.today()),
+            }
+
+        # Create tags
+        buckets = ["groceries", "dining", "utilities", "entertainment", "transportation",
+                   "shopping", "healthcare", "subscriptions", "travel", "personal", "income"]
+
+        bucket_tags = {}
+        for bucket in buckets:
+            tag = Tag(namespace="bucket", value=bucket)
+            session.add(tag)
+            bucket_tags[bucket] = tag
+
+        account_tags = {}
+        for acc in ACCOUNTS:
+            tag = Tag(namespace="account", value=acc)
+            session.add(tag)
+            account_tags[acc] = tag
+
+        await session.flush()
+
+        # Generate 50,000+ transactions over 2 years
+        transactions = []
+        start_date = date.today() - timedelta(days=730)
+
+        for i in range(52000):
+            if random.random() < 0.9:
+                merchant, bucket, min_amt, max_amt = random.choice(MERCHANTS)
+                amount = round(random.uniform(min_amt, max_amt), 2)
+            else:
+                source, min_amt, max_amt = random.choice(INCOME_SOURCES)
+                merchant = source
+                bucket = "income"
+                amount = round(random.uniform(min_amt, max_amt), 2)
+
+            account_name = random.choice(ACCOUNTS)
+            txn_date = start_date + timedelta(days=random.randint(0, 730))
+
+            txn = Transaction(
+                date=txn_date,
+                description=f"{merchant} purchase",
+                merchant=merchant,
+                amount=amount,
+                account_source=f"{account_name.upper()}-Checking",
+                account_tag_id=account_tags[account_name].id,
+                category=bucket,
+            )
+            transactions.append(txn)
+
+            if len(transactions) >= 2000:
+                session.add_all(transactions)
+                await session.flush()
+                transactions.clear()
+
+        if transactions:
+            session.add_all(transactions)
+            await session.flush()
+
+        # Create dashboard
+        dashboard = Dashboard(
+            name="Stress Test Dashboard",
+            date_range_type="ytd",
+            is_default=True,
+            position=0,
+        )
+        session.add(dashboard)
+        await session.flush()
+
+        widget_types = ["summary", "bucket_pie", "trends", "top_merchants", "velocity"]
+        for i, wtype in enumerate(widget_types):
+            widget = DashboardWidget(
+                dashboard_id=dashboard.id,
+                widget_type=wtype,
+                title=f"Test {wtype.title()}",
+                position=i,
+                width="half" if wtype != "summary" else "full",
+                is_visible=True,
+            )
+            session.add(widget)
+
+        await session.commit()
+        _stress_seeded = True
+
+        return {
+            "transaction_count": 52000,
+            "accounts": ACCOUNTS,
+            "buckets": buckets,
+            "date_range": (start_date, date.today()),
+        }
+
+
 # ============================================================================
 # Performance Thresholds
 # ============================================================================
