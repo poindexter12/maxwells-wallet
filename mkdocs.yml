@@ -50,6 +50,7 @@ nav:
   - Developer Guide:
     - Architecture: developer/architecture.md
     - Database: developer/database.md
+    - Observability: developer/observability.md
     - Testing: developer/testing.md
   - Domain Model: domain-model.md
 

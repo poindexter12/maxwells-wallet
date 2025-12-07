@@ -2,6 +2,16 @@
 
 Import transactions from various file formats.
 
+## CSV Auto-Detection
+
+Maxwell's Wallet automatically detects your CSV format based on header signatures. Just upload your file and the system will:
+
+1. Analyze the header row to identify the bank/source
+2. Apply the correct parsing rules
+3. Extract transactions with proper date and amount formatting
+
+No manual format selection required for supported formats.
+
 ## Supported Formats
 
 ### CSV Formats
@@ -11,8 +21,10 @@ Import transactions from various file formats.
 | Bank of America (Checking) | "Running Bal." column |
 | Bank of America (Credit Card) | "Posted Date" + "Reference Number" |
 | American Express | "Card Member" + "Account #" |
+| Chase | Chase-specific headers |
 | Venmo | Venmo-specific headers |
 | Inspira HSA | Inspira-specific headers |
+| Custom CSV | User-defined column mapping |
 
 ### Quicken Formats
 

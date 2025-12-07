@@ -11,13 +11,21 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 
 **[Documentation](https://docs.maxwellswallet.com)** · **[Requirements](docs/requirements/)**
 
-## What's New in v0.6
+## What's New in v0.8
 
-- **Multi-Dashboard Support** - Create multiple dashboards with different layouts and filters
-- **Advanced Visualizations** - Sankey diagrams, treemaps, and calendar heatmaps
-- **Dashboard Year/Month Toggle** - Switch between monthly and yearly views
-- **Widget Filtering** - Filter individual widgets by bucket, account, or merchant
-- **Improved Duplicate Detection** - Cross-account duplicate warnings during import
+### Observability (v0.8.0-beta1)
+- **OpenTelemetry Tracing** - Automatic request tracing with SQLAlchemy query instrumentation
+- **Prometheus Metrics** - `/metrics` endpoint with latency histograms, error rates, and request gauges
+- **Health Dashboard** - Real-time system health in Admin UI with auto-refresh
+- **Alerting** - Webhook notifications for error rate and latency threshold breaches
+
+### Performance (v0.8.0-beta2)
+- **Virtual Scrolling** - Smooth handling of 50k+ transactions using TanStack Virtual
+- **Cursor Pagination** - O(1) performance regardless of scroll depth
+
+### v0.7 Highlights
+- **CSV Auto-Detection** - Automatically detect bank CSV formats on import
+- **E2E Testing** - Full Playwright test suite for critical user flows
 
 See [CHANGELOG.md](CHANGELOG.md) for full release history.
 

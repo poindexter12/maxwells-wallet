@@ -1,4 +1,4 @@
-# {{project_name}} Backend
+# Maxwell's Wallet Backend
 
 FastAPI backend with SQLModel, Alembic migrations, and uv for dependency management.
 
@@ -53,7 +53,12 @@ This will automatically:
 ### Development Server
 
 ```bash
-{{constraints.commands.backend}}
+uv run uvicorn app.main:app --reload
+```
+
+Or from the repo root:
+```bash
+make backend
 ```
 
 The API will be available at `http://localhost:8000`
@@ -75,3 +80,29 @@ uv run alembic upgrade head
 Once running, visit:
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
+- Prometheus Metrics: `http://localhost:8000/metrics`
+
+## Observability
+
+The backend includes OpenTelemetry tracing and Prometheus metrics. Configure via environment variables:
+
+```bash
+OTEL_ENABLED=true              # Master toggle
+OTEL_TRACING_ENABLED=true      # Request tracing
+OTEL_METRICS_ENABLED=true      # Prometheus metrics
+OTEL_SLOW_QUERY_THRESHOLD_MS=100  # Log slow queries
+```
+
+See [docs/OBSERVABILITY.md](../docs/OBSERVABILITY.md) for full configuration options.
+
+## Testing
+
+Run the test suite:
+```bash
+uv run pytest
+```
+
+Or from the repo root:
+```bash
+make test-backend
+```

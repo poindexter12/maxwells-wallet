@@ -5,10 +5,65 @@ All notable changes to Maxwell's Wallet will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0-beta2] - 2025-12-07
+
+### Added
+- **Virtual Scrolling** - TanStack Virtual for efficient rendering of 50k+ transactions
+- **Cursor Pagination (Frontend)** - O(1) performance regardless of scroll depth
+- **Performance Testing** - Stress test infrastructure with 50k transaction dataset
+- Multi-account filtering stress tests
+
+### Fixed
+- Dashboard chart rendering errors during tab switching
+
+## [0.8.0-beta1] - 2025-12-06
+
+### Added
+- **OpenTelemetry Tracing** - Automatic span creation for all FastAPI requests
+  - SQLAlchemy query tracing with SQL comments
+  - Custom `@traced()` decorator for business logic spans
+- **Prometheus Metrics** - `/metrics` endpoint in Prometheus format
+  - Request latency histograms (p50, p95, p99)
+  - Error rate counters and active request gauges
+  - Database query timing
+- **Health Dashboard** - New "Health" tab in Admin UI
+  - Real-time latency percentiles and error rates
+  - System status indicator (healthy/degraded/unhealthy)
+  - Auto-refresh every 10 seconds
+- **Alerting** - Configurable webhook notifications
+  - Error rate threshold alerts (default: 5%)
+  - P99 latency threshold alerts (default: 5000ms)
+  - Cooldown to prevent alert storms
+
+### Configuration
+New environment variables (all optional, observability enabled by default):
+- `OTEL_ENABLED` - Master toggle for observability
+- `OTEL_TRACING_ENABLED` - OpenTelemetry tracing
+- `OTEL_METRICS_ENABLED` - Prometheus metrics
+- `OTEL_LOG_FORMAT` - json or console
+- `OTEL_SLOW_QUERY_THRESHOLD_MS` - Slow query logging threshold
+- `OTEL_ALERT_WEBHOOK_URL` - Webhook URL for alerts
+
+## [0.7.0] - 2025-12-05
+
+### Added
+- **CSV Auto-Detection** - Automatically detect CSV format when importing transactions
+- **E2E Testing** - Full end-to-end test suite with Playwright
+- **Seed Script** - Database seeding for E2E testing
+
+### Changed
+- **Frontend Refactoring** - Major component extraction for maintainability
+  - Dashboard widgets extracted into separate components
+  - Tools page split into 4 panel components
+  - Transactions page components extracted
+- **Developer Experience** - Centralized AI config in `.waypoint/` with multi-editor support
+- Migrated roadmap to GitHub Discussions
+
 ## [0.6.1] - 2025-12-03
 
 ### Changed
 - Release 0.6.1
+
 ## [0.6.0] - 2025-12-03
 
 ### Added
