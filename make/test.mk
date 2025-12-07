@@ -4,6 +4,7 @@
 
 .PHONY: test-backend test-unit test-coverage test-reports test-tags test-import test-budgets
 .PHONY: test-e2e-install test-e2e test-e2e-headed test-e2e-debug test-e2e-import test-e2e-full
+.PHONY: test-perf test-perf-quick test-perf-verbose
 .PHONY: test-all lint-frontend
 .PHONY: lint lint-backend vulture dead-code typecheck quality security-audit
 
@@ -15,7 +16,7 @@ test-backend: ## Run backend tests
 	@echo "$(BLUE)Running backend tests...$(NC)"
 	@cd $(BACKEND_DIR) && \
 		unset VIRTUAL_ENV && \
-		.venv/bin/python -m pytest --ignore=tests/e2e -v
+		.venv/bin/python -m pytest --ignore=tests/e2e --ignore=tests/performance -v
 	@echo "$(GREEN)✓ Tests complete$(NC)"
 
 test-unit: test-backend ## Run unit/integration tests (alias)
@@ -24,7 +25,7 @@ test-coverage: ## Run tests with coverage report
 	@echo "$(BLUE)Running tests with coverage...$(NC)"
 	@cd $(BACKEND_DIR) && \
 		unset VIRTUAL_ENV && \
-		.venv/bin/python -m pytest --ignore=tests/e2e -v --cov=app --cov-report=term-missing --cov-report=html
+		.venv/bin/python -m pytest --ignore=tests/e2e --ignore=tests/performance -v --cov=app --cov-report=term-missing --cov-report=html
 	@echo "$(GREEN)✓ Coverage report generated in backend/htmlcov/$(NC)"
 
 test-reports: ## Run report/analytics tests only
@@ -107,6 +108,32 @@ test-e2e-full: ## Run full workflow E2E tests (slow)
 	@echo "$(GREEN)✓ Full workflow E2E tests complete$(NC)"
 
 test-all: test-backend test-e2e ## Run all tests (unit + E2E)
+
+# -----------------------------------------------------------------------------
+# Performance Tests
+# -----------------------------------------------------------------------------
+
+test-perf: ## Run performance tests (10k+ transactions, slow)
+	@echo "$(BLUE)Running performance tests...$(NC)"
+	@echo "$(YELLOW)This will generate a large test dataset (~10k transactions)$(NC)"
+	@cd $(BACKEND_DIR) && \
+		unset VIRTUAL_ENV && \
+		.venv/bin/python -m pytest tests/performance -v -m performance --tb=short
+	@echo "$(GREEN)✓ Performance tests complete$(NC)"
+
+test-perf-quick: ## Run quick performance tests (skip slow benchmarks)
+	@echo "$(BLUE)Running quick performance tests...$(NC)"
+	@cd $(BACKEND_DIR) && \
+		unset VIRTUAL_ENV && \
+		.venv/bin/python -m pytest tests/performance -v -m "performance and not slow" --tb=short
+	@echo "$(GREEN)✓ Quick performance tests complete$(NC)"
+
+test-perf-verbose: ## Run performance tests with query logging
+	@echo "$(BLUE)Running performance tests with query logging...$(NC)"
+	@cd $(BACKEND_DIR) && \
+		unset VIRTUAL_ENV && \
+		.venv/bin/python -m pytest tests/performance -v -m performance --tb=long -s
+	@echo "$(GREEN)✓ Performance tests complete$(NC)"
 
 # -----------------------------------------------------------------------------
 # Linting
