@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { TEST_IDS } from '@/test-ids'
 import { PageHelp } from '@/components/PageHelp'
 import { BatchImport } from '@/components/import/BatchImport'
 import { SingleFileImport } from '@/components/import/SingleFileImport'
@@ -285,7 +286,7 @@ export default function ImportPage() {
       <h1 className="text-3xl font-bold text-theme">Import Transactions</h1>
 
       {/* Import Mode Toggle */}
-      <div className="flex gap-4 bg-white rounded-lg shadow p-4">
+      <div data-testid={TEST_IDS.IMPORT_MODE_TOGGLE} className="flex gap-4 bg-white rounded-lg shadow p-4">
         <button
           onClick={() => {
             setBatchMode(false)

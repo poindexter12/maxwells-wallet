@@ -2,6 +2,7 @@
 
 import { format } from 'date-fns'
 import Link from 'next/link'
+import { CHAOS_EXCLUDED_IDS } from '@/test-ids'
 import { ImportSession, FORMAT_NAMES } from '@/types/admin'
 
 interface ImportsTabProps {
@@ -94,6 +95,7 @@ export function ImportsTab({
                     {session.status === 'completed' && (
                       <>
                         <button
+                          data-testid={CHAOS_EXCLUDED_IDS.ROLLBACK_IMPORT}
                           onClick={() => onDeleteSession(session.id)}
                           disabled={actionInProgress}
                           className={`px-2 py-1 rounded text-xs font-medium ${

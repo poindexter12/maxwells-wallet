@@ -7,6 +7,7 @@ import { formatCurrency } from '@/lib/format'
 import { PageHelp } from '@/components/PageHelp'
 import { HelpTip } from '@/components/Tooltip'
 import { VirtualTransactionList } from '@/components/transactions'
+import { TEST_IDS } from '@/test-ids'
 
 interface Tag {
   id: number
@@ -641,6 +642,7 @@ function TransactionsContent() {
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-theme-muted font-medium uppercase tracking-wide">Date:</span>
             <button
+              data-testid={TEST_IDS.QUICK_FILTER_THIS_MONTH}
               onClick={() => {
                 const now = new Date()
                 const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -657,6 +659,7 @@ function TransactionsContent() {
               This Month
             </button>
             <button
+              data-testid={TEST_IDS.QUICK_FILTER_LAST_MONTH}
               onClick={() => {
                 const now = new Date()
                 const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1)
@@ -674,6 +677,7 @@ function TransactionsContent() {
               Last Month
             </button>
             <button
+              data-testid={TEST_IDS.QUICK_FILTER_THIS_YEAR}
               onClick={() => {
                 const now = new Date()
                 const firstDay = new Date(now.getFullYear(), 0, 1)
@@ -690,6 +694,7 @@ function TransactionsContent() {
               This Year
             </button>
             <button
+              data-testid={TEST_IDS.QUICK_FILTER_YTD}
               onClick={() => {
                 const now = new Date()
                 const firstDay = new Date(now.getFullYear(), 0, 1)
@@ -705,6 +710,7 @@ function TransactionsContent() {
               YTD
             </button>
             <button
+              data-testid={TEST_IDS.QUICK_FILTER_LAST_90_DAYS}
               onClick={() => {
                 const now = new Date()
                 const past = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
@@ -727,6 +733,7 @@ function TransactionsContent() {
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-theme-muted font-medium uppercase tracking-wide">Quick:</span>
             <button
+              data-testid={TEST_IDS.QUICK_FILTER_LARGE_DYNAMIC}
               onClick={() => {
                 const now = new Date()
                 const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -748,6 +755,7 @@ function TransactionsContent() {
               ⚠️ Large{largeThreshold ? ` ($${largeThreshold}+)` : ''}
             </button>
             <button
+              data-testid={TEST_IDS.QUICK_FILTER_TOP_SPENDING}
               onClick={() => {
                 const now = new Date()
                 const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -767,6 +775,7 @@ function TransactionsContent() {
               🏪 Top Spending
             </button>
             <button
+              data-testid={TEST_IDS.QUICK_FILTER_LARGE}
               onClick={() => {
                 setFilters({
                   ...filters,
@@ -781,6 +790,7 @@ function TransactionsContent() {
               💰 Large ($100+)
             </button>
             <button
+              data-testid={TEST_IDS.QUICK_FILTER_UNRECONCILED}
               onClick={() => {
                 setFilters({
                   ...filters,
@@ -802,6 +812,7 @@ function TransactionsContent() {
         {/* Primary filters row */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <input
+            data-testid={TEST_IDS.FILTER_SEARCH}
             type="text"
             placeholder="Search merchant or description..."
             className="input"
@@ -814,6 +825,7 @@ function TransactionsContent() {
             }}
           />
           <select
+            data-testid={TEST_IDS.FILTER_BUCKET}
             className="input"
             value={filters.bucket}
             onChange={(e) => setFilters({ ...filters, bucket: e.target.value })}
@@ -826,6 +838,7 @@ function TransactionsContent() {
             ))}
           </select>
           <select
+            data-testid={TEST_IDS.FILTER_OCCASION}
             className="input"
             value={filters.occasion}
             onChange={(e) => setFilters({ ...filters, occasion: e.target.value })}
@@ -839,6 +852,7 @@ function TransactionsContent() {
           </select>
           <div className="relative">
             <button
+              data-testid={TEST_IDS.FILTER_ACCOUNT}
               type="button"
               onClick={() => setShowAccountDropdown(!showAccountDropdown)}
               className="w-full px-4 py-2 border border-theme rounded-md text-left flex justify-between items-center bg-theme-elevated"
@@ -935,6 +949,7 @@ function TransactionsContent() {
               Search
             </button>
             <button
+              data-testid={TEST_IDS.FILTER_ADVANCED_TOGGLE}
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
               className={`px-3 py-2 border border-theme rounded-md ${showAdvancedFilters ? 'bg-[var(--color-bg-hover)]' : ''}`}
               title="Advanced filters"
@@ -951,6 +966,7 @@ function TransactionsContent() {
           <div className="pt-4 border-t border-theme">
             <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               <select
+                data-testid={TEST_IDS.FILTER_STATUS}
                 className="input"
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
@@ -962,6 +978,7 @@ function TransactionsContent() {
                 <option value="ignored">Ignored</option>
               </select>
               <select
+                data-testid={TEST_IDS.FILTER_TRANSFERS}
                 className="input"
                 value={filters.transfers}
                 onChange={(e) => setFilters({ ...filters, transfers: e.target.value as 'all' | 'hide' | 'only' })}
@@ -973,6 +990,7 @@ function TransactionsContent() {
               </select>
               <div className="flex gap-2 items-center">
                 <input
+                  data-testid={TEST_IDS.FILTER_AMOUNT_MIN}
                   type="number"
                   placeholder="Min $"
                   className="input w-full"
@@ -981,6 +999,7 @@ function TransactionsContent() {
                 />
                 <span className="text-theme-muted">–</span>
                 <input
+                  data-testid={TEST_IDS.FILTER_AMOUNT_MAX}
                   type="number"
                   placeholder="Max $"
                   className="input w-full"
@@ -989,6 +1008,7 @@ function TransactionsContent() {
                 />
               </div>
               <input
+                data-testid={TEST_IDS.FILTER_DATE_START}
                 type="date"
                 className="input"
                 value={filters.startDate}
@@ -996,6 +1016,7 @@ function TransactionsContent() {
                 title="Start date"
               />
               <input
+                data-testid={TEST_IDS.FILTER_DATE_END}
                 type="date"
                 className="input"
                 value={filters.endDate}
@@ -1003,6 +1024,7 @@ function TransactionsContent() {
                 title="End date"
               />
               <button
+                data-testid={TEST_IDS.FILTER_CLEAR}
                 onClick={() => {
                   setSearchInput('')
                   setFilters({
@@ -1092,6 +1114,7 @@ function TransactionsContent() {
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <input
+              data-testid={TEST_IDS.BULK_SELECT_ALL}
               type="checkbox"
               checked={selectedIds.size === transactions.length && transactions.length > 0}
               ref={el => {
@@ -1116,6 +1139,7 @@ function TransactionsContent() {
               <div className="flex items-center gap-2">
                 <span className="text-sm text-[var(--color-accent)]">Assign:</span>
                 <select
+                  data-testid={TEST_IDS.BULK_ACTION_SELECT}
                   value={bulkAction}
                   onChange={(e) => {
                     setBulkAction(e.target.value)
@@ -1177,6 +1201,7 @@ function TransactionsContent() {
 
               {bulkValue && (
                 <button
+                  data-testid={TEST_IDS.BULK_APPLY_BUTTON}
                   onClick={handleBulkApply}
                   disabled={bulkLoading}
                   className="btn-primary text-sm disabled:opacity-50"

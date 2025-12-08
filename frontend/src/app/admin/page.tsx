@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { TEST_IDS } from '@/test-ids'
 import { PageHelp } from '@/components/PageHelp'
 import { OverviewTab } from '@/components/admin/OverviewTab'
 import { ImportsTab } from '@/components/admin/ImportsTab'
@@ -257,6 +258,7 @@ export default function AdminPage() {
       <div className="border-b border-theme">
         <nav className="-mb-px flex space-x-8">
           <button
+            data-testid={TEST_IDS.ADMIN_TAB_OVERVIEW}
             onClick={() => setActiveTab('overview')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'overview'
@@ -267,6 +269,7 @@ export default function AdminPage() {
             Overview
           </button>
           <button
+            data-testid={TEST_IDS.ADMIN_TAB_IMPORTS}
             onClick={() => setActiveTab('imports')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'imports'

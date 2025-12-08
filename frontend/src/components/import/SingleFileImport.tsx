@@ -2,6 +2,7 @@
 
 import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
+import { TEST_IDS } from '@/test-ids'
 import { AccountTag, SavedCustomFormat, FORMAT_NAMES } from '@/types/import'
 
 interface SingleFileImportProps {
@@ -49,6 +50,7 @@ export function SingleFileImport({
             Import File
           </label>
           <input
+            data-testid={TEST_IDS.IMPORT_FILE_INPUT}
             type="file"
             accept=".csv,.qif,.qfx,.ofx"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
@@ -89,6 +91,7 @@ export function SingleFileImport({
             </div>
             {accountMode === 'existing' && accounts.length > 0 ? (
               <select
+                data-testid={TEST_IDS.IMPORT_ACCOUNT_SELECT}
                 value={accountSource}
                 onChange={(e) => setAccountSource(e.target.value)}
                 className={`w-full px-4 py-2 border rounded-md ${!accountSource ? 'border-yellow-400' : ''}`}
@@ -121,6 +124,7 @@ export function SingleFileImport({
               Format (Optional)
             </label>
             <select
+              data-testid={TEST_IDS.IMPORT_FORMAT_SELECT}
               value={selectedCustomFormat ? `custom:${selectedCustomFormat.id}` : formatHint}
               onChange={(e) => onFormatChange(e.target.value)}
               className="w-full px-4 py-2 border rounded-md"
@@ -149,6 +153,7 @@ export function SingleFileImport({
         </div>
 
         <button
+          data-testid={TEST_IDS.IMPORT_PREVIEW_BUTTON}
           onClick={onPreview}
           disabled={!file || !accountSource}
           className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
@@ -227,6 +232,7 @@ export function SingleFileImport({
 
           <div className="flex gap-4">
             <button
+              data-testid={TEST_IDS.IMPORT_CONFIRM_BUTTON}
               onClick={onConfirm}
               disabled={importing}
               className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
