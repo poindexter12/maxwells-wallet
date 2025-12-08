@@ -83,7 +83,6 @@ export const TEST_IDS = {
   FORMAT_LIST: 'format-list',
   FORMAT_ITEM: 'format-item',
   FORMAT_EDIT_BUTTON: 'format-edit-button',
-  FORMAT_DELETE_BUTTON: 'format-delete-button',
   FORMAT_TEST_BUTTON: 'format-test-button',
 
   // ============================================
@@ -101,7 +100,6 @@ export const TEST_IDS = {
   ADMIN_TAB_OVERVIEW: 'admin-tab-overview',
   ADMIN_TAB_IMPORTS: 'admin-tab-imports',
   ADMIN_TAB_TAGS: 'admin-tab-tags',
-  PURGE_BUTTON: 'purge-button', // Already exists - dangerous!
 
   // ============================================
   // Modals
@@ -111,8 +109,84 @@ export const TEST_IDS = {
   MODAL_CLOSE: 'modal-close',
 } as const;
 
-// Type for test ID values
+/**
+ * Test IDs for destructive/dangerous actions that chaos tests should NEVER click.
+ *
+ * These are kept in a separate group so:
+ * 1. They can't accidentally be added to TEST_IDS
+ * 2. Chaos tests can easily exclude all of them
+ * 3. The intent is clear - these actions have irreversible consequences
+ *
+ * Usage in components:
+ *   import { CHAOS_EXCLUDED_IDS } from '@/test-ids';
+ *   <button data-testid={CHAOS_EXCLUDED_IDS.PURGE_ALL_DATA}>Purge</button>
+ *
+ * Usage in chaos tests:
+ *   import { getChaosExcludeSelectors } from '../src/test-ids';
+ *   performRandomActions(page, { excludeSelectors: getChaosExcludeSelectors() });
+ */
+export const CHAOS_EXCLUDED_IDS = {
+  // Destructive data operations
+  PURGE_ALL_DATA: 'purge-all-data', // Deletes ALL transactions
+  DELETE_ACCOUNT: 'delete-account', // Deletes an account and its transactions
+  ROLLBACK_IMPORT: 'rollback-import', // Deletes an entire import session
+
+  // Bulk destructive operations
+  BULK_DELETE: 'bulk-delete', // Bulk delete selected items
+
+  // Format/config deletions
+  FORMAT_DELETE_BUTTON: 'format-delete-button', // Delete saved CSV format
+  RULE_DELETE_BUTTON: 'rule-delete-button', // Delete tag rule
+  TAG_DELETE_BUTTON: 'tag-delete-button', // Delete tag
+
+  // Confirmation buttons in destructive modals
+  CONFIRM_DELETE: 'confirm-delete', // Generic delete confirmation
+  CONFIRM_PURGE: 'confirm-purge', // Purge confirmation
+} as const;
+
+// Type for regular test ID values
 export type TestId = (typeof TEST_IDS)[keyof typeof TEST_IDS];
 
+// Type for chaos-excluded test ID values
+export type ChaosExcludedId =
+  (typeof CHAOS_EXCLUDED_IDS)[keyof typeof CHAOS_EXCLUDED_IDS];
+
+// Combined type for all test IDs
+export type AnyTestId = TestId | ChaosExcludedId;
+
 // Helper to create data-testid attribute object (for spreading)
-export const testId = (id: TestId) => ({ 'data-testid': id });
+export const testId = (id: AnyTestId) => ({ 'data-testid': id });
+
+/**
+ * Get all chaos-excluded selectors for use in chaos tests.
+ * Returns array of CSS selectors like '[data-testid="purge-all-data"]'
+ */
+export function getChaosExcludeSelectors(): string[] {
+  return Object.values(CHAOS_EXCLUDED_IDS).map(
+    (id) => `[data-testid="${id}"]`
+  );
+}
+
+/**
+ * Validate that no IDs appear in both TEST_IDS and CHAOS_EXCLUDED_IDS.
+ * Call this in a test to catch accidental duplicates.
+ * Throws an error if overlap is found.
+ */
+export function validateNoTestIdOverlap(): void {
+  const regularIds = new Set(Object.values(TEST_IDS));
+  const excludedIds = new Set(Object.values(CHAOS_EXCLUDED_IDS));
+
+  const overlap: string[] = [];
+  for (const id of regularIds) {
+    if (excludedIds.has(id as ChaosExcludedId)) {
+      overlap.push(id);
+    }
+  }
+
+  if (overlap.length > 0) {
+    throw new Error(
+      `Test ID overlap detected! The following IDs appear in both TEST_IDS and CHAOS_EXCLUDED_IDS: ${overlap.join(', ')}. ` +
+        `Move them to only ONE group.`
+    );
+  }
+}
