@@ -270,6 +270,16 @@ async function getVisibleElements(
       const isVisible = await element.isVisible();
       if (!isVisible) continue;
 
+      // Check if disabled
+      const isDisabled = await element.evaluate((el) => {
+        return (
+          (el as HTMLButtonElement).disabled ||
+          el.getAttribute('aria-disabled') === 'true' ||
+          el.classList.contains('disabled')
+        );
+      });
+      if (isDisabled) continue;
+
       // Check exclusions
       let excluded = false;
       for (const excludeSel of excludeSelectors) {
