@@ -151,3 +151,15 @@ Use this section for quick reference. Canonical skill cards live in `.claude/ski
 - Default to bigint/uuid PKs; ensure FK cascades are explicit (set null/restrict/cascade).
 - Add indexes for foreign keys and common predicates; evaluate partial indexes for sparse data.
 - Write migrations to be idempotent and reversible; include comments on rollback steps.
+
+### E2E Testing (Playwright)
+- **Always use `data-testid` attributes** for element selection in tests. Never rely on text content, CSS classes, or DOM structure.
+- Naming convention: `data-testid="<component>-<element>"` (e.g., `filter-search`, `transactions-list`, `help-dismiss`)
+- When adding new UI components that tests will interact with, add test IDs proactively.
+- Common test IDs to use:
+  - Page containers: `data-testid="<page>-page"` (e.g., `transactions-page`)
+  - Lists/tables: `data-testid="<name>-list"` (e.g., `transactions-list`)
+  - Form inputs: `data-testid="<form>-<field>"` (e.g., `filter-search`, `filter-bucket`)
+  - Buttons: `data-testid="<action>-button"` (e.g., `help-dismiss`, `import-confirm`)
+- E2E tests live in `frontend/e2e/`. Run with `make test-e2e` or `npx playwright test`.
+- See `frontend/e2e/README.md` for detailed testing conventions.

@@ -20,3 +20,11 @@ Operating rules:
 - Make a short plan for non-trivial tasks; keep one step in progress.
 - Prefer `make test-backend`/`make test-all`/frontend test commands over raw invocations; keep logs concise.
 - Keep tests deterministic and isolated; avoid destructive commands; add comments only when logic is non-obvious.
+
+E2E Testing (Playwright):
+- **ALWAYS use `data-testid` attributes** for element selection. Never select by text content, CSS classes, or DOM structure.
+- All test IDs are registered in `frontend/src/test-ids.ts` - add new IDs there first.
+- When writing tests that need new selectors, add the test ID to both the constants file AND the component.
+- Naming: `data-testid="<component>-<element>"` (e.g., `filter-search`, `help-dismiss`)
+- See `frontend/e2e/README.md` for full conventions and chaos testing patterns.
+- Chaos tests use seeded randomness for reproducibility - always log the seed on failure.
