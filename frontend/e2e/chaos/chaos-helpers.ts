@@ -1,4 +1,5 @@
 import { Page, Locator } from '@playwright/test';
+import { getChaosExcludeSelectors } from '../../src/test-ids';
 
 /**
  * Seeded pseudo-random number generator (LCG algorithm)
@@ -71,12 +72,21 @@ const DEFAULT_ACTION_TYPES: ActionType[] = [
   'press-key',
 ];
 
+// Build default exclusions from the centralized CHAOS_EXCLUDED_IDS registry
+// plus some general patterns
 const DEFAULT_EXCLUDE_SELECTORS = [
-  '[data-testid="logout"]',
-  '[data-testid="delete"]',
+  // All chaos-excluded test IDs (destructive actions)
+  ...getChaosExcludeSelectors(),
+
+  // General patterns
   'a[href^="http"]', // External links
   'a[href^="mailto:"]',
-  '[data-chaos-exclude]', // Opt-out attribute
+  '[data-chaos-exclude]', // Manual opt-out attribute
+
+  // Legacy text-based exclusions (for elements not yet using test IDs)
+  'button:has-text("Delete")',
+  'button:has-text("Purge")',
+  'button:has-text("Remove")',
 ];
 
 /**

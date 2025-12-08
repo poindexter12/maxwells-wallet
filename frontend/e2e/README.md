@@ -122,6 +122,27 @@ await page.locator(`[data-testid="${TEST_IDS.HELP_DISMISS}"]`).click();
 2. Add `data-testid={TEST_IDS.YOUR_ID}` to the component
 3. Use `TEST_IDS.YOUR_ID` in tests
 
+### Chaos-Excluded IDs (Destructive Actions)
+
+For buttons that perform destructive/irreversible actions (delete, purge, etc.), use `CHAOS_EXCLUDED_IDS` instead:
+
+```typescript
+// In src/test-ids.ts
+export const CHAOS_EXCLUDED_IDS = {
+  PURGE_ALL_DATA: 'purge-all-data',
+  DELETE_ACCOUNT: 'delete-account',
+  // ...
+} as const;
+```
+
+```tsx
+// In your component
+import { CHAOS_EXCLUDED_IDS } from '@/test-ids';
+<button data-testid={CHAOS_EXCLUDED_IDS.PURGE_ALL_DATA}>Purge All</button>
+```
+
+Chaos tests automatically exclude all `CHAOS_EXCLUDED_IDS` selectors. A validation test ensures no ID appears in both groups.
+
 ## Chaos Testing
 
 The `chaos/` directory contains monkey testing that performs random actions to find crashes.
