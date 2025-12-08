@@ -24,6 +24,10 @@ Operating rules:
 E2E Testing (Playwright):
 - **ALWAYS use `data-testid` attributes** for element selection. Never select by text content, CSS classes, or DOM structure.
 - All test IDs are registered in `frontend/src/test-ids.ts` - add new IDs there first.
+- **Two groups of test IDs**:
+  - `TEST_IDS`: Normal elements - safe for chaos testing
+  - `CHAOS_EXCLUDED_IDS`: Destructive actions (delete, purge) - chaos tests skip these automatically
+- When adding destructive buttons, use `CHAOS_EXCLUDED_IDS` not `TEST_IDS`. A validation test catches overlap.
 - When writing tests that need new selectors, add the test ID to both the constants file AND the component.
 - Naming: `data-testid="<component>-<element>"` (e.g., `filter-search`, `help-dismiss`)
 - See `frontend/e2e/README.md` for full conventions and chaos testing patterns.

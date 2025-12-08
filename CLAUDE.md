@@ -156,6 +156,10 @@ Use this section for quick reference. Canonical skill cards live in `.claude/ski
 - **Always use `data-testid` attributes** for element selection in tests. Never rely on text content, CSS classes, or DOM structure.
 - Naming convention: `data-testid="<component>-<element>"` (e.g., `filter-search`, `transactions-list`, `help-dismiss`)
 - When adding new UI components that tests will interact with, add test IDs proactively.
+- **Two groups of test IDs** in `frontend/src/test-ids.ts`:
+  - `TEST_IDS`: Normal elements - safe for chaos testing to interact with
+  - `CHAOS_EXCLUDED_IDS`: Destructive actions (delete, purge) - chaos tests automatically skip these
+- When adding a destructive button (delete, purge, remove), use `CHAOS_EXCLUDED_IDS` not `TEST_IDS`.
 - Common test IDs to use:
   - Page containers: `data-testid="<page>-page"` (e.g., `transactions-page`)
   - Lists/tables: `data-testid="<name>-list"` (e.g., `transactions-list`)
