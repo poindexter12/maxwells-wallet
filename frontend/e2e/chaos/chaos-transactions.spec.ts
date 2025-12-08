@@ -6,7 +6,7 @@ import { performRandomActions, SeededRandom } from './chaos-helpers';
  *
  * The transactions page is the core of the application - test it heavily.
  */
-test.describe('Transactions Chaos Testing', () => {
+test.describe('Transactions Chaos Testing @chaos', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/transactions');
     await page.waitForLoadState('networkidle');

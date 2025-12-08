@@ -6,7 +6,7 @@ import { performRandomActions } from './chaos-helpers';
  *
  * Tests the import page and the custom format configuration in tools.
  */
-test.describe('Import Flow Chaos Testing', () => {
+test.describe('Import Flow Chaos Testing @chaos', () => {
   test('import page UI chaos - seed 88888', async ({ page }) => {
     // Increase timeout for this test
     test.setTimeout(60000);
@@ -90,7 +90,7 @@ test.describe('Import Flow Chaos Testing', () => {
   });
 });
 
-test.describe('Custom CSV Format Management Chaos', () => {
+test.describe('Custom CSV Format Management Chaos @chaos', () => {
   test('tools formats panel chaos - seed 11111', async ({ page }) => {
     await page.goto('/tools');
     await page.waitForLoadState('networkidle');
@@ -334,7 +334,7 @@ test.describe('Custom CSV Format Management Chaos', () => {
   });
 });
 
-test.describe('Cross-page Navigation Chaos', () => {
+test.describe('Cross-page Navigation Chaos @chaos', () => {
   test('navigate between import-related pages - seed 44444', async ({ page }) => {
     const seed = 44444;
     const rng = new SeededRandom(seed);

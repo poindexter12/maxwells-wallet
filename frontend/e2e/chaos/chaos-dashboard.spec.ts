@@ -7,7 +7,7 @@ import { performRandomActions, SeededRandom } from './chaos-helpers';
  * These tests perform random actions to find crashes and unexpected errors.
  * Each test logs its seed - use the same seed to reproduce failures.
  */
-test.describe('Dashboard Chaos Testing', () => {
+test.describe('Dashboard Chaos Testing @chaos', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
@@ -194,7 +194,7 @@ test.describe('Dashboard Chaos Testing', () => {
  * Run with different seeds to explore more paths.
  * If a test fails, note the seed and add it as a specific test case.
  */
-test.describe('Chaos with random seeds', () => {
+test.describe('Chaos with random seeds @chaos', () => {
   // Generate a few random seeds for broader coverage
   const randomSeeds = [Date.now(), Date.now() + 1, Date.now() + 2];
 
