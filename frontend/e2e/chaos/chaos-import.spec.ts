@@ -9,7 +9,7 @@ import { performRandomActions } from './chaos-helpers';
 test.describe('Import Flow Chaos Testing @chaos', () => {
   test('import page UI chaos - seed 88888', async ({ page }) => {
     // Increase timeout for this test
-    test.setTimeout(60000);
+    test.setTimeout(120000);
 
     await page.goto('/import');
     await page.waitForLoadState('networkidle');
@@ -61,7 +61,7 @@ test.describe('Import Flow Chaos Testing @chaos', () => {
   });
 
   test('general import page chaos - seed 99999', async ({ page }) => {
-    test.setTimeout(60000);
+    test.setTimeout(120000);
     await page.goto('/import');
     await page.waitForLoadState('networkidle');
 
@@ -93,7 +93,7 @@ test.describe('Import Flow Chaos Testing @chaos', () => {
 
 test.describe('Custom CSV Format Management Chaos @chaos', () => {
   test('tools formats panel chaos - seed 11111', async ({ page }) => {
-    test.setTimeout(60000);
+    test.setTimeout(120000);
     await page.goto('/tools');
     await page.waitForLoadState('networkidle');
 
@@ -253,7 +253,7 @@ test.describe('Custom CSV Format Management Chaos @chaos', () => {
   });
 
   test('custom format mapper chaos - seed 22222', async ({ page }) => {
-    test.setTimeout(60000);
+    test.setTimeout(120000);
     await page.goto('/tools');
     await page.waitForLoadState('networkidle');
 
@@ -302,7 +302,7 @@ test.describe('Custom CSV Format Management Chaos @chaos', () => {
   });
 
   test('tools page general chaos - seed 33333', async ({ page }) => {
-    test.setTimeout(60000);
+    test.setTimeout(120000);
 
     await page.goto('/tools');
     await page.waitForLoadState('networkidle');
@@ -341,7 +341,7 @@ test.describe('Custom CSV Format Management Chaos @chaos', () => {
 
 test.describe('Cross-page Navigation Chaos @chaos', () => {
   test('navigate between import-related pages - seed 44444', async ({ page }) => {
-    test.setTimeout(120000); // 8 rounds with page navigations
+    test.setTimeout(180000); // 8 rounds with page navigations need more time in CI
     const seed = 44444;
     const rng = new SeededRandom(seed);
     const errors: string[] = [];

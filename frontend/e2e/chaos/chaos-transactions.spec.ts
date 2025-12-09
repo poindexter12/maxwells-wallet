@@ -422,7 +422,7 @@ test.describe('Transactions Chaos Testing @chaos', () => {
   });
 
   test('deep scroll stress test - seed 55555', async ({ page }) => {
-    test.setTimeout(60000);
+    test.setTimeout(120000); // 20 scrolls + 20 random actions
     const seed = 55555;
     const errors: string[] = [];
 

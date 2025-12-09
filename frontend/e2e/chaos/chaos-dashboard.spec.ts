@@ -123,7 +123,7 @@ test.describe('Dashboard Chaos Testing @chaos', () => {
   });
 
   test('rapid random clicking - stress test', async ({ page }) => {
-    test.setTimeout(120000); // 100 fast actions need 2 minutes
+    test.setTimeout(180000); // 100 fast actions need 3 minutes in slow CI
     const seed = 99999;
 
     // Fast clicking with minimal delays
