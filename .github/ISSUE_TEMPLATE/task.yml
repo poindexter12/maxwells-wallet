@@ -1,0 +1,109 @@
+name: 📋 Task / Chore
+description: General tasks, refactoring, or maintenance work
+title: "chore: "
+labels: ["chore", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for tasks that don't fit bug reports or feature requests, such as:
+        - Code refactoring
+        - Documentation updates
+        - Dependency updates
+        - Technical debt
+        - Build/CI improvements
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Task Type
+      description: What kind of task is this?
+      options:
+        - Refactoring
+        - Documentation
+        - Dependencies
+        - Technical debt
+        - Build/CI
+        - Testing
+        - Tooling
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What needs to be done?
+      placeholder: Describe the task or improvement
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why should this be done?
+      placeholder: |
+        What problem does this solve?
+        What improvement does this bring?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which part of the codebase?
+      options:
+        - Frontend
+        - Backend
+        - Database
+        - Documentation
+        - CI/CD
+        - Build tooling
+        - Multiple components
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent is this task?
+      options:
+        - High - Should be done soon
+        - Medium - Normal priority
+        - Low - Nice to have
+    validations:
+      required: true
+
+  - type: textarea
+    id: tasks
+    attributes:
+      label: Task Breakdown
+      description: Break down the work into actionable steps
+      value: |
+        - [ ] Step 1
+        - [ ] Step 2
+        - [ ] Step 3
+      render: markdown
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Definition of Done
+      description: When can this task be considered complete?
+      placeholder: |
+        - [ ] Code changes implemented
+        - [ ] Tests updated/added
+        - [ ] Documentation updated
+        - [ ] PR reviewed and merged
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other relevant information
+      placeholder: Links, references, or additional notes

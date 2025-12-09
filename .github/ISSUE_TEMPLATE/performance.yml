@@ -1,0 +1,117 @@
+name: 🐢 Performance Issue
+description: Report a performance problem or regression
+title: "perf: "
+labels: ["performance", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Report performance issues, slow responses, or resource usage problems.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the performance issue
+      placeholder: What is slow or using excessive resources?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Performance Issue Type
+      description: What kind of performance problem is this?
+      options:
+        - Slow page load
+        - Slow API response
+        - High memory usage
+        - High CPU usage
+        - Database query performance
+        - Network/bandwidth
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this performance issue?
+      placeholder: |
+        1. Navigate to...
+        2. Perform action...
+        3. Observe slow response
+    validations:
+      required: true
+
+  - type: textarea
+    id: metrics
+    attributes:
+      label: Performance Metrics
+      description: Provide specific measurements if available
+      placeholder: |
+        - Response time: [e.g., 5 seconds vs expected 500ms]
+        - Memory usage: [e.g., 2GB vs expected 200MB]
+        - Database query time: [e.g., 3s for query]
+        - Page load time: [e.g., 10s vs expected 2s]
+      render: markdown
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Performance
+      description: What performance did you expect?
+      placeholder: Response should complete within...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Frequency
+      description: How often does this occur?
+      options:
+        - Always
+        - Frequently
+        - Occasionally
+        - Rare
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Details about when this occurs
+      value: |
+        - Data volume: [e.g., 1000 transactions, 50 accounts]
+        - Concurrent users: [if known]
+        - Network conditions: [e.g., local, slow connection]
+        - Device specs: [if relevant]
+      render: markdown
+
+  - type: textarea
+    id: profiling
+    attributes:
+      label: Profiling Data
+      description: If you've done any profiling, share the results
+      placeholder: |
+        - Chrome DevTools performance report
+        - Backend profiler output
+        - Database EXPLAIN output
+        - Screenshots or traces
+
+  - type: textarea
+    id: regression
+    attributes:
+      label: Regression Information
+      description: Did this used to be faster? When did you first notice the slowdown?
+      placeholder: This started happening after... / This used to take X time
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other relevant information
+      placeholder: Add any other context about the performance issue

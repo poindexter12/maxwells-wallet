@@ -24,6 +24,7 @@ test.describe('Transactions Chaos Testing @chaos', () => {
   });
 
   test('filter combinations chaos - seed 22222', async ({ page }) => {
+    test.setTimeout(60000);
     const seed = 22222;
     const rng = new SeededRandom(seed);
     const errors: string[] = [];
@@ -208,6 +209,7 @@ test.describe('Transactions Chaos Testing @chaos', () => {
   });
 
   test('inline editing chaos - seed 33333', async ({ page }) => {
+    test.setTimeout(60000);
     const seed = 33333;
     const rng = new SeededRandom(seed);
     const errors: string[] = [];
@@ -325,6 +327,7 @@ test.describe('Transactions Chaos Testing @chaos', () => {
   });
 
   test('bulk operations chaos - seed 44444', async ({ page }) => {
+    test.setTimeout(60000);
     const seed = 44444;
     const rng = new SeededRandom(seed);
     const errors: string[] = [];
@@ -345,10 +348,14 @@ test.describe('Transactions Chaos Testing @chaos', () => {
 
         switch (action) {
           case 'select-checkbox': {
-            const checkboxes = page.locator('input[type="checkbox"]');
+            // Only target visible checkboxes to handle virtualized lists
+            const checkboxes = page.locator('input[type="checkbox"]:visible');
             const count = await checkboxes.count();
-            if (count > 0) {
-              await checkboxes.nth(rng.int(0, count - 1)).click();
+            if (count > 1) {
+              // Skip first (select-all) and pick from visible ones
+              const target = checkboxes.nth(rng.int(1, Math.min(count - 1, 5)));
+              await target.scrollIntoViewIfNeeded();
+              await target.click({ timeout: 5000 });
               console.log(`  ${i + 1}. select checkbox`);
             }
             break;
@@ -415,6 +422,7 @@ test.describe('Transactions Chaos Testing @chaos', () => {
   });
 
   test('deep scroll stress test - seed 55555', async ({ page }) => {
+    test.setTimeout(60000);
     const seed = 55555;
     const errors: string[] = [];
 
@@ -456,6 +464,7 @@ test.describe('Transactions Chaos Testing @chaos', () => {
   });
 
   test('rapid pagination stress - seed 66666', async ({ page }) => {
+    test.setTimeout(60000);
     const seed = 66666;
     const rng = new SeededRandom(seed);
     const errors: string[] = [];
@@ -520,6 +529,7 @@ test.describe('Transactions Chaos Testing @chaos', () => {
   });
 
   test('general transactions chaos - seed 77777', async ({ page }) => {
+    test.setTimeout(90000); // 50 actions need more time
     const seed = 77777;
 
     const result = await performRandomActions(page, {

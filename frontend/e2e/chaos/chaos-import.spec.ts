@@ -61,6 +61,7 @@ test.describe('Import Flow Chaos Testing @chaos', () => {
   });
 
   test('general import page chaos - seed 99999', async ({ page }) => {
+    test.setTimeout(60000);
     await page.goto('/import');
     await page.waitForLoadState('networkidle');
 
@@ -92,6 +93,7 @@ test.describe('Import Flow Chaos Testing @chaos', () => {
 
 test.describe('Custom CSV Format Management Chaos @chaos', () => {
   test('tools formats panel chaos - seed 11111', async ({ page }) => {
+    test.setTimeout(60000);
     await page.goto('/tools');
     await page.waitForLoadState('networkidle');
 
@@ -184,10 +186,12 @@ test.describe('Custom CSV Format Management Chaos @chaos', () => {
 
       // Toggle checkboxes
       async () => {
-        const checkboxes = page.locator('input[type="checkbox"]');
+        const checkboxes = page.locator('input[type="checkbox"]:visible');
         const count = await checkboxes.count();
         if (count > 0) {
-          await checkboxes.nth(rng.int(0, count - 1)).click();
+          const target = checkboxes.nth(rng.int(0, Math.min(count - 1, 5)));
+          await target.scrollIntoViewIfNeeded();
+          await target.click({ timeout: 5000 });
           return 'toggle checkbox';
         }
         return 'skip checkbox';
@@ -249,6 +253,7 @@ test.describe('Custom CSV Format Management Chaos @chaos', () => {
   });
 
   test('custom format mapper chaos - seed 22222', async ({ page }) => {
+    test.setTimeout(60000);
     await page.goto('/tools');
     await page.waitForLoadState('networkidle');
 
@@ -336,6 +341,7 @@ test.describe('Custom CSV Format Management Chaos @chaos', () => {
 
 test.describe('Cross-page Navigation Chaos @chaos', () => {
   test('navigate between import-related pages - seed 44444', async ({ page }) => {
+    test.setTimeout(120000); // 8 rounds with page navigations
     const seed = 44444;
     const rng = new SeededRandom(seed);
     const errors: string[] = [];

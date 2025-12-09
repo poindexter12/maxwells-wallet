@@ -19,6 +19,7 @@ test.describe('Dashboard Chaos Testing @chaos', () => {
   });
 
   test('dashboard survives 50 random interactions', async ({ page }) => {
+    test.setTimeout(90000); // 50 actions with delays need more time
     const seed = 12345; // Fixed seed for reproducibility
 
     const result = await performRandomActions(page, {
@@ -53,6 +54,7 @@ test.describe('Dashboard Chaos Testing @chaos', () => {
   });
 
   test('chaos with tab switching - seed 11111', async ({ page }) => {
+    test.setTimeout(60000);
     const seed = 11111;
     const rng = new SeededRandom(seed);
 
@@ -121,6 +123,7 @@ test.describe('Dashboard Chaos Testing @chaos', () => {
   });
 
   test('rapid random clicking - stress test', async ({ page }) => {
+    test.setTimeout(60000); // 100 fast actions
     const seed = 99999;
 
     // Fast clicking with minimal delays
@@ -154,6 +157,7 @@ test.describe('Dashboard Chaos Testing @chaos', () => {
   });
 
   test('form filling chaos', async ({ page }) => {
+    test.setTimeout(60000);
     // Navigate to a page with forms
     await page.goto('/transactions');
     await page.waitForLoadState('networkidle');

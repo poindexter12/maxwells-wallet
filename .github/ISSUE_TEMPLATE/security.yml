@@ -1,0 +1,117 @@
+name: 🔒 Security Vulnerability
+description: Report a security vulnerability (privately if needed)
+title: "security: "
+labels: ["security", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Security Disclosure
+        
+        **For sensitive security issues**, please consider using GitHub's private vulnerability reporting instead of creating a public issue.
+        
+        Go to the Security tab → Report a vulnerability
+        
+        For general security concerns or dependency vulnerabilities, you can use this form.
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity Assessment
+      description: How severe do you believe this vulnerability is?
+      options:
+        - Critical - Immediate action required
+        - High - Significant risk
+        - Medium - Moderate risk
+        - Low - Minor risk
+        - Informational
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Vulnerability Type
+      description: What kind of security issue is this?
+      options:
+        - Dependency vulnerability
+        - Authentication/Authorization
+        - SQL Injection
+        - Cross-Site Scripting (XSS)
+        - Cross-Site Request Forgery (CSRF)
+        - Information disclosure
+        - Insecure configuration
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Vulnerability Description
+      description: Describe the security issue
+      placeholder: What is the vulnerability and what could an attacker do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: affected
+    attributes:
+      label: Affected Components
+      description: Which parts of the system are affected?
+      placeholder: |
+        - Component: [e.g., authentication API, user profile page]
+        - Versions: [if known]
+        - Dependencies: [if dependency vulnerability]
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: How can this vulnerability be reproduced? (Only if appropriate to share publicly)
+      placeholder: |
+        1. Navigate to...
+        2. Submit payload...
+        3. Observe...
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact Assessment
+      description: What is the potential impact if exploited?
+      placeholder: |
+        - Data that could be accessed
+        - Actions that could be performed
+        - Users affected
+    validations:
+      required: true
+
+  - type: textarea
+    id: mitigation
+    attributes:
+      label: Suggested Mitigation
+      description: If you have suggestions for fixing this, share them here
+      placeholder: Potential fixes or workarounds
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Any relevant CVEs, advisories, or documentation
+      placeholder: |
+        - CVE-XXXX-XXXXX
+        - Links to security advisories
+        - Related issues
+
+  - type: checkboxes
+    id: disclosure
+    attributes:
+      label: Responsible Disclosure
+      description: Please confirm you understand responsible disclosure
+      options:
+        - label: I have not publicly disclosed details of this vulnerability beyond this report
+          required: true
+        - label: I will allow reasonable time for a fix before public disclosure
+          required: true
