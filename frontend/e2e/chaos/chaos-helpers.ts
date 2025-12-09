@@ -68,8 +68,8 @@ const DEFAULT_ACTION_TYPES: ActionType[] = [
   'click-link',
   'fill-input',
   'scroll',
-  'hover',
   'press-key',
+  // 'hover' removed - too slow on CI (~4-5s each) and low value for chaos testing
 ];
 
 // Build default exclusions from the centralized CHAOS_EXCLUDED_IDS registry
@@ -121,27 +121,39 @@ export async function performRandomActions(
   console.log(`  Config: ${options.actions} actions, delay ${minDelay}-${maxDelay}ms, timeout ${timeout}ms`);
 
   for (let i = 0; i < options.actions; i++) {
-    const actionType = rng.pick(actionTypes);
     const actionStart = Date.now();
+    let actionDesc: string | null = null;
+    let attempts = 0;
+    const maxAttempts = actionTypes.length; // Try each action type at most once
 
-    try {
-      const actionDesc = await executeAction(
-        page,
-        actionType,
-        rng,
-        excludeSelectors,
-        timeout
-      );
+    // Try different action types until we find one with available targets
+    while (actionDesc === null && attempts < maxAttempts) {
+      const actionType = rng.pick(actionTypes);
+      attempts++;
+
+      try {
+        actionDesc = await executeAction(
+          page,
+          actionType,
+          rng,
+          excludeSelectors,
+          timeout
+        );
+      } catch (e) {
+        // Individual action failures are expected in chaos testing
+        const msg = e instanceof Error ? e.message : String(e);
+        const actionDuration = Date.now() - actionStart;
+        actionsLog.push(`${i + 1}. [FAILED] ${actionType}: ${msg}`);
+        console.log(`  [${i + 1}/${options.actions}] FAILED ${actionType}: ${msg} (${actionDuration}ms)`);
+        break; // Don't retry on actual errors
+      }
+    }
+
+    if (actionDesc !== null) {
       const actionDuration = Date.now() - actionStart;
       actionsLog.push(`${i + 1}. ${actionDesc}`);
       console.log(`  [${i + 1}/${options.actions}] ${actionDesc} (${actionDuration}ms)`);
       options.onAction?.(actionDesc, i);
-    } catch (e) {
-      // Individual action failures are expected in chaos testing
-      const msg = e instanceof Error ? e.message : String(e);
-      const actionDuration = Date.now() - actionStart;
-      actionsLog.push(`${i + 1}. [FAILED] ${actionType}: ${msg}`);
-      console.log(`  [${i + 1}/${options.actions}] FAILED ${actionType}: ${msg} (${actionDuration}ms)`);
     }
 
     // Random delay between actions
@@ -174,7 +186,7 @@ async function executeAction(
   rng: SeededRandom,
   excludeSelectors: string[],
   timeout: number
-): Promise<string> {
+): Promise<string | null> {
   switch (actionType) {
     case 'click-button': {
       const buttons = await getVisibleElements(
@@ -182,7 +194,7 @@ async function executeAction(
         'button:visible',
         excludeSelectors
       );
-      if (buttons.length === 0) return 'click-button: no buttons found';
+      if (buttons.length === 0) return null; // No targets, try different action
 
       const button = rng.pick(buttons);
       const text = await button.textContent();
@@ -196,7 +208,7 @@ async function executeAction(
         'a:visible',
         excludeSelectors
       );
-      if (links.length === 0) return 'click-link: no links found';
+      if (links.length === 0) return null;
 
       const link = rng.pick(links);
       const text = await link.textContent();
@@ -210,7 +222,7 @@ async function executeAction(
         'input:visible:not([type=file]):not([type=hidden]):not([readonly])',
         excludeSelectors
       );
-      if (inputs.length === 0) return 'fill-input: no inputs found';
+      if (inputs.length === 0) return null;
 
       const input = rng.pick(inputs);
       const type = (await input.getAttribute('type')) || 'text';
@@ -226,11 +238,11 @@ async function executeAction(
         'select:visible',
         excludeSelectors
       );
-      if (selects.length === 0) return 'select-option: no selects found';
+      if (selects.length === 0) return null;
 
       const select = rng.pick(selects);
       const options = await select.locator('option').all();
-      if (options.length === 0) return 'select-option: no options';
+      if (options.length === 0) return null;
 
       const option = rng.pick(options);
       const value = await option.getAttribute('value');
@@ -238,10 +250,11 @@ async function executeAction(
         await select.selectOption(value);
         return `select-option: "${value}"`;
       }
-      return 'select-option: no value';
+      return null;
     }
 
     case 'scroll': {
+      // Scroll always works - no elements needed
       const direction = rng.pick(['up', 'down', 'left', 'right']);
       const amount = rng.int(100, 500);
       const deltaX = direction === 'left' ? -amount : direction === 'right' ? amount : 0;
@@ -256,7 +269,7 @@ async function executeAction(
         'button:visible, a:visible, [role="button"]:visible',
         excludeSelectors
       );
-      if (elements.length === 0) return 'hover: no elements found';
+      if (elements.length === 0) return null;
 
       const element = rng.pick(elements);
       await element.hover({ timeout });
@@ -265,6 +278,7 @@ async function executeAction(
     }
 
     case 'press-key': {
+      // Press-key always works - no elements needed
       const keys = ['Tab', 'Escape', 'Enter', 'ArrowDown', 'ArrowUp'];
       const key = rng.pick(keys);
       await page.keyboard.press(key);
@@ -272,7 +286,7 @@ async function executeAction(
     }
 
     default:
-      return `unknown action: ${actionType}`;
+      return null;
   }
 }
 
