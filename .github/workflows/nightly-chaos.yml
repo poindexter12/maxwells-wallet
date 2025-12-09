@@ -4,6 +4,8 @@ on:
   schedule:
     # Run weekly on Sunday at 3am UTC
     - cron: '0 3 * * 0'
+  pull_request:
+    types: [labeled, synchronize]
   workflow_dispatch:
     inputs:
       browser:
@@ -21,6 +23,10 @@ jobs:
   chaos-tests:
     name: Chaos Tests (${{ matrix.browser }})
     runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'test-chaos')
     strategy:
       fail-fast: false
       matrix:
@@ -90,7 +96,7 @@ jobs:
     name: Create Issue on Failure
     runs-on: ubuntu-latest
     needs: [chaos-tests]
-    if: failure()
+    if: failure() && github.event_name != 'pull_request'
 
     steps:
       - uses: actions/checkout@v4
