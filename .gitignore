@@ -25,6 +25,7 @@ wheels/
 MANIFEST
 .pytest_cache/
 .coverage
+coverage/
 htmlcov/
 .venv/
 venv/
