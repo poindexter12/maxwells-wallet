@@ -13,20 +13,21 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 
 ## What's New in v0.8
 
-### Testing & Quality (v0.8.0-beta3)
-- **Chaos/Monkey Testing** - Automated random UI interaction testing for stability
-- **ESLint 9 Support** - Updated to Next.js 16 flat config format
-- **CI Improvements** - Linting and performance tests on all PRs
-
-### Performance (v0.8.0-beta2)
-- **Virtual Scrolling** - Smooth handling of 50k+ transactions using TanStack Virtual
-- **Cursor Pagination** - O(1) performance regardless of scroll depth
-
-### Observability (v0.8.0-beta1)
+### Observability
 - **OpenTelemetry Tracing** - Automatic request tracing with SQLAlchemy query instrumentation
 - **Prometheus Metrics** - `/metrics` endpoint with latency histograms, error rates, and request gauges
 - **Health Dashboard** - Real-time system health in Admin UI with auto-refresh
 - **Alerting** - Webhook notifications for error rate and latency threshold breaches
+
+### Performance
+- **Virtual Scrolling** - Smooth handling of 50k+ transactions using TanStack Virtual
+- **Cursor Pagination** - O(1) performance regardless of scroll depth
+- **Composite Indexes** - Optimized database indexes for common query patterns
+
+### Testing & Quality
+- **Chaos/Monkey Testing** - Automated random UI interaction testing for stability
+- **ESLint 9 Support** - Updated to Next.js 16 flat config format
+- **CI Improvements** - Linting and performance tests on all PRs
 
 See [CHANGELOG.md](CHANGELOG.md) for full release history.
 
