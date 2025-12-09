@@ -218,6 +218,7 @@ export default function BudgetsPage() {
             setShowForm(true)
           }}
           className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          data-chaos-target="budget-new"
         >
           New Budget
         </button>
@@ -324,12 +325,14 @@ export default function BudgetsPage() {
                   <button
                     onClick={() => handleEdit(budget)}
                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    data-chaos-target={`budget-edit-${budget.id}`}
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(budget.id)}
                     className="text-red-600 hover:text-red-800 text-sm font-medium"
+                    data-chaos-exclude
                   >
                     Delete
                   </button>
@@ -357,6 +360,7 @@ export default function BudgetsPage() {
                   onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
                   className="w-full px-3 py-2 border rounded-md"
                   required
+                  data-chaos-target="budget-form-category"
                 >
                   <option value="">Select a category...</option>
                   {bucketTags.length > 0 && (
@@ -399,6 +403,7 @@ export default function BudgetsPage() {
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                   className="w-full px-3 py-2 border rounded-md"
                   required
+                  data-chaos-target="budget-form-amount"
                 />
               </div>
               <div>
@@ -409,6 +414,7 @@ export default function BudgetsPage() {
                   value={formData.period}
                   onChange={(e) => setFormData({ ...formData, period: e.target.value as 'monthly' | 'yearly' })}
                   className="w-full px-3 py-2 border rounded-md"
+                  data-chaos-target="budget-form-period"
                 >
                   <option value="monthly">Monthly</option>
                   <option value="yearly">Yearly</option>
@@ -421,6 +427,7 @@ export default function BudgetsPage() {
                   onChange={(e) => setFormData({ ...formData, rollover_enabled: e.target.checked })}
                   className="mr-2"
                   id="rollover"
+                  data-chaos-target="budget-form-rollover"
                 />
                 <label htmlFor="rollover" className="text-sm text-gray-700">
                   Enable rollover (unused budget carries to next period)
@@ -434,12 +441,14 @@ export default function BudgetsPage() {
                     setEditingBudget(null)
                   }}
                   className="flex-1 px-4 py-2 border rounded-md hover:bg-gray-50"
+                  data-chaos-target="budget-form-cancel"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  data-chaos-target="budget-form-submit"
                 >
                   {editingBudget ? 'Update' : 'Create'}
                 </button>

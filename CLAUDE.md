@@ -167,3 +167,25 @@ Use this section for quick reference. Canonical skill cards live in `.claude/ski
   - Buttons: `data-testid="<action>-button"` (e.g., `help-dismiss`, `import-confirm`)
 - E2E tests live in `frontend/e2e/`. Run with `make test-e2e` or `npx playwright test`.
 - See `frontend/e2e/README.md` for detailed testing conventions.
+
+### Chaos Testing (`data-chaos-target`)
+- **Use `data-chaos-target` attribute** to mark interactive elements for chaos/monkey testing.
+- Unlike `data-testid` (static selectors for specific tests), `data-chaos-target` is for discoverable elements that chaos tests will randomly interact with.
+- The chaos test system auto-detects element type: buttons/links get clicked, inputs get filled, selects get options chosen.
+- **When to use which attribute:**
+  - `data-testid`: When you need to select a specific element in a targeted test
+  - `data-chaos-target`: When you want chaos tests to discover and interact with the element
+  - Elements can have both attributes if needed
+- **Naming convention:** `data-chaos-target="<page>-<element>"` (e.g., `nav-dashboard`, `budget-form-submit`, `import-mode-batch`)
+- **Destructive actions:** Use `data-chaos-exclude` attribute instead to prevent chaos tests from clicking destructive buttons
+  ```tsx
+  // Safe for chaos tests to click
+  <button data-chaos-target="budget-new">New Budget</button>
+
+  // Excluded from chaos testing (delete action)
+  <button data-chaos-exclude>Delete</button>
+  ```
+- **Adding chaos targets to new components:**
+  1. Add `data-chaos-target="descriptive-name"` to interactive elements (buttons, links, inputs, selects)
+  2. For destructive actions, use `data-chaos-exclude` instead
+  3. Test locally: `npx playwright test chaos/ --headed` to see chaos tests in action

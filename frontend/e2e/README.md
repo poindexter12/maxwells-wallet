@@ -150,9 +150,61 @@ The `chaos/` directory contains monkey testing that performs random actions to f
 ### How It Works
 
 1. **Seeded randomness** - Same seed = same action sequence (mostly reproducible)
-2. **Action types** - Click buttons, fill inputs, scroll, hover, press keys
-3. **Error capture** - Catches `pageerror` events and crash overlays
-4. **Exclusions** - Skips dangerous buttons (Delete, Purge) and disabled elements
+2. **Targeted element discovery** - Uses `data-chaos-target` attributes for fast element selection
+3. **Auto-detection** - Element type determines action: buttons/links → click, inputs → fill, selects → choose option
+4. **Error capture** - Catches `pageerror` events and crash overlays
+5. **Exclusions** - Skips elements with `data-chaos-exclude` attribute and disabled elements
+
+### Chaos Target Attributes
+
+Use `data-chaos-target` to mark interactive elements that chaos tests should discover and interact with.
+
+```tsx
+// Button - will be clicked
+<button data-chaos-target="budget-new">New Budget</button>
+
+// Input - will be filled with random value
+<input data-chaos-target="filter-search" type="text" />
+
+// Select - will have random option chosen
+<select data-chaos-target="import-format-select">
+  <option value="">Auto-detect</option>
+  <option value="qif">QIF</option>
+</select>
+
+// Destructive action - excluded from chaos testing
+<button data-chaos-exclude>Delete</button>
+```
+
+#### Naming Convention
+
+Format: `data-chaos-target="<page>-<element>"`
+
+| Page | Examples |
+|------|----------|
+| Navigation | `nav-dashboard`, `nav-transactions`, `nav-admin` |
+| Dashboard | `tab-<name>`, `create-dashboard`, `customize-dashboard` |
+| Budgets | `budget-new`, `budget-edit-<id>`, `budget-form-submit` |
+| Import | `import-mode-single`, `import-mode-batch`, `import-preview-button` |
+| Admin | `admin-tab-overview`, `admin-tab-imports`, `admin-tab-health` |
+| Tools | `tools-tab-transfers`, `tools-tab-rules`, `tools-tab-merchants` |
+
+#### Adding Chaos Targets to New Components
+
+1. **Interactive buttons/links:** `data-chaos-target="<page>-<action>"`
+2. **Form inputs:** `data-chaos-target="<form>-<field>"`
+3. **Tabs:** `data-chaos-target="<page>-tab-<name>"`
+4. **Destructive buttons:** Use `data-chaos-exclude` instead (never `data-chaos-target`)
+
+#### Difference from `data-testid`
+
+| Attribute | Purpose | Used By |
+|-----------|---------|---------|
+| `data-testid` | Select specific element in targeted tests | Regular E2E tests |
+| `data-chaos-target` | Discoverable elements for random interaction | Chaos tests |
+| `data-chaos-exclude` | Prevent chaos interaction on destructive elements | Chaos tests |
+
+Elements can have both `data-testid` (for targeted tests) and `data-chaos-target` (for chaos tests) if needed.
 
 ### Running Chaos Tests
 

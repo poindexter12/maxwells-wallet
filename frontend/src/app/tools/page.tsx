@@ -84,6 +84,7 @@ export default function ToolsPage() {
                   : 'border-transparent text-theme-muted hover:text-theme hover:border-[var(--color-border-strong)]'
               }`}
               data-testid={`tab-${tab}`}
+              data-chaos-target={`tools-tab-${tab}`}
             >
               {TAB_LABELS[tab]}
             </button>

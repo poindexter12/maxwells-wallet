@@ -294,6 +294,7 @@ export default function ImportPage() {
             setFiles([])
           }}
           className={`flex-1 px-4 py-2 rounded-md ${!batchMode ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+          data-chaos-target="import-mode-single"
         >
           Single File Import
         </button>
@@ -304,6 +305,7 @@ export default function ImportPage() {
             setFile(null)
           }}
           className={`flex-1 px-4 py-2 rounded-md ${batchMode ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+          data-chaos-target="import-mode-batch"
         >
           Batch Import (Multiple Files)
         </button>

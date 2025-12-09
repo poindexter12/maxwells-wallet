@@ -234,8 +234,22 @@ async function executeAction(
         return null;
       } else {
         // Default: click (buttons, links, etc.)
-        await target.click({ timeout });
-        return `click-target: [${name}]`;
+        // Try clicking - if blocked by overlay, dismiss it and retry
+        try {
+          await target.click({ timeout });
+          return `click-target: [${name}]`;
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          // If blocked by overlay/modal, try to dismiss it
+          if (msg.includes('intercepts pointer events')) {
+            // Try pressing Escape to close any modal
+            await page.keyboard.press('Escape');
+            await page.waitForTimeout(100);
+            // Return as a modal dismiss action instead of failing
+            return `modal-dismiss: (was blocked clicking [${name}])`;
+          }
+          throw e; // Re-throw other errors
+        }
       }
     }
 
@@ -249,8 +263,18 @@ async function executeAction(
 
       const button = rng.pick(buttons);
       const text = await button.textContent();
-      await button.click({ timeout });
-      return `click-button: "${text?.trim().slice(0, 30) || 'unnamed'}"`;
+      try {
+        await button.click({ timeout });
+        return `click-button: "${text?.trim().slice(0, 30) || 'unnamed'}"`;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes('intercepts pointer events')) {
+          await page.keyboard.press('Escape');
+          await page.waitForTimeout(100);
+          return `modal-dismiss: (was blocked clicking button)`;
+        }
+        throw e;
+      }
     }
 
     case 'click-link': {
@@ -263,8 +287,18 @@ async function executeAction(
 
       const link = rng.pick(links);
       const text = await link.textContent();
-      await link.click({ timeout });
-      return `click-link: "${text?.trim().slice(0, 30) || 'unnamed'}"`;
+      try {
+        await link.click({ timeout });
+        return `click-link: "${text?.trim().slice(0, 30) || 'unnamed'}"`;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes('intercepts pointer events')) {
+          await page.keyboard.press('Escape');
+          await page.waitForTimeout(100);
+          return `modal-dismiss: (was blocked clicking link)`;
+        }
+        throw e;
+      }
     }
 
     case 'fill-input': {
@@ -323,9 +357,19 @@ async function executeAction(
       if (elements.length === 0) return null;
 
       const element = rng.pick(elements);
-      await element.hover({ timeout });
-      const text = await element.textContent();
-      return `hover: "${text?.trim().slice(0, 30) || 'unnamed'}"`;
+      try {
+        await element.hover({ timeout });
+        const text = await element.textContent();
+        return `hover: "${text?.trim().slice(0, 30) || 'unnamed'}"`;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes('intercepts pointer events')) {
+          await page.keyboard.press('Escape');
+          await page.waitForTimeout(100);
+          return `modal-dismiss: (was blocked hovering)`;
+        }
+        throw e;
+      }
     }
 
     case 'press-key': {
