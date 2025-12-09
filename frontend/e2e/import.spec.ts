@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Import Flow', () => {
+test.describe('Import Flow @e2e', () => {
   test('shows file upload area', async ({ page }) => {
     await page.goto('/import');
 
@@ -28,7 +28,7 @@ test.describe('Import Flow', () => {
   });
 });
 
-test.describe('Tools Page', () => {
+test.describe('Tools Page @e2e', () => {
   test('loads with tabs', async ({ page }) => {
     await page.goto('/tools');
 

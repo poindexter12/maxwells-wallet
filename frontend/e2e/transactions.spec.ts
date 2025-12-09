@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Transactions', () => {
+test.describe('Transactions @e2e', () => {
   test('loads transactions page', async ({ page }) => {
     await page.goto('/transactions');
 

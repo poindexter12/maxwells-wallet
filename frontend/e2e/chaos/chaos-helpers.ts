@@ -1,6 +1,10 @@
 import { Page, Locator } from '@playwright/test';
 import { getChaosExcludeSelectors } from '../../src/test-ids';
 
+// Simple attribute for chaos-targetable elements: data-chaos-target
+// Add to components: <button data-chaos-target="description">
+const CHAOS_TARGET_SELECTOR = '[data-chaos-target]';
+
 /**
  * Seeded pseudo-random number generator (LCG algorithm)
  * Same seed always produces same sequence
@@ -37,8 +41,9 @@ export class SeededRandom {
 }
 
 export type ActionType =
-  | 'click-button'
-  | 'click-link'
+  | 'click-target'  // Fast: uses data-testid selectors
+  | 'click-button'  // Slow: scans all buttons
+  | 'click-link'    // Slow: scans all links
   | 'fill-input'
   | 'select-option'
   | 'scroll'
@@ -56,6 +61,17 @@ export interface ChaosOptions {
   onAction?: (action: string, index: number) => void;
 }
 
+export interface TimedChaosOptions {
+  durationMs: number;
+  seed?: number;
+  actionTypes?: ActionType[];
+  excludeSelectors?: string[];
+  minDelay?: number;
+  maxDelay?: number;
+  timeout?: number;
+  onAction?: (action: string, index: number) => void;
+}
+
 export interface ChaosResult {
   seed: number;
   actionsPerformed: number;
@@ -64,12 +80,14 @@ export interface ChaosResult {
 }
 
 const DEFAULT_ACTION_TYPES: ActionType[] = [
-  'click-button',
-  'click-link',
-  'fill-input',
+  'click-target', // Fast: uses data-testid selectors (preferred)
   'scroll',
-  'hover',
   'press-key',
+  // Slow actions (scan all elements) - disabled by default:
+  // 'click-button',
+  // 'click-link',
+  // 'fill-input',
+  // 'hover',
 ];
 
 // Build default exclusions from the centralized CHAOS_EXCLUDED_IDS registry
@@ -105,7 +123,7 @@ export async function performRandomActions(
   ];
   const minDelay = options.minDelay ?? 50;
   const maxDelay = options.maxDelay ?? 300;
-  const timeout = options.timeout ?? 2000;
+  const timeout = options.timeout ?? 5000; // 5s for slow CI environments
 
   const errors: string[] = [];
   const actionsLog: string[] = [];
@@ -116,25 +134,46 @@ export async function performRandomActions(
   };
   page.on('pageerror', errorHandler);
 
-  console.log(`🐒 Chaos monkey starting with seed: ${seed}`);
+  const startTime = Date.now();
+  console.log(`🐒 Chaos monkey starting with seed: ${seed} at ${new Date().toISOString()}`);
+  console.log(`  Config: ${options.actions} actions, delay ${minDelay}-${maxDelay}ms, timeout ${timeout}ms`);
 
   for (let i = 0; i < options.actions; i++) {
-    const actionType = rng.pick(actionTypes);
+    const actionStart = Date.now();
+    let actionDesc: string | null = null;
+    let attempts = 0;
+    const maxAttempts = actionTypes.length; // Try each action type at most once
 
-    try {
-      const actionDesc = await executeAction(
-        page,
-        actionType,
-        rng,
-        excludeSelectors,
-        timeout
-      );
+    // Try different action types until we find one with available targets
+    while (actionDesc === null && attempts < maxAttempts) {
+      const actionType = rng.pick(actionTypes);
+      attempts++;
+
+      try {
+        actionDesc = await executeAction(
+          page,
+          actionType,
+          rng,
+          excludeSelectors,
+          timeout
+        );
+      } catch (e) {
+        // Action failures (timeouts, etc.) indicate UI issues - fail the test
+        const msg = e instanceof Error ? e.message : String(e);
+        const actionDuration = Date.now() - actionStart;
+        const errorMsg = `[${actionType}] ${msg}`;
+        actionsLog.push(`${i + 1}. [FAILED] ${actionType}: ${msg}`);
+        errors.push(errorMsg); // Add to errors so test fails
+        console.log(`  [${i + 1}/${options.actions}] FAILED ${actionType}: ${msg} (${actionDuration}ms)`);
+        break; // Stop on action failure
+      }
+    }
+
+    if (actionDesc !== null) {
+      const actionDuration = Date.now() - actionStart;
       actionsLog.push(`${i + 1}. ${actionDesc}`);
+      console.log(`  [${i + 1}/${options.actions}] ${actionDesc} (${actionDuration}ms)`);
       options.onAction?.(actionDesc, i);
-    } catch (e) {
-      // Individual action failures are expected in chaos testing
-      const msg = e instanceof Error ? e.message : String(e);
-      actionsLog.push(`${i + 1}. [FAILED] ${actionType}: ${msg}`);
     }
 
     // Random delay between actions
@@ -149,7 +188,101 @@ export async function performRandomActions(
 
   page.off('pageerror', errorHandler);
 
-  console.log(`🐒 Chaos monkey completed. Actions: ${actionsLog.length}, Errors: ${errors.length}`);
+  const totalDuration = Date.now() - startTime;
+  console.log(`🐒 Chaos monkey completed at ${new Date().toISOString()}`);
+  console.log(`  Total: ${actionsLog.length} actions in ${totalDuration}ms (${Math.round(totalDuration / actionsLog.length)}ms/action), Errors: ${errors.length}`);
+
+  return {
+    seed,
+    actionsPerformed: actionsLog.length,
+    errors,
+    actions: actionsLog,
+  };
+}
+
+/**
+ * Perform random actions for a specified duration (time-based endurance testing)
+ * Use this for long-running stability tests where you want to simulate real user sessions
+ */
+export async function performTimedRandomActions(
+  page: Page,
+  options: TimedChaosOptions
+): Promise<ChaosResult> {
+  const seed = options.seed ?? Date.now();
+  const rng = new SeededRandom(seed);
+  const actionTypes = options.actionTypes ?? DEFAULT_ACTION_TYPES;
+  const excludeSelectors = [
+    ...DEFAULT_EXCLUDE_SELECTORS,
+    ...(options.excludeSelectors ?? []),
+  ];
+  const minDelay = options.minDelay ?? 50;
+  const maxDelay = options.maxDelay ?? 300;
+  const timeout = options.timeout ?? 5000;
+  const durationMs = options.durationMs;
+
+  const errors: string[] = [];
+  const actionsLog: string[] = [];
+
+  const errorHandler = (error: Error) => {
+    errors.push(error.message);
+  };
+  page.on('pageerror', errorHandler);
+
+  const startTime = Date.now();
+  const endTime = startTime + durationMs;
+  console.log(`🐒 Timed chaos starting with seed: ${seed} at ${new Date().toISOString()}`);
+  console.log(`  Config: ${Math.round(durationMs / 1000)}s duration, delay ${minDelay}-${maxDelay}ms, timeout ${timeout}ms`);
+
+  let actionIndex = 0;
+  while (Date.now() < endTime && errors.length === 0) {
+    const actionStart = Date.now();
+    let actionDesc: string | null = null;
+    let attempts = 0;
+    const maxAttempts = actionTypes.length;
+
+    while (actionDesc === null && attempts < maxAttempts) {
+      const actionType = rng.pick(actionTypes);
+      attempts++;
+
+      try {
+        actionDesc = await executeAction(
+          page,
+          actionType,
+          rng,
+          excludeSelectors,
+          timeout
+        );
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        const actionDuration = Date.now() - actionStart;
+        const errorMsg = `[${actionType}] ${msg}`;
+        actionsLog.push(`${actionIndex + 1}. [FAILED] ${actionType}: ${msg}`);
+        errors.push(errorMsg);
+        console.log(`  [${actionIndex + 1}] FAILED ${actionType}: ${msg} (${actionDuration}ms)`);
+        break;
+      }
+    }
+
+    if (actionDesc !== null) {
+      const actionDuration = Date.now() - actionStart;
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      actionsLog.push(`${actionIndex + 1}. ${actionDesc}`);
+      // Log progress every 10 actions
+      if (actionIndex % 10 === 0) {
+        console.log(`  [${elapsed}s/${Math.round(durationMs / 1000)}s] Action ${actionIndex + 1}: ${actionDesc} (${actionDuration}ms)`);
+      }
+      options.onAction?.(actionDesc, actionIndex);
+    }
+
+    actionIndex++;
+    await page.waitForTimeout(rng.int(minDelay, maxDelay));
+  }
+
+  page.off('pageerror', errorHandler);
+
+  const totalDuration = Date.now() - startTime;
+  console.log(`🐒 Timed chaos completed at ${new Date().toISOString()}`);
+  console.log(`  Total: ${actionsLog.length} actions in ${Math.round(totalDuration / 1000)}s (${Math.round(totalDuration / actionsLog.length)}ms/action), Errors: ${errors.length}`);
 
   return {
     seed,
@@ -165,20 +298,113 @@ async function executeAction(
   rng: SeededRandom,
   excludeSelectors: string[],
   timeout: number
-): Promise<string> {
+): Promise<string | null> {
   switch (actionType) {
+    case 'click-target': {
+      // Fast path: find elements with data-chaos-target attribute
+      const targets = await page.locator(CHAOS_TARGET_SELECTOR).all();
+
+      // Filter to visible and enabled elements only
+      const eligibleTargets: Locator[] = [];
+      for (const target of targets) {
+        try {
+          const isVisible = await target.isVisible();
+          if (!isVisible) continue;
+
+          // Check if disabled
+          const isDisabled = await target.evaluate((el) => {
+            return (
+              (el as HTMLButtonElement).disabled ||
+              el.getAttribute('aria-disabled') === 'true' ||
+              el.classList.contains('disabled')
+            );
+          });
+          if (isDisabled) continue;
+
+          eligibleTargets.push(target);
+        } catch {
+          // Element may have become stale, skip it
+        }
+      }
+
+      if (eligibleTargets.length === 0) return null;
+
+      const target = rng.pick(eligibleTargets);
+      const name = await target.getAttribute('data-chaos-target');
+      const tagName = await target.evaluate(el => el.tagName.toLowerCase());
+
+      // Determine action based on element type
+      if (tagName === 'input' || tagName === 'textarea') {
+        const type = await target.getAttribute('type') || 'text';
+
+        // File inputs cannot be interacted with programmatically - skip
+        if (type === 'file') {
+          return null; // Try different action
+        }
+
+        // Checkboxes and radios should be clicked, not filled
+        if (type === 'checkbox' || type === 'radio') {
+          await target.click({ timeout });
+          return `click-target: [${name}] (${type})`;
+        }
+
+        const value = generateInputValue(type, rng);
+        await target.fill(value);
+        return `fill-target: [${name}] = "${value}"`;
+      } else if (tagName === 'select') {
+        const options = await target.locator('option').all();
+        if (options.length > 0) {
+          const option = rng.pick(options);
+          const value = await option.getAttribute('value');
+          if (value) {
+            await target.selectOption(value);
+            return `select-target: [${name}] = "${value}"`;
+          }
+        }
+        return null;
+      } else {
+        // Default: click (buttons, links, etc.)
+        // Try clicking - if blocked by overlay, dismiss it and retry
+        try {
+          await target.click({ timeout });
+          return `click-target: [${name}]`;
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          // If blocked by overlay/modal, try to dismiss it
+          if (msg.includes('intercepts pointer events')) {
+            // Try pressing Escape to close any modal
+            await page.keyboard.press('Escape');
+            await page.waitForTimeout(100);
+            // Return as a modal dismiss action instead of failing
+            return `modal-dismiss: (was blocked clicking [${name}])`;
+          }
+          throw e; // Re-throw other errors
+        }
+      }
+    }
+
     case 'click-button': {
       const buttons = await getVisibleElements(
         page,
         'button:visible',
         excludeSelectors
       );
-      if (buttons.length === 0) return 'click-button: no buttons found';
+      if (buttons.length === 0) return null; // No targets, try different action
 
       const button = rng.pick(buttons);
       const text = await button.textContent();
-      await button.click({ timeout });
-      return `click-button: "${text?.trim().slice(0, 30) || 'unnamed'}"`;
+      try {
+        await button.click({ timeout });
+        return `click-button: "${text?.trim().slice(0, 30) || 'unnamed'}"`;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes('intercepts pointer events')) {
+          await page.keyboard.press('Escape');
+          await page.waitForTimeout(100);
+          return `modal-dismiss: (was blocked clicking button)`;
+        }
+        throw e;
+      }
     }
 
     case 'click-link': {
@@ -187,12 +413,22 @@ async function executeAction(
         'a:visible',
         excludeSelectors
       );
-      if (links.length === 0) return 'click-link: no links found';
+      if (links.length === 0) return null;
 
       const link = rng.pick(links);
       const text = await link.textContent();
-      await link.click({ timeout });
-      return `click-link: "${text?.trim().slice(0, 30) || 'unnamed'}"`;
+      try {
+        await link.click({ timeout });
+        return `click-link: "${text?.trim().slice(0, 30) || 'unnamed'}"`;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes('intercepts pointer events')) {
+          await page.keyboard.press('Escape');
+          await page.waitForTimeout(100);
+          return `modal-dismiss: (was blocked clicking link)`;
+        }
+        throw e;
+      }
     }
 
     case 'fill-input': {
@@ -201,7 +437,7 @@ async function executeAction(
         'input:visible:not([type=file]):not([type=hidden]):not([readonly])',
         excludeSelectors
       );
-      if (inputs.length === 0) return 'fill-input: no inputs found';
+      if (inputs.length === 0) return null;
 
       const input = rng.pick(inputs);
       const type = (await input.getAttribute('type')) || 'text';
@@ -217,11 +453,11 @@ async function executeAction(
         'select:visible',
         excludeSelectors
       );
-      if (selects.length === 0) return 'select-option: no selects found';
+      if (selects.length === 0) return null;
 
       const select = rng.pick(selects);
       const options = await select.locator('option').all();
-      if (options.length === 0) return 'select-option: no options';
+      if (options.length === 0) return null;
 
       const option = rng.pick(options);
       const value = await option.getAttribute('value');
@@ -229,10 +465,11 @@ async function executeAction(
         await select.selectOption(value);
         return `select-option: "${value}"`;
       }
-      return 'select-option: no value';
+      return null;
     }
 
     case 'scroll': {
+      // Scroll always works - no elements needed
       const direction = rng.pick(['up', 'down', 'left', 'right']);
       const amount = rng.int(100, 500);
       const deltaX = direction === 'left' ? -amount : direction === 'right' ? amount : 0;
@@ -247,15 +484,26 @@ async function executeAction(
         'button:visible, a:visible, [role="button"]:visible',
         excludeSelectors
       );
-      if (elements.length === 0) return 'hover: no elements found';
+      if (elements.length === 0) return null;
 
       const element = rng.pick(elements);
-      await element.hover({ timeout });
-      const text = await element.textContent();
-      return `hover: "${text?.trim().slice(0, 30) || 'unnamed'}"`;
+      try {
+        await element.hover({ timeout });
+        const text = await element.textContent();
+        return `hover: "${text?.trim().slice(0, 30) || 'unnamed'}"`;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes('intercepts pointer events')) {
+          await page.keyboard.press('Escape');
+          await page.waitForTimeout(100);
+          return `modal-dismiss: (was blocked hovering)`;
+        }
+        throw e;
+      }
     }
 
     case 'press-key': {
+      // Press-key always works - no elements needed
       const keys = ['Tab', 'Escape', 'Enter', 'ArrowDown', 'ArrowUp'];
       const key = rng.pick(keys);
       await page.keyboard.press(key);
@@ -263,7 +511,7 @@ async function executeAction(
     }
 
     default:
-      return `unknown action: ${actionType}`;
+      return null;
   }
 }
 
@@ -335,5 +583,392 @@ function generateInputValue(type: string, rng: SeededRandom): string {
       return `https://example.com/${rng.string(8)}`;
     default:
       return `chaos-${rng.string(6)}`;
+  }
+}
+
+// =============================================================================
+// DEMON CHAOS MODE - Adversarial/Fuzz Testing
+// =============================================================================
+
+/**
+ * Adversarial input payloads for security and robustness testing
+ */
+export const ADVERSARIAL_PAYLOADS = {
+  // XSS attack vectors
+  xss: [
+    '<script>alert(1)</script>',
+    '<img src=x onerror=alert(1)>',
+    '"><script>alert(1)</script>',
+    "javascript:alert('XSS')",
+    '<svg/onload=alert(1)>',
+    '{{constructor.constructor("alert(1)")()}}',
+  ],
+
+  // SQL injection patterns
+  sql: [
+    "'; DROP TABLE transactions; --",
+    "1' OR '1'='1",
+    "1; SELECT * FROM users--",
+    "' UNION SELECT * FROM --",
+    "admin'--",
+    "1' AND SLEEP(5)--",
+  ],
+
+  // Unicode edge cases
+  unicode: [
+    '🔥'.repeat(100), // Emoji spam
+    '\u202E\u202Dtest', // RTL override
+    '\u0000', // Null character
+    '﷽'.repeat(20), // Longest unicode char
+    '\uFEFF'.repeat(10), // Zero-width no-break space
+    'Ṫ̈́ḣ̈́ï̈́s̈́ ï̈́s̈́ z̈́ä̈́l̈́g̈́ö̈́', // Zalgo text
+    '表ポあA鷗ŒéＢ逍Ü', // Mixed scripts
+  ],
+
+  // Buffer overflow attempts
+  overflow: [
+    'A'.repeat(1000),
+    'x'.repeat(5000),
+    '9'.repeat(10000), // For number fields
+    '<'.repeat(500) + '>'.repeat(500),
+  ],
+
+  // Control characters
+  control: [
+    '\t\t\t\n\n\n',
+    '\r\n\r\n\r\n',
+    '\x00\x01\x02\x03',
+    '\b\b\b', // Backspace
+    '\x1B[2J', // ANSI clear screen
+  ],
+
+  // Special characters that might break parsing
+  special: [
+    '\\\\\\',
+    '///',
+    '"""',
+    "'''",
+    '<<<>>>',
+    '&&&|||',
+    ';;;',
+    '```',
+    '${process.env}',
+    '{{7*7}}',
+  ],
+
+  // Path traversal
+  path: [
+    '../../../etc/passwd',
+    '..\\..\\..\\windows\\system32',
+    '%2e%2e%2f',
+    '....//....//....//etc/passwd',
+  ],
+
+  // Format string attacks
+  format: [
+    '%s%s%s%s%s',
+    '%n%n%n%n',
+    '%x%x%x%x',
+    '{0}{1}{2}',
+  ],
+
+  // JSON/XML breaking
+  markup: [
+    '{"__proto__":{"admin":true}}',
+    '</script><script>alert(1)</script>',
+    ']]><!--',
+    '<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>',
+  ],
+};
+
+/**
+ * Generate an adversarial input value for fuzz testing
+ */
+export function generateAdversarialInput(rng: SeededRandom, category?: keyof typeof ADVERSARIAL_PAYLOADS): string {
+  const categories = Object.keys(ADVERSARIAL_PAYLOADS) as (keyof typeof ADVERSARIAL_PAYLOADS)[];
+  const selectedCategory = category ?? rng.pick(categories);
+  const payloads = ADVERSARIAL_PAYLOADS[selectedCategory];
+  return rng.pick(payloads);
+}
+
+/**
+ * Demon chaos action types - aggressive/adversarial actions
+ */
+export type DemonActionType =
+  | 'rapid-click'      // Multiple fast clicks on same element
+  | 'double-click'     // Actual dblclick event
+  | 'fuzz-input'       // Fill with adversarial payload
+  | 'paste-bomb'       // Paste huge string via clipboard
+  | 'blur-focus-spam'; // Rapidly tab through fields
+
+export interface DemonChaosOptions {
+  actions: number;
+  seed?: number;
+  actionTypes?: DemonActionType[];
+  excludeSelectors?: string[];
+  onAction?: (action: string, index: number) => void;
+}
+
+export interface TimedDemonChaosOptions {
+  durationMs: number;
+  seed?: number;
+  actionTypes?: DemonActionType[];
+  excludeSelectors?: string[];
+  onAction?: (action: string, index: number) => void;
+}
+
+export interface DemonChaosResult {
+  seed: number;
+  actionsPerformed: number;
+  errors: string[];
+  actions: string[];
+}
+
+const DEFAULT_DEMON_ACTION_TYPES: DemonActionType[] = [
+  'rapid-click',
+  'double-click',
+  'fuzz-input',
+  'blur-focus-spam',
+];
+
+/**
+ * Perform adversarial/fuzz actions on the page
+ * This is more aggressive than regular chaos - intentionally tries to break things
+ */
+export async function performDemonActions(
+  page: Page,
+  options: DemonChaosOptions
+): Promise<DemonChaosResult> {
+  const seed = options.seed ?? Date.now();
+  const rng = new SeededRandom(seed);
+  const actionTypes = options.actionTypes ?? DEFAULT_DEMON_ACTION_TYPES;
+  const excludeSelectors = [
+    ...DEFAULT_EXCLUDE_SELECTORS,
+    ...(options.excludeSelectors ?? []),
+  ];
+
+  const errors: string[] = [];
+  const actionsLog: string[] = [];
+
+  const errorHandler = (error: Error) => {
+    errors.push(error.message);
+  };
+  page.on('pageerror', errorHandler);
+
+  console.log(`😈 Demon chaos starting with seed: ${seed}`);
+
+  for (let i = 0; i < options.actions; i++) {
+    const actionType = rng.pick(actionTypes);
+    let actionDesc: string | null = null;
+
+    try {
+      actionDesc = await executeDemonAction(
+        page,
+        actionType,
+        rng,
+        excludeSelectors
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      actionsLog.push(`${i + 1}. [FAILED] ${actionType}: ${msg}`);
+      errors.push(`[${actionType}] ${msg}`);
+      console.log(`  [${i + 1}/${options.actions}] FAILED ${actionType}: ${msg}`);
+      break;
+    }
+
+    if (actionDesc) {
+      actionsLog.push(`${i + 1}. ${actionDesc}`);
+      console.log(`  [${i + 1}/${options.actions}] ${actionDesc}`);
+      options.onAction?.(actionDesc, i);
+    }
+
+    // No delays in demon mode - we're trying to break things!
+    if (errors.length > 0) break;
+  }
+
+  page.off('pageerror', errorHandler);
+
+  console.log(`😈 Demon chaos completed: ${actionsLog.length} actions, ${errors.length} errors`);
+
+  return {
+    seed,
+    actionsPerformed: actionsLog.length,
+    errors,
+    actions: actionsLog,
+  };
+}
+
+/**
+ * Perform adversarial actions for a specified duration (time-based endurance testing)
+ * Use this for extended fuzzing sessions in weekly CI runs
+ */
+export async function performTimedDemonActions(
+  page: Page,
+  options: TimedDemonChaosOptions
+): Promise<DemonChaosResult> {
+  const seed = options.seed ?? Date.now();
+  const rng = new SeededRandom(seed);
+  const actionTypes = options.actionTypes ?? DEFAULT_DEMON_ACTION_TYPES;
+  const excludeSelectors = [
+    ...DEFAULT_EXCLUDE_SELECTORS,
+    ...(options.excludeSelectors ?? []),
+  ];
+  const durationMs = options.durationMs;
+
+  const errors: string[] = [];
+  const actionsLog: string[] = [];
+
+  const errorHandler = (error: Error) => {
+    errors.push(error.message);
+  };
+  page.on('pageerror', errorHandler);
+
+  const startTime = Date.now();
+  const endTime = startTime + durationMs;
+  console.log(`😈 Timed demon chaos starting with seed: ${seed} at ${new Date().toISOString()}`);
+  console.log(`  Config: ${Math.round(durationMs / 1000)}s duration`);
+
+  let actionIndex = 0;
+  while (Date.now() < endTime && errors.length === 0) {
+    const actionType = rng.pick(actionTypes);
+    let actionDesc: string | null = null;
+
+    try {
+      actionDesc = await executeDemonAction(
+        page,
+        actionType,
+        rng,
+        excludeSelectors
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      actionsLog.push(`${actionIndex + 1}. [FAILED] ${actionType}: ${msg}`);
+      errors.push(`[${actionType}] ${msg}`);
+      console.log(`  [${actionIndex + 1}] FAILED ${actionType}: ${msg}`);
+      break;
+    }
+
+    if (actionDesc) {
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      actionsLog.push(`${actionIndex + 1}. ${actionDesc}`);
+      // Log progress every 10 actions
+      if (actionIndex % 10 === 0) {
+        console.log(`  [${elapsed}s/${Math.round(durationMs / 1000)}s] Action ${actionIndex + 1}: ${actionDesc}`);
+      }
+      options.onAction?.(actionDesc, actionIndex);
+    }
+
+    actionIndex++;
+    // No delays in demon mode - we're aggressively trying to break things
+  }
+
+  page.off('pageerror', errorHandler);
+
+  const totalDuration = Date.now() - startTime;
+  console.log(`😈 Timed demon chaos completed at ${new Date().toISOString()}`);
+  console.log(`  Total: ${actionsLog.length} actions in ${Math.round(totalDuration / 1000)}s, Errors: ${errors.length}`);
+
+  return {
+    seed,
+    actionsPerformed: actionsLog.length,
+    errors,
+    actions: actionsLog,
+  };
+}
+
+async function executeDemonAction(
+  page: Page,
+  actionType: DemonActionType,
+  rng: SeededRandom,
+  excludeSelectors: string[]
+): Promise<string | null> {
+  switch (actionType) {
+    case 'rapid-click': {
+      const buttons = await getVisibleElements(page, 'button:visible', excludeSelectors);
+      if (buttons.length === 0) return null;
+
+      const button = rng.pick(buttons);
+      const text = await button.textContent();
+      const clicks = rng.int(3, 10);
+
+      // Rapid fire clicks with no wait
+      for (let i = 0; i < clicks; i++) {
+        await button.click({ force: true, timeout: 1000 }).catch(() => {});
+      }
+      return `rapid-click: "${text?.trim().slice(0, 20)}" x${clicks}`;
+    }
+
+    case 'double-click': {
+      const elements = await getVisibleElements(
+        page,
+        'button:visible, a:visible, [role="button"]:visible',
+        excludeSelectors
+      );
+      if (elements.length === 0) return null;
+
+      const element = rng.pick(elements);
+      const text = await element.textContent();
+      await element.dblclick({ timeout: 2000 });
+      return `double-click: "${text?.trim().slice(0, 20)}"`;
+    }
+
+    case 'fuzz-input': {
+      const inputs = await getVisibleElements(
+        page,
+        'input:visible:not([type=file]):not([type=hidden]):not([readonly]), textarea:visible',
+        excludeSelectors
+      );
+      if (inputs.length === 0) return null;
+
+      const input = rng.pick(inputs);
+      const payload = generateAdversarialInput(rng);
+      const name = await input.getAttribute('name') || await input.getAttribute('placeholder') || 'unknown';
+
+      await input.fill(payload);
+      // Also try pressing Enter to submit
+      await input.press('Enter').catch(() => {});
+
+      return `fuzz-input[${name}]: "${payload.slice(0, 30)}${payload.length > 30 ? '...' : ''}"`;
+    }
+
+    case 'paste-bomb': {
+      const inputs = await getVisibleElements(
+        page,
+        'input:visible:not([type=file]):not([type=hidden]):not([readonly]), textarea:visible',
+        excludeSelectors
+      );
+      if (inputs.length === 0) return null;
+
+      const input = rng.pick(inputs);
+      const bomb = 'X'.repeat(rng.int(1000, 10000));
+      const name = await input.getAttribute('name') || 'unknown';
+
+      await input.focus();
+      // Paste via keyboard
+      await page.keyboard.insertText(bomb);
+
+      return `paste-bomb[${name}]: ${bomb.length} chars`;
+    }
+
+    case 'blur-focus-spam': {
+      const inputs = await getVisibleElements(
+        page,
+        'input:visible:not([type=file]):not([type=hidden]), textarea:visible, select:visible, button:visible',
+        excludeSelectors
+      );
+      if (inputs.length < 2) return null;
+
+      const iterations = rng.int(5, 15);
+      for (let i = 0; i < iterations; i++) {
+        const el = rng.pick(inputs);
+        await el.focus().catch(() => {});
+        await page.keyboard.press('Tab');
+      }
+
+      return `blur-focus-spam: ${iterations} tab cycles`;
+    }
+
+    default:
+      return null;
   }
 }

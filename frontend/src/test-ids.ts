@@ -47,11 +47,21 @@ export const TEST_IDS = {
   FILTER_CLEAR: 'filter-clear',
   FILTER_ADVANCED_TOGGLE: 'filter-advanced-toggle',
 
-  // Quick filters
+  // Quick filters - Date
   QUICK_FILTER_THIS_MONTH: 'quick-filter-this-month',
   QUICK_FILTER_LAST_MONTH: 'quick-filter-last-month',
+  QUICK_FILTER_THIS_YEAR: 'quick-filter-this-year',
+  QUICK_FILTER_YTD: 'quick-filter-ytd',
+  QUICK_FILTER_LAST_90_DAYS: 'quick-filter-last-90-days',
+
+  // Quick filters - Insights
+  QUICK_FILTER_LARGE_DYNAMIC: 'quick-filter-large-dynamic',
+  QUICK_FILTER_TOP_SPENDING: 'quick-filter-top-spending',
   QUICK_FILTER_LARGE: 'quick-filter-large',
   QUICK_FILTER_UNRECONCILED: 'quick-filter-unreconciled',
+
+  // Transfer filter
+  FILTER_TRANSFERS: 'filter-transfers',
 
   // Bulk operations
   BULK_SELECT_ALL: 'bulk-select-all',

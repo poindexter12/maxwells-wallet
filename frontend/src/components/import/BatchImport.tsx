@@ -47,6 +47,7 @@ export function BatchImport({
             multiple
             onChange={(e) => setFiles(Array.from(e.target.files || []))}
             className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            data-chaos-target="batch-file-input"
           />
           {files.length > 0 && (
             <p className="mt-2 text-sm text-gray-600">
@@ -59,6 +60,7 @@ export function BatchImport({
           onClick={onPreview}
           disabled={files.length === 0}
           className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          data-chaos-target="batch-preview-button"
         >
           Preview Batch Import
         </button>
@@ -106,6 +108,7 @@ export function BatchImport({
                     checked={filePreview.selected}
                     onChange={() => onToggleSelection(filePreview.filename)}
                     className="mt-1"
+                    data-chaos-target={`batch-file-checkbox-${filePreview.filename}`}
                   />
                   <div className="flex-1 space-y-3">
                     <div className="flex justify-between items-start">
@@ -156,6 +159,7 @@ export function BatchImport({
                             value={filePreview.accountSourceOverride || filePreview.account_source || ''}
                             onChange={(e) => onUpdateAccountSource(filePreview.filename, e.target.value)}
                             className={`flex-1 px-3 py-1 text-sm border rounded-md ${!(filePreview.accountSourceOverride || filePreview.account_source) ? 'border-yellow-400' : ''}`}
+                            data-chaos-target={`batch-account-select-${filePreview.filename}`}
                           >
                             <option value="">-- Select Account --</option>
                             {accounts.map((acct) => (
@@ -171,6 +175,7 @@ export function BatchImport({
                           onChange={(e) => onUpdateAccountSource(filePreview.filename, e.target.value)}
                           placeholder={accounts.length > 0 ? "or type new" : "e.g., BOFA-Checking"}
                           className={`${accounts.length > 0 ? 'w-32' : 'flex-1'} px-3 py-1 text-sm border rounded-md ${!(filePreview.accountSourceOverride || filePreview.account_source) ? 'border-yellow-400' : ''}`}
+                          data-chaos-target={`batch-account-input-${filePreview.filename}`}
                         />
                       </div>
                       {!(filePreview.accountSourceOverride || filePreview.account_source) && (
@@ -188,6 +193,7 @@ export function BatchImport({
               onClick={onConfirm}
               disabled={isDisabled}
               className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              data-chaos-target="batch-confirm-button"
             >
               {importing ? 'Importing...' :
                !allHaveAccounts ? `${filesWithoutAccount.length} File${filesWithoutAccount.length !== 1 ? 's' : ''} Missing Account` :
@@ -196,6 +202,7 @@ export function BatchImport({
             <button
               onClick={onCancel}
               className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              data-chaos-target="batch-cancel-button"
             >
               Cancel
             </button>

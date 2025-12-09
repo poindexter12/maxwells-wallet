@@ -1,0 +1,97 @@
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement
+title: "feat: "
+labels: ["feature", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Please provide as much detail as possible to help us understand your idea.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? Is your feature request related to a problem?
+      placeholder: I'm frustrated when... / It would be helpful if...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see
+      placeholder: A clear and concise description of what you want to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you considered any alternative solutions or features?
+      placeholder: Describe any alternative solutions or workarounds you've considered
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which part of the application would this affect?
+      options:
+        - Frontend (UI/UX)
+        - Backend (API)
+        - Database
+        - Documentation
+        - DevOps/Infrastructure
+        - Testing
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority (your opinion)
+      description: How important is this feature to you?
+      options:
+        - Critical - Blocking my use
+        - High - Very important
+        - Medium - Would be nice to have
+        - Low - Minor improvement
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case / User Story
+      description: Describe how you or others would use this feature
+      placeholder: |
+        As a [type of user]
+        I want [goal/desire]
+        So that [benefit/value]
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: What would need to be true for this feature to be considered complete?
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+        - [ ] Criterion 3
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups / References
+      description: If applicable, add mockups, screenshots, or links to similar implementations
+      placeholder: Drag images here or paste links
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other information that would be helpful
+      placeholder: Add any other context about the feature request here

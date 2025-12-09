@@ -1,6 +1,7 @@
 'use client'
 
 import { formatCurrency } from '@/lib/format'
+import { CHAOS_EXCLUDED_IDS } from '@/test-ids'
 import { AdminStats } from '@/types/admin'
 
 interface OverviewTabProps {
@@ -82,6 +83,7 @@ export function OverviewTab({
           These actions are destructive and cannot be undone. Use with extreme caution.
         </p>
         <button
+          data-testid={CHAOS_EXCLUDED_IDS.PURGE_ALL_DATA}
           onClick={onPurgeAll}
           disabled={actionInProgress}
           className={`px-4 py-2 rounded font-medium ${

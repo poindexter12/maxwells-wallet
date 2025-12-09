@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { TEST_IDS } from '@/test-ids'
 import { PageHelp } from '@/components/PageHelp'
 import { OverviewTab } from '@/components/admin/OverviewTab'
 import { ImportsTab } from '@/components/admin/ImportsTab'
@@ -257,6 +258,8 @@ export default function AdminPage() {
       <div className="border-b border-theme">
         <nav className="-mb-px flex space-x-8">
           <button
+            data-testid={TEST_IDS.ADMIN_TAB_OVERVIEW}
+            data-chaos-target="admin-tab-overview"
             onClick={() => setActiveTab('overview')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'overview'
@@ -267,6 +270,8 @@ export default function AdminPage() {
             Overview
           </button>
           <button
+            data-testid={TEST_IDS.ADMIN_TAB_IMPORTS}
+            data-chaos-target="admin-tab-imports"
             onClick={() => setActiveTab('imports')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'imports'
@@ -277,6 +282,7 @@ export default function AdminPage() {
             Imports
           </button>
           <button
+            data-chaos-target="admin-tab-health"
             onClick={() => setActiveTab('health')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'health'
@@ -289,6 +295,7 @@ export default function AdminPage() {
           {TAG_TABS.map((tab) => (
             <button
               key={tab.id}
+              data-chaos-target={`admin-tab-${tab.id}`}
               onClick={() => setActiveTab(tab.id)}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === tab.id
