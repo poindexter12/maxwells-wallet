@@ -6,7 +6,7 @@ import { test, expect, ConsoleMessage } from '@playwright/test';
  * Tests for the bug where clicking between dashboard tabs causes a client-side crash.
  * Captures console errors and checks for the Next.js error overlay.
  */
-test.describe('Dashboard Tab Switching', () => {
+test.describe('Dashboard Tab Switching @e2e', () => {
   // Collect console errors during tests
   let consoleErrors: string[] = [];
   let pageErrors: string[] = [];

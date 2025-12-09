@@ -133,7 +133,7 @@ jobs:
 
       - name: Run E2E tests
         working-directory: frontend
-        run: npx playwright test e2e/*.spec.ts --project=chromium
+        run: npx playwright test --grep "@e2e" --project=chromium
         env:
           CI: true
 
