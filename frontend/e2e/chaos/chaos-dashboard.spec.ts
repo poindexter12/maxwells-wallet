@@ -8,9 +8,8 @@ import { performRandomActions, SeededRandom } from './chaos-helpers';
  * Each round runs fully before the next begins.
  */
 
-// Testing with 34 actions - CI is ~15x slower than local
-// Full: [13, 21, 34, 55, 89]
-const FIBONACCI_ROUNDS = [13, 21, 34];
+// Full Fibonacci sequence - CI runs ~15x slower than local but self-hosted runners handle it
+const FIBONACCI_ROUNDS = [13, 21, 34, 55, 89];
 
 test.describe('Dashboard Chaos - Fibonacci Ramp @chaos', () => {
   const baseSeed = 12345;
