@@ -233,6 +233,13 @@ async function executeAction(
       // Determine action based on element type
       if (tagName === 'input' || tagName === 'textarea') {
         const type = await target.getAttribute('type') || 'text';
+
+        // Checkboxes and radios should be clicked, not filled
+        if (type === 'checkbox' || type === 'radio') {
+          await target.click({ timeout });
+          return `click-target: [${name}] (${type})`;
+        }
+
         const value = generateInputValue(type, rng);
         await target.fill(value);
         return `fill-target: [${name}] = "${value}"`;
