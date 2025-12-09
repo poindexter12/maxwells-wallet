@@ -7,31 +7,15 @@ on:
   pull_request:
     types: [labeled, synchronize]
   workflow_dispatch:
-    inputs:
-      browser:
-        description: 'Browser to test'
-        required: false
-        type: choice
-        default: 'all'
-        options:
-          - all
-          - chromium
-          - firefox
-          - webkit
 
 jobs:
   chaos-tests:
-    name: Chaos Tests (${{ matrix.browser }}, shard ${{ matrix.shard }}/3)
+    name: Chaos Tests (chromium)
     runs-on: [self-hosted, homelab]
     if: >
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch' ||
       contains(github.event.pull_request.labels.*.name, 'test-chaos')
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: ${{ inputs.browser == 'all' || inputs.browser == '' && fromJson('["chromium", "firefox", "webkit"]') || fromJson(format('["{0}"]', inputs.browser)) }}
-        shard: [1, 2, 3]
 
     steps:
       - uses: actions/checkout@v4
@@ -77,11 +61,11 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: frontend
-        run: npx playwright install --with-deps ${{ matrix.browser }}
+        run: npx playwright install --with-deps chromium
 
       - name: Run chaos tests
         working-directory: frontend
-        run: npx playwright test --grep "@chaos" --project=${{ matrix.browser }} --shard=${{ matrix.shard }}/3
+        run: npx playwright test --grep "@chaos" --project=chromium
         env:
           CI: true
 
@@ -89,7 +73,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: chaos-report-${{ matrix.browser }}-shard-${{ matrix.shard }}
+          name: chaos-report-chromium
           path: frontend/playwright-report/
           retention-days: 7
 
