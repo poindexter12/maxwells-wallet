@@ -118,6 +118,10 @@ export async function performRandomActions(
 
   console.log(`🐒 Chaos monkey starting with seed: ${seed}`);
 
+  // Calculate progress milestones (every 25%)
+  const progressMilestones = [25, 50, 75, 100];
+  let lastMilestone = 0;
+
   for (let i = 0; i < options.actions; i++) {
     const actionType = rng.pick(actionTypes);
 
@@ -139,6 +143,14 @@ export async function performRandomActions(
 
     // Random delay between actions
     await page.waitForTimeout(rng.int(minDelay, maxDelay));
+
+    // Progress reporting
+    const progress = Math.floor(((i + 1) / options.actions) * 100);
+    const milestone = progressMilestones.find((m) => m <= progress && m > lastMilestone);
+    if (milestone) {
+      console.log(`  📊 Progress: ${progress}% (${i + 1}/${options.actions} actions)`);
+      lastMilestone = milestone;
+    }
 
     // Early exit if we hit a crash
     if (errors.length > 0) {
