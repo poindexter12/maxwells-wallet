@@ -108,6 +108,15 @@ pnpm build
 2. Run backend (`uv run uvicorn ...`) and frontend (`pnpm dev`) servers for local development.
 3. Iterate by editing code/config directly.
 
+## Release Checklist
+
+When preparing a release (including betas):
+1. **Update versions** in both:
+   - `frontend/package.json` → `"version": "x.y.z"`
+   - `backend/pyproject.toml` → `version = "x.y.z"`
+2. **Update CHANGELOG.md** with new section for the version
+3. **Update README.md** "What's New" section if significant changes
+
 ## Agent Skills and Tooling Guidance
 
 Use this section for quick reference. Canonical skill cards live in `.claude/skills/` (one per topic). If only one agent needs custom rules, add them in `.claude/agents/*.mdc`.

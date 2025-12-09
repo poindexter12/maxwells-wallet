@@ -184,7 +184,7 @@ class CustomCsvParser(CSVFormatParser):
 
         super().__init__()
 
-    def _col_name(self, col: Union[str, int], default: str) -> str:
+    def _col_name(self, col: Union[str, int], _default: str) -> str:
         """Get column name, handling both string names and int indexes."""
         if isinstance(col, str):
             return col

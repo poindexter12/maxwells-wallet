@@ -51,7 +51,7 @@ async def seed_database(request: SeedRequest = SeedRequest()):
 
     try:
         # Import here to avoid loading seed script in production
-        from scripts.seed import seed_all, async_session, clear_data, seed_tags, seed_transactions, seed_budgets, seed_dashboards, seed_tag_rules
+        from scripts.seed import async_session, clear_data, seed_tags, seed_transactions, seed_budgets, seed_dashboards, seed_tag_rules
 
         async with async_session() as session:
             if request.clear:

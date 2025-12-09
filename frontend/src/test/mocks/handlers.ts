@@ -2,7 +2,6 @@ import { http, HttpResponse } from 'msw'
 import {
   mockTags,
   mockBucketTags,
-  mockAccountTags,
   mockTransactions,
   mockTransactionCount,
   mockDashboards as initialDashboards,
@@ -195,7 +194,7 @@ export const handlers = [
     return HttpResponse.json(widget)
   }),
 
-  http.put(`${API_BASE}/dashboard/layout`, async ({ request }) => {
+  http.put(`${API_BASE}/dashboard/layout`, async ({ request: _request }) => {
     // Just return success for layout updates
     return HttpResponse.json({ success: true })
   }),

@@ -19,7 +19,7 @@ export function Tooltip({ content, children, position = 'top', className = '' }:
   useEffect(() => {
     if (isVisible && tooltipRef.current && triggerRef.current) {
       const tooltipRect = tooltipRef.current.getBoundingClientRect()
-      const triggerRect = triggerRef.current.getBoundingClientRect()
+      const _triggerRect = triggerRef.current.getBoundingClientRect()
 
       let newPosition = position
 

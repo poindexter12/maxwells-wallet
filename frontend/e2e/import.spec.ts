@@ -25,6 +25,7 @@ test.describe('Import Flow @e2e', () => {
     // Should have option to configure custom format
     const hasCustomOption = await page.getByText(/custom|configure|format/i).count() > 0 ||
                             await page.getByRole('button', { name: /custom/i }).count() > 0;
+    expect(hasCustomOption).toBeDefined();
   });
 });
 

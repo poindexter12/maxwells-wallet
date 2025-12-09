@@ -35,6 +35,7 @@ test.describe('Navigation @e2e', () => {
              el.classList.contains('bg-') ||
              window.getComputedStyle(el).fontWeight >= '600';
     });
+    expect(isActive).toBeDefined();
   });
 
   // Note: /accounts route doesn't exist - accounts are managed via /tools

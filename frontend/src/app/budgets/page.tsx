@@ -59,10 +59,6 @@ export default function BudgetsPage() {
     rollover_enabled: false
   })
 
-  useEffect(() => {
-    fetchData()
-  }, [])
-
   async function fetchData() {
     try {
       const [budgetsRes, statusRes, alertsRes, bucketsRes, occasionsRes, accountsRes] = await Promise.all([
@@ -93,6 +89,10 @@ export default function BudgetsPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

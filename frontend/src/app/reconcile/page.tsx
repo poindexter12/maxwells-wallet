@@ -37,12 +37,6 @@ export default function ReconcilePage() {
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchBucketTags()
-    fetchAccountTags()
-    fetchUnreconciledTransactions()
-  }, [])
-
   async function fetchBucketTags() {
     try {
       const res = await fetch('/api/v1/tags/buckets')
@@ -95,6 +89,12 @@ export default function ReconcilePage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchBucketTags()
+    fetchAccountTags()
+    fetchUnreconciledTransactions()
+  }, [])
 
   function toggleSelection(id: number) {
     const newSelected = new Set(selected)
