@@ -234,6 +234,11 @@ async function executeAction(
       if (tagName === 'input' || tagName === 'textarea') {
         const type = await target.getAttribute('type') || 'text';
 
+        // File inputs cannot be interacted with programmatically - skip
+        if (type === 'file') {
+          return null; // Try different action
+        }
+
         // Checkboxes and radios should be clicked, not filled
         if (type === 'checkbox' || type === 'radio') {
           await target.click({ timeout });
