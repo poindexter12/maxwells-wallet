@@ -127,27 +127,13 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Install Playwright browsers (chromium only)
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'test-e2e-all') }}
+      - name: Install Playwright browsers
         working-directory: frontend
         run: npx playwright install --with-deps chromium
 
-      - name: Install Playwright browsers (all)
-        if: ${{ contains(github.event.pull_request.labels.*.name, 'test-e2e-all') }}
-        working-directory: frontend
-        run: npx playwright install --with-deps
-
-      - name: Run E2E tests (chromium only)
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'test-e2e-all') }}
+      - name: Run E2E tests
         working-directory: frontend
         run: npx playwright test --project=chromium --grep-invert "@chaos"
-        env:
-          CI: true
-
-      - name: Run E2E tests (all browsers)
-        if: ${{ contains(github.event.pull_request.labels.*.name, 'test-e2e-all') }}
-        working-directory: frontend
-        run: npx playwright test --grep-invert "@chaos"
         env:
           CI: true
 
