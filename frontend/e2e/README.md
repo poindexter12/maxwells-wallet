@@ -25,13 +25,48 @@ npx playwright test --headed
 
 ```
 frontend/e2e/
-├── chaos/                    # Chaos/monkey testing
-│   ├── chaos-helpers.ts      # Seeded PRNG, action executor
-│   ├── chaos-dashboard.spec.ts
-│   ├── chaos-transactions.spec.ts
-│   └── chaos-import.spec.ts
-├── dashboard-tabs.spec.ts    # Dashboard tab switching tests
-└── README.md                 # This file
+├── chaos/                       # Chaos/monkey testing
+│   ├── chaos-helpers.ts         # Seeded PRNG, action executors, adversarial payloads
+│   ├── chaos-dashboard.spec.ts  # Dashboard chaos tests @chaos
+│   ├── chaos-transactions.spec.ts  # Transactions page @chaos
+│   ├── chaos-import.spec.ts     # Import/tools pages @chaos
+│   ├── chaos-roaming.spec.ts    # Cross-page navigation @chaos
+│   ├── chaos-demon.spec.ts      # Adversarial/fuzz testing @demon
+│   └── chaos-endurance.spec.ts  # Time-based endurance @endurance
+├── dashboard-tabs.spec.ts       # Dashboard tab switching tests
+└── README.md                    # This file
+```
+
+## Test Tiers & Tags
+
+Tests are organized into tiers for different CI schedules:
+
+| Tier | Tag | When | What |
+|------|-----|------|------|
+| **PR** | - | Every PR | Regular E2E tests (dashboard-tabs, etc.) |
+| **Nightly** | `@chaos` `@demon` | Weekly Sun 3am UTC | Action-based chaos (5 specs × 3 browsers) |
+| **Weekly** | `@endurance` | Weekly Sun 4am UTC | Time-based endurance (1-15 min tests) |
+
+### Running by Tag
+
+```bash
+# All chaos tests (action-based)
+npx playwright test --grep "@chaos"
+
+# All demon tests (adversarial/fuzz)
+npx playwright test --grep "@demon"
+
+# All endurance tests (time-based)
+npx playwright test --grep "@endurance"
+
+# Short endurance only (1 min)
+npx playwright test --grep "@endurance-short"
+
+# Medium endurance (5 min)
+npx playwright test --grep "@endurance-medium"
+
+# Long endurance (15 min)
+npx playwright test --grep "@endurance-long"
 ```
 
 ## Element Selection: Use `data-testid`
@@ -232,7 +267,7 @@ npx playwright test chaos/chaos-transactions.spec.ts
 import { test, expect } from '@playwright/test';
 import { performRandomActions } from './chaos-helpers';
 
-test('my page survives chaos', async ({ page }) => {
+test('my page survives chaos @chaos', async ({ page }) => {
   await page.goto('/my-page');
   await page.waitForLoadState('networkidle');
 
@@ -246,6 +281,84 @@ test('my page survives chaos', async ({ page }) => {
   });
 
   expect(result.errors).toEqual([]);
+});
+```
+
+## Demon Chaos (Adversarial/Fuzz Testing)
+
+The `chaos-demon.spec.ts` file contains adversarial tests that intentionally try to break things:
+
+- **XSS payloads**: `<script>alert(1)</script>`, event handlers, etc.
+- **SQL injection patterns**: `'; DROP TABLE--`, `OR 1=1`, etc.
+- **Unicode edge cases**: Emoji spam, RTL override, zalgo text, null chars
+- **Buffer overflow attempts**: Very long strings (1K-10K chars)
+- **Control characters**: Tabs, newlines, ANSI escapes
+- **Rapid-fire clicking**: Multiple fast clicks on the same element
+- **Paste bombs**: Pasting huge strings via clipboard
+
+### Running Demon Tests
+
+```bash
+# All demon tests
+npx playwright test --grep "@demon"
+
+# Demon tests on specific page
+npx playwright test chaos-demon.spec.ts --grep "transactions"
+```
+
+### Using Adversarial Payloads
+
+```typescript
+import { ADVERSARIAL_PAYLOADS, generateAdversarialInput, performDemonActions } from './chaos-helpers';
+
+// Access specific payload categories
+const xssPayloads = ADVERSARIAL_PAYLOADS.xss;
+const unicodePayloads = ADVERSARIAL_PAYLOADS.unicode;
+
+// Generate random adversarial input
+const payload = generateAdversarialInput(rng, 'xss'); // or 'sql', 'unicode', etc.
+
+// Run demon chaos
+const result = await performDemonActions(page, {
+  actions: 50,
+  seed: 12345,
+  excludeSelectors: ['nav a'],
+});
+```
+
+## Endurance Testing (Time-Based)
+
+The `chaos-endurance.spec.ts` file contains time-based tests for catching:
+
+- Memory leaks
+- Performance degradation over time
+- Edge cases that only appear after extended use
+
+### Test Durations
+
+| Tag | Duration | Use Case |
+|-----|----------|----------|
+| `@endurance-short` | 1 minute | Quick validation, CI smoke test |
+| `@endurance-medium` | 5 minutes | Standard weekly testing |
+| `@endurance-long` | 15 minutes | Extended stability testing |
+
+### Using Time-Based Functions
+
+```typescript
+import { performTimedRandomActions, performTimedDemonActions } from './chaos-helpers';
+
+// Run chaos for a specific duration
+const result = await performTimedRandomActions(page, {
+  durationMs: 5 * 60 * 1000, // 5 minutes
+  seed: 12345,
+  minDelay: 50,
+  maxDelay: 150,
+});
+
+// Run adversarial actions for a duration
+const demonResult = await performTimedDemonActions(page, {
+  durationMs: 60 * 1000, // 1 minute
+  seed: 12345,
 });
 ```
 

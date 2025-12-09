@@ -61,6 +61,17 @@ export interface ChaosOptions {
   onAction?: (action: string, index: number) => void;
 }
 
+export interface TimedChaosOptions {
+  durationMs: number;
+  seed?: number;
+  actionTypes?: ActionType[];
+  excludeSelectors?: string[];
+  minDelay?: number;
+  maxDelay?: number;
+  timeout?: number;
+  onAction?: (action: string, index: number) => void;
+}
+
 export interface ChaosResult {
   seed: number;
   actionsPerformed: number;
@@ -180,6 +191,98 @@ export async function performRandomActions(
   const totalDuration = Date.now() - startTime;
   console.log(`🐒 Chaos monkey completed at ${new Date().toISOString()}`);
   console.log(`  Total: ${actionsLog.length} actions in ${totalDuration}ms (${Math.round(totalDuration / actionsLog.length)}ms/action), Errors: ${errors.length}`);
+
+  return {
+    seed,
+    actionsPerformed: actionsLog.length,
+    errors,
+    actions: actionsLog,
+  };
+}
+
+/**
+ * Perform random actions for a specified duration (time-based endurance testing)
+ * Use this for long-running stability tests where you want to simulate real user sessions
+ */
+export async function performTimedRandomActions(
+  page: Page,
+  options: TimedChaosOptions
+): Promise<ChaosResult> {
+  const seed = options.seed ?? Date.now();
+  const rng = new SeededRandom(seed);
+  const actionTypes = options.actionTypes ?? DEFAULT_ACTION_TYPES;
+  const excludeSelectors = [
+    ...DEFAULT_EXCLUDE_SELECTORS,
+    ...(options.excludeSelectors ?? []),
+  ];
+  const minDelay = options.minDelay ?? 50;
+  const maxDelay = options.maxDelay ?? 300;
+  const timeout = options.timeout ?? 5000;
+  const durationMs = options.durationMs;
+
+  const errors: string[] = [];
+  const actionsLog: string[] = [];
+
+  const errorHandler = (error: Error) => {
+    errors.push(error.message);
+  };
+  page.on('pageerror', errorHandler);
+
+  const startTime = Date.now();
+  const endTime = startTime + durationMs;
+  console.log(`🐒 Timed chaos starting with seed: ${seed} at ${new Date().toISOString()}`);
+  console.log(`  Config: ${Math.round(durationMs / 1000)}s duration, delay ${minDelay}-${maxDelay}ms, timeout ${timeout}ms`);
+
+  let actionIndex = 0;
+  while (Date.now() < endTime && errors.length === 0) {
+    const actionStart = Date.now();
+    let actionDesc: string | null = null;
+    let attempts = 0;
+    const maxAttempts = actionTypes.length;
+
+    while (actionDesc === null && attempts < maxAttempts) {
+      const actionType = rng.pick(actionTypes);
+      attempts++;
+
+      try {
+        actionDesc = await executeAction(
+          page,
+          actionType,
+          rng,
+          excludeSelectors,
+          timeout
+        );
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        const actionDuration = Date.now() - actionStart;
+        const errorMsg = `[${actionType}] ${msg}`;
+        actionsLog.push(`${actionIndex + 1}. [FAILED] ${actionType}: ${msg}`);
+        errors.push(errorMsg);
+        console.log(`  [${actionIndex + 1}] FAILED ${actionType}: ${msg} (${actionDuration}ms)`);
+        break;
+      }
+    }
+
+    if (actionDesc !== null) {
+      const actionDuration = Date.now() - actionStart;
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      actionsLog.push(`${actionIndex + 1}. ${actionDesc}`);
+      // Log progress every 10 actions
+      if (actionIndex % 10 === 0) {
+        console.log(`  [${elapsed}s/${Math.round(durationMs / 1000)}s] Action ${actionIndex + 1}: ${actionDesc} (${actionDuration}ms)`);
+      }
+      options.onAction?.(actionDesc, actionIndex);
+    }
+
+    actionIndex++;
+    await page.waitForTimeout(rng.int(minDelay, maxDelay));
+  }
+
+  page.off('pageerror', errorHandler);
+
+  const totalDuration = Date.now() - startTime;
+  console.log(`🐒 Timed chaos completed at ${new Date().toISOString()}`);
+  console.log(`  Total: ${actionsLog.length} actions in ${Math.round(totalDuration / 1000)}s (${Math.round(totalDuration / actionsLog.length)}ms/action), Errors: ${errors.length}`);
 
   return {
     seed,
@@ -606,6 +709,14 @@ export interface DemonChaosOptions {
   onAction?: (action: string, index: number) => void;
 }
 
+export interface TimedDemonChaosOptions {
+  durationMs: number;
+  seed?: number;
+  actionTypes?: DemonActionType[];
+  excludeSelectors?: string[];
+  onAction?: (action: string, index: number) => void;
+}
+
 export interface DemonChaosResult {
   seed: number;
   actionsPerformed: number;
@@ -678,6 +789,84 @@ export async function performDemonActions(
   page.off('pageerror', errorHandler);
 
   console.log(`😈 Demon chaos completed: ${actionsLog.length} actions, ${errors.length} errors`);
+
+  return {
+    seed,
+    actionsPerformed: actionsLog.length,
+    errors,
+    actions: actionsLog,
+  };
+}
+
+/**
+ * Perform adversarial actions for a specified duration (time-based endurance testing)
+ * Use this for extended fuzzing sessions in weekly CI runs
+ */
+export async function performTimedDemonActions(
+  page: Page,
+  options: TimedDemonChaosOptions
+): Promise<DemonChaosResult> {
+  const seed = options.seed ?? Date.now();
+  const rng = new SeededRandom(seed);
+  const actionTypes = options.actionTypes ?? DEFAULT_DEMON_ACTION_TYPES;
+  const excludeSelectors = [
+    ...DEFAULT_EXCLUDE_SELECTORS,
+    ...(options.excludeSelectors ?? []),
+  ];
+  const durationMs = options.durationMs;
+
+  const errors: string[] = [];
+  const actionsLog: string[] = [];
+
+  const errorHandler = (error: Error) => {
+    errors.push(error.message);
+  };
+  page.on('pageerror', errorHandler);
+
+  const startTime = Date.now();
+  const endTime = startTime + durationMs;
+  console.log(`😈 Timed demon chaos starting with seed: ${seed} at ${new Date().toISOString()}`);
+  console.log(`  Config: ${Math.round(durationMs / 1000)}s duration`);
+
+  let actionIndex = 0;
+  while (Date.now() < endTime && errors.length === 0) {
+    const actionType = rng.pick(actionTypes);
+    let actionDesc: string | null = null;
+
+    try {
+      actionDesc = await executeDemonAction(
+        page,
+        actionType,
+        rng,
+        excludeSelectors
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      actionsLog.push(`${actionIndex + 1}. [FAILED] ${actionType}: ${msg}`);
+      errors.push(`[${actionType}] ${msg}`);
+      console.log(`  [${actionIndex + 1}] FAILED ${actionType}: ${msg}`);
+      break;
+    }
+
+    if (actionDesc) {
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      actionsLog.push(`${actionIndex + 1}. ${actionDesc}`);
+      // Log progress every 10 actions
+      if (actionIndex % 10 === 0) {
+        console.log(`  [${elapsed}s/${Math.round(durationMs / 1000)}s] Action ${actionIndex + 1}: ${actionDesc}`);
+      }
+      options.onAction?.(actionDesc, actionIndex);
+    }
+
+    actionIndex++;
+    // No delays in demon mode - we're aggressively trying to break things
+  }
+
+  page.off('pageerror', errorHandler);
+
+  const totalDuration = Date.now() - startTime;
+  console.log(`😈 Timed demon chaos completed at ${new Date().toISOString()}`);
+  console.log(`  Total: ${actionsLog.length} actions in ${Math.round(totalDuration / 1000)}s, Errors: ${errors.length}`);
 
   return {
     seed,
