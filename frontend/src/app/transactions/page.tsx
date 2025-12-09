@@ -643,6 +643,7 @@ function TransactionsContent() {
             <span className="text-xs text-theme-muted font-medium uppercase tracking-wide">Date:</span>
             <button
               data-testid={TEST_IDS.QUICK_FILTER_THIS_MONTH}
+              data-chaos-target="txn-quick-this-month"
               onClick={() => {
                 const now = new Date()
                 const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -660,6 +661,7 @@ function TransactionsContent() {
             </button>
             <button
               data-testid={TEST_IDS.QUICK_FILTER_LAST_MONTH}
+              data-chaos-target="txn-quick-last-month"
               onClick={() => {
                 const now = new Date()
                 const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1)
@@ -678,6 +680,7 @@ function TransactionsContent() {
             </button>
             <button
               data-testid={TEST_IDS.QUICK_FILTER_THIS_YEAR}
+              data-chaos-target="txn-quick-this-year"
               onClick={() => {
                 const now = new Date()
                 const firstDay = new Date(now.getFullYear(), 0, 1)
@@ -695,6 +698,7 @@ function TransactionsContent() {
             </button>
             <button
               data-testid={TEST_IDS.QUICK_FILTER_YTD}
+              data-chaos-target="txn-quick-ytd"
               onClick={() => {
                 const now = new Date()
                 const firstDay = new Date(now.getFullYear(), 0, 1)
@@ -711,6 +715,7 @@ function TransactionsContent() {
             </button>
             <button
               data-testid={TEST_IDS.QUICK_FILTER_LAST_90_DAYS}
+              data-chaos-target="txn-quick-last-90"
               onClick={() => {
                 const now = new Date()
                 const past = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
@@ -813,6 +818,7 @@ function TransactionsContent() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <input
             data-testid={TEST_IDS.FILTER_SEARCH}
+            data-chaos-target="txn-filter-search"
             type="text"
             placeholder="Search merchant or description..."
             className="input"
@@ -826,6 +832,7 @@ function TransactionsContent() {
           />
           <select
             data-testid={TEST_IDS.FILTER_BUCKET}
+            data-chaos-target="txn-filter-bucket"
             className="input"
             value={filters.bucket}
             onChange={(e) => setFilters({ ...filters, bucket: e.target.value })}
@@ -839,6 +846,7 @@ function TransactionsContent() {
           </select>
           <select
             data-testid={TEST_IDS.FILTER_OCCASION}
+            data-chaos-target="txn-filter-occasion"
             className="input"
             value={filters.occasion}
             onChange={(e) => setFilters({ ...filters, occasion: e.target.value })}
@@ -967,6 +975,7 @@ function TransactionsContent() {
             <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               <select
                 data-testid={TEST_IDS.FILTER_STATUS}
+                data-chaos-target="txn-filter-status"
                 className="input"
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
@@ -979,6 +988,7 @@ function TransactionsContent() {
               </select>
               <select
                 data-testid={TEST_IDS.FILTER_TRANSFERS}
+                data-chaos-target="txn-filter-transfers"
                 className="input"
                 value={filters.transfers}
                 onChange={(e) => setFilters({ ...filters, transfers: e.target.value as 'all' | 'hide' | 'only' })}
@@ -991,6 +1001,7 @@ function TransactionsContent() {
               <div className="flex gap-2 items-center">
                 <input
                   data-testid={TEST_IDS.FILTER_AMOUNT_MIN}
+                  data-chaos-target="txn-filter-amount-min"
                   type="number"
                   placeholder="Min $"
                   className="input w-full"
@@ -1000,6 +1011,7 @@ function TransactionsContent() {
                 <span className="text-theme-muted">–</span>
                 <input
                   data-testid={TEST_IDS.FILTER_AMOUNT_MAX}
+                  data-chaos-target="txn-filter-amount-max"
                   type="number"
                   placeholder="Max $"
                   className="input w-full"
@@ -1009,6 +1021,7 @@ function TransactionsContent() {
               </div>
               <input
                 data-testid={TEST_IDS.FILTER_DATE_START}
+                data-chaos-target="txn-filter-date-start"
                 type="date"
                 className="input"
                 value={filters.startDate}
@@ -1017,6 +1030,7 @@ function TransactionsContent() {
               />
               <input
                 data-testid={TEST_IDS.FILTER_DATE_END}
+                data-chaos-target="txn-filter-date-end"
                 type="date"
                 className="input"
                 value={filters.endDate}
@@ -1025,6 +1039,7 @@ function TransactionsContent() {
               />
               <button
                 data-testid={TEST_IDS.FILTER_CLEAR}
+                data-chaos-target="txn-filter-clear"
                 onClick={() => {
                   setSearchInput('')
                   setFilters({

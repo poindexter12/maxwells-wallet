@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  chaos-tests:
+  chaos-dashboard:
     name: Chaos (dashboard)
     runs-on: [self-hosted, homelab]
     if: >
@@ -63,7 +63,7 @@ jobs:
         working-directory: frontend
         run: npx playwright install --with-deps chromium
 
-      - name: Run chaos tests
+      - name: Run chaos tests (dashboard)
         working-directory: frontend
         run: |
           npx playwright test \
@@ -82,10 +82,83 @@ jobs:
           path: frontend/playwright-report/
           retention-days: 7
 
+  chaos-transactions:
+    name: Chaos (transactions)
+    runs-on: [self-hosted, homelab]
+    if: >
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'test-chaos')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: uv sync
+
+      - name: Create data directory
+        working-directory: backend
+        run: mkdir -p data
+
+      - name: Initialize database schema
+        working-directory: backend
+        run: uv run python -m scripts.init_db
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///./data/wallet.db"
+
+      - name: Seed database
+        working-directory: backend
+        run: uv run python -m scripts.seed
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///./data/wallet.db"
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run chaos tests (transactions)
+        working-directory: frontend
+        run: |
+          npx playwright test \
+            e2e/chaos/chaos-transactions.spec.ts \
+            --project=chromium \
+            --workers=1 \
+            --reporter=list
+        env:
+          CI: true
+
+      - name: Upload chaos test report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: chaos-report-transactions
+          path: frontend/playwright-report/
+          retention-days: 7
+
   create-issue:
     name: Create Issue on Failure
     runs-on: [self-hosted, homelab]
-    needs: [chaos-tests]
+    needs: [chaos-dashboard, chaos-transactions]
     if: failure() && github.event_name != 'pull_request'
 
     steps:
