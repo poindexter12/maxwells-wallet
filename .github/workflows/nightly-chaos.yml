@@ -61,14 +61,13 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: frontend
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Run chaos tests (dashboard)
         working-directory: frontend
         run: |
           npx playwright test \
             e2e/chaos/chaos-dashboard.spec.ts \
-            --project=chromium \
             --workers=1 \
             --reporter=list
         env:
@@ -134,14 +133,13 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: frontend
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Run chaos tests (transactions)
         working-directory: frontend
         run: |
           npx playwright test \
             e2e/chaos/chaos-transactions.spec.ts \
-            --project=chromium \
             --workers=1 \
             --reporter=list
         env:
@@ -207,14 +205,13 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: frontend
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Run chaos tests (import/tools)
         working-directory: frontend
         run: |
           npx playwright test \
             e2e/chaos/chaos-import.spec.ts \
-            --project=chromium \
             --workers=1 \
             --reporter=list
         env:
@@ -280,14 +277,13 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: frontend
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Run chaos tests (roaming)
         working-directory: frontend
         run: |
           npx playwright test \
             e2e/chaos/chaos-roaming.spec.ts \
-            --project=chromium \
             --workers=1 \
             --reporter=list
         env:
