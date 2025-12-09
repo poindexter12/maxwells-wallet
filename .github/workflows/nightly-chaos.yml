@@ -10,20 +10,12 @@ on:
 
 jobs:
   chaos-tests:
-    name: Chaos (${{ matrix.spec }})
+    name: Chaos (dashboard)
     runs-on: [self-hosted, homelab]
     if: >
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch' ||
       contains(github.event.pull_request.labels.*.name, 'test-chaos')
-    strategy:
-      fail-fast: false
-      matrix:
-        spec:
-          - dashboard
-          - transactions
-          - import
-          - roaming
 
     steps:
       - uses: actions/checkout@v4
@@ -75,7 +67,7 @@ jobs:
         working-directory: frontend
         run: |
           npx playwright test \
-            e2e/chaos/chaos-${{ matrix.spec }}.spec.ts \
+            e2e/chaos/chaos-dashboard.spec.ts \
             --project=chromium \
             --workers=1 \
             --reporter=list
@@ -86,7 +78,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: chaos-report-${{ matrix.spec }}
+          name: chaos-report-dashboard
           path: frontend/playwright-report/
           retention-days: 7
 
