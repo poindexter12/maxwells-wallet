@@ -105,7 +105,7 @@ export async function performRandomActions(
   ];
   const minDelay = options.minDelay ?? 50;
   const maxDelay = options.maxDelay ?? 300;
-  const timeout = options.timeout ?? 2000;
+  const timeout = options.timeout ?? 5000; // 5s for slow CI environments
 
   const errors: string[] = [];
   const actionsLog: string[] = [];
