@@ -309,7 +309,7 @@ export default function Dashboard() {
 
       {visibleWidgets.length === 0 ? (
         <div className="card p-12 text-center text-theme-muted">
-          <p>No widgets visible. Click "Customize" to configure your dashboard.</p>
+          <p>No widgets visible. Click &quot;Customize&quot; to configure your dashboard.</p>
         </div>
       ) : (
         <>

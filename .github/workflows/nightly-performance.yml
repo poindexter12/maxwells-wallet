@@ -1,21 +1,18 @@
-name: Performance Tests
+name: Nightly Performance Tests
 
 on:
   schedule:
     # Run daily at 4am UTC
     - cron: '0 4 * * *'
-  pull_request:
-    types: [labeled, synchronize]
   workflow_dispatch:
+
+# Note: PR performance tests now run via CI workflow (ci.yml)
+# This workflow is for nightly runs and manual triggers only
 
 jobs:
   performance-tests:
     name: Performance Tests
     runs-on: ubuntu-latest
-    if: >
-      github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch' ||
-      contains(github.event.pull_request.labels.*.name, 'test-perf')
 
     steps:
       - uses: actions/checkout@v4

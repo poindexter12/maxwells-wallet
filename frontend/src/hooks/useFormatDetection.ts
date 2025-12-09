@@ -50,7 +50,7 @@ interface UseFormatDetectionReturn {
   setSkipFooterRows: (rows: number) => void
 }
 
-export function useFormatDetection({ file, initialConfig }: UseFormatDetectionProps): UseFormatDetectionReturn {
+export function useFormatDetection({ file, initialConfig: _initialConfig }: UseFormatDetectionProps): UseFormatDetectionReturn {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 

@@ -4,18 +4,15 @@ on:
   schedule:
     # Run daily at 3:30am UTC
     - cron: '30 3 * * *'
-  pull_request:
-    types: [labeled, synchronize]
   workflow_dispatch:
+
+# Note: All-browser E2E tests run nightly and on-demand only
+# CI runs E2E on chromium for PRs; use workflow_dispatch for full browser coverage
 
 jobs:
   e2e-tests:
     name: E2E (${{ matrix.browser }})
     runs-on: ubuntu-latest
-    if: >
-      github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch' ||
-      contains(github.event.pull_request.labels.*.name, 'test-e2e-all')
     strategy:
       fail-fast: false
       matrix:

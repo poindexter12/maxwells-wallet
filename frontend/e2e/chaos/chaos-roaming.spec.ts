@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { performRandomActions, SeededRandom } from './chaos-helpers';
+import { performRandomActions } from './chaos-helpers';
 
 /**
  * Roaming Chaos Tests
@@ -48,7 +48,7 @@ test.describe('Application-Wide Roaming Chaos @chaos', () => {
           'input[type="file"]',
           // Allow navigation - no 'nav a' exclusion!
         ],
-        onAction: (action, i) => {
+        onAction: (_action, _i) => {
           const url = page.url();
           const path = new URL(url).pathname;
           if (!pagesVisited.has(path)) {
