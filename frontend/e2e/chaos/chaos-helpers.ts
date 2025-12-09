@@ -140,12 +140,14 @@ export async function performRandomActions(
           timeout
         );
       } catch (e) {
-        // Individual action failures are expected in chaos testing
+        // Action failures (timeouts, etc.) indicate UI issues - fail the test
         const msg = e instanceof Error ? e.message : String(e);
         const actionDuration = Date.now() - actionStart;
+        const errorMsg = `[${actionType}] ${msg}`;
         actionsLog.push(`${i + 1}. [FAILED] ${actionType}: ${msg}`);
+        errors.push(errorMsg); // Add to errors so test fails
         console.log(`  [${i + 1}/${options.actions}] FAILED ${actionType}: ${msg} (${actionDuration}ms)`);
-        break; // Don't retry on actual errors
+        break; // Stop on action failure
       }
     }
 
