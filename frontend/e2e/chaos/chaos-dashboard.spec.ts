@@ -8,17 +8,17 @@ import { performRandomActions, SeededRandom } from './chaos-helpers';
  * Each round runs fully before the next begins.
  */
 
-// Reduced sequence for debugging CI issues
+// Testing with 34 actions - CI is ~15x slower than local
 // Full: [13, 21, 34, 55, 89]
-const FIBONACCI_ROUNDS = [13, 21];
+const FIBONACCI_ROUNDS = [13, 21, 34];
 
 test.describe('Dashboard Chaos - Fibonacci Ramp @chaos', () => {
   const baseSeed = 12345;
 
   for (const [index, actionCount] of FIBONACCI_ROUNDS.entries()) {
     test(`dashboard chaos - ${actionCount} actions`, async ({ page }) => {
-      // Timeout scales: 30s base + 1s per action
-      test.setTimeout(30000 + actionCount * 1000);
+      // Timeout scales: 30s base + 2s per action (CI is ~15x slower than local)
+      test.setTimeout(30000 + actionCount * 2000);
 
       await page.goto('/');
       await page.waitForLoadState('networkidle');
