@@ -5,37 +5,11 @@ All notable changes to Maxwell's Wallet will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.8.0-beta3] - 2025-12-09
+## [0.8.0] - 2025-12-09
 
 ### Added
-- **Chaos/Monkey Testing** - Automated random interaction testing for UI stability
-  - Seeded random actions for reproducible tests
-  - CHAOS_EXCLUDED_IDS to protect destructive buttons
-  - Dashboard, Transactions, Import, and Roaming test suites
-- **ESLint 9 Flat Config** - Updated to Next.js 16 ESLint configuration
-- **CI Improvements**
-  - Re-enabled frontend linting in CI
-  - Performance tests now run on all PRs (no label required)
-  - Removed PR triggers from nightly workflows to reduce noise
 
-### Fixed
-- Dead code cleanup (unused imports and variables)
-- Frontend test coverage expanded for import/admin features
-
-## [0.8.0-beta2] - 2025-12-07
-
-### Added
-- **Virtual Scrolling** - TanStack Virtual for efficient rendering of 50k+ transactions
-- **Cursor Pagination (Frontend)** - O(1) performance regardless of scroll depth
-- **Performance Testing** - Stress test infrastructure with 50k transaction dataset
-- Multi-account filtering stress tests
-
-### Fixed
-- Dashboard chart rendering errors during tab switching
-
-## [0.8.0-beta1] - 2025-12-06
-
-### Added
+#### Observability
 - **OpenTelemetry Tracing** - Automatic span creation for all FastAPI requests
   - SQLAlchemy query tracing with SQL comments
   - Custom `@traced()` decorator for business logic spans
@@ -47,10 +21,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Real-time latency percentiles and error rates
   - System status indicator (healthy/degraded/unhealthy)
   - Auto-refresh every 10 seconds
-- **Alerting** - Configurable webhook notifications
-  - Error rate threshold alerts (default: 5%)
-  - P99 latency threshold alerts (default: 5000ms)
-  - Cooldown to prevent alert storms
+- **Alerting** - Configurable webhook notifications for error rate and latency thresholds
+
+#### Performance
+- **Virtual Scrolling** - TanStack Virtual for efficient rendering of 50k+ transactions
+- **Cursor Pagination** - O(1) performance regardless of scroll depth
+- **Composite Indexes** - Optimized database indexes for common query patterns
+- **Performance Testing** - Stress test infrastructure with 50k transaction dataset
+
+#### Testing & Quality
+- **Chaos/Monkey Testing** - Automated random interaction testing for UI stability
+  - Seeded random actions for reproducible tests
+  - CHAOS_EXCLUDED_IDS to protect destructive buttons
+- **ESLint 9 Flat Config** - Updated to Next.js 16 ESLint configuration
+- **CI Improvements** - Linting and performance tests on all PRs
 
 ### Configuration
 New environment variables (all optional, observability enabled by default):
