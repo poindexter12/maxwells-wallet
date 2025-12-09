@@ -30,6 +30,7 @@ jobs:
           - transactions
           - import
           - roaming
+          - demon
         browser:
           - chromium
           - firefox
