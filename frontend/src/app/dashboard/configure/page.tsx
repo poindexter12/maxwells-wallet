@@ -241,7 +241,7 @@ export default function DashboardConfigurePage() {
             <h3 className="font-medium text-theme mb-1">Creating Filtered Views</h3>
             <p>
               Duplicate widgets to create focused views. For example, duplicate the treemap
-              and filter it to show only "Groceries" spending.
+              and filter it to show only &quot;Groceries&quot; spending.
             </p>
           </div>
           <div>

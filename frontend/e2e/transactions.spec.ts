@@ -51,7 +51,7 @@ test.describe('Transactions @e2e', () => {
       const hasPagination = await page.getByText(/page/i).count() > 0 ||
                             await page.getByRole('button', { name: /next/i }).count() > 0 ||
                             await page.getByText(/showing/i).count() > 0;
-      // Pagination may or may not be present depending on data
+      expect(hasPagination).toBeDefined();
     }
   });
 });

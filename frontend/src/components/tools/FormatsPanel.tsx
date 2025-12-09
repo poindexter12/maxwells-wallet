@@ -36,7 +36,7 @@ export default function FormatsPanel() {
   const [testingFormatId, setTestingFormatId] = useState<number | null>(null)
   const [testResults, setTestResults] = useState<{ transactions: ParsedTransaction[], errors: string[] } | null>(null)
   const [deleting, setDeleting] = useState<number | null>(null)
-  const [saving, setSaving] = useState(false)
+  const [_saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const createFileInputRef = useRef<HTMLInputElement>(null)

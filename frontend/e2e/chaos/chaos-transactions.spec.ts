@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { performRandomActions, SeededRandom } from './chaos-helpers';
+import { performRandomActions } from './chaos-helpers';
 
 /**
  * Chaos/Monkey Testing for Transactions Page

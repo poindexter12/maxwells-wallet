@@ -61,11 +61,11 @@ export function CustomFormatMapper({ file, onConfigured, onCancel, initialConfig
     amountConvention,
     setAmountConvention,
     amountPrefix,
-    setAmountPrefix,
+    setAmountPrefix: _setAmountPrefix,
     invertSign,
     setInvertSign,
     skipFooterRows,
-    setSkipFooterRows,
+    setSkipFooterRows: _setSkipFooterRows,
   } = useFormatDetection({ file, initialConfig })
 
   function buildConfig(): CustomConfig {

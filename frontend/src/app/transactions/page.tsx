@@ -3,9 +3,7 @@
 import { useEffect, useState, useRef, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { formatCurrency } from '@/lib/format'
 import { PageHelp } from '@/components/PageHelp'
-import { HelpTip } from '@/components/Tooltip'
 import { VirtualTransactionList } from '@/components/transactions'
 import { TEST_IDS } from '@/test-ids'
 
@@ -83,7 +81,7 @@ function TransactionsContent() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [showAccountDropdown, setShowAccountDropdown] = useState(false)
   const [addingTagTo, setAddingTagTo] = useState<number | null>(null)
-  const [newTagValue, setNewTagValue] = useState('')
+  const [_newTagValue, setNewTagValue] = useState('')
 
   // Bulk selection state
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
@@ -226,7 +224,7 @@ function TransactionsContent() {
     }
   }
 
-  function getAccountDisplayName(accountSource: string): string {
+  function _getAccountDisplayName(accountSource: string): string {
     const accountTag = accountTags.find(t => t.value === accountSource.toLowerCase().replace(/\s+/g, '-'))
     return accountTag?.description || accountSource
   }

@@ -6,7 +6,7 @@
     "dev": "NODE_OPTIONS='--disable-warning=DEP0060' next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -23,6 +23,7 @@
     "recharts": "^3.5.1"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.3",
     "@playwright/test": "^1.57.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",

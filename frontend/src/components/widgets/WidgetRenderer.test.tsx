@@ -21,7 +21,7 @@ vi.mock('./BucketPieChart', () => ({
 }))
 
 vi.mock('./TopMerchantsList', () => ({
-  TopMerchantsList: ({ data }: any) => <div data-testid="top-merchants-list">TopMerchantsList</div>
+  TopMerchantsList: ({ data: _data }: any) => <div data-testid="top-merchants-list">TopMerchantsList</div>
 }))
 
 vi.mock('./TrendsChart', () => ({
