@@ -1,6 +1,10 @@
 import { Page, Locator } from '@playwright/test';
 import { getChaosExcludeSelectors } from '../../src/test-ids';
 
+// Simple attribute for chaos-targetable elements: data-chaos-target
+// Add to components: <button data-chaos-target="description">
+const CHAOS_TARGET_SELECTOR = '[data-chaos-target]';
+
 /**
  * Seeded pseudo-random number generator (LCG algorithm)
  * Same seed always produces same sequence
@@ -37,8 +41,9 @@ export class SeededRandom {
 }
 
 export type ActionType =
-  | 'click-button'
-  | 'click-link'
+  | 'click-target'  // Fast: uses data-testid selectors
+  | 'click-button'  // Slow: scans all buttons
+  | 'click-link'    // Slow: scans all links
   | 'fill-input'
   | 'select-option'
   | 'scroll'
@@ -64,12 +69,14 @@ export interface ChaosResult {
 }
 
 const DEFAULT_ACTION_TYPES: ActionType[] = [
-  'click-button',
-  'click-link',
-  'fill-input',
+  'click-target', // Fast: uses data-testid selectors (preferred)
   'scroll',
   'press-key',
-  // 'hover' removed - too slow on CI (~4-5s each) and low value for chaos testing
+  // Slow actions (scan all elements) - disabled by default:
+  // 'click-button',
+  // 'click-link',
+  // 'fill-input',
+  // 'hover',
 ];
 
 // Build default exclusions from the centralized CHAOS_EXCLUDED_IDS registry
@@ -190,6 +197,48 @@ async function executeAction(
   timeout: number
 ): Promise<string | null> {
   switch (actionType) {
+    case 'click-target': {
+      // Fast path: find elements with data-chaos-target attribute
+      const targets = await page.locator(CHAOS_TARGET_SELECTOR).all();
+
+      // Filter to visible elements only
+      const visibleTargets: Locator[] = [];
+      for (const target of targets) {
+        if (await target.isVisible().catch(() => false)) {
+          visibleTargets.push(target);
+        }
+      }
+
+      if (visibleTargets.length === 0) return null;
+
+      const target = rng.pick(visibleTargets);
+      const name = await target.getAttribute('data-chaos-target');
+      const tagName = await target.evaluate(el => el.tagName.toLowerCase());
+
+      // Determine action based on element type
+      if (tagName === 'input' || tagName === 'textarea') {
+        const type = await target.getAttribute('type') || 'text';
+        const value = generateInputValue(type, rng);
+        await target.fill(value);
+        return `fill-target: [${name}] = "${value}"`;
+      } else if (tagName === 'select') {
+        const options = await target.locator('option').all();
+        if (options.length > 0) {
+          const option = rng.pick(options);
+          const value = await option.getAttribute('value');
+          if (value) {
+            await target.selectOption(value);
+            return `select-target: [${name}] = "${value}"`;
+          }
+        }
+        return null;
+      } else {
+        // Default: click (buttons, links, etc.)
+        await target.click({ timeout });
+        return `click-target: [${name}]`;
+      }
+    }
+
     case 'click-button': {
       const buttons = await getVisibleElements(
         page,
