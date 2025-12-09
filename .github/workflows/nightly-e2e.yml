@@ -7,21 +7,10 @@ on:
   pull_request:
     types: [labeled, synchronize]
   workflow_dispatch:
-    inputs:
-      browser:
-        description: 'Browser to test'
-        required: false
-        type: choice
-        default: 'all'
-        options:
-          - all
-          - chromium
-          - firefox
-          - webkit
 
 jobs:
   e2e-tests:
-    name: E2E Tests (${{ matrix.browser }})
+    name: E2E (${{ matrix.browser }})
     runs-on: ubuntu-latest
     if: >
       github.event_name == 'schedule' ||
@@ -30,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser: ${{ inputs.browser == 'all' || inputs.browser == '' && fromJson('["chromium", "firefox", "webkit"]') || fromJson(format('["{0}"]', inputs.browser)) }}
+        browser: [chromium, firefox, webkit]
 
     steps:
       - uses: actions/checkout@v4
@@ -80,7 +69,7 @@ jobs:
 
       - name: Run E2E tests
         working-directory: frontend
-        run: npx playwright test --project=${{ matrix.browser }} --grep-invert "@chaos"
+        run: npx playwright test --grep "@e2e" --project=${{ matrix.browser }}
         env:
           CI: true
 
