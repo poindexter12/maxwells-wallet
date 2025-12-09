@@ -55,6 +55,7 @@ export function DashboardConfig({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
+        data-chaos-target="customize-dashboard"
         className="flex items-center gap-2 px-3 py-2 text-sm rounded-md border border-theme hover:bg-[var(--color-bg-hover)] transition-colors"
         title="Configure dashboard"
       >

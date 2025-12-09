@@ -1,0 +1,135 @@
+name: Chaos Tests
+
+on:
+  schedule:
+    # Run weekly on Sunday at 3am UTC
+    - cron: '0 3 * * 0'
+  pull_request:
+    types: [labeled, synchronize]
+  workflow_dispatch:
+    inputs:
+      browsers:
+        description: 'Browsers to test (comma-separated: chromium,firefox,webkit)'
+        required: false
+        default: 'chromium,firefox,webkit'
+
+jobs:
+  chaos:
+    name: Chaos (${{ matrix.spec }}, ${{ matrix.browser }})
+    runs-on: [self-hosted, homelab]
+    if: >
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'test-chaos')
+
+    strategy:
+      fail-fast: false
+      matrix:
+        spec:
+          - dashboard
+          - transactions
+          - import
+          - roaming
+          - demon
+        browser:
+          - chromium
+          - firefox
+          - webkit
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: uv sync
+
+      - name: Create data directory
+        working-directory: backend
+        run: mkdir -p data
+
+      - name: Initialize database schema
+        working-directory: backend
+        run: uv run python -m scripts.init_db
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///./data/wallet.db"
+
+      - name: Seed database
+        working-directory: backend
+        run: uv run python -m scripts.seed
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///./data/wallet.db"
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright browser (${{ matrix.browser }})
+        working-directory: frontend
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Run chaos tests (${{ matrix.spec }})
+        working-directory: frontend
+        run: |
+          npx playwright test \
+            e2e/chaos/chaos-${{ matrix.spec }}.spec.ts \
+            --project=${{ matrix.browser }} \
+            --workers=1 \
+            --reporter=list
+        env:
+          CI: true
+
+      - name: Upload chaos test report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: chaos-report-${{ matrix.spec }}-${{ matrix.browser }}
+          path: frontend/playwright-report/
+          retention-days: 7
+
+  create-issue:
+    name: Create Issue on Failure
+    runs-on: [self-hosted, homelab]
+    needs: [chaos]
+    if: failure() && github.event_name != 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create issue for chaos test failures
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          existing=$(gh issue list --label "chaos-testing" --state open --json number --jq 'length')
+          if [ "$existing" -gt 0 ]; then
+            echo "Chaos testing issue already exists, skipping"
+            exit 0
+          fi
+
+          gh issue create \
+            --title "🐒 Chaos Testing: Failures detected" \
+            --label "chaos-testing,automated,bug" \
+            --body "## Chaos Tests Failed
+
+          The chaos/monkey tests found issues that may indicate UI instability.
+
+          **Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+          ### Next Steps
+          1. Download the Playwright report artifact from the failed run
+          2. Review the seed values in failed tests to reproduce
+          3. Fix identified crashes or error handling issues"

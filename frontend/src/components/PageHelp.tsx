@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, ReactNode } from 'react'
+import { TEST_IDS } from '@/test-ids'
 
 interface PageHelpProps {
   pageId: string  // Unique ID for localStorage persistence
@@ -195,6 +196,7 @@ export function PageHelp({
           {helpState === 'first-visit' && (
             <div className="pt-2 flex justify-end">
               <button
+                data-testid={TEST_IDS.HELP_DISMISS}
                 onClick={handleDismiss}
                 className="px-3 py-1.5 text-sm bg-[var(--color-accent)] text-[var(--color-primary-text)] rounded-md hover:opacity-90 transition-opacity"
               >

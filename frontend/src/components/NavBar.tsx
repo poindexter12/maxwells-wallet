@@ -25,27 +25,27 @@ export function NavBar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
-            <Link href="/" className="nav-brand flex items-center px-2 gap-2">
+            <Link href="/" className="nav-brand flex items-center px-2 gap-2" data-chaos-target="nav-home">
               <img src="/favicon.svg" alt="" className="w-6 h-6" />
               Maxwell&apos;s Wallet
             </Link>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-6 sm:items-center">
-              <Link href="/" className={linkClass('/')}>
+              <Link href="/" className={linkClass('/')} data-chaos-target="nav-dashboard">
                 Dashboard
               </Link>
-              <Link href="/transactions" className={linkClass('/transactions')}>
+              <Link href="/transactions" className={linkClass('/transactions')} data-chaos-target="nav-transactions">
                 Transactions
               </Link>
-              <Link href="/budgets" className={linkClass('/budgets')}>
+              <Link href="/budgets" className={linkClass('/budgets')} data-chaos-target="nav-budgets">
                 Budgets
               </Link>
-              <Link href="/organize" className={linkClass('/organize')}>
+              <Link href="/organize" className={linkClass('/organize')} data-chaos-target="nav-organize">
                 Organize
               </Link>
-              <Link href="/tools" className={linkClass('/tools')}>
+              <Link href="/tools" className={linkClass('/tools')} data-chaos-target="nav-tools">
                 Tools
               </Link>
-              <Link href="/admin" className={linkClass('/admin')}>
+              <Link href="/admin" className={linkClass('/admin')} data-chaos-target="nav-admin">
                 Admin
               </Link>
             </div>

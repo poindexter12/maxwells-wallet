@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Dashboard', () => {
+test.describe('Dashboard @e2e', () => {
   test('loads and displays summary widget', async ({ page }) => {
     await page.goto('/');
 

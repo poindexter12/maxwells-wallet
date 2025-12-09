@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { TEST_IDS } from '@/test-ids'
 import { PageHelp } from '@/components/PageHelp'
 import { BatchImport } from '@/components/import/BatchImport'
 import { SingleFileImport } from '@/components/import/SingleFileImport'
@@ -285,7 +286,7 @@ export default function ImportPage() {
       <h1 className="text-3xl font-bold text-theme">Import Transactions</h1>
 
       {/* Import Mode Toggle */}
-      <div className="flex gap-4 bg-white rounded-lg shadow p-4">
+      <div data-testid={TEST_IDS.IMPORT_MODE_TOGGLE} className="flex gap-4 bg-white rounded-lg shadow p-4">
         <button
           onClick={() => {
             setBatchMode(false)
@@ -293,6 +294,7 @@ export default function ImportPage() {
             setFiles([])
           }}
           className={`flex-1 px-4 py-2 rounded-md ${!batchMode ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+          data-chaos-target="import-mode-single"
         >
           Single File Import
         </button>
@@ -303,6 +305,7 @@ export default function ImportPage() {
             setFile(null)
           }}
           className={`flex-1 px-4 py-2 rounded-md ${batchMode ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+          data-chaos-target="import-mode-batch"
         >
           Batch Import (Multiple Files)
         </button>

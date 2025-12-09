@@ -1,0 +1,152 @@
+name: Weekly Endurance Tests
+
+on:
+  schedule:
+    # Run weekly on Sunday at 4am UTC (after nightly chaos at 3am)
+    - cron: '0 4 * * 0'
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: 'Test tier (short=1min, medium=5min, long=15min)'
+        required: false
+        default: 'medium'
+        type: choice
+        options:
+          - short
+          - medium
+          - long
+
+jobs:
+  endurance:
+    name: Endurance (${{ matrix.test }})
+    runs-on: [self-hosted, homelab]
+    if: >
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        test:
+          - roaming
+          - demon
+          - page-cycling
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: uv sync
+
+      - name: Create data directory
+        working-directory: backend
+        run: mkdir -p data
+
+      - name: Initialize database schema
+        working-directory: backend
+        run: uv run python -m scripts.init_db
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///./data/wallet.db"
+
+      - name: Seed database
+        working-directory: backend
+        run: uv run python -m scripts.seed
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///./data/wallet.db"
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright browser (chromium)
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Determine grep pattern
+        id: grep
+        run: |
+          DURATION="${{ github.event.inputs.duration || 'medium' }}"
+          case "${{ matrix.test }}" in
+            roaming)
+              echo "pattern=Timed Roaming Endurance.*@endurance-${DURATION}" >> $GITHUB_OUTPUT
+              ;;
+            demon)
+              echo "pattern=Timed Demon Endurance.*@endurance-${DURATION}" >> $GITHUB_OUTPUT
+              ;;
+            page-cycling)
+              echo "pattern=Page-Cycling Endurance" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - name: Run endurance tests (${{ matrix.test }})
+        working-directory: frontend
+        run: |
+          npx playwright test \
+            e2e/chaos/chaos-endurance.spec.ts \
+            --grep "${{ steps.grep.outputs.pattern }}" \
+            --project=chromium \
+            --workers=1 \
+            --reporter=list
+        env:
+          CI: true
+
+      - name: Upload endurance test report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: endurance-report-${{ matrix.test }}
+          path: frontend/playwright-report/
+          retention-days: 14
+
+  create-issue:
+    name: Create Issue on Failure
+    runs-on: [self-hosted, homelab]
+    needs: [endurance]
+    if: failure()
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create issue for endurance test failures
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          existing=$(gh issue list --label "endurance-testing" --state open --json number --jq 'length')
+          if [ "$existing" -gt 0 ]; then
+            echo "Endurance testing issue already exists, skipping"
+            exit 0
+          fi
+
+          gh issue create \
+            --title "🏃 Endurance Testing: Failures detected" \
+            --label "endurance-testing,automated,bug" \
+            --body "## Endurance Tests Failed
+
+          The weekly endurance tests found issues that may indicate:
+          - Memory leaks
+          - Performance degradation over time
+          - Edge cases appearing after extended use
+
+          **Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+          ### Next Steps
+          1. Download the Playwright report artifact from the failed run
+          2. Check browser memory/CPU usage patterns
+          3. Review the seed values in failed tests to reproduce
+          4. Consider profiling the application during extended use"
