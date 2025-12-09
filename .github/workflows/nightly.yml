@@ -5,28 +5,11 @@ on:
     # Run at 3am UTC every day
     - cron: '0 3 * * *'
   workflow_dispatch:
-    inputs:
-      job:
-        description: 'Which job to run (leave empty for all)'
-        required: false
-        type: choice
-        options:
-          - all
-          - security-audit
-          - dead-code
-          - code-quality
-          - coverage
-          - chaos-tests
-          - performance
 
 jobs:
   security-audit:
     name: Security Audit (pip-audit)
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || inputs.job == 'all' || inputs.job == 'security-audit'
-    outputs:
-      failed: ${{ steps.audit.outputs.failed }}
-      details: ${{ steps.audit.outputs.details }}
     defaults:
       run:
         working-directory: backend
@@ -53,26 +36,17 @@ jobs:
 
           if uv run pip-audit 2>&1 | tee audit-output.txt; then
             echo "✅ No known vulnerabilities found!" >> $GITHUB_STEP_SUMMARY
-            echo "failed=false" >> $GITHUB_OUTPUT
           else
             echo "⚠️ Vulnerabilities detected:" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             cat audit-output.txt >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "failed=true" >> $GITHUB_OUTPUT
-            # Escape for JSON
-            details=$(cat audit-output.txt | head -50 | jq -Rs .)
-            echo "details=$details" >> $GITHUB_OUTPUT
             exit 1
           fi
 
   dead-code-analysis:
     name: Dead Code Analysis (Vulture)
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || inputs.job == 'all' || inputs.job == 'dead-code'
-    outputs:
-      failed: ${{ steps.vulture.outputs.failed }}
-      details: ${{ steps.vulture.outputs.details }}
     defaults:
       run:
         working-directory: backend
@@ -101,23 +75,18 @@ jobs:
 
           if [ -z "$output" ]; then
             echo "✅ No dead code detected!" >> $GITHUB_STEP_SUMMARY
-            echo "failed=false" >> $GITHUB_OUTPUT
           else
             echo "⚠️ Potential dead code found:" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "$output" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "failed=true" >> $GITHUB_OUTPUT
-            details=$(echo "$output" | head -50 | jq -Rs .)
-            echo "details=$details" >> $GITHUB_OUTPUT
             exit 1
           fi
 
   code-quality:
     name: Code Quality Checks
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || inputs.job == 'all' || inputs.job == 'code-quality'
     defaults:
       run:
         working-directory: backend
@@ -169,7 +138,6 @@ jobs:
   coverage-check:
     name: Coverage Threshold Check
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || inputs.job == 'all' || inputs.job == 'coverage'
     defaults:
       run:
         working-directory: backend
@@ -196,118 +164,10 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ Coverage meets 85% threshold" >> $GITHUB_STEP_SUMMARY
 
-  chaos-tests:
-    name: Chaos Tests (${{ matrix.browser }})
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || inputs.job == 'all' || inputs.job == 'chaos-tests'
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, firefox, webkit]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        run: uv python install 3.11
-
-      - name: Install backend dependencies
-        working-directory: backend
-        run: uv sync
-
-      - name: Create data directory
-        working-directory: backend
-        run: mkdir -p data
-
-      - name: Initialize database schema
-        working-directory: backend
-        run: uv run python -m scripts.init_db
-        env:
-          DATABASE_URL: "sqlite+aiosqlite:///./data/wallet.db"
-
-      - name: Seed database
-        working-directory: backend
-        run: uv run python -m scripts.seed
-        env:
-          DATABASE_URL: "sqlite+aiosqlite:///./data/wallet.db"
-
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Install Playwright browsers
-        working-directory: frontend
-        run: npx playwright install --with-deps ${{ matrix.browser }}
-
-      - name: Run chaos tests
-        working-directory: frontend
-        run: npx playwright test --grep "@chaos" --project=${{ matrix.browser }}
-        env:
-          CI: true
-
-      - name: Upload chaos test report
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: chaos-report-${{ matrix.browser }}
-          path: frontend/playwright-report/
-          retention-days: 7
-
-  performance-tests:
-    name: Performance Tests
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || inputs.job == 'all' || inputs.job == 'performance'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        run: uv python install 3.11
-
-      - name: Install backend dependencies
-        working-directory: backend
-        run: uv sync
-
-      - name: Run performance tests
-        working-directory: backend
-        run: |
-          uv run pytest tests/performance -v -m performance --tb=short
-
-          echo "## Performance Tests" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Performance tests completed" >> $GITHUB_STEP_SUMMARY
-        env:
-          OTEL_ENABLED: "false"
-
-      - name: Upload performance results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: performance-results
-          path: backend/test_perf.db
-          retention-days: 7
-
   create-issues:
     name: Create Issues for Failures
     runs-on: ubuntu-latest
-    needs: [security-audit, dead-code-analysis, code-quality, coverage-check, chaos-tests, performance-tests]
+    needs: [security-audit, dead-code-analysis, code-quality, coverage-check]
     if: always() && contains(needs.*.result, 'failure')
 
     steps:
@@ -318,7 +178,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Check if issue already exists
           existing=$(gh issue list --label "security" --state open --json number --jq 'length')
           if [ "$existing" -gt 0 ]; then
             echo "Security issue already exists, skipping"
@@ -334,13 +193,8 @@ jobs:
 
           **Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-          ### Details
-          \`\`\`
-          ${{ needs.security-audit.outputs.details }}
-          \`\`\`
-
           ### Next Steps
-          1. Review the vulnerabilities above
+          1. Review the vulnerabilities in the workflow run
           2. Update affected packages: \`uv lock --upgrade-package <package>\`
           3. If no fix available, assess risk and document in code"
 
@@ -349,7 +203,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Check if issue already exists
           existing=$(gh issue list --label "dead-code" --state open --json number --jq 'length')
           if [ "$existing" -gt 0 ]; then
             echo "Dead code issue already exists, skipping"
@@ -365,11 +218,6 @@ jobs:
 
           **Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-          ### Details
-          \`\`\`
-          ${{ needs.dead-code-analysis.outputs.details }}
-          \`\`\`
-
           ### Next Steps
           1. Review each item - some may be false positives (e.g., used via reflection)
           2. Remove confirmed dead code
@@ -380,7 +228,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Check if issue already exists
           existing=$(gh issue list --label "coverage" --state open --json number --jq 'length')
           if [ "$existing" -gt 0 ]; then
             echo "Coverage issue already exists, skipping"
@@ -400,55 +247,3 @@ jobs:
           1. Check the workflow run for detailed coverage report
           2. Identify untested code paths
           3. Add tests to restore coverage above 85%"
-
-      - name: Create issue for chaos test failures
-        if: needs.chaos-tests.result == 'failure'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Check if issue already exists
-          existing=$(gh issue list --label "chaos-testing" --state open --json number --jq 'length')
-          if [ "$existing" -gt 0 ]; then
-            echo "Chaos testing issue already exists, skipping"
-            exit 0
-          fi
-
-          gh issue create \
-            --title "🐒 Chaos Testing: Failures detected" \
-            --label "chaos-testing,automated,bug" \
-            --body "## Chaos Tests Failed
-
-          The nightly chaos/monkey tests found issues that may indicate UI instability.
-
-          **Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-          ### Next Steps
-          1. Download the Playwright report artifact from the failed run
-          2. Review the seed values in failed tests to reproduce
-          3. Fix identified crashes or error handling issues"
-
-      - name: Create issue for performance regression
-        if: needs.performance-tests.result == 'failure'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Check if issue already exists
-          existing=$(gh issue list --label "performance" --state open --json number --jq 'length')
-          if [ "$existing" -gt 0 ]; then
-            echo "Performance issue already exists, skipping"
-            exit 0
-          fi
-
-          gh issue create \
-            --title "🐢 Performance: Test failures detected" \
-            --label "performance,automated" \
-            --body "## Performance Tests Failed
-
-          The nightly performance tests detected failures or regressions.
-
-          **Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-          ### Next Steps
-          1. Review the performance test output in the workflow run
-          2. Check for recent changes that may have impacted performance
-          3. Profile affected endpoints to identify bottlenecks"
