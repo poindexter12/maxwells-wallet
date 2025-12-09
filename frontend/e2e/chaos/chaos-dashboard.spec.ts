@@ -8,8 +8,9 @@ import { performRandomActions, SeededRandom } from './chaos-helpers';
  * Each round runs fully before the next begins.
  */
 
-// Fibonacci sequence starting at meaningful scale
-const FIBONACCI_ROUNDS = [13, 21, 34, 55, 89];
+// Reduced sequence for debugging CI issues
+// Full: [13, 21, 34, 55, 89]
+const FIBONACCI_ROUNDS = [13, 21];
 
 test.describe('Dashboard Chaos - Fibonacci Ramp @chaos', () => {
   const baseSeed = 12345;

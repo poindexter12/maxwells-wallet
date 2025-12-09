@@ -116,14 +116,13 @@ export async function performRandomActions(
   };
   page.on('pageerror', errorHandler);
 
-  console.log(`🐒 Chaos monkey starting with seed: ${seed}`);
-
-  // Calculate progress milestones (every 25%)
-  const progressMilestones = [25, 50, 75, 100];
-  let lastMilestone = 0;
+  const startTime = Date.now();
+  console.log(`🐒 Chaos monkey starting with seed: ${seed} at ${new Date().toISOString()}`);
+  console.log(`  Config: ${options.actions} actions, delay ${minDelay}-${maxDelay}ms, timeout ${timeout}ms`);
 
   for (let i = 0; i < options.actions; i++) {
     const actionType = rng.pick(actionTypes);
+    const actionStart = Date.now();
 
     try {
       const actionDesc = await executeAction(
@@ -133,24 +132,20 @@ export async function performRandomActions(
         excludeSelectors,
         timeout
       );
+      const actionDuration = Date.now() - actionStart;
       actionsLog.push(`${i + 1}. ${actionDesc}`);
+      console.log(`  [${i + 1}/${options.actions}] ${actionDesc} (${actionDuration}ms)`);
       options.onAction?.(actionDesc, i);
     } catch (e) {
       // Individual action failures are expected in chaos testing
       const msg = e instanceof Error ? e.message : String(e);
+      const actionDuration = Date.now() - actionStart;
       actionsLog.push(`${i + 1}. [FAILED] ${actionType}: ${msg}`);
+      console.log(`  [${i + 1}/${options.actions}] FAILED ${actionType}: ${msg} (${actionDuration}ms)`);
     }
 
     // Random delay between actions
     await page.waitForTimeout(rng.int(minDelay, maxDelay));
-
-    // Progress reporting
-    const progress = Math.floor(((i + 1) / options.actions) * 100);
-    const milestone = progressMilestones.find((m) => m <= progress && m > lastMilestone);
-    if (milestone) {
-      console.log(`  📊 Progress: ${progress}% (${i + 1}/${options.actions} actions)`);
-      lastMilestone = milestone;
-    }
 
     // Early exit if we hit a crash
     if (errors.length > 0) {
@@ -161,7 +156,9 @@ export async function performRandomActions(
 
   page.off('pageerror', errorHandler);
 
-  console.log(`🐒 Chaos monkey completed. Actions: ${actionsLog.length}, Errors: ${errors.length}`);
+  const totalDuration = Date.now() - startTime;
+  console.log(`🐒 Chaos monkey completed at ${new Date().toISOString()}`);
+  console.log(`  Total: ${actionsLog.length} actions in ${totalDuration}ms (${Math.round(totalDuration / actionsLog.length)}ms/action), Errors: ${errors.length}`);
 
   return {
     seed,
