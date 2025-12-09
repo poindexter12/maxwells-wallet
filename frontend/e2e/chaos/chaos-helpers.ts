@@ -482,3 +482,304 @@ function generateInputValue(type: string, rng: SeededRandom): string {
       return `chaos-${rng.string(6)}`;
   }
 }
+
+// =============================================================================
+// DEMON CHAOS MODE - Adversarial/Fuzz Testing
+// =============================================================================
+
+/**
+ * Adversarial input payloads for security and robustness testing
+ */
+export const ADVERSARIAL_PAYLOADS = {
+  // XSS attack vectors
+  xss: [
+    '<script>alert(1)</script>',
+    '<img src=x onerror=alert(1)>',
+    '"><script>alert(1)</script>',
+    "javascript:alert('XSS')",
+    '<svg/onload=alert(1)>',
+    '{{constructor.constructor("alert(1)")()}}',
+  ],
+
+  // SQL injection patterns
+  sql: [
+    "'; DROP TABLE transactions; --",
+    "1' OR '1'='1",
+    "1; SELECT * FROM users--",
+    "' UNION SELECT * FROM --",
+    "admin'--",
+    "1' AND SLEEP(5)--",
+  ],
+
+  // Unicode edge cases
+  unicode: [
+    '🔥'.repeat(100), // Emoji spam
+    '\u202E\u202Dtest', // RTL override
+    '\u0000', // Null character
+    '﷽'.repeat(20), // Longest unicode char
+    '\uFEFF'.repeat(10), // Zero-width no-break space
+    'Ṫ̈́ḣ̈́ï̈́s̈́ ï̈́s̈́ z̈́ä̈́l̈́g̈́ö̈́', // Zalgo text
+    '表ポあA鷗ŒéＢ逍Ü', // Mixed scripts
+  ],
+
+  // Buffer overflow attempts
+  overflow: [
+    'A'.repeat(1000),
+    'x'.repeat(5000),
+    '9'.repeat(10000), // For number fields
+    '<'.repeat(500) + '>'.repeat(500),
+  ],
+
+  // Control characters
+  control: [
+    '\t\t\t\n\n\n',
+    '\r\n\r\n\r\n',
+    '\x00\x01\x02\x03',
+    '\b\b\b', // Backspace
+    '\x1B[2J', // ANSI clear screen
+  ],
+
+  // Special characters that might break parsing
+  special: [
+    '\\\\\\',
+    '///',
+    '"""',
+    "'''",
+    '<<<>>>',
+    '&&&|||',
+    ';;;',
+    '```',
+    '${process.env}',
+    '{{7*7}}',
+  ],
+
+  // Path traversal
+  path: [
+    '../../../etc/passwd',
+    '..\\..\\..\\windows\\system32',
+    '%2e%2e%2f',
+    '....//....//....//etc/passwd',
+  ],
+
+  // Format string attacks
+  format: [
+    '%s%s%s%s%s',
+    '%n%n%n%n',
+    '%x%x%x%x',
+    '{0}{1}{2}',
+  ],
+
+  // JSON/XML breaking
+  markup: [
+    '{"__proto__":{"admin":true}}',
+    '</script><script>alert(1)</script>',
+    ']]><!--',
+    '<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>',
+  ],
+};
+
+/**
+ * Generate an adversarial input value for fuzz testing
+ */
+export function generateAdversarialInput(rng: SeededRandom, category?: keyof typeof ADVERSARIAL_PAYLOADS): string {
+  const categories = Object.keys(ADVERSARIAL_PAYLOADS) as (keyof typeof ADVERSARIAL_PAYLOADS)[];
+  const selectedCategory = category ?? rng.pick(categories);
+  const payloads = ADVERSARIAL_PAYLOADS[selectedCategory];
+  return rng.pick(payloads);
+}
+
+/**
+ * Demon chaos action types - aggressive/adversarial actions
+ */
+export type DemonActionType =
+  | 'rapid-click'      // Multiple fast clicks on same element
+  | 'double-click'     // Actual dblclick event
+  | 'fuzz-input'       // Fill with adversarial payload
+  | 'paste-bomb'       // Paste huge string via clipboard
+  | 'blur-focus-spam'; // Rapidly tab through fields
+
+export interface DemonChaosOptions {
+  actions: number;
+  seed?: number;
+  actionTypes?: DemonActionType[];
+  excludeSelectors?: string[];
+  onAction?: (action: string, index: number) => void;
+}
+
+export interface DemonChaosResult {
+  seed: number;
+  actionsPerformed: number;
+  errors: string[];
+  actions: string[];
+}
+
+const DEFAULT_DEMON_ACTION_TYPES: DemonActionType[] = [
+  'rapid-click',
+  'double-click',
+  'fuzz-input',
+  'blur-focus-spam',
+];
+
+/**
+ * Perform adversarial/fuzz actions on the page
+ * This is more aggressive than regular chaos - intentionally tries to break things
+ */
+export async function performDemonActions(
+  page: Page,
+  options: DemonChaosOptions
+): Promise<DemonChaosResult> {
+  const seed = options.seed ?? Date.now();
+  const rng = new SeededRandom(seed);
+  const actionTypes = options.actionTypes ?? DEFAULT_DEMON_ACTION_TYPES;
+  const excludeSelectors = [
+    ...DEFAULT_EXCLUDE_SELECTORS,
+    ...(options.excludeSelectors ?? []),
+  ];
+
+  const errors: string[] = [];
+  const actionsLog: string[] = [];
+
+  const errorHandler = (error: Error) => {
+    errors.push(error.message);
+  };
+  page.on('pageerror', errorHandler);
+
+  console.log(`😈 Demon chaos starting with seed: ${seed}`);
+
+  for (let i = 0; i < options.actions; i++) {
+    const actionType = rng.pick(actionTypes);
+    let actionDesc: string | null = null;
+
+    try {
+      actionDesc = await executeDemonAction(
+        page,
+        actionType,
+        rng,
+        excludeSelectors
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      actionsLog.push(`${i + 1}. [FAILED] ${actionType}: ${msg}`);
+      errors.push(`[${actionType}] ${msg}`);
+      console.log(`  [${i + 1}/${options.actions}] FAILED ${actionType}: ${msg}`);
+      break;
+    }
+
+    if (actionDesc) {
+      actionsLog.push(`${i + 1}. ${actionDesc}`);
+      console.log(`  [${i + 1}/${options.actions}] ${actionDesc}`);
+      options.onAction?.(actionDesc, i);
+    }
+
+    // No delays in demon mode - we're trying to break things!
+    if (errors.length > 0) break;
+  }
+
+  page.off('pageerror', errorHandler);
+
+  console.log(`😈 Demon chaos completed: ${actionsLog.length} actions, ${errors.length} errors`);
+
+  return {
+    seed,
+    actionsPerformed: actionsLog.length,
+    errors,
+    actions: actionsLog,
+  };
+}
+
+async function executeDemonAction(
+  page: Page,
+  actionType: DemonActionType,
+  rng: SeededRandom,
+  excludeSelectors: string[]
+): Promise<string | null> {
+  switch (actionType) {
+    case 'rapid-click': {
+      const buttons = await getVisibleElements(page, 'button:visible', excludeSelectors);
+      if (buttons.length === 0) return null;
+
+      const button = rng.pick(buttons);
+      const text = await button.textContent();
+      const clicks = rng.int(3, 10);
+
+      // Rapid fire clicks with no wait
+      for (let i = 0; i < clicks; i++) {
+        await button.click({ force: true, timeout: 1000 }).catch(() => {});
+      }
+      return `rapid-click: "${text?.trim().slice(0, 20)}" x${clicks}`;
+    }
+
+    case 'double-click': {
+      const elements = await getVisibleElements(
+        page,
+        'button:visible, a:visible, [role="button"]:visible',
+        excludeSelectors
+      );
+      if (elements.length === 0) return null;
+
+      const element = rng.pick(elements);
+      const text = await element.textContent();
+      await element.dblclick({ timeout: 2000 });
+      return `double-click: "${text?.trim().slice(0, 20)}"`;
+    }
+
+    case 'fuzz-input': {
+      const inputs = await getVisibleElements(
+        page,
+        'input:visible:not([type=file]):not([type=hidden]):not([readonly]), textarea:visible',
+        excludeSelectors
+      );
+      if (inputs.length === 0) return null;
+
+      const input = rng.pick(inputs);
+      const payload = generateAdversarialInput(rng);
+      const name = await input.getAttribute('name') || await input.getAttribute('placeholder') || 'unknown';
+
+      await input.fill(payload);
+      // Also try pressing Enter to submit
+      await input.press('Enter').catch(() => {});
+
+      return `fuzz-input[${name}]: "${payload.slice(0, 30)}${payload.length > 30 ? '...' : ''}"`;
+    }
+
+    case 'paste-bomb': {
+      const inputs = await getVisibleElements(
+        page,
+        'input:visible:not([type=file]):not([type=hidden]):not([readonly]), textarea:visible',
+        excludeSelectors
+      );
+      if (inputs.length === 0) return null;
+
+      const input = rng.pick(inputs);
+      const bomb = 'X'.repeat(rng.int(1000, 10000));
+      const name = await input.getAttribute('name') || 'unknown';
+
+      await input.focus();
+      // Paste via keyboard
+      await page.keyboard.insertText(bomb);
+
+      return `paste-bomb[${name}]: ${bomb.length} chars`;
+    }
+
+    case 'blur-focus-spam': {
+      const inputs = await getVisibleElements(
+        page,
+        'input:visible:not([type=file]):not([type=hidden]), textarea:visible, select:visible, button:visible',
+        excludeSelectors
+      );
+      if (inputs.length < 2) return null;
+
+      const iterations = rng.int(5, 15);
+      for (let i = 0; i < iterations; i++) {
+        const el = rng.pick(inputs);
+        await el.focus().catch(() => {});
+        await page.keyboard.press('Tab');
+      }
+
+      return `blur-focus-spam: ${iterations} tab cycles`;
+    }
+
+    default:
+      return null;
+  }
+}
