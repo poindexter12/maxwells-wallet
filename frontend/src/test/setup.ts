@@ -2,6 +2,23 @@ import '@testing-library/jest-dom'
 import { vi, beforeAll, afterAll, afterEach } from 'vitest'
 import { server } from './mocks/server'
 
+// Mock next-intl for tests
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string, values?: Record<string, unknown>) => {
+    // Return the key with interpolated values for testing
+    if (values) {
+      let result = key
+      for (const [k, v] of Object.entries(values)) {
+        result = result.replace(`{${k}}`, String(v))
+      }
+      return result
+    }
+    return key
+  },
+  useLocale: () => 'en-US',
+  NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
+
 // Start MSW server before all tests
 beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
 

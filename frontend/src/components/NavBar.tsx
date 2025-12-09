@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { usePathname } from 'next/navigation'
 
 export function NavBar() {
@@ -50,7 +51,8 @@ export function NavBar() {
               </Link>
             </div>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
             <ThemeSwitcher />
           </div>
         </div>

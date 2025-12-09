@@ -1,0 +1,380 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear",
+    "confirm": "Confirm",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "all": "All",
+    "none": "None",
+    "apply": "Apply",
+    "reset": "Reset",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "new": "New",
+    "add": "Add",
+    "remove": "Remove",
+    "view": "View",
+    "manage": "Manage",
+    "customize": "Customize",
+    "collapse": "Collapse",
+    "expand": "Expand"
+  },
+  "fields": {
+    "amount": "Amount",
+    "date": "Date",
+    "status": "Status",
+    "actions": "Actions",
+    "details": "Details",
+    "description": "Description",
+    "name": "Name",
+    "type": "Type",
+    "category": "Category",
+    "value": "Value",
+    "period": "Period",
+    "notes": "Notes"
+  },
+  "nav": {
+    "brand": "Maxwell's Wallet",
+    "dashboard": "Dashboard",
+    "transactions": "Transactions",
+    "budgets": "Budgets",
+    "organize": "Organize",
+    "tools": "Tools",
+    "admin": "Admin",
+    "import": "Import CSV"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageDescription": "Choose your preferred language for the interface",
+    "browserDefault": "Auto (Browser)",
+    "saved": "Settings saved",
+    "theme": "Theme"
+  },
+  "transactions": {
+    "title": "Transactions",
+    "subtitle": "Showing {count} of {total} transactions",
+    "merchant": "Merchant",
+    "description": "Description",
+    "account": "Account",
+    "bucket": "Bucket",
+    "occasion": "Occasion",
+    "searchPlaceholder": "Search merchant or description...",
+    "allBuckets": "All Buckets",
+    "allOccasions": "All Occasions",
+    "allAccounts": "All Accounts",
+    "allStatus": "All Status",
+    "hideTransfers": "Hide Transfers",
+    "showTransfers": "All Transactions",
+    "transfersOnly": "Transfers Only",
+    "transfer": "Transfer",
+    "transferExcluded": "Internal transfer - excluded from spending",
+    "status": {
+      "unreconciled": "Unreconciled",
+      "matched": "Matched",
+      "manuallyEntered": "Manually Entered",
+      "ignored": "Ignored"
+    },
+    "filters": {
+      "title": "Filters",
+      "thisMonth": "This Month",
+      "lastMonth": "Last Month",
+      "thisYear": "This Year",
+      "ytd": "YTD",
+      "last90Days": "Last 90 Days",
+      "large": "Large ($100+)",
+      "topSpending": "Top Spending",
+      "clearAll": "Clear All",
+      "date": "Date:",
+      "quick": "Quick:",
+      "advanced": "Advanced filters",
+      "clickToInclude": "Click to include, Shift+Click to exclude"
+    },
+    "bulk": {
+      "selectAll": "Select all ({count} loaded)",
+      "selected": "{count} of {total} selected",
+      "assign": "Assign:",
+      "chooseType": "Choose type...",
+      "selectBucket": "Select bucket...",
+      "selectOccasion": "Select occasion...",
+      "selectAccount": "Select account...",
+      "apply": "Apply to {count}",
+      "applying": "Applying...",
+      "clearSelection": "Clear selection"
+    },
+    "confirmDelete": "Are you sure you want to delete this transaction?"
+  },
+  "budgets": {
+    "title": "Budget Tracking",
+    "subtitle": "Monitor spending against budget limits for buckets, occasions, and accounts",
+    "newBudget": "New Budget",
+    "editBudget": "Edit Budget",
+    "createBudget": "Create Budget",
+    "allBudgets": "All Budgets",
+    "noBudgets": "No budgets created yet",
+    "alerts": "Budget Alerts",
+    "spent": "Spent",
+    "budget": "Budget",
+    "remaining": "Remaining",
+    "used": "{percent}% used",
+    "selectCategory": "Select a category...",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "rollover": "Enable rollover (unused budget carries to next period)",
+    "status": {
+      "onTrack": "On Track",
+      "warning": "Warning",
+      "exceeded": "Exceeded"
+    },
+    "confirmDelete": "Are you sure you want to delete this budget?"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "noDashboard": "No dashboard available",
+    "createDashboard": "Create new dashboard",
+    "noWidgets": "No widgets visible",
+    "dateRange": {
+      "mtd": "Month to Date",
+      "qtd": "Quarter to Date",
+      "ytd": "Year to Date",
+      "last30Days": "Last 30 Days",
+      "last90Days": "Last 90 Days",
+      "lastYear": "Last Year"
+    },
+    "widgets": {
+      "summary": "Summary",
+      "velocity": "Spending Velocity",
+      "anomalies": "Anomalies",
+      "bucketPie": "Spending by Bucket",
+      "topMerchants": "Top Merchants",
+      "trends": "Trends",
+      "sankey": "Money Flow",
+      "treemap": "Spending Breakdown",
+      "heatmap": "Spending Calendar",
+      "budgetStatus": "Budget Status",
+      "creditCards": "Credit Cards",
+      "recurring": "Upcoming Recurring"
+    },
+    "summary": {
+      "totalIncome": "Total Income",
+      "totalExpenses": "Total Expenses",
+      "net": "Net",
+      "vsLastMonth": "vs last month"
+    }
+  },
+  "import": {
+    "title": "Import Transactions",
+    "subtitle": "Upload CSV, QIF, QFX, or OFX files from your bank",
+    "selectFile": "Select File",
+    "selectFiles": "Select Files",
+    "preview": "Preview",
+    "confirm": "Confirm Import",
+    "confirmImport": "Import Transactions",
+    "success": "Import Successful",
+    "transactionsImported": "{count} transactions imported",
+    "duplicatesSkipped": "{count} duplicates skipped",
+    "format": "Format",
+    "formatOptional": "Format (Optional)",
+    "account": "Account",
+    "accountRequired": "Required for accurate duplicate detection",
+    "singleFile": "Single File Import",
+    "batchImport": "Batch Import (Multiple Files)",
+    "noFilesSelected": "Please select at least one file to import",
+    "processing": "Processing...",
+    "analyzing": "Analyzing file..."
+  },
+  "admin": {
+    "title": "Admin",
+    "tabs": {
+      "overview": "Overview",
+      "imports": "Imports",
+      "health": "Health",
+      "buckets": "Buckets",
+      "accounts": "Accounts",
+      "occasions": "Occasions",
+      "expenses": "Expenses"
+    },
+    "stats": {
+      "totalTransactions": "Total Transactions",
+      "totalImports": "Total Imports",
+      "lastImport": "Last Import"
+    },
+    "confirmDelete": "Delete \"{name}\"? This cannot be undone.",
+    "purge": {
+      "title": "Purge All Data",
+      "warning": "This will permanently delete all transactions. This action cannot be undone.",
+      "confirm": "Type PURGE_ALL to confirm"
+    }
+  },
+  "tools": {
+    "title": "Tools",
+    "subtitle": "Manage categorization rules, merchant aliases, and transfers",
+    "categoryRules": "Category Rules",
+    "merchantAliases": "Merchant Aliases",
+    "transfers": "Transfers",
+    "savedFilters": "Saved Filters"
+  },
+  "organize": {
+    "title": "Organize",
+    "subtitle": "Manage and organize your tags and categories"
+  },
+  "recurring": {
+    "title": "Recurring Transactions",
+    "subtitle": "Track subscriptions and recurring payments",
+    "upcoming": "Upcoming Payments",
+    "detected": "Detected Patterns",
+    "frequency": {
+      "weekly": "Weekly",
+      "biweekly": "Bi-weekly",
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "yearly": "Yearly"
+    }
+  },
+  "reconcile": {
+    "title": "Reconcile",
+    "subtitle": "Review and categorize imported transactions",
+    "markReconciled": "Mark Reconciled",
+    "markIgnored": "Mark Ignored"
+  },
+  "tags": {
+    "title": "Tags",
+    "bucket": "Bucket",
+    "occasion": "Occasion",
+    "account": "Account",
+    "expense": "Expense",
+    "create": "Create Tag",
+    "edit": "Edit Tag",
+    "delete": "Delete Tag",
+    "namespace": "Namespace",
+    "sortOrder": "Sort Order",
+    "color": "Color"
+  },
+  "errors": {
+    "generic": "An error occurred. Please try again.",
+    "notFound": "The requested resource was not found.",
+    "validation": "Invalid input provided.",
+    "network": "Network error. Please check your connection.",
+    "unauthorized": "You are not authorized to perform this action.",
+    "TRANSACTION_NOT_FOUND": "Transaction not found.",
+    "TAG_NOT_FOUND": "Tag not found.",
+    "TAG_ALREADY_EXISTS": "A tag with this name already exists.",
+    "TAG_IN_USE": "Cannot delete tag: it is used by {count} transaction(s).",
+    "TAG_NOT_APPLIED": "This tag is not applied to this transaction.",
+    "BUDGET_NOT_FOUND": "Budget not found.",
+    "BUDGET_ALREADY_EXISTS": "A budget already exists for {tag} ({period}).",
+    "IMPORT_NO_TRANSACTIONS": "No transactions found in file.",
+    "IMPORT_FORMAT_NOT_FOUND": "Import format not found.",
+    "IMPORT_UNSUPPORTED_FORMAT": "Unsupported file format.",
+    "IMPORT_NO_FILES": "No files provided.",
+    "DASHBOARD_NOT_FOUND": "Dashboard not found.",
+    "WIDGET_NOT_FOUND": "Widget not found.",
+    "CANNOT_DELETE_LAST_DASHBOARD": "Cannot delete the last dashboard.",
+    "FILTER_NOT_FOUND": "Filter not found.",
+    "ACCOUNT_NOT_FOUND": "Account not found.",
+    "RULE_NOT_FOUND": "Rule not found."
+  },
+  "help": {
+    "dismiss": "Got it",
+    "showHelp": "Help",
+    "hideHelp": "Hide help",
+    "newFeature": "New",
+    "transactions": {
+      "title": "Transactions Help",
+      "description": "View, filter, and categorize all your imported transactions.",
+      "steps": [
+        "Use filters to narrow down transactions by date, category, or amount",
+        "Click on a transaction to view details and edit",
+        "Use bulk actions to categorize multiple transactions at once",
+        "Toggle transfer visibility to focus on spending or see all movements"
+      ],
+      "tips": [
+        "Hold Shift while clicking a filter to exclude instead of include",
+        "Use the search bar to find transactions by merchant or description",
+        "Click column headers to sort transactions"
+      ]
+    },
+    "budgets": {
+      "title": "Budgets Help",
+      "description": "Set spending limits and track your progress against them.",
+      "steps": [
+        "Click 'New Budget' to create a budget for a bucket, occasion, or account",
+        "Set monthly or yearly limits",
+        "Monitor the progress bar to see how much you've spent",
+        "Enable rollover to carry unused budget to the next period"
+      ],
+      "tips": [
+        "Budgets turn yellow at 80% and red at 100%",
+        "Click on a budget to see detailed spending breakdown"
+      ]
+    },
+    "dashboard": {
+      "title": "Dashboard Help",
+      "description": "Get a quick overview of your financial health with customizable widgets.",
+      "steps": [
+        "Use date range selector to view different time periods",
+        "Click 'Manage' to show/hide widgets",
+        "Drag widgets to reorder them",
+        "Create multiple dashboards for different views"
+      ],
+      "tips": [
+        "Click on chart elements to drill down into transactions",
+        "Anomalies highlight unusual spending patterns"
+      ]
+    },
+    "import": {
+      "title": "Import Help",
+      "description": "Import transactions from your bank's CSV, QIF, QFX, or OFX files.",
+      "steps": [
+        "Select the file from your bank's export",
+        "Choose the account (required for duplicate detection)",
+        "Preview the transactions before importing",
+        "Confirm to add transactions to your records"
+      ],
+      "tips": [
+        "Use batch import for multiple files at once",
+        "The format is usually auto-detected",
+        "Duplicates are automatically skipped"
+      ]
+    },
+    "admin": {
+      "title": "Admin Help",
+      "description": "Manage tags, view import history, and monitor system health.",
+      "steps": [
+        "Use tabs to navigate between different admin sections",
+        "Create and organize tags for categorization",
+        "View import history and statistics",
+        "Monitor system health metrics"
+      ],
+      "tips": [
+        "Delete unused tags to keep your categories clean",
+        "Check the Health tab for performance metrics"
+      ]
+    },
+    "tools": {
+      "title": "Tools Help",
+      "description": "Set up automation rules for categorizing transactions.",
+      "steps": [
+        "Create category rules to auto-assign tags based on merchant or description",
+        "Set up merchant aliases to normalize messy bank names",
+        "Detect and link internal transfers",
+        "Save filters for quick access to common views"
+      ],
+      "tips": [
+        "Rules are applied in priority order",
+        "Test rules before applying to see which transactions match"
+      ]
+    }
+  }
+}
