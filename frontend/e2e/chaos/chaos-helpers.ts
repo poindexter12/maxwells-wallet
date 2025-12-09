@@ -201,17 +201,32 @@ async function executeAction(
       // Fast path: find elements with data-chaos-target attribute
       const targets = await page.locator(CHAOS_TARGET_SELECTOR).all();
 
-      // Filter to visible elements only
-      const visibleTargets: Locator[] = [];
+      // Filter to visible and enabled elements only
+      const eligibleTargets: Locator[] = [];
       for (const target of targets) {
-        if (await target.isVisible().catch(() => false)) {
-          visibleTargets.push(target);
+        try {
+          const isVisible = await target.isVisible();
+          if (!isVisible) continue;
+
+          // Check if disabled
+          const isDisabled = await target.evaluate((el) => {
+            return (
+              (el as HTMLButtonElement).disabled ||
+              el.getAttribute('aria-disabled') === 'true' ||
+              el.classList.contains('disabled')
+            );
+          });
+          if (isDisabled) continue;
+
+          eligibleTargets.push(target);
+        } catch {
+          // Element may have become stale, skip it
         }
       }
 
-      if (visibleTargets.length === 0) return null;
+      if (eligibleTargets.length === 0) return null;
 
-      const target = rng.pick(visibleTargets);
+      const target = rng.pick(eligibleTargets);
       const name = await target.getAttribute('data-chaos-target');
       const tagName = await target.evaluate(el => el.tagName.toLowerCase());
 
