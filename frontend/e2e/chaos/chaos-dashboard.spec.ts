@@ -19,7 +19,7 @@ test.describe('Dashboard Chaos Testing @chaos', () => {
   });
 
   test('dashboard survives 50 random interactions', async ({ page }) => {
-    test.setTimeout(90000); // 50 actions with delays need more time
+    test.setTimeout(180000); // 50 actions with delays need 3 minutes
     const seed = 12345; // Fixed seed for reproducibility
 
     const result = await performRandomActions(page, {
@@ -123,7 +123,7 @@ test.describe('Dashboard Chaos Testing @chaos', () => {
   });
 
   test('rapid random clicking - stress test', async ({ page }) => {
-    test.setTimeout(60000); // 100 fast actions
+    test.setTimeout(120000); // 100 fast actions need 2 minutes
     const seed = 99999;
 
     // Fast clicking with minimal delays

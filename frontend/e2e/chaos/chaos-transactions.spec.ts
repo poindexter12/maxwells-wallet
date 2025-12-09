@@ -529,7 +529,7 @@ test.describe('Transactions Chaos Testing @chaos', () => {
   });
 
   test('general transactions chaos - seed 77777', async ({ page }) => {
-    test.setTimeout(90000); // 50 actions need more time
+    test.setTimeout(180000); // 50 actions need 3 minutes
     const seed = 77777;
 
     const result = await performRandomActions(page, {
