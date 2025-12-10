@@ -62,7 +62,7 @@ class TestImportPreview:
         files = {"file": ("test.txt", io.BytesIO(content), "text/plain")}
         response = await client.post("/api/v1/import/preview", files=files)
         assert response.status_code == 400
-        assert "Unsupported file type" in response.json()["detail"]
+        assert response.json()["detail"]["error_code"] == "IMPORT_UNSUPPORTED_FORMAT"
 
     @pytest.mark.asyncio
     async def test_preview_with_format_hint(self, client: AsyncClient, seed_categories):
@@ -137,7 +137,7 @@ class TestImportConfirm:
         data = {"format_type": "amex_cc"}
         response = await client.post("/api/v1/import/confirm", files=files, data=data)
         assert response.status_code == 400
-        assert "Unsupported file type" in response.json()["detail"]
+        assert response.json()["detail"]["error_code"] == "IMPORT_UNSUPPORTED_FORMAT"
 
     @pytest.mark.asyncio
     async def test_confirm_import_empty_file(self, client: AsyncClient):
@@ -148,7 +148,7 @@ class TestImportConfirm:
         data = {"format_type": "amex_cc"}
         response = await client.post("/api/v1/import/confirm", files=files, data=data)
         assert response.status_code == 400
-        assert "No transactions found" in response.json()["detail"]
+        assert response.json()["detail"]["error_code"] == "IMPORT_NO_TRANSACTIONS"
 
     @pytest.mark.asyncio
     async def test_confirm_import_with_save_format(self, client: AsyncClient, seed_categories):
@@ -183,7 +183,7 @@ class TestImportFormats:
         """Delete nonexistent format returns 404"""
         response = await client.delete("/api/v1/import/formats/99999")
         assert response.status_code == 404
-        assert "not found" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "IMPORT_FORMAT_NOT_FOUND"
 
     @pytest.mark.asyncio
     async def test_delete_format_success(self, client: AsyncClient, seed_categories):
@@ -249,7 +249,7 @@ class TestBatchImport:
         ]
         response = await client.post("/api/v1/import/batch/upload", files=files)
         assert response.status_code == 400
-        assert "unsupported" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "IMPORT_UNSUPPORTED_FORMAT"
 
     @pytest.mark.asyncio
     async def test_batch_upload_detects_bofa_from_filename(self, client: AsyncClient, seed_categories):
@@ -315,7 +315,7 @@ class TestBatchImport:
             data={"request": json.dumps(request_data)}
         )
         assert response.status_code == 400
-        assert "No files selected" in response.json()["detail"]
+        assert response.json()["detail"]["error_code"] == "IMPORT_NO_FILES"
 
     @pytest.mark.asyncio
     async def test_batch_confirm_file_not_found(self, client: AsyncClient):
@@ -337,7 +337,8 @@ class TestBatchImport:
             data={"request": json.dumps(request_data)}
         )
         assert response.status_code == 400
-        assert "not found" in response.json()["detail"].lower()
+        # File exists but with wrong name, so it's a validation error
+        assert response.json()["detail"]["error_code"] == "VALIDATION_ERROR"
 
     @pytest.mark.asyncio
     async def test_batch_confirm_cross_file_duplicates(self, client: AsyncClient, seed_categories):

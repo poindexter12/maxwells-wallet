@@ -636,7 +636,7 @@ class TestQuickenAPIImport:
         response = await client.post("/api/v1/import/preview", files=files)
 
         assert response.status_code == 400
-        assert "Unsupported file type" in response.json()["detail"]
+        assert response.json()["detail"]["error_code"] == "IMPORT_UNSUPPORTED_FORMAT"
 
 
 # =============================================================================

@@ -1,5 +1,5 @@
 """Merchant aliases router for normalizing merchant names"""
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlmodel import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
@@ -11,6 +11,7 @@ from app.models import (
     MerchantAlias, MerchantAliasCreate, MerchantAliasUpdate,
     MerchantAliasMatchType, Transaction
 )
+from app.errors import ErrorCode, not_found, bad_request
 
 
 router = APIRouter(prefix="/api/v1/merchants", tags=["merchants"])
@@ -88,7 +89,7 @@ async def get_alias(
     )
     alias = result.scalar_one_or_none()
     if not alias:
-        raise HTTPException(status_code=404, detail="Alias not found")
+        raise not_found(ErrorCode.ALIAS_NOT_FOUND, alias_id=alias_id)
     return alias
 
 
@@ -103,10 +104,7 @@ async def create_alias(
         try:
             re.compile(alias.pattern)
         except re.error as e:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid regex pattern: {str(e)}"
-            )
+            raise bad_request(ErrorCode.INVALID_REGEX, str(e), pattern=alias.pattern)
 
     # Check for duplicate pattern
     result = await session.execute(
@@ -117,9 +115,10 @@ async def create_alias(
     )
     existing = result.scalar_one_or_none()
     if existing:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Alias with pattern '{alias.pattern}' and match type '{alias.match_type}' already exists"
+        raise bad_request(
+            ErrorCode.ALIAS_ALREADY_EXISTS,
+            pattern=alias.pattern,
+            match_type=alias.match_type.value
         )
 
     db_alias = MerchantAlias(**alias.model_dump())
@@ -141,7 +140,7 @@ async def update_alias(
     )
     db_alias = result.scalar_one_or_none()
     if not db_alias:
-        raise HTTPException(status_code=404, detail="Alias not found")
+        raise not_found(ErrorCode.ALIAS_NOT_FOUND, alias_id=alias_id)
 
     # Validate regex if being updated to regex type
     update_data = alias.model_dump(exclude_unset=True)
@@ -152,10 +151,7 @@ async def update_alias(
         try:
             re.compile(new_pattern)
         except re.error as e:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid regex pattern: {str(e)}"
-            )
+            raise bad_request(ErrorCode.INVALID_REGEX, str(e), pattern=new_pattern)
 
     for key, value in update_data.items():
         setattr(db_alias, key, value)
@@ -177,7 +173,7 @@ async def delete_alias(
     )
     alias = result.scalar_one_or_none()
     if not alias:
-        raise HTTPException(status_code=404, detail="Alias not found")
+        raise not_found(ErrorCode.ALIAS_NOT_FOUND, alias_id=alias_id)
 
     await session.delete(alias)
     await session.commit()

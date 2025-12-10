@@ -72,7 +72,7 @@ class TestMerchantAliases:
 
         response = await client.post("/api/v1/merchants/aliases", json=alias_data)
         assert response.status_code == 400
-        assert "invalid regex" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "INVALID_REGEX"
 
     @pytest.mark.asyncio
     async def test_create_duplicate_alias(self, client: AsyncClient):
@@ -88,7 +88,7 @@ class TestMerchantAliases:
 
         response2 = await client.post("/api/v1/merchants/aliases", json=alias_data)
         assert response2.status_code == 400
-        assert "already exists" in response2.json()["detail"].lower()
+        assert response2.json()["detail"]["error_code"] == "ALIAS_ALREADY_EXISTS"
 
     @pytest.mark.asyncio
     async def test_list_aliases_by_priority(self, client: AsyncClient):

@@ -15,7 +15,7 @@ class TestTagRulesEdgeCases:
         """Get nonexistent rule returns 404"""
         response = await client.get("/api/v1/tag-rules/99999")
         assert response.status_code == 404
-        assert "not found" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "RULE_NOT_FOUND"
 
     @pytest.mark.asyncio
     async def test_update_nonexistent_rule(self, client: AsyncClient):
@@ -56,7 +56,7 @@ class TestTagRulesEdgeCases:
         # Try to apply it
         response = await client.post(f"/api/v1/tag-rules/{rule_id}/apply")
         assert response.status_code == 400
-        assert "disabled" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "RULE_DISABLED"
 
     @pytest.mark.asyncio
     async def test_update_rule_invalid_tag_format(self, client: AsyncClient, seed_categories):
@@ -72,7 +72,7 @@ class TestTagRulesEdgeCases:
             "tag": "invalid-no-colon"
         })
         assert response.status_code == 400
-        assert "invalid tag format" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "TAG_INVALID_FORMAT"
 
     @pytest.mark.asyncio
     async def test_update_rule_nonexistent_tag(self, client: AsyncClient, seed_categories):
@@ -88,7 +88,7 @@ class TestTagRulesEdgeCases:
             "tag": "bucket:does-not-exist-12345"
         })
         assert response.status_code == 400
-        assert "does not exist" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "TAG_NOT_FOUND"
 
 
 class TestTagRuleMatching:

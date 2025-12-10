@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlmodel import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List, Dict, Any
@@ -24,6 +24,7 @@ from app.parsers import (
 )
 from app.tag_inference import infer_bucket_tag
 from app.utils.hashing import compute_transaction_hash_from_dict
+from app.errors import ErrorCode, not_found, bad_request
 import re as regex_module
 
 router = APIRouter(prefix="/api/v1/import", tags=["import"])
@@ -171,9 +172,10 @@ async def preview_import(
     Use this to review before calling `/confirm` to actually import.
     """
     if not is_valid_import_file(file.filename):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported file type. Supported formats: {', '.join(SUPPORTED_EXTENSIONS)}"
+        raise bad_request(
+            ErrorCode.IMPORT_UNSUPPORTED_FORMAT,
+            f"Unsupported file type. Supported formats: {', '.join(SUPPORTED_EXTENSIONS)}",
+            filename=file.filename
         )
 
     # Read file content
@@ -253,9 +255,9 @@ async def confirm_import(
     Merchant aliases are applied automatically during import.
     """
     if not is_valid_import_file(file.filename):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported file type. Supported formats: {', '.join(SUPPORTED_EXTENSIONS)}"
+        raise bad_request(
+            ErrorCode.IMPORT_UNSUPPORTED_FORMAT,
+            f"Unsupported file type. Supported formats: {', '.join(SUPPORTED_EXTENSIONS)}"
         )
 
     # Read file content
@@ -266,7 +268,7 @@ async def confirm_import(
     transactions, _ = parse_csv(file_content, account_source, format_type)
 
     if not transactions:
-        raise HTTPException(status_code=400, detail="No transactions found in file")
+        raise bad_request(ErrorCode.IMPORT_NO_TRANSACTIONS)
 
     # Build user history for bucket tag suggestions
     all_txns_result = await session.execute(
@@ -474,7 +476,7 @@ async def delete_saved_format(
     )
     format_pref = result.scalar_one_or_none()
     if not format_pref:
-        raise HTTPException(status_code=404, detail="Format not found")
+        raise not_found(ErrorCode.IMPORT_FORMAT_NOT_FOUND, format_id=format_id)
 
     await session.delete(format_pref)
     await session.commit()
@@ -527,14 +529,15 @@ async def batch_upload_preview(
     - Preview of transactions
     """
     if not files:
-        raise HTTPException(status_code=400, detail="No files provided")
+        raise bad_request(ErrorCode.IMPORT_NO_FILES)
 
     # Validate all files have supported extensions
     for file in files:
         if not is_valid_import_file(file.filename):
-            raise HTTPException(
-                status_code=400,
-                detail=f"File {file.filename} has unsupported format. Supported: {', '.join(SUPPORTED_EXTENSIONS)}"
+            raise bad_request(
+                ErrorCode.IMPORT_UNSUPPORTED_FORMAT,
+                f"File {file.filename} has unsupported format. Supported: {', '.join(SUPPORTED_EXTENSIONS)}",
+                filename=file.filename
             )
 
     previews: List[BatchFilePreview] = []
@@ -688,7 +691,7 @@ async def batch_confirm_import(
     request_obj = BatchConfirmRequest(**request_data)
 
     if not request_obj.files:
-        raise HTTPException(status_code=400, detail="No files selected for import")
+        raise bad_request(ErrorCode.IMPORT_NO_FILES)
 
     # Create batch import session
     batch_session = BatchImportSession(
@@ -726,9 +729,10 @@ async def batch_confirm_import(
     for file_info in request_obj.files:
         # Find the matching uploaded file
         if file_info.filename not in file_map:
-            raise HTTPException(
-                status_code=400,
-                detail=f"File {file_info.filename} not found in uploaded files"
+            raise bad_request(
+                ErrorCode.VALIDATION_ERROR,
+                f"File {file_info.filename} not found in uploaded files",
+                filename=file_info.filename
             )
 
         file = file_map[file_info.filename]
@@ -950,9 +954,9 @@ async def analyze_csv_file(
     - **format_confidence**: Confidence score for detected format (0-1)
     """
     if not file.filename.lower().endswith('.csv'):
-        raise HTTPException(
-            status_code=400,
-            detail="Only CSV files can be analyzed for custom format creation"
+        raise bad_request(
+            ErrorCode.IMPORT_UNSUPPORTED_FORMAT,
+            "Only CSV files can be analyzed for custom format creation"
         )
 
     content = await file.read()
@@ -1016,9 +1020,9 @@ async def auto_detect_csv_format_endpoint(
     - **header_signature**: Computed signature for this file's headers
     """
     if not file.filename.lower().endswith('.csv'):
-        raise HTTPException(
-            status_code=400,
-            detail="Only CSV files can be auto-detected"
+        raise bad_request(
+            ErrorCode.IMPORT_UNSUPPORTED_FORMAT,
+            "Only CSV files can be auto-detected"
         )
 
     content = await file.read()
@@ -1096,9 +1100,9 @@ async def preview_custom_import(
     - **errors**: Any parsing errors encountered
     """
     if not file.filename.lower().endswith('.csv'):
-        raise HTTPException(
-            status_code=400,
-            detail="Custom format preview only supports CSV files"
+        raise bad_request(
+            ErrorCode.IMPORT_UNSUPPORTED_FORMAT,
+            "Custom format preview only supports CSV files"
         )
 
     content = await file.read()
@@ -1108,10 +1112,7 @@ async def preview_custom_import(
     try:
         config = CustomCsvConfig.from_json(config_json)
     except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid config JSON: {str(e)}"
-        )
+        raise bad_request(ErrorCode.IMPORT_PARSE_ERROR, f"Invalid config JSON: {str(e)}")
 
     try:
         parser = CustomCsvParser(config)
@@ -1184,9 +1185,9 @@ async def confirm_custom_import(
     - **import_session_id**: ID for tracking this import batch
     """
     if not file.filename.lower().endswith('.csv'):
-        raise HTTPException(
-            status_code=400,
-            detail="Custom format import only supports CSV files"
+        raise bad_request(
+            ErrorCode.IMPORT_UNSUPPORTED_FORMAT,
+            "Custom format import only supports CSV files"
         )
 
     content = await file.read()
@@ -1196,23 +1197,17 @@ async def confirm_custom_import(
     try:
         config = CustomCsvConfig.from_json(config_json)
     except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid config JSON: {str(e)}"
-        )
+        raise bad_request(ErrorCode.IMPORT_PARSE_ERROR, f"Invalid config JSON: {str(e)}")
 
     # Parse transactions
     try:
         parser = CustomCsvParser(config)
         parsed_transactions = parser.parse(csv_content)
     except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Parse error: {str(e)}"
-        )
+        raise bad_request(ErrorCode.IMPORT_PARSE_ERROR, f"Parse error: {str(e)}")
 
     if not parsed_transactions:
-        raise HTTPException(status_code=400, detail="No transactions found in file")
+        raise bad_request(ErrorCode.IMPORT_NO_TRANSACTIONS)
 
     # Build user history for bucket tag suggestions
     all_txns_result = await session.execute(
@@ -1422,19 +1417,17 @@ async def create_custom_config(
     try:
         CustomCsvConfig.from_json(config.config_json)
     except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid config JSON: {str(e)}"
-        )
+        raise bad_request(ErrorCode.IMPORT_PARSE_ERROR, f"Invalid config JSON: {str(e)}")
 
     # Check for duplicate name
     result = await session.execute(
         select(CustomFormatConfig).where(CustomFormatConfig.name == config.name)
     )
     if result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=400,
-            detail=f"A configuration named '{config.name}' already exists"
+        raise bad_request(
+            ErrorCode.VALIDATION_ERROR,
+            f"A configuration named '{config.name}' already exists",
+            config_name=config.name
         )
 
     db_config = CustomFormatConfig(
@@ -1472,7 +1465,7 @@ async def get_custom_config(
     )
     config = result.scalar_one_or_none()
     if not config:
-        raise HTTPException(status_code=404, detail="Configuration not found")
+        raise not_found(ErrorCode.IMPORT_CONFIG_NOT_FOUND, config_id=config_id)
     return config
 
 
@@ -1488,17 +1481,14 @@ async def update_custom_config(
     )
     config = result.scalar_one_or_none()
     if not config:
-        raise HTTPException(status_code=404, detail="Configuration not found")
+        raise not_found(ErrorCode.IMPORT_CONFIG_NOT_FOUND, config_id=config_id)
 
     # Validate config_json if provided
     if update.config_json:
         try:
             CustomCsvConfig.from_json(update.config_json)
         except Exception as e:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid config JSON: {str(e)}"
-            )
+            raise bad_request(ErrorCode.IMPORT_PARSE_ERROR, f"Invalid config JSON: {str(e)}")
 
     # Check for duplicate name
     if update.name and update.name != config.name:
@@ -1506,9 +1496,10 @@ async def update_custom_config(
             select(CustomFormatConfig).where(CustomFormatConfig.name == update.name)
         )
         if existing.scalar_one_or_none():
-            raise HTTPException(
-                status_code=400,
-                detail=f"A configuration named '{update.name}' already exists"
+            raise bad_request(
+                ErrorCode.VALIDATION_ERROR,
+                f"A configuration named '{update.name}' already exists",
+                config_name=update.name
             )
 
     update_data = update.model_dump(exclude_unset=True)
@@ -1533,7 +1524,7 @@ async def delete_custom_config(
     )
     config = result.scalar_one_or_none()
     if not config:
-        raise HTTPException(status_code=404, detail="Configuration not found")
+        raise not_found(ErrorCode.IMPORT_CONFIG_NOT_FOUND, config_id=config_id)
 
     await session.delete(config)
     await session.commit()
@@ -1555,7 +1546,7 @@ async def export_custom_config(
     )
     config = result.scalar_one_or_none()
     if not config:
-        raise HTTPException(status_code=404, detail="Configuration not found")
+        raise not_found(ErrorCode.IMPORT_CONFIG_NOT_FOUND, config_id=config_id)
 
     import json
     return {
@@ -1589,10 +1580,7 @@ async def import_custom_config(
     try:
         parsed_config = CustomCsvConfig.from_json(config_json)
     except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid config: {str(e)}"
-        )
+        raise bad_request(ErrorCode.IMPORT_PARSE_ERROR, f"Invalid config: {str(e)}")
 
     # Use provided name or extract from config
     name = request.name or request.config.get("name", "Imported Config")

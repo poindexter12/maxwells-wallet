@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func
@@ -14,6 +14,7 @@ from app.models import (
 )
 from app.utils.hashing import compute_transaction_content_hash
 from app.utils.pagination import encode_cursor, decode_cursor
+from app.errors import ErrorCode, not_found, bad_request
 from sqlmodel import and_
 from pydantic import BaseModel
 
@@ -40,19 +41,17 @@ MAX_REGEX_LENGTH = 200
 
 
 def validate_regex_pattern(pattern: str) -> None:
-    """Validate a regex pattern before use. Raises HTTPException on invalid patterns."""
+    """Validate a regex pattern before use. Raises AppException on invalid patterns."""
     if len(pattern) > MAX_REGEX_LENGTH:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Regex pattern too long (max {MAX_REGEX_LENGTH} characters)"
+        raise bad_request(
+            ErrorCode.INVALID_REGEX,
+            f"Regex pattern too long (max {MAX_REGEX_LENGTH} characters)",
+            max_length=MAX_REGEX_LENGTH
         )
     try:
         re.compile(pattern)
     except re.error as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid regex pattern: {e}"
-        )
+        raise bad_request(ErrorCode.INVALID_REGEX, f"Invalid regex pattern: {e}")
 
 
 def build_transaction_filter_query(
@@ -359,7 +358,7 @@ async def get_transaction(
     )
     transaction = result.scalar_one_or_none()
     if not transaction:
-        raise HTTPException(status_code=404, detail="Transaction not found")
+        raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
     return transaction
 
 @router.post("/", response_model=Transaction, status_code=201)
@@ -397,7 +396,7 @@ async def update_transaction(
     )
     db_transaction = result.scalar_one_or_none()
     if not db_transaction:
-        raise HTTPException(status_code=404, detail="Transaction not found")
+        raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
 
     # Update fields
     for key, value in transaction.model_dump(exclude_unset=True).items():
@@ -420,7 +419,7 @@ async def delete_transaction(
     )
     transaction = result.scalar_one_or_none()
     if not transaction:
-        raise HTTPException(status_code=404, detail="Transaction not found")
+        raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
 
     await session.delete(transaction)
     await session.commit()
@@ -438,7 +437,7 @@ async def bulk_update_transactions(
     transactions = result.scalars().all()
 
     if not transactions:
-        raise HTTPException(status_code=404, detail="No transactions found")
+        raise not_found(ErrorCode.TRANSACTIONS_NOT_FOUND)
 
     for txn in transactions:
         for key, value in updates.model_dump(exclude_unset=True).items():
@@ -471,13 +470,13 @@ async def add_tag_to_transaction(
     )
     transaction = txn_result.scalar_one_or_none()
     if not transaction:
-        raise HTTPException(status_code=404, detail="Transaction not found")
+        raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
 
     # Parse and validate tag
     try:
         namespace, value = parse_tag_string(request.tag)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise bad_request(ErrorCode.TAG_INVALID_FORMAT, str(e), tag=request.tag)
 
     # Get the tag
     tag_result = await session.execute(
@@ -485,7 +484,7 @@ async def add_tag_to_transaction(
     )
     tag = tag_result.scalar_one_or_none()
     if not tag:
-        raise HTTPException(status_code=400, detail=f"Tag '{request.tag}' does not exist")
+        raise bad_request(ErrorCode.TAG_NOT_FOUND, tag=request.tag)
 
     # For bucket namespace, remove existing bucket tag first (only one allowed)
     if namespace == "bucket":
@@ -535,13 +534,13 @@ async def remove_tag_from_transaction(
     )
     transaction = txn_result.scalar_one_or_none()
     if not transaction:
-        raise HTTPException(status_code=404, detail="Transaction not found")
+        raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
 
     # Parse tag
     try:
         namespace, value = parse_tag_string(tag)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise bad_request(ErrorCode.TAG_INVALID_FORMAT, str(e), tag=tag)
 
     # Get the tag
     tag_result = await session.execute(
@@ -549,7 +548,7 @@ async def remove_tag_from_transaction(
     )
     tag_obj = tag_result.scalar_one_or_none()
     if not tag_obj:
-        raise HTTPException(status_code=400, detail=f"Tag '{tag}' does not exist")
+        raise bad_request(ErrorCode.TAG_NOT_FOUND, tag=tag)
 
     # Find and remove the link
     link_result = await session.execute(
@@ -562,7 +561,7 @@ async def remove_tag_from_transaction(
     )
     link = link_result.scalar_one_or_none()
     if not link:
-        raise HTTPException(status_code=404, detail="Tag not applied to this transaction")
+        raise not_found(ErrorCode.TAG_NOT_APPLIED, transaction_id=transaction_id, tag=tag)
 
     await session.delete(link)
     await session.commit()
@@ -582,7 +581,7 @@ async def get_transaction_tags(
     )
     transaction = txn_result.scalar_one_or_none()
     if not transaction:
-        raise HTTPException(status_code=404, detail="Transaction not found")
+        raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
 
     # Get tags from junction table (bucket, occasion, etc.)
     result = await session.execute(
@@ -631,7 +630,7 @@ async def get_transaction_splits(
     )
     transaction = txn_result.scalar_one_or_none()
     if not transaction:
-        raise HTTPException(status_code=404, detail="Transaction not found")
+        raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
 
     # Get all bucket tags with amounts for this transaction
     result = await session.execute(
@@ -681,7 +680,7 @@ async def set_transaction_splits(
     )
     transaction = txn_result.scalar_one_or_none()
     if not transaction:
-        raise HTTPException(status_code=404, detail="Transaction not found")
+        raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
 
     # Remove existing bucket splits (TransactionTags with amounts)
     existing_result = await session.execute(
@@ -718,12 +717,14 @@ async def set_transaction_splits(
         try:
             namespace, value = parse_tag_string(split.tag)
         except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+            raise bad_request(ErrorCode.TAG_INVALID_FORMAT, str(e), tag=split.tag)
 
         if namespace != "bucket":
-            raise HTTPException(
-                status_code=400,
-                detail=f"Splits must use bucket tags, got '{namespace}'"
+            raise bad_request(
+                ErrorCode.VALIDATION_ERROR,
+                f"Splits must use bucket tags, got '{namespace}'",
+                expected="bucket",
+                got=namespace
             )
 
         # Get the tag
@@ -732,7 +733,7 @@ async def set_transaction_splits(
         )
         tag = tag_result.scalar_one_or_none()
         if not tag:
-            raise HTTPException(status_code=400, detail=f"Tag '{split.tag}' does not exist")
+            raise bad_request(ErrorCode.TAG_NOT_FOUND, tag=split.tag)
 
         # Create transaction tag with amount
         txn_tag = TransactionTag(
@@ -763,7 +764,7 @@ async def clear_transaction_splits(
     )
     transaction = txn_result.scalar_one_or_none()
     if not transaction:
-        raise HTTPException(status_code=404, detail="Transaction not found")
+        raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
 
     # Remove all bucket splits
     existing_result = await session.execute(

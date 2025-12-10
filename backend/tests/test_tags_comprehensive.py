@@ -305,7 +305,7 @@ class TestTagsAdditional:
         # Second creation should fail
         response = await client.post("/api/v1/tags", json=tag_data)
         assert response.status_code == 400
-        assert "already exists" in response.json()["detail"]
+        assert response.json()["detail"]["error_code"] == "TAG_ALREADY_EXISTS"
 
     @pytest.mark.asyncio
     async def test_update_tag_value_conflict(self, client: AsyncClient):
@@ -326,7 +326,7 @@ class TestTagsAdditional:
             "value": "existing-value-123"
         })
         assert update_response.status_code == 400
-        assert "already exists" in update_response.json()["detail"]
+        assert update_response.json()["detail"]["error_code"] == "TAG_ALREADY_EXISTS"
 
     @pytest.mark.asyncio
     async def test_update_nonexistent_tag(self, client: AsyncClient):
@@ -436,7 +436,6 @@ class TestTagsAdditional:
                     # Try to delete
                     delete_response = await client.delete(f"/api/v1/tags/{tag['id']}")
                     assert delete_response.status_code == 400
-                    # Check for message indicating tag is in use
-                    detail = delete_response.json()["detail"].lower()
-                    assert "used by" in detail or "in use" in detail
+                    # Check for error code indicating tag is in use
+                    assert delete_response.json()["detail"]["error_code"] == "TAG_IN_USE"
                     break

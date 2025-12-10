@@ -97,7 +97,7 @@ class TestTags:
 
         response = await client.post("/api/v1/tags/", json=tag_data)
         assert response.status_code == 400
-        assert "already exists" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "TAG_ALREADY_EXISTS"
 
     @pytest.mark.asyncio
     async def test_update_tag_description(self, client: AsyncClient, seed_tags):
@@ -151,7 +151,7 @@ class TestTags:
         update_data = {"value": "first-tag"}
         response = await client.patch(f"/api/v1/tags/{tag_id}", json=update_data)
         assert response.status_code == 400
-        assert "already exists" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "TAG_ALREADY_EXISTS"
 
     @pytest.mark.asyncio
     async def test_delete_unused_tag(self, client: AsyncClient, seed_tags):
@@ -180,7 +180,8 @@ class TestTags:
 
         response = await client.delete(f"/api/v1/tags/{tag_id}")
         assert response.status_code == 400
-        assert "used by" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "TAG_IN_USE"
+        assert response.json()["detail"]["context"]["count"] >= 1
 
     @pytest.mark.asyncio
     async def test_tag_usage_count(self, client: AsyncClient, seed_transactions):

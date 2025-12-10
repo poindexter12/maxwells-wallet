@@ -3,7 +3,7 @@ Account management endpoints.
 
 Provides account summary with balances, due dates, and credit limits.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlmodel import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from app.database import get_session
 from app.models import Tag, Transaction, TagUpdate
+from app.errors import ErrorCode, not_found, bad_request
 
 router = APIRouter(prefix="/api/v1/accounts", tags=["accounts"])
 
@@ -152,7 +153,7 @@ async def get_account(
     row = result.one_or_none()
 
     if not row or row.count == 0:
-        raise HTTPException(status_code=404, detail=f"Account '{account_source}' not found")
+        raise not_found(ErrorCode.ACCOUNT_NOT_FOUND, account_source=account_source)
 
     balance, count = row.balance, row.count
 
@@ -200,11 +201,11 @@ async def update_account(
     """
     # Validate due_day
     if update.due_day is not None and (update.due_day < 1 or update.due_day > 31):
-        raise HTTPException(status_code=400, detail="due_day must be between 1 and 31")
+        raise bad_request(ErrorCode.ACCOUNT_INVALID_DUE_DAY, due_day=update.due_day)
 
     # Validate credit_limit
     if update.credit_limit is not None and update.credit_limit < 0:
-        raise HTTPException(status_code=400, detail="credit_limit must be non-negative")
+        raise bad_request(ErrorCode.ACCOUNT_INVALID_CREDIT_LIMIT, credit_limit=update.credit_limit)
 
     # Check account exists (has transactions)
     count_result = await session.execute(
@@ -213,7 +214,7 @@ async def update_account(
         )
     )
     if count_result.scalar() == 0:
-        raise HTTPException(status_code=404, detail=f"Account '{account_source}' not found")
+        raise not_found(ErrorCode.ACCOUNT_NOT_FOUND, account_source=account_source)
 
     # Get or create account tag
     tag_result = await session.execute(

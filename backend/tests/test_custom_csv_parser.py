@@ -540,7 +540,7 @@ class TestCustomCsvApiEndpoints:
         response = await client.post("/api/v1/import/custom/preview", files=files, data=data)
 
         assert response.status_code == 400
-        assert "Invalid config JSON" in response.json()["detail"]
+        assert response.json()["detail"]["error_code"] == "IMPORT_PARSE_ERROR"
 
     async def test_custom_confirm_endpoint(self, client: AsyncClient):
         """Test POST /api/v1/import/custom/confirm"""
@@ -602,7 +602,7 @@ class TestCustomCsvApiEndpoints:
         response = await client.post("/api/v1/import/custom/confirm", files=files, data=data)
 
         assert response.status_code == 400
-        assert "Invalid config JSON" in response.json()["detail"]
+        assert response.json()["detail"]["error_code"] == "IMPORT_PARSE_ERROR"
 
     async def test_create_custom_config(self, client: AsyncClient):
         """Test POST /api/v1/import/custom/configs"""

@@ -50,7 +50,7 @@ class TestAdminImportSessions:
         """Get nonexistent import session returns 404"""
         response = await client.get("/api/v1/admin/import-sessions/99999")
         assert response.status_code == 404
-        assert "not found" in response.json()["detail"]
+        assert response.json()["detail"]["error_code"] == "IMPORT_SESSION_NOT_FOUND"
 
     @pytest.mark.asyncio
     async def test_delete_import_session_without_confirm(self, client: AsyncClient, seed_categories):
@@ -68,7 +68,7 @@ class TestAdminImportSessions:
             # Try to delete without proper confirm
             response = await client.delete(f"/api/v1/admin/import-sessions/{session_id}?confirm=no")
             assert response.status_code == 400
-            assert "confirm='DELETE'" in response.json()["detail"]
+            assert response.json()["detail"]["error_code"] == "CONFIRMATION_REQUIRED"
 
     @pytest.mark.asyncio
     async def test_delete_import_session_with_confirm(self, client: AsyncClient, seed_categories):
@@ -95,6 +95,7 @@ class TestAdminImportSessions:
         """Delete nonexistent import session returns 404"""
         response = await client.delete("/api/v1/admin/import-sessions/99999?confirm=DELETE")
         assert response.status_code == 404
+        assert response.json()["detail"]["error_code"] == "IMPORT_SESSION_NOT_FOUND"
 
 
 class TestAdminPurge:
@@ -102,16 +103,17 @@ class TestAdminPurge:
 
     @pytest.mark.asyncio
     async def test_purge_without_confirm(self, client: AsyncClient):
-        """Purge all transactions without confirm fails"""
-        response = await client.delete("/api/v1/admin/transactions/purge-all?confirm=no")
+        """Purge all data without confirm fails"""
+        response = await client.delete("/api/v1/admin/purge-all?confirm=no")
         assert response.status_code == 400
-        assert "PURGE_ALL" in response.json()["detail"]
+        assert response.json()["detail"]["error_code"] == "CONFIRMATION_REQUIRED"
 
     @pytest.mark.asyncio
     async def test_purge_with_wrong_confirm(self, client: AsyncClient):
-        """Purge all transactions with wrong confirm fails"""
-        response = await client.delete("/api/v1/admin/transactions/purge-all?confirm=yes")
+        """Purge all data with wrong confirm fails"""
+        response = await client.delete("/api/v1/admin/purge-all?confirm=yes")
         assert response.status_code == 400
+        assert response.json()["detail"]["error_code"] == "CONFIRMATION_REQUIRED"
 
     # NOTE: We don't test actual purge since it would destroy test data
     # The code path for PURGE_ALL=true would delete everything
