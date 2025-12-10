@@ -578,7 +578,7 @@ class LanguagePreference(str, Enum):
     pt = "pt"
     de = "de"
     nl = "nl"
-    l33t = "l33t"  # QA testing locale
+    pseudo = "pseudo"  # QA testing locale (pseudo-localized text)
 
 
 class AppSettings(BaseModel, table=True):

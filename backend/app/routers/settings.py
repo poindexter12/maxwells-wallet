@@ -10,7 +10,7 @@ from app.models import AppSettings, AppSettingsUpdate, LanguagePreference
 router = APIRouter(prefix="/api/v1/settings", tags=["settings"])
 
 # Supported locales for i18n
-SUPPORTED_LOCALES = ["en-US", "en-GB", "es", "fr", "it", "pt", "de", "nl", "l33t"]
+SUPPORTED_LOCALES = ["en-US", "en-GB", "es", "fr", "it", "pt", "de", "nl", "pseudo"]
 DEFAULT_LOCALE = "en-US"
 
 
