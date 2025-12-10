@@ -2,7 +2,7 @@
 # Utility Targets
 # =============================================================================
 
-.PHONY: clean clean-all status info check-deps
+.PHONY: clean clean-all status info check-deps check-node
 .PHONY: data-setup data-anonymize data-status data-force data-clean
 
 # -----------------------------------------------------------------------------
@@ -68,7 +68,28 @@ check-deps: ## Check if required dependencies are installed
 	@command -v uv >/dev/null 2>&1 || { echo "$(RED)✗ uv not found. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh$(NC)"; exit 1; }
 	@command -v node >/dev/null 2>&1 || { echo "$(RED)✗ Node.js not found$(NC)"; exit 1; }
 	@command -v npm >/dev/null 2>&1 || { echo "$(RED)✗ npm not found. Install Node.js from nodejs.org$(NC)"; exit 1; }
+	@$(MAKE) check-node
 	@echo "$(GREEN)✓ All dependencies found$(NC)"
+
+check-node: ## Check Node.js version matches .nvmrc (installs if needed via nvm)
+	@if [ -f .nvmrc ]; then \
+		REQUIRED=$$(cat .nvmrc); \
+		CURRENT=$$(node -v 2>/dev/null | sed 's/v//'); \
+		CURRENT_MAJOR=$$(echo $$CURRENT | cut -d. -f1); \
+		if [ "$$CURRENT_MAJOR" != "$$REQUIRED" ]; then \
+			echo "$(YELLOW)Node.js version mismatch: have v$$CURRENT, need v$$REQUIRED$(NC)"; \
+			if command -v nvm >/dev/null 2>&1 || [ -s "$$HOME/.nvm/nvm.sh" ]; then \
+				echo "$(BLUE)Installing Node $$REQUIRED via nvm...$(NC)"; \
+				. "$$HOME/.nvm/nvm.sh" && nvm install $$REQUIRED && nvm use $$REQUIRED; \
+				echo "$(GREEN)✓ Node $$REQUIRED installed. Run 'nvm use' or restart your shell.$(NC)"; \
+			else \
+				echo "$(RED)Please install Node $$REQUIRED or run 'nvm use' if you have nvm$(NC)"; \
+				exit 1; \
+			fi; \
+		else \
+			echo "$(GREEN)✓ Node.js v$$CURRENT (matches .nvmrc)$(NC)"; \
+		fi; \
+	fi
 
 # -----------------------------------------------------------------------------
 # Test Data Anonymization (delegates to data/Makefile)
