@@ -18,6 +18,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Set ENABLE_PSEUDO=true in .env to include pseudo locale for QA testing
+        ENABLE_PSEUDO: ${ENABLE_PSEUDO:-false}
     ports:
       - "3000:3000"   # Frontend
       - "3001:3001"   # Backend API

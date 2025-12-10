@@ -3,6 +3,9 @@
 
 FROM node:22-slim AS frontend-builder
 
+# Build arg to enable pseudo locale (set ENABLE_PSEUDO=true in .env or pass --build-arg)
+ARG ENABLE_PSEUDO=false
+
 WORKDIR /app/frontend
 
 # Install dependencies
@@ -14,13 +17,19 @@ COPY frontend/ ./
 # Ensure public directory exists (may be empty)
 RUN mkdir -p public
 
-# Generate pseudo-locale for QA testing (optional, controlled by NEXT_PUBLIC_ENABLE_PSEUDO at runtime)
-RUN node scripts/generate-pseudo-locale.js
+# Generate pseudo-locale for QA testing (only if enabled)
+RUN if [ "$ENABLE_PSEUDO" = "true" ]; then \
+      echo "==> ENABLE_PSEUDO=true: Generating pseudo-locale for QA testing..."; \
+      node scripts/generate-pseudo-locale.js; \
+      echo "==> Pseudo-locale generated successfully"; \
+    else \
+      echo "==> ENABLE_PSEUDO=false: Skipping pseudo-locale (set ENABLE_PSEUDO=true in .env to enable)"; \
+    fi
 
 ENV BACKEND_URL=http://localhost:3001
-# Build with pseudo locale support baked in (can be toggled at runtime)
-ENV NEXT_PUBLIC_ENABLE_PSEUDO=true
-RUN npm run build
+# Pass pseudo locale setting to Next.js build
+ENV NEXT_PUBLIC_ENABLE_PSEUDO=$ENABLE_PSEUDO
+RUN echo "==> Building Next.js with NEXT_PUBLIC_ENABLE_PSEUDO=$ENABLE_PSEUDO" && npm run build
 
 # Final stage: Python + Node runtime
 FROM python:3.11-slim
