@@ -60,7 +60,7 @@ export function SankeyFlowChart({ widget, data }: SankeyFlowChartProps) {
     return (
       <div className="card p-6">
         <h2 className="text-lg font-semibold text-theme mb-4">{title}</h2>
-        <p className="text-theme-muted text-center py-12">No flow data available for this period</p>
+        <p className="text-theme-muted text-center py-12">{t('noFlowData')}</p>
       </div>
     )
   }
@@ -68,7 +68,7 @@ export function SankeyFlowChart({ widget, data }: SankeyFlowChartProps) {
   return (
     <div className="card p-6">
       <h2 className="text-lg font-semibold text-theme mb-4">{title}</h2>
-      <p className="text-sm text-theme-muted mb-4">Income → Accounts → Spending Categories</p>
+      <p className="text-sm text-theme-muted mb-4">{t('sankeyDescription')}</p>
       <ResponsiveContainer width="100%" height={450}>
         <Sankey
           data={data}

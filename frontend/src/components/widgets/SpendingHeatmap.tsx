@@ -27,7 +27,7 @@ export function SpendingHeatmap({
     return (
       <div className="card p-6">
         <h2 className="text-lg font-semibold text-theme mb-4">{title}</h2>
-        <p className="text-theme-muted text-center py-12">No spending data available</p>
+        <p className="text-theme-muted text-center py-12">{t('noSpendingData')}</p>
       </div>
     )
   }
@@ -40,15 +40,15 @@ export function SpendingHeatmap({
         {data.summary && (
           <div className="flex gap-6 mb-4 text-sm">
             <div>
-              <span className="text-theme-muted">Total: </span>
+              <span className="text-theme-muted">{t('total')}: </span>
               <span className="font-semibold text-theme">{formatCurrency(data.summary.total_spending)}</span>
             </div>
             <div>
-              <span className="text-theme-muted">Max Month: </span>
+              <span className="text-theme-muted">{t('maxMonth')}: </span>
               <span className="font-semibold text-theme">{formatCurrency(data.summary.max_monthly || 0)}</span>
             </div>
             <div>
-              <span className="text-theme-muted">Active Months: </span>
+              <span className="text-theme-muted">{t('activeMonths')}: </span>
               <span className="font-semibold text-theme">{data.summary.months_with_spending || 0}</span>
             </div>
           </div>
@@ -63,7 +63,7 @@ export function SpendingHeatmap({
                 key={month.month}
                 className="rounded-lg p-3 flex flex-col items-center justify-center"
                 style={{ backgroundColor: colorVar }}
-                title={`${month.month_name}: ${formatCurrency(month.amount)} (${month.count} transactions)`}
+                title={`${month.month_name}: ${formatCurrency(month.amount)} (${month.count} ${t('transactions').toLowerCase()})`}
               >
                 <span
                   className="font-semibold text-sm"
@@ -83,11 +83,11 @@ export function SpendingHeatmap({
         </div>
         {/* Legend */}
         <div className="flex items-center gap-2 mt-4 text-xs text-theme-muted">
-          <span>Less</span>
+          <span>{t('heatmapLess')}</span>
           {HEATMAP_VARS.map((colorVar, i) => (
             <div key={i} className="w-4 h-4 rounded" style={{ backgroundColor: colorVar }} />
           ))}
-          <span>More</span>
+          <span>{t('heatmapMore')}</span>
         </div>
       </div>
     )
@@ -114,15 +114,15 @@ export function SpendingHeatmap({
       {data.summary && (
         <div className="flex gap-6 mb-4 text-sm">
           <div>
-            <span className="text-theme-muted">Total: </span>
+            <span className="text-theme-muted">{t('total')}: </span>
             <span className="font-semibold text-theme">{formatCurrency(data.summary.total_spending)}</span>
           </div>
           <div>
-            <span className="text-theme-muted">Max Day: </span>
+            <span className="text-theme-muted">{t('maxDay')}: </span>
             <span className="font-semibold text-theme">{formatCurrency(data.summary.max_daily)}</span>
           </div>
           <div>
-            <span className="text-theme-muted">Active Days: </span>
+            <span className="text-theme-muted">{t('activeDays')}: </span>
             <span className="font-semibold text-theme">{data.summary.days_with_spending}</span>
           </div>
         </div>
@@ -149,7 +149,7 @@ export function SpendingHeatmap({
                     key={dayIndex}
                     className="w-10 h-10 rounded flex flex-col items-center justify-center text-xs"
                     style={{ backgroundColor: colorVar }}
-                    title={day && !isNaN(selectedYear) && !isNaN(selectedMonth) ? `${format(new Date(selectedYear, selectedMonth - 1, day.day), 'MMM d')}: ${formatCurrency(day.amount)} (${day.count} transactions)` : ''}
+                    title={day && !isNaN(selectedYear) && !isNaN(selectedMonth) ? `${format(new Date(selectedYear, selectedMonth - 1, day.day), 'MMM d')}: ${formatCurrency(day.amount)} (${day.count} ${t('transactions').toLowerCase()})` : ''}
                   >
                     {day && (
                       <>
@@ -178,11 +178,11 @@ export function SpendingHeatmap({
       </div>
       {/* Legend */}
       <div className="flex items-center gap-2 mt-4 text-xs text-theme-muted">
-        <span>Less</span>
+        <span>{t('heatmapLess')}</span>
         {HEATMAP_VARS.map((colorVar, i) => (
           <div key={i} className="w-4 h-4 rounded" style={{ backgroundColor: colorVar }} />
         ))}
-        <span>More</span>
+        <span>{t('heatmapMore')}</span>
       </div>
     </div>
   )

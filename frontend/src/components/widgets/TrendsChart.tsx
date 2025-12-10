@@ -42,9 +42,9 @@ export function TrendsChart({ widget, data, isMonthlyScale: _isMonthlyScale }: T
             labelFormatter={(label) => isWeekly ? `Week ${label.split('-')[1]?.replace('W', '') || label}` : formatPeriodLabel(label)}
           />
           <Legend />
-          <Line type="monotone" dataKey="income" stroke="#10b981" name="Income" />
-          <Line type="monotone" dataKey="expenses" stroke="#ef4444" name="Expenses" />
-          <Line type="monotone" dataKey="net" stroke="#3b82f6" name="Net" />
+          <Line type="monotone" dataKey="income" stroke="#10b981" name={t('income')} />
+          <Line type="monotone" dataKey="expenses" stroke="#ef4444" name={t('expenses')} />
+          <Line type="monotone" dataKey="net" stroke="#3b82f6" name={t('netLabel')} />
         </LineChart>
       </ResponsiveContainer>
     </div>
