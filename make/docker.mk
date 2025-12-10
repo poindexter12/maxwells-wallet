@@ -4,8 +4,16 @@
 
 .PHONY: docker docker-build docker-build-force docker-up docker-down docker-logs
 .PHONY: docker-shell docker-clean docker-seed docker-migrate
+.PHONY: docker-with-pseudo docker-build-pseudo
 
 docker: docker-build docker-up ## Build and start Docker container
+
+docker-with-pseudo: docker-build-pseudo docker-up ## Build and start Docker with pseudo locale for i18n QA
+
+docker-build-pseudo: ## Build Docker image with pseudo locale enabled
+	@echo "$(BLUE)Building Docker image with pseudo locale...$(NC)"
+	ENABLE_PSEUDO=true docker compose build
+	@echo "$(GREEN)✓ Docker image built with pseudo locale$(NC)"
 
 docker-build: ## Build Docker image
 	@echo "$(BLUE)Building Docker image...$(NC)"
