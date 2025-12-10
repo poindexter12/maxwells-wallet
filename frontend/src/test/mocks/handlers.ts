@@ -476,4 +476,24 @@ export const handlers = [
       unallocated: totalAmount - allocatedTotal,
     })
   }),
+
+  // Settings
+  http.get(`${API_BASE}/settings`, ({ request }) => {
+    const acceptLanguage = request.headers.get('Accept-Language') || ''
+    // Simple parse - just use first locale or default to en-US
+    const effectiveLocale = acceptLanguage.split(',')[0]?.split(';')[0]?.trim() || 'en-US'
+    return HttpResponse.json({
+      language: 'browser',
+      effective_locale: effectiveLocale,
+      supported_locales: ['en-US', 'en-GB', 'es', 'fr', 'it', 'pt', 'de', 'nl', 'l33t'],
+    })
+  }),
+
+  http.patch(`${API_BASE}/settings`, async ({ request }) => {
+    const body = await request.json() as { language?: string }
+    return HttpResponse.json({
+      language: body.language || 'browser',
+      updated_at: new Date().toISOString(),
+    })
+  }),
 ]

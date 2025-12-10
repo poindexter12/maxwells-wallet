@@ -1,0 +1,309 @@
+{
+  "common": {
+    "loading": "l04d1ng...",
+    "save": "54v3",
+    "cancel": "c4nc3l",
+    "delete": "d3l373",
+    "edit": "3d17",
+    "create": "cr3473",
+    "update": "upd473",
+    "search": "534rch",
+    "filter": "f1l73r",
+    "clear": "cl34r",
+    "confirm": "c0nf1rm",
+    "close": "cl053",
+    "yes": "y35",
+    "no": "n0",
+    "all": "4ll",
+    "none": "n0n3",
+    "apply": "4pply",
+    "reset": "r3537",
+    "back": "b4ck",
+    "next": "n3x7",
+    "previous": "pr3v10u5",
+    "new": "n3w",
+    "add": "4dd",
+    "remove": "r3m0v3",
+    "view": "v13w",
+    "manage": "m4n4g3",
+    "customize": "cu570m1z3",
+    "collapse": "c0ll4p53",
+    "expand": "3xp4nd"
+  },
+  "fields": {
+    "amount": "4m0un7",
+    "date": "d473",
+    "status": "574tu5",
+    "actions": "4c710n5",
+    "details": "d3741l5",
+    "description": "d35cr1p710n",
+    "name": "n4m3",
+    "type": "7yp3",
+    "category": "c473g0ry",
+    "value": "v4lu3",
+    "period": "p3r10d",
+    "notes": "n073s"
+  },
+  "nav": {
+    "brand": "m4xw3ll'5 w4ll37",
+    "dashboard": "d45hb04rd",
+    "transactions": "7r4n54c710n5",
+    "budgets": "bud9375",
+    "organize": "0r94n1z3",
+    "tools": "700l5",
+    "admin": "4dm1n",
+    "import": "1mp0r7 c5v"
+  },
+  "settings": {
+    "title": "5377in95",
+    "language": "l4n9u493",
+    "languageDescription": "ch0053 y0ur pr3f3rr3d l4n9u493",
+    "browserDefault": "4u70 (br0w53r)",
+    "saved": "5377in95 54v3d",
+    "theme": "7h3m3"
+  },
+  "transactions": {
+    "title": "7r4n54c710n5",
+    "subtitle": "5h0w1ng {count} 0f {total} 7r4n54c710n5",
+    "merchant": "m3rch4n7",
+    "description": "d35cr1p710n",
+    "account": "4cc0un7",
+    "bucket": "buck37",
+    "occasion": "0cc4510n",
+    "searchPlaceholder": "534rch m3rch4n7 0r d35cr1p710n...",
+    "allBuckets": "4ll buck375",
+    "allOccasions": "4ll 0cc4510n5",
+    "allAccounts": "4ll 4cc0un75",
+    "allStatus": "4ll 574tu5",
+    "hideTransfers": "h1d3 7r4n5f3r5",
+    "showTransfers": "4ll 7r4n54c710n5",
+    "transfersOnly": "7r4n5f3r5 0nly",
+    "transfer": "7r4n5f3r",
+    "transferExcluded": "1n73rn4l 7r4n5f3r - 3xclud3d fr0m 5p3nd1n9",
+    "status": {
+      "unreconciled": "unr3c0nc1l3d",
+      "matched": "m47ch3d",
+      "manuallyEntered": "m4nu4lly 3n73r3d",
+      "ignored": "19n0r3d"
+    },
+    "filters": {
+      "title": "f1l73r5",
+      "thisMonth": "7h15 m0n7h",
+      "lastMonth": "l457 m0n7h",
+      "thisYear": "7h15 y34r",
+      "ytd": "y7d",
+      "last90Days": "l457 90 d4y5",
+      "large": "l4r93 ($100+)",
+      "topSpending": "70p 5p3nd1ng",
+      "clearAll": "cl34r 4ll",
+      "date": "d473:",
+      "quick": "qu1ck:",
+      "advanced": "4dv4nc3d f1l73r5",
+      "clickToInclude": "cl1ck 70 1nclud3, 5h1f7+cl1ck 70 3xclud3"
+    },
+    "bulk": {
+      "selectAll": "53l3c7 4ll ({count} l04d3d)",
+      "selected": "{count} 0f {total} 53l3c73d",
+      "assign": "4551gn:",
+      "chooseType": "ch0053 7yp3...",
+      "selectBucket": "53l3c7 buck37...",
+      "selectOccasion": "53l3c7 0cc4510n...",
+      "selectAccount": "53l3c7 4cc0un7...",
+      "apply": "4pply 70 {count}",
+      "applying": "4pply1ng...",
+      "clearSelection": "cl34r 53l3c710n"
+    },
+    "confirmDelete": "4r3 y0u 5ur3 y0u w4n7 70 d3l373 7h15 7r4n54c710n?"
+  },
+  "budgets": {
+    "title": "bud937 7r4ck1ng",
+    "subtitle": "m0n170r 5p3nd1ng 494in57 bud937 l1m175",
+    "newBudget": "n3w bud937",
+    "editBudget": "3d17 bud937",
+    "createBudget": "cr3473 bud937",
+    "allBudgets": "4ll bud9375",
+    "noBudgets": "n0 bud9375 cr3473d y37",
+    "alerts": "bud937 4l3r75",
+    "spent": "5p3n7",
+    "budget": "bud937",
+    "remaining": "r3m41n1ng",
+    "used": "{percent}% u53d",
+    "selectCategory": "53l3c7 4 c473g0ry...",
+    "monthly": "m0n7hly",
+    "yearly": "y34rly",
+    "rollover": "3n4bl3 r0ll0v3r",
+    "status": {
+      "onTrack": "0n 7r4ck",
+      "warning": "w4rn1ng",
+      "exceeded": "3xc33d3d"
+    },
+    "confirmDelete": "4r3 y0u 5ur3 y0u w4n7 70 d3l373 7h15 bud937?"
+  },
+  "dashboard": {
+    "title": "d45hb04rd",
+    "noDashboard": "n0 d45hb04rd 4v41l4bl3",
+    "createDashboard": "cr3473 n3w d45hb04rd",
+    "noWidgets": "n0 w1d9375 v151bl3",
+    "dateRange": {
+      "mtd": "m0n7h 70 d473",
+      "qtd": "qu4r73r 70 d473",
+      "ytd": "y34r 70 d473",
+      "last30Days": "l457 30 d4y5",
+      "last90Days": "l457 90 d4y5",
+      "lastYear": "l457 y34r"
+    },
+    "widgets": {
+      "summary": "5umm4ry",
+      "velocity": "5p3nd1ng v3l0c17y",
+      "anomalies": "4n0m4l135",
+      "bucketPie": "5p3nd1ng by buck37",
+      "topMerchants": "70p m3rch4n75",
+      "trends": "7r3nd5",
+      "sankey": "m0n3y fl0w",
+      "treemap": "5p3nd1ng br34kd0wn",
+      "heatmap": "5p3nd1ng c4l3nd4r",
+      "budgetStatus": "bud937 574tu5",
+      "creditCards": "cr3d17 c4rd5",
+      "recurring": "upc0m1ng r3curr1ng"
+    },
+    "summary": {
+      "totalIncome": "707al 1nc0m3",
+      "totalExpenses": "707al 3xp3n535",
+      "net": "n37",
+      "vsLastMonth": "v5 l457 m0n7h"
+    }
+  },
+  "import": {
+    "title": "1mp0r7 7r4n54c710n5",
+    "subtitle": "upl04d c5v, q1f, qfx, 0r 0fx f1l35",
+    "selectFile": "53l3c7 f1l3",
+    "selectFiles": "53l3c7 f1l35",
+    "preview": "pr3v13w",
+    "confirm": "c0nf1rm 1mp0r7",
+    "confirmImport": "1mp0r7 7r4n54c710n5",
+    "success": "1mp0r7 5ucc355ful",
+    "transactionsImported": "{count} 7r4n54c710n5 1mp0r73d",
+    "duplicatesSkipped": "{count} dupl1c4735 5k1pp3d",
+    "format": "f0rm47",
+    "formatOptional": "f0rm47 (0p710n4l)",
+    "account": "4cc0un7",
+    "accountRequired": "r3qu1r3d f0r dupl1c473 d373c710n",
+    "singleFile": "51ngl3 f1l3 1mp0r7",
+    "batchImport": "b47ch 1mp0r7 (mul71pl3 f1l35)",
+    "noFilesSelected": "pl3453 53l3c7 47 l3457 0n3 f1l3",
+    "processing": "pr0c3551ng...",
+    "analyzing": "4n4lyz1ng f1l3..."
+  },
+  "admin": {
+    "title": "4dm1n",
+    "tabs": {
+      "overview": "0v3rv13w",
+      "imports": "1mp0r75",
+      "health": "h34l7h",
+      "buckets": "buck375",
+      "accounts": "4cc0un75",
+      "occasions": "0cc4510n5",
+      "expenses": "3xp3n535"
+    },
+    "stats": {
+      "totalTransactions": "707al 7r4n54c710n5",
+      "totalImports": "707al 1mp0r75",
+      "lastImport": "l457 1mp0r7"
+    },
+    "confirmDelete": "d3l373 \"{name}\"? 7h15 c4nn07 b3 und0n3.",
+    "purge": {
+      "title": "pur93 4ll d474",
+      "warning": "7h15 w1ll p3rm4n3n7ly d3l373 4ll 7r4n54c710n5",
+      "confirm": "7yp3 pur93_4ll 70 c0nf1rm"
+    }
+  },
+  "tools": {
+    "title": "700l5",
+    "subtitle": "m4n493 c4739or1z4710n rul35, m3rch4n7 4l14535, 4nd 7r4n5f3r5",
+    "categoryRules": "c4739ory rul35",
+    "merchantAliases": "m3rch4n7 4l14535",
+    "transfers": "7r4n5f3r5",
+    "savedFilters": "54v3d f1l73r5"
+  },
+  "organize": {
+    "title": "0r94n1z3",
+    "subtitle": "m4n493 4nd 0r94n1z3 y0ur 7495"
+  },
+  "recurring": {
+    "title": "r3curr1ng 7r4n54c710n5",
+    "subtitle": "7r4ck 5ub5cr1p710n5 4nd r3curr1ng p4ym3n75",
+    "upcoming": "upc0m1ng p4ym3n75",
+    "detected": "d373c73d p4773rn5",
+    "frequency": {
+      "weekly": "w33kly",
+      "biweekly": "b1-w33kly",
+      "monthly": "m0n7hly",
+      "quarterly": "qu4r73rly",
+      "yearly": "y34rly"
+    }
+  },
+  "reconcile": {
+    "title": "r3c0nc1l3",
+    "subtitle": "r3v13w 4nd c4739or1z3 1mp0r73d 7r4n54c710n5",
+    "markReconciled": "m4rk r3c0nc1l3d",
+    "markIgnored": "m4rk 19n0r3d"
+  },
+  "tags": {
+    "title": "7495",
+    "bucket": "buck37",
+    "occasion": "0cc4510n",
+    "account": "4cc0un7",
+    "expense": "3xp3n53",
+    "create": "cr3473 749",
+    "edit": "3d17 749",
+    "delete": "d3l373 749",
+    "namespace": "n4m35p4c3",
+    "sortOrder": "50r7 0rd3r",
+    "color": "c0l0r"
+  },
+  "errors": {
+    "generic": "4n 3rr0r 0ccurr3d. pl3453 7ry 494in.",
+    "notFound": "7h3 r3qu3573d r350urc3 w45 n07 f0und.",
+    "validation": "1nv4l1d 1npu7 pr0v1d3d.",
+    "network": "n37w0rk 3rr0r. pl3453 ch3ck y0ur c0nn3c710n.",
+    "unauthorized": "y0u 4r3 n07 4u7h0r1z3d.",
+    "unknownCode": "unkn0wn 3rr0r: {code}",
+    "TRANSACTION_NOT_FOUND": "7r4n54c710n n07 f0und.",
+    "TAG_NOT_FOUND": "749 n07 f0und.",
+    "TAG_ALREADY_EXISTS": "4 749 w17h 7h15 n4m3 4lr34dy 3x1575.",
+    "TAG_IN_USE": "c4nn07 d3l373 749: u53d by {count} 7r4n54c710n(5).",
+    "BUDGET_NOT_FOUND": "bud937 n07 f0und.",
+    "DASHBOARD_NOT_FOUND": "d45hb04rd n07 f0und.",
+    "WIDGET_NOT_FOUND": "w1d937 n07 f0und."
+  },
+  "help": {
+    "dismiss": "907 17",
+    "showHelp": "h3lp",
+    "hideHelp": "h1d3 h3lp",
+    "newFeature": "n3w",
+    "transactions": {
+      "title": "7r4n54c710n5 h3lp",
+      "description": "v13w, f1l73r, 4nd c4739or1z3 4ll y0ur 7r4n54c710n5."
+    },
+    "budgets": {
+      "title": "bud9375 h3lp",
+      "description": "537 5p3nd1ng l1m175 4nd 7r4ck y0ur pr09r355."
+    },
+    "dashboard": {
+      "title": "d45hb04rd h3lp",
+      "description": "937 4 qu1ck 0v3rv13w 0f y0ur f1n4nc14l h34l7h."
+    },
+    "import": {
+      "title": "1mp0r7 h3lp",
+      "description": "1mp0r7 7r4n54c710n5 fr0m y0ur b4nk's f1l35."
+    },
+    "admin": {
+      "title": "4dm1n h3lp",
+      "description": "m4n493 7495, v13w 1mp0r7 h1570ry, 4nd m0n170r 5y573m h34l7h."
+    },
+    "tools": {
+      "title": "700l5 h3lp",
+      "description": "537 up 4u70m4710n rul35 f0r c4739or1z1ng 7r4n54c710n5."
+    }
+  }
+}

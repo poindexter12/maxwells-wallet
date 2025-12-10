@@ -561,3 +561,34 @@ class DashboardWidgetUpdate(SQLModel):
 class DashboardLayoutUpdate(SQLModel):
     """Batch update for widget positions"""
     widgets: List[dict]  # [{"id": 1, "position": 0}, {"id": 2, "position": 1}, ...]
+
+
+# ============================================================================
+# Application Settings
+# ============================================================================
+
+class LanguagePreference(str, Enum):
+    """User's language preference for i18n"""
+    browser = "browser"  # Use Accept-Language header from browser
+    en_us = "en-US"
+    en_gb = "en-GB"
+    es = "es"
+    fr = "fr"
+    it = "it"
+    pt = "pt"
+    de = "de"
+    nl = "nl"
+    l33t = "l33t"  # QA testing locale
+
+
+class AppSettings(BaseModel, table=True):
+    """Application-wide settings (single row, upsert pattern)"""
+    __tablename__ = "app_settings"
+
+    language: LanguagePreference = Field(default=LanguagePreference.browser)
+    # Future settings can be added here (currency format, date format, etc.)
+
+
+class AppSettingsUpdate(SQLModel):
+    """Schema for updating app settings"""
+    language: Optional[LanguagePreference] = None
