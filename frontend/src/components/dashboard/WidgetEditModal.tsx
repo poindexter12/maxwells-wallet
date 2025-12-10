@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Widget, Bucket, FilterOption, WIDGET_INFO } from '@/types/dashboard'
 
 interface WidgetEditModalProps {
@@ -37,7 +38,10 @@ export function WidgetEditModal({
   onClose,
   onSave
 }: WidgetEditModalProps) {
+  const t = useTranslations('dashboard.widgets')
+  const tCommon = useTranslations('common')
   const info = WIDGET_INFO[widget.widget_type]
+  const widgetName = info ? t(info.nameKey as 'summary') : widget.widget_type
 
   return (
     <>
@@ -47,7 +51,7 @@ export function WidgetEditModal({
       />
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-theme-elevated border border-theme rounded-lg shadow-xl z-50 p-6 max-h-[90vh] overflow-y-auto">
         <h3 className="text-lg font-semibold text-theme mb-4">
-          Configure {info?.icon} {info?.name || widget.widget_type}
+          Configure {info?.icon} {widgetName}
         </h3>
 
         <div className="space-y-4">
@@ -60,7 +64,7 @@ export function WidgetEditModal({
               type="text"
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
-              placeholder={info?.name || widget.widget_type}
+              placeholder={widgetName}
               className="w-full px-3 py-2 border border-theme rounded-md bg-theme text-theme"
             />
             <p className="text-xs text-theme-muted mt-1">

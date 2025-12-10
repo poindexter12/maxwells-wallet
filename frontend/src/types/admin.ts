@@ -82,15 +82,15 @@ export interface HealthStats {
 export interface TagTabConfig {
   id: AdminTab
   namespace: string | null
-  label: string
-  description: string
+  labelKey: string  // Translation key for label
+  descriptionKey: string  // Translation key for description
   showNamespace: boolean
 }
 
 export const TAG_TABS: TagTabConfig[] = [
-  { id: 'all-tags', namespace: null, label: 'All Tags', description: 'View all tags across all namespaces', showNamespace: true },
-  { id: 'buckets', namespace: 'bucket', label: 'Buckets', description: 'Spending categories like groceries, dining, entertainment', showNamespace: false },
-  { id: 'accounts', namespace: 'account', label: 'Accounts', description: 'Bank accounts and credit cards with display names', showNamespace: false },
-  { id: 'occasions', namespace: 'occasion', label: 'Occasions', description: 'Special events like vacation, holidays, birthdays', showNamespace: false },
-  { id: 'expense-types', namespace: 'expense', label: 'Expense Types', description: 'Recurring, one-time, refund classifications', showNamespace: false },
+  { id: 'all-tags', namespace: null, labelKey: 'allTagsLabel', descriptionKey: 'allTagsDescription', showNamespace: true },
+  { id: 'buckets', namespace: 'bucket', labelKey: 'bucketsLabel', descriptionKey: 'bucketsDescription', showNamespace: false },
+  { id: 'accounts', namespace: 'account', labelKey: 'accountsLabel', descriptionKey: 'accountsDescription', showNamespace: false },
+  { id: 'occasions', namespace: 'occasion', labelKey: 'occasionsLabel', descriptionKey: 'occasionsDescription', showNamespace: false },
+  { id: 'expense-types', namespace: 'expense', labelKey: 'expenseTypesLabel', descriptionKey: 'expenseTypesDescription', showNamespace: false },
 ]

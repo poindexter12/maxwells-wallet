@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
-import { formatCurrency } from '@/lib/format'
+import { useFormat } from '@/hooks/useFormat'
 import { Widget, HeatmapData, HeatmapDay, HeatmapMonth, HEATMAP_VARS } from './types'
 
 interface SpendingHeatmapProps {
@@ -21,6 +21,7 @@ export function SpendingHeatmap({
   selectedMonth
 }: SpendingHeatmapProps) {
   const t = useTranslations('dashboard.widgets')
+  const { formatCurrency } = useFormat()
   const title = widget?.title || t('heatmap')
 
   if (!data || !data.days) {
@@ -164,7 +165,7 @@ export function SpendingHeatmap({
                             className="text-[8px]"
                             style={{ color: useLightText ? 'rgba(255,255,255,0.8)' : 'var(--color-text-muted)' }}
                           >
-                            ${Math.round(day.amount)}
+                            {formatCurrency(day.amount)}
                           </span>
                         )}
                       </>

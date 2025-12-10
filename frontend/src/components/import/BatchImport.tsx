@@ -1,8 +1,7 @@
 'use client'
 
-import { format } from 'date-fns'
 import { useTranslations } from 'next-intl'
-import { formatCurrency } from '@/lib/format'
+import { useFormat } from '@/hooks/useFormat'
 import { FilePreview, AccountTag, FORMAT_NAMES } from '@/types/import'
 
 interface BatchImportProps {
@@ -32,6 +31,7 @@ export function BatchImport({
 }: BatchImportProps) {
   const t = useTranslations('import')
   const tCommon = useTranslations('common')
+  const { formatCurrency, formatDateRange } = useFormat()
 
   const selectedFiles = batchPreviews.filter(p => p.selected)
   const filesWithoutAccount = selectedFiles.filter(p => !(p.accountSourceOverride || p.account_source))
@@ -141,7 +141,7 @@ export function BatchImport({
                         <p className="text-gray-600">{t('dateRange')}</p>
                         <p className="font-semibold">
                           {filePreview.date_range_start && filePreview.date_range_end
-                            ? `${format(new Date(filePreview.date_range_start), 'MM/dd/yy')} - ${format(new Date(filePreview.date_range_end), 'MM/dd/yy')}`
+                            ? formatDateRange(filePreview.date_range_start, filePreview.date_range_end)
                             : 'N/A'}
                         </p>
                       </div>

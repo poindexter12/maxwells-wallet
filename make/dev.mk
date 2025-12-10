@@ -11,6 +11,10 @@ backend: ## Run backend server
 		uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 frontend: ## Run frontend development server
+	@if [ "$$ENABLE_PSEUDO" = "true" ]; then \
+		echo "$(BLUE)ENABLE_PSEUDO=true: Regenerating pseudo-locale...$(NC)"; \
+		cd $(FRONTEND_DIR) && node scripts/generate-pseudo-locale.js; \
+	fi
 	@echo "$(BLUE)Starting frontend server...$(NC)"
 	@cd $(FRONTEND_DIR) && npm run dev
 

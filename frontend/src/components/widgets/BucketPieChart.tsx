@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
-import { formatCurrency } from '@/lib/format'
+import { useFormat } from '@/hooks/useFormat'
 import { Widget, COLORS } from './types'
 
 interface BucketPieChartProps {
@@ -12,6 +12,7 @@ interface BucketPieChartProps {
 
 export function BucketPieChart({ widget, bucketData }: BucketPieChartProps) {
   const t = useTranslations('dashboard.widgets')
+  const { formatCurrency } = useFormat()
 
   return (
     <div className="card p-6">

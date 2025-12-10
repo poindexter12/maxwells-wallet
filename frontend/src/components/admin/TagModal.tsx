@@ -23,17 +23,21 @@ export function CreateTagModal({
   onCreate
 }: CreateTagModalProps) {
   const t = useTranslations('admin.tagModal')
+  const tTags = useTranslations('admin.tags')
   const tCommon = useTranslations('common')
 
   const isAccount = currentTagTab.namespace === 'account'
   const exampleValue = isAccount ? 'chase-checking' : 'vacation'
   const exampleDisplay = isAccount ? 'Chase Checking Account' : ''
 
+  // Resolve label from translation key
+  const label = tTags(currentTagTab.labelKey as 'allTagsLabel')
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="card p-6 max-w-md w-full mx-4">
         <h2 className="text-xl font-semibold text-theme mb-4">
-          {t('addLabel', { type: currentTagTab.label.replace(/s$/, '') })}
+          {t('addLabel', { type: label.replace(/s$/, '') })}
         </h2>
 
         {tagError && (

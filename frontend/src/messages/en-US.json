@@ -192,6 +192,17 @@
       "treemapDescription": "Spending by category and merchant",
       "heatmapLess": "Less",
       "heatmapMore": "More",
+      "descriptions": {
+        "summary": "Shows total income, expenses, and net for the period. Includes month-over-month comparison.",
+        "velocity": "Daily burn rate showing if you're on track for your typical monthly spending.",
+        "anomalies": "Highlights unusual transactions that deviate significantly from your normal spending patterns.",
+        "bucketPie": "Pie chart showing how spending is distributed across your budget buckets.",
+        "topMerchants": "List of merchants where you spend the most. Can be filtered by bucket to see top merchants within a category.",
+        "trends": "Line chart showing income, expenses, and net over time. Shows 12 weeks in month view, 12 months in year view.",
+        "sankey": "Flow diagram showing how money moves from income sources through accounts to spending categories. Great for understanding overall cash flow.",
+        "treemap": "Hierarchical view of spending by category and merchant. Larger boxes = more spending. Click to explore.",
+        "heatmap": "Calendar heatmap showing daily spending intensity. Darker = more spent. Click months in year view to drill down."
+      },
       "total": "Total",
       "maxMonth": "Max Month",
       "maxDay": "Max Day",
@@ -217,7 +228,11 @@
       "underBudget": "Under Budget",
       "onTrack": "On Track",
       "projectedRemaining": "Projected remaining",
-      "previousMonth": "Previous month"
+      "previousMonth": "Previous month",
+      "customLabel": "Custom",
+      "filterBuckets": "Buckets: {buckets}",
+      "filterAccounts": "Accounts: {accounts}",
+      "filterMerchants": "Merchants: {merchants}"
     },
     "summary": {
       "totalIncome": "Total Income",
@@ -344,6 +359,29 @@
         "rolled_back": "rolled_back"
       }
     },
+    "health": {
+      "systemStatus": "System {status}",
+      "updated": "Updated {time}",
+      "uptime": "Uptime",
+      "totalRequests": "Total Requests",
+      "activeRequests": "Active Requests",
+      "slowQueries": "Slow Queries",
+      "requestLatency": "Request Latency",
+      "p50Median": "P50 (median)",
+      "p95": "P95",
+      "p99": "P99",
+      "errorRate": "Error Rate",
+      "lastHour": "Last Hour",
+      "last24Hours": "Last 24 Hours",
+      "observabilityInfo": "Observability Info",
+      "metricsEndpoint": "Metrics Endpoint",
+      "metricsFormat": "(Prometheus format)",
+      "slowQueryThreshold": "Slow Query Threshold",
+      "slowQueryDescription": "Queries taking >100ms are logged to the application logs.",
+      "autoRefresh": "Auto-refresh",
+      "autoRefreshDescription": "This dashboard updates every 10 seconds.",
+      "observabilityDisabled": "Observability may be disabled. Set <code>OTEL_ENABLED=true</code> to enable."
+    },
     "tags": {
       "noTags": "No {type} configured yet.",
       "tableHeaders": {
@@ -358,7 +396,17 @@
       "usageCountPlural": "{count} transactions",
       "cannotDelete": "Cannot delete: tag is in use",
       "deleteTag": "Delete tag",
-      "deleteConfirm": "Delete \"{namespace}:{value}\"? This cannot be undone."
+      "deleteConfirm": "Delete \"{namespace}:{value}\"? This cannot be undone.",
+      "allTagsDescription": "View all tags across all namespaces",
+      "bucketsDescription": "Spending categories like groceries, dining, entertainment",
+      "accountsDescription": "Bank accounts and credit cards with display names",
+      "occasionsDescription": "Special events like vacation, holidays, birthdays",
+      "expenseTypesDescription": "Recurring, one-time, refund classifications",
+      "allTagsLabel": "All Tags",
+      "bucketsLabel": "Buckets",
+      "accountsLabel": "Accounts",
+      "occasionsLabel": "Occasions",
+      "expenseTypesLabel": "Expense Types"
     },
     "tagModal": {
       "addLabel": "Add {type}",
@@ -480,7 +528,13 @@
       "created": "Created",
       "confirmDelete": "Delete this format configuration?",
       "deleting": "Deleting...",
-      "editFormat": "Edit Format"
+      "editFormat": "Edit Format",
+      "test": "Test",
+      "usedCount": "Used {count}x",
+      "configAccount": "Account: {value}",
+      "configDate": "Date: {value}",
+      "configAmount": "Amount: {value}",
+      "invalidConfig": "Invalid configuration"
     }
   },
   "organize": {

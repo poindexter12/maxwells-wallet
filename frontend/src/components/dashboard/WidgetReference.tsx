@@ -1,8 +1,11 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { WIDGET_INFO } from '@/types/dashboard'
 
 export function WidgetReference() {
+  const t = useTranslations('dashboard.widgets')
+
   return (
     <div className="card p-6">
       <h2 className="text-lg font-semibold text-theme mb-4">Widget Reference</h2>
@@ -11,9 +14,9 @@ export function WidgetReference() {
           <div key={type} className="p-3 rounded-lg bg-theme-subtle">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-xl">{info.icon}</span>
-              <span className="font-medium text-theme">{info.name}</span>
+              <span className="font-medium text-theme">{t(info.nameKey as 'summary')}</span>
             </div>
-            <p className="text-xs text-theme-muted">{info.description}</p>
+            <p className="text-xs text-theme-muted">{t(`descriptions.${info.descriptionKey}` as 'descriptions.summary')}</p>
             <div className="flex gap-2 mt-2">
               {info.supportsFilter && (
                 <span className="text-xs px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded">

@@ -16,7 +16,7 @@ class TestSettingsEndpoints:
         data = response.json()
         assert data["language"] == "browser"
         assert data["effective_locale"] in [
-            "en-US", "en-GB", "es", "fr", "it", "pt", "de", "nl", "l33t"
+            "en-US", "en-GB", "es", "fr", "it", "pt", "de", "nl", "pseudo"
         ]
         assert "supported_locales" in data
 
@@ -28,7 +28,7 @@ class TestSettingsEndpoints:
 
         data = response.json()
         assert set(data["supported_locales"]) == {
-            "en-US", "en-GB", "es", "fr", "it", "pt", "de", "nl", "l33t"
+            "en-US", "en-GB", "es", "fr", "it", "pt", "de", "nl", "pseudo"
         }
 
     @pytest.mark.asyncio
@@ -63,18 +63,18 @@ class TestSettingsEndpoints:
         assert response.json()["language"] == "browser"
 
     @pytest.mark.asyncio
-    async def test_update_language_l33t(self, client: AsyncClient):
-        """PATCH /settings can set l33t locale for QA testing."""
+    async def test_update_language_pseudo(self, client: AsyncClient):
+        """PATCH /settings can set pseudo locale for QA testing."""
         response = await client.patch(
             "/api/v1/settings",
-            json={"language": "l33t"}
+            json={"language": "pseudo"}
         )
         assert response.status_code == 200
-        assert response.json()["language"] == "l33t"
+        assert response.json()["language"] == "pseudo"
 
-        # Verify effective locale is l33t
+        # Verify effective locale is pseudo
         response = await client.get("/api/v1/settings")
-        assert response.json()["effective_locale"] == "l33t"
+        assert response.json()["effective_locale"] == "pseudo"
 
     @pytest.mark.asyncio
     async def test_accept_language_header_parsing(self, client: AsyncClient):

@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
-import { formatCurrency } from '@/lib/format'
+import { useFormat } from '@/hooks/useFormat'
 import { AnomaliesData } from './types'
 
 interface AnomaliesPanelProps {
@@ -13,6 +13,7 @@ interface AnomaliesPanelProps {
 
 export function AnomaliesPanel({ anomalies, selectedYear, selectedMonth }: AnomaliesPanelProps) {
   const t = useTranslations('dashboard.widgets')
+  const { formatCurrency } = useFormat()
 
   if (!anomalies) return null
   // Guard against invalid year/month values

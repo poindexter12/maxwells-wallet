@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { formatCurrency } from '@/lib/format'
+import { useFormat } from '@/hooks/useFormat'
 import { SummaryData, MonthOverMonthData } from './types'
 import { TEST_IDS } from '@/test-ids'
 
@@ -12,6 +12,7 @@ interface SummaryCardsProps {
 
 export function SummaryCards({ summary, monthOverMonth }: SummaryCardsProps) {
   const t = useTranslations('dashboard.summary')
+  const { formatCurrency } = useFormat()
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6" data-testid={TEST_IDS.WIDGET_SUMMARY_CARDS}>

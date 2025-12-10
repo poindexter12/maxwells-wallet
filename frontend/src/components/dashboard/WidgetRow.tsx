@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Widget, WidgetConfig, WIDGET_INFO } from '@/types/dashboard'
 
 interface WidgetRowProps {
@@ -29,13 +30,18 @@ export function WidgetRow({
   onDuplicate,
   onDelete
 }: WidgetRowProps) {
+  const t = useTranslations('dashboard.widgets')
   const info = WIDGET_INFO[widget.widget_type] || {
     icon: '📦',
-    name: widget.widget_type,
-    description: 'Custom widget',
+    nameKey: widget.widget_type,
+    descriptionKey: widget.widget_type,
     supportsFilter: false,
     canDuplicate: false
   }
+
+  // Get translated name and description
+  const widgetName = t(info.nameKey as 'summary')
+  const widgetDescription = t(`descriptions.${info.descriptionKey}` as 'descriptions.summary')
 
   const hasBucketFilter = config.buckets && config.buckets.length > 0
   const hasAccountFilter = config.accounts && config.accounts.length > 0
@@ -92,7 +98,7 @@ export function WidgetRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <h3 className="font-medium text-theme">
-            {widget.title || info.name}
+            {widget.title || widgetName}
           </h3>
           {info.supportsFilter && (
             <span className="text-blue-500" title="Supports bucket filtering">
@@ -103,26 +109,26 @@ export function WidgetRow({
           )}
           {isDuplicate && (
             <span className="text-xs px-2 py-0.5 bg-theme-subtle rounded text-theme-muted">
-              Custom
+              {t('customLabel')}
             </span>
           )}
         </div>
-        <p className="text-sm text-theme-muted mt-0.5">{info.description}</p>
+        <p className="text-sm text-theme-muted mt-0.5">{widgetDescription}</p>
         {hasFilter && (
           <div className="flex flex-wrap gap-2 mt-1">
             {hasBucketFilter && (
               <span className="text-xs px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded">
-                Buckets: {config.buckets!.join(', ')}
+                {t('filterBuckets', { buckets: config.buckets!.join(', ') })}
               </span>
             )}
             {hasAccountFilter && (
               <span className="text-xs px-2 py-0.5 bg-green-500/10 text-green-500 rounded">
-                Accounts: {config.accounts!.join(', ')}
+                {t('filterAccounts', { accounts: config.accounts!.join(', ') })}
               </span>
             )}
             {hasMerchantFilter && (
               <span className="text-xs px-2 py-0.5 bg-purple-500/10 text-purple-500 rounded">
-                Merchants: {config.merchants!.join(', ')}
+                {t('filterMerchants', { merchants: config.merchants!.join(', ') })}
               </span>
             )}
           </div>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { formatCurrency } from '@/lib/format'
+import { useFormat } from '@/hooks/useFormat'
 import { PageHelp } from '@/components/PageHelp'
 
 type OrganizeTab = 'buckets' | 'occasions' | 'accounts'
@@ -121,6 +121,7 @@ export default function OrganizePage() {
 
 function BucketsContent({ buckets }: { buckets: TagStats[] }) {
   const t = useTranslations('organize.buckets')
+  const { formatCurrency } = useFormat()
   const totalTransactions = buckets.reduce((sum, b) => sum + b.transaction_count, 0)
   const totalSpending = buckets.reduce((sum, b) => sum + Math.abs(b.total_amount), 0)
 
@@ -204,6 +205,7 @@ function BucketsContent({ buckets }: { buckets: TagStats[] }) {
 
 function OccasionsContent({ occasions }: { occasions: TagStats[] }) {
   const t = useTranslations('organize.occasions')
+  const { formatCurrency } = useFormat()
   const totalTransactions = occasions.reduce((sum, o) => sum + o.transaction_count, 0)
   const totalSpending = occasions.reduce((sum, o) => sum + Math.abs(o.total_amount), 0)
 
@@ -287,6 +289,7 @@ function OccasionsContent({ occasions }: { occasions: TagStats[] }) {
 
 function AccountsContent({ accounts }: { accounts: TagStats[] }) {
   const t = useTranslations('organize.accounts')
+  const { formatCurrency } = useFormat()
   const totalTransactions = accounts.reduce((sum, a) => sum + a.transaction_count, 0)
   const totalNet = accounts.reduce((sum, a) => sum + a.total_amount, 0)
 
