@@ -95,8 +95,7 @@ async function findUntranslatedStrings(page: Page): Promise<string[]> {
   return found
 }
 
-// TODO: Re-enable once l33t translations are complete (see issue #105)
-test.describe.skip('i18n Translation Completeness @e2e', () => {
+test.describe('i18n Translation Completeness @e2e', () => {
   test.beforeEach(async ({ page }) => {
     // Set language to l33t speak via localStorage
     // We need to set this before the first navigation
