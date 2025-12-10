@@ -62,6 +62,8 @@ WORKDIR /app
 COPY --from=frontend-builder /app/frontend/.next/standalone ./frontend/
 COPY --from=frontend-builder /app/frontend/.next/static ./frontend/.next/static
 COPY --from=frontend-builder /app/frontend/public ./frontend/public
+# Copy i18n message files (not included in standalone output due to dynamic imports)
+COPY --from=frontend-builder /app/frontend/src/messages ./frontend/src/messages
 
 # Create supervisord config
 RUN mkdir -p /etc/supervisor/conf.d
