@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { locales, languageNames, Locale } from '@/i18n'
+import { locales, languageNames } from '@/i18n'
 
 interface LanguageOption {
   code: string
