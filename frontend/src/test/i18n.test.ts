@@ -4,8 +4,9 @@
  * Ensures all translation files have the same keys as en-US.json (the source of truth)
  */
 import { describe, it, expect } from 'vitest'
+import { existsSync } from 'fs'
+import { join } from 'path'
 import enUS from '../messages/en-US.json'
-import pseudo from '../messages/pseudo.json'
 
 /**
  * Recursively extract all keys from a nested object
@@ -77,10 +78,22 @@ describe('i18n translations', () => {
     })
   })
 
-  describe('pseudo.json', () => {
-    const pseudoKeys = new Set(getAllKeys(pseudo))
+  // pseudo.json is gitignored and only available in dev when generated
+  // Skip these tests if the file doesn't exist (e.g., in CI)
+  const pseudoPath = join(__dirname, '../messages/pseudo.json')
+  const hasPseudo = existsSync(pseudoPath)
+
+  describe.skipIf(!hasPseudo)('pseudo.json (dev-only, run `make i18n-pseudo` to generate)', () => {
+    // Dynamic import since file may not exist
+    let pseudo: Record<string, unknown>
+
+    it('should load pseudo.json', async () => {
+      pseudo = (await import('../messages/pseudo.json')).default
+      expect(pseudo).toBeDefined()
+    })
 
     it('should have all keys from en-US.json', () => {
+      const pseudoKeys = new Set(getAllKeys(pseudo))
       const missingKeys = [...sourceKeys].filter(key => !pseudoKeys.has(key))
 
       if (missingKeys.length > 0) {
@@ -92,6 +105,7 @@ describe('i18n translations', () => {
     })
 
     it('should not have extra keys not in en-US.json', () => {
+      const pseudoKeys = new Set(getAllKeys(pseudo))
       const extraKeys = [...pseudoKeys].filter(key => !sourceKeys.has(key))
 
       if (extraKeys.length > 0) {

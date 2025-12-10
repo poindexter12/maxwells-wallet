@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate pseudo-locale for i18n tests
+        run: node scripts/generate-pseudo-locale.js
+
       - name: Run linter
         run: npm run lint
 

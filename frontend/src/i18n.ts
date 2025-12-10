@@ -1,7 +1,7 @@
 /**
  * Internationalization (i18n) configuration for Maxwell's Wallet
  *
- * Supports 8 languages + pseudo for QA testing:
+ * Supports 8 languages:
  * - en-US: English (United States) - default
  * - en-GB: English (United Kingdom)
  * - es: Spanish
@@ -10,11 +10,24 @@
  * - pt: Portuguese
  * - de: German
  * - nl: Dutch
- * - pseudo: Pseudo-locale (QA testing) - auto-generated from en-US
+ *
+ * In development, a 'pseudo' locale is available for QA testing.
+ * Generate it with: make i18n-pseudo
  */
 
-export const locales = ['en-US', 'en-GB', 'es', 'fr', 'it', 'pt', 'de', 'nl', 'pseudo'] as const;
-export type Locale = (typeof locales)[number];
+// Production locales (always available)
+const productionLocales = ['en-US', 'en-GB', 'es', 'fr', 'it', 'pt', 'de', 'nl'] as const;
+
+// Dev-only locale for QA testing (not shipped to production)
+const devLocales = ['pseudo'] as const;
+
+// Combined locales based on environment
+const isDev = process.env.NODE_ENV === 'development';
+export const locales = isDev
+  ? ([...productionLocales, ...devLocales] as const)
+  : productionLocales;
+
+export type Locale = (typeof productionLocales)[number] | (typeof devLocales)[number];
 export const defaultLocale: Locale = 'en-US';
 
 // Language display names (in their native language)
@@ -32,5 +45,5 @@ export const languageNames: Record<Locale, string> = {
 
 // Helper to check if a locale is valid
 export function isValidLocale(locale: string): locale is Locale {
-  return locales.includes(locale as Locale);
+  return (locales as readonly string[]).includes(locale);
 }
