@@ -1,7 +1,5 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
-import { formatCurrency } from '@/lib/format'
 import { Widget } from './types'
 import {
   useSummaryData,

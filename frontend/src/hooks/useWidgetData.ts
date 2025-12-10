@@ -1,7 +1,7 @@
 'use client'
 
 import useSWR from 'swr'
-import { useDashboard, DateRangeType } from '@/contexts/DashboardContext'
+import { useDashboard } from '@/contexts/DashboardContext'
 import {
   SummaryData,
   MonthOverMonthData,
