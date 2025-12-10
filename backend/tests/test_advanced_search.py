@@ -101,7 +101,7 @@ class TestRegexSearchValidation:
             params={"search": "[invalid(regex", "search_regex": "true"}
         )
         assert response.status_code == 400
-        assert "Invalid regex pattern" in response.json()["detail"]
+        assert response.json()["detail"]["error_code"] == "INVALID_REGEX"
 
     @pytest.mark.asyncio
     async def test_regex_too_long_returns_400(self, client: AsyncClient):
@@ -112,7 +112,7 @@ class TestRegexSearchValidation:
             params={"search": long_pattern, "search_regex": "true"}
         )
         assert response.status_code == 400
-        assert "too long" in response.json()["detail"]
+        assert response.json()["detail"]["error_code"] == "INVALID_REGEX"
 
     @pytest.mark.asyncio
     async def test_valid_regex_accepted(self, client: AsyncClient, seed_categories):

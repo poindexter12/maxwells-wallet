@@ -123,7 +123,7 @@ class TestBudgets:
         # Try to create duplicate
         response2 = await client.post("/api/v1/budgets", json=budget_data)
         assert response2.status_code == 400
-        assert "already exists" in response2.json()["detail"].lower()
+        assert response2.json()["detail"]["error_code"] == "BUDGET_ALREADY_EXISTS"
 
     @pytest.mark.asyncio
     async def test_budget_status(self, client: AsyncClient, seed_categories, seed_transactions):
@@ -325,7 +325,7 @@ class TestBudgets:
 
         response = await client.post("/api/v1/budgets", json=budget_data)
         assert response.status_code == 400
-        assert "invalid tag format" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "TAG_INVALID_FORMAT"
 
     @pytest.mark.asyncio
     async def test_nonexistent_tag(self, client: AsyncClient, seed_categories):
@@ -338,4 +338,4 @@ class TestBudgets:
 
         response = await client.post("/api/v1/budgets", json=budget_data)
         assert response.status_code == 400
-        assert "does not exist" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "TAG_NOT_FOUND"

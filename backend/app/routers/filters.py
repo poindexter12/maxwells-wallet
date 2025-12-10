@@ -1,5 +1,5 @@
 """Saved filters router for managing saved search filters/views."""
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
@@ -12,6 +12,7 @@ from app.models import (
     Transaction, ReconciliationStatus, Tag, TransactionTag
 )
 from app.routers.transactions import build_transaction_filter_query
+from app.errors import ErrorCode, not_found
 from pydantic import BaseModel
 from sqlmodel import and_
 
@@ -135,7 +136,7 @@ async def get_filter(
     )
     db_filter = result.scalar_one_or_none()
     if not db_filter:
-        raise HTTPException(status_code=404, detail="Filter not found")
+        raise not_found(ErrorCode.FILTER_NOT_FOUND, filter_id=filter_id)
     return db_to_response(db_filter)
 
 
@@ -151,7 +152,7 @@ async def update_filter(
     )
     db_filter = result.scalar_one_or_none()
     if not db_filter:
-        raise HTTPException(status_code=404, detail="Filter not found")
+        raise not_found(ErrorCode.FILTER_NOT_FOUND, filter_id=filter_id)
 
     update_data = filter_update.model_dump(exclude_unset=True)
 
@@ -185,7 +186,7 @@ async def delete_filter(
     )
     db_filter = result.scalar_one_or_none()
     if not db_filter:
-        raise HTTPException(status_code=404, detail="Filter not found")
+        raise not_found(ErrorCode.FILTER_NOT_FOUND, filter_id=filter_id)
 
     await session.delete(db_filter)
     await session.commit()
@@ -207,7 +208,7 @@ async def apply_filter(
     )
     db_filter = result.scalar_one_or_none()
     if not db_filter:
-        raise HTTPException(status_code=404, detail="Filter not found")
+        raise not_found(ErrorCode.FILTER_NOT_FOUND, filter_id=filter_id)
 
     # Update usage stats
     db_filter.use_count += 1
@@ -271,7 +272,7 @@ async def toggle_pin(
     )
     db_filter = result.scalar_one_or_none()
     if not db_filter:
-        raise HTTPException(status_code=404, detail="Filter not found")
+        raise not_found(ErrorCode.FILTER_NOT_FOUND, filter_id=filter_id)
 
     db_filter.is_pinned = not db_filter.is_pinned
     db_filter.updated_at = datetime.utcnow()

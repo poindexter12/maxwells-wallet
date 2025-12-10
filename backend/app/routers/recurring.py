@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional, Tuple
@@ -11,6 +11,7 @@ from app.models import (
     RecurringPattern, RecurringPatternCreate, RecurringPatternUpdate,
     RecurringFrequency, RecurringStatus, Transaction
 )
+from app.errors import ErrorCode, not_found
 
 router = APIRouter(prefix="/api/v1/recurring", tags=["recurring"])
 
@@ -88,7 +89,7 @@ async def update_recurring_pattern(
     )
     db_pattern = result.scalar_one_or_none()
     if not db_pattern:
-        raise HTTPException(status_code=404, detail="Pattern not found")
+        raise not_found(ErrorCode.PATTERN_NOT_FOUND, pattern_id=pattern_id)
 
     for key, value in pattern.model_dump(exclude_unset=True).items():
         setattr(db_pattern, key, value)
@@ -111,7 +112,7 @@ async def delete_recurring_pattern(
     )
     pattern = result.scalar_one_or_none()
     if not pattern:
-        raise HTTPException(status_code=404, detail="Pattern not found")
+        raise not_found(ErrorCode.PATTERN_NOT_FOUND, pattern_id=pattern_id)
 
     await session.delete(pattern)
     await session.commit()
@@ -321,5 +322,5 @@ async def get_recurring_pattern(
     )
     pattern = result.scalar_one_or_none()
     if not pattern:
-        raise HTTPException(status_code=404, detail="Pattern not found")
+        raise not_found(ErrorCode.PATTERN_NOT_FOUND, pattern_id=pattern_id)
     return pattern

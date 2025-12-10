@@ -4,7 +4,7 @@ Dashboards API
 Manages named dashboards with filters and view settings.
 Each dashboard can have its own set of widgets.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Dict, Any, Optional
@@ -17,6 +17,7 @@ from app.models import (
     DashboardWidget, DashboardWidgetCreate,
     DateRangeType
 )
+from app.errors import ErrorCode, not_found, bad_request
 
 
 # ============================================================================
@@ -195,7 +196,7 @@ async def get_dashboard(dashboard_id: int, session: AsyncSession = Depends(get_s
     )
     dashboard = result.scalar_one_or_none()
     if not dashboard:
-        raise HTTPException(status_code=404, detail="Dashboard not found")
+        raise not_found(ErrorCode.DASHBOARD_NOT_FOUND, dashboard_id=dashboard_id)
     return dashboard_to_response(dashboard)
 
 
@@ -271,7 +272,7 @@ async def update_dashboard(
     )
     db_dashboard = result.scalar_one_or_none()
     if not db_dashboard:
-        raise HTTPException(status_code=404, detail="Dashboard not found")
+        raise not_found(ErrorCode.DASHBOARD_NOT_FOUND, dashboard_id=dashboard_id)
 
     update_data = dashboard.model_dump(exclude_unset=True)
 
@@ -305,13 +306,13 @@ async def delete_dashboard(dashboard_id: int, session: AsyncSession = Depends(ge
     )
     dashboard = result.scalar_one_or_none()
     if not dashboard:
-        raise HTTPException(status_code=404, detail="Dashboard not found")
+        raise not_found(ErrorCode.DASHBOARD_NOT_FOUND, dashboard_id=dashboard_id)
 
     # Count total dashboards
     count_result = await session.execute(select(Dashboard))
     all_dashboards = list(count_result.scalars().all())
     if len(all_dashboards) <= 1:
-        raise HTTPException(status_code=400, detail="Cannot delete the last dashboard")
+        raise bad_request(ErrorCode.CANNOT_DELETE_LAST_DASHBOARD)
 
     # If deleting the default, promote another dashboard
     if dashboard.is_default:
@@ -342,7 +343,7 @@ async def clone_dashboard(
     )
     original = result.scalar_one_or_none()
     if not original:
-        raise HTTPException(status_code=404, detail="Dashboard not found")
+        raise not_found(ErrorCode.DASHBOARD_NOT_FOUND, dashboard_id=dashboard_id)
 
     # Find max position
     max_result = await session.execute(select(Dashboard))
@@ -392,7 +393,7 @@ async def set_default_dashboard(
     )
     dashboard = result.scalar_one_or_none()
     if not dashboard:
-        raise HTTPException(status_code=404, detail="Dashboard not found")
+        raise not_found(ErrorCode.DASHBOARD_NOT_FOUND, dashboard_id=dashboard_id)
 
     # Clear other defaults
     all_result = await session.execute(
@@ -422,9 +423,9 @@ async def reorder_dashboards(
         new_position = item.get("position")
 
         if dashboard_id is None or new_position is None:
-            raise HTTPException(
-                status_code=400,
-                detail="Each item must have 'id' and 'position' fields"
+            raise bad_request(
+                ErrorCode.VALIDATION_ERROR,
+                "Each item must have 'id' and 'position' fields"
             )
 
         result = await session.execute(
@@ -432,7 +433,7 @@ async def reorder_dashboards(
         )
         dashboard = result.scalar_one_or_none()
         if not dashboard:
-            raise HTTPException(status_code=404, detail=f"Dashboard {dashboard_id} not found")
+            raise not_found(ErrorCode.DASHBOARD_NOT_FOUND, dashboard_id=dashboard_id)
 
         dashboard.position = new_position
         dashboard.updated_at = datetime.utcnow()
@@ -461,7 +462,7 @@ async def list_dashboard_widgets(
     )
     dashboard = dash_result.scalar_one_or_none()
     if not dashboard:
-        raise HTTPException(status_code=404, detail="Dashboard not found")
+        raise not_found(ErrorCode.DASHBOARD_NOT_FOUND, dashboard_id=dashboard_id)
 
     result = await session.execute(
         select(DashboardWidget)
@@ -524,7 +525,7 @@ async def create_dashboard_widget(
         select(Dashboard).where(Dashboard.id == dashboard_id)
     )
     if not dash_result.scalar_one_or_none():
-        raise HTTPException(status_code=404, detail="Dashboard not found")
+        raise not_found(ErrorCode.DASHBOARD_NOT_FOUND, dashboard_id=dashboard_id)
 
     db_widget = DashboardWidget(
         dashboard_id=dashboard_id,

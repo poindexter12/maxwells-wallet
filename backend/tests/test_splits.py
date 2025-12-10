@@ -258,7 +258,7 @@ class TestTransactionSplits:
             "splits": [{"tag": "occasion:birthday", "amount": 50.00}]
         })
         assert response.status_code == 400
-        assert "bucket" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "VALIDATION_ERROR"
 
     @pytest.mark.asyncio
     async def test_split_nonexistent_bucket_fails(self, client: AsyncClient, seed_categories):

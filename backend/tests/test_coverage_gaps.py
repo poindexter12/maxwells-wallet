@@ -20,7 +20,7 @@ class TestImportRouterGaps:
 
         response = await client.post("/api/v1/import/preview", files=files)
         assert response.status_code == 400
-        assert "Unsupported file type" in response.json()["detail"]
+        assert response.json()["detail"]["error_code"] == "IMPORT_UNSUPPORTED_FORMAT"
 
     @pytest.mark.asyncio
     async def test_confirm_invalid_file_extension(self, client: AsyncClient):
@@ -31,7 +31,7 @@ class TestImportRouterGaps:
 
         response = await client.post("/api/v1/import/confirm", files=files, data=data)
         assert response.status_code == 400
-        assert "Unsupported file type" in response.json()["detail"]
+        assert response.json()["detail"]["error_code"] == "IMPORT_UNSUPPORTED_FORMAT"
 
     @pytest.mark.asyncio
     async def test_confirm_empty_file(self, client: AsyncClient):
@@ -44,7 +44,7 @@ class TestImportRouterGaps:
 
         response = await client.post("/api/v1/import/confirm", files=files, data=data)
         assert response.status_code == 400
-        assert "No transactions found" in response.json()["detail"]
+        assert response.json()["detail"]["error_code"] == "IMPORT_NO_TRANSACTIONS"
 
     @pytest.mark.asyncio
     async def test_delete_format_not_found(self, client: AsyncClient):
@@ -88,7 +88,7 @@ class TestImportRouterGaps:
         files = [("files", ("test.pdf", io.BytesIO(b"content"), "application/pdf"))]
         response = await client.post("/api/v1/import/batch/upload", files=files)
         assert response.status_code == 400
-        assert "unsupported format" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "IMPORT_UNSUPPORTED_FORMAT"
 
     @pytest.mark.asyncio
     async def test_batch_upload_preview(self, client: AsyncClient, seed_categories):

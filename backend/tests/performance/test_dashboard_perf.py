@@ -51,7 +51,6 @@ class TestDashboardPerformance:
             "Dashboard detail has too many queries (possible N+1)"
         )
 
-    @pytest.mark.xfail(reason="Detecting INSERT during GET - needs investigation")
     async def test_dashboard_widgets_no_n_plus_one(
         self, perf_client, seed_large_dataset, query_counter
     ):
