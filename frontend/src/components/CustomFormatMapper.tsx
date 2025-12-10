@@ -95,7 +95,7 @@ export function CustomFormatMapper({ file, onConfigured, onCancel, initialConfig
 
   function handleConfirm() {
     const config = buildConfig()
-    onConfigured({ ...config, description: configDescription } as any)
+    onConfigured({ ...config, description: configDescription })
   }
 
   async function handleNewAccount() {

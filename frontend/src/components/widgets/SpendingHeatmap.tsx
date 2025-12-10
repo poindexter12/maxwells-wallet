@@ -3,11 +3,11 @@
 import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
-import { Widget, HEATMAP_VARS } from './types'
+import { Widget, HeatmapData, HeatmapDay, HeatmapMonth, HEATMAP_VARS } from './types'
 
 interface SpendingHeatmapProps {
   widget?: Widget
-  data: any
+  data: HeatmapData | null
   isMonthlyScale: boolean
   selectedYear: number
   selectedMonth: number
@@ -54,7 +54,7 @@ export function SpendingHeatmap({
           </div>
         )}
         <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
-          {data.days.map((month: any) => {
+          {(data.days as HeatmapMonth[]).map((month) => {
             const colorVar = HEATMAP_VARS[Math.min(month.intensity, 5)]
             const useLightText = month.intensity >= 3
 
@@ -97,12 +97,13 @@ export function SpendingHeatmap({
   const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
   // Organize days into weeks (7 columns)
-  const firstDayWeekday = data.days[0]?.weekday ?? 0
-  const paddedDays = [
+  const days = data.days as HeatmapDay[]
+  const firstDayWeekday = days[0]?.weekday ?? 0
+  const paddedDays: (HeatmapDay | null)[] = [
     ...Array(firstDayWeekday).fill(null),
-    ...data.days
+    ...days
   ]
-  const weeks: any[][] = []
+  const weeks: (HeatmapDay | null)[][] = []
   for (let i = 0; i < paddedDays.length; i += 7) {
     weeks.push(paddedDays.slice(i, i + 7))
   }
@@ -139,7 +140,7 @@ export function SpendingHeatmap({
           {/* Calendar grid */}
           {weeks.map((week, weekIndex) => (
             <div key={weekIndex} className="grid grid-cols-7 gap-1 mb-1">
-              {week.map((day: any, dayIndex: number) => {
+              {week.map((day, dayIndex) => {
                 const colorVar = day ? HEATMAP_VARS[Math.min(day.intensity, 5)] : 'transparent'
                 const useLightText = day && day.intensity >= 3
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { Widget, SummaryData, MonthOverMonthData, SpendingVelocityData, AnomaliesData, TrendsData, TopMerchantsData } from './types'
+import { Widget, SummaryData, MonthOverMonthData, SpendingVelocityData, AnomaliesData, TrendsData, TopMerchantsData, SankeyData, TreemapData, HeatmapData } from './types'
 import { SummaryCards } from './SummaryCards'
 import { SpendingVelocity } from './SpendingVelocity'
 import { AnomaliesPanel } from './AnomaliesPanel'
@@ -20,16 +20,16 @@ interface WidgetRendererProps {
   anomalies: AnomaliesData | null
   trends: TrendsData | null
   topMerchants: TopMerchantsData | null
-  sankeyData: any
-  treemapData: any
-  heatmapData: any
+  sankeyData: SankeyData | null
+  treemapData: TreemapData | null
+  heatmapData: HeatmapData | null
   // Context
   isMonthlyScale: boolean
   selectedYear: number
   selectedMonth: number
   bucketData: Array<{ name: string; value: number; count: number }>
   // Custom widget data (for filtered widgets)
-  customData?: any
+  customData?: TrendsData | TopMerchantsData | SankeyData | TreemapData | HeatmapData | null
 }
 
 export function WidgetRenderer({
@@ -76,22 +76,22 @@ export function WidgetRenderer({
       return <BucketPieChart widget={widget} bucketData={bucketData} />
 
     case 'top_merchants':
-      return <TopMerchantsList widget={widget} data={customData || topMerchants} />
+      return <TopMerchantsList widget={widget} data={(customData as TopMerchantsData | null) || topMerchants} />
 
     case 'trends':
-      return <TrendsChart widget={widget} data={customData || trends} isMonthlyScale={isMonthlyScale} />
+      return <TrendsChart widget={widget} data={(customData as TrendsData | null) || trends} isMonthlyScale={isMonthlyScale} />
 
     case 'sankey':
-      return <SankeyFlowChart widget={widget} data={customData || sankeyData} />
+      return <SankeyFlowChart widget={widget} data={(customData as SankeyData | null) || sankeyData} />
 
     case 'treemap':
-      return <SpendingTreemap widget={widget} data={customData || treemapData} />
+      return <SpendingTreemap widget={widget} data={(customData as TreemapData | null) || treemapData} />
 
     case 'heatmap':
       return (
         <SpendingHeatmap
           widget={widget}
-          data={customData || heatmapData}
+          data={(customData as HeatmapData | null) || heatmapData}
           isMonthlyScale={isMonthlyScale}
           selectedYear={selectedYear}
           selectedMonth={selectedMonth}
