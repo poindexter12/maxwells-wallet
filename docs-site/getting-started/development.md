@@ -5,8 +5,10 @@ Set up Maxwell's Wallet for local development.
 ## Prerequisites
 
 - Python 3.11+
-- Node.js 18+
+- Node.js 22+ (LTS) - pinned via `.nvmrc`
 - [uv](https://github.com/astral-sh/uv) - Fast Python package manager
+
+> **Tip**: If you use nvm, run `nvm install` in the repo root to install the correct Node version.
 
 ## Using Make (Recommended)
 

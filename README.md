@@ -11,23 +11,18 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 
 **[Documentation](https://docs.maxwellswallet.com)** · **[Requirements](docs/requirements/)**
 
-## What's New in v0.8
+## What's New in v0.9
 
-### Observability
-- **OpenTelemetry Tracing** - Automatic request tracing with SQLAlchemy query instrumentation
-- **Prometheus Metrics** - `/metrics` endpoint with latency histograms, error rates, and request gauges
-- **Health Dashboard** - Real-time system health in Admin UI with auto-refresh
-- **Alerting** - Webhook notifications for error rate and latency threshold breaches
+### Internationalization (i18n)
+- **Multi-language Support** - Complete i18n infrastructure with next-intl
+- **10 Locales** - English (US/UK), Spanish, French, Italian, Portuguese, German, Dutch, l33t speak
+- **Structured Error Codes** - API errors include machine-readable codes for frontend translation
+- **Widget Translations** - All dashboard widgets fully translated
 
-### Performance
-- **Virtual Scrolling** - Smooth handling of 50k+ transactions using TanStack Virtual
-- **Cursor Pagination** - O(1) performance regardless of scroll depth
-- **Composite Indexes** - Optimized database indexes for common query patterns
-
-### Testing & Quality
-- **Chaos/Monkey Testing** - Automated random UI interaction testing for stability
-- **ESLint 9 Support** - Updated to Next.js 16 flat config format
-- **CI Improvements** - Linting and performance tests on all PRs
+### Developer Experience
+- **Node.js 22 LTS** - Pinned via `.nvmrc` with auto-install support
+- **TypeScript Improvements** - Stricter types, removed `any` usage in widget components
+- **Translation Testing** - Automated tests ensure translation completeness
 
 See [CHANGELOG.md](CHANGELOG.md) for full release history.
 
