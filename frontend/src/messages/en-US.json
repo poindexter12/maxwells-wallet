@@ -283,7 +283,17 @@
     "CANNOT_DELETE_LAST_DASHBOARD": "Cannot delete the last dashboard.",
     "FILTER_NOT_FOUND": "Filter not found.",
     "ACCOUNT_NOT_FOUND": "Account not found.",
-    "RULE_NOT_FOUND": "Rule not found."
+    "RULE_NOT_FOUND": "Rule not found.",
+    "TRANSACTIONS_NOT_FOUND": "One or more transactions not found.",
+    "TAG_INVALID_FORMAT": "Invalid tag format. Use namespace:value.",
+    "IMPORT_SESSION_NOT_FOUND": "Import session not found or expired.",
+    "ALIAS_ALREADY_EXISTS": "A merchant alias with this name already exists.",
+    "RECURRING_NOT_FOUND": "Recurring transaction not found.",
+    "CONFIRMATION_REQUIRED": "Confirmation required for this action.",
+    "VALIDATION_ERROR": "Validation error.",
+    "NO_TRANSACTION_IDS": "No transaction IDs provided.",
+    "TRANSACTION_NOT_LINKED": "Transaction is not linked to another transaction.",
+    "unknownCode": "An unexpected error occurred."
   },
   "help": {
     "dismiss": "Got it",
