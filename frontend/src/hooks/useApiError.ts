@@ -16,7 +16,7 @@ import { useTranslations } from 'next-intl'
 interface ApiErrorDetail {
   error_code: string
   message?: string | null
-  context?: Record<string, unknown>
+  context?: Record<string, string | number | Date>
 }
 
 interface ApiErrorResponse {
