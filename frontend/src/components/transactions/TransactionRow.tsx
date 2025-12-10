@@ -2,6 +2,7 @@
 
 import { memo, forwardRef } from 'react'
 import { format } from 'date-fns'
+import { useTranslations } from 'next-intl'
 import { formatCurrency } from '@/lib/format'
 import { SplitTransaction } from '@/components/SplitTransaction'
 import { TransactionRowProps, getBucketBorderColor } from './types'
@@ -43,7 +44,13 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
   },
   ref
 ) {
+  const t = useTranslations('transactions')
+  const tCommon = useTranslations('common')
+  const tFields = useTranslations('fields')
   const nonBucketAccountTags = txn.tags?.filter(t => t.namespace !== 'bucket' && t.namespace !== 'account') || []
+
+  // Convert snake_case status to camelCase for translation lookup
+  const statusKey = txn.reconciliation_status?.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase()) || 'unreconciled'
 
   return (
     <div
@@ -76,7 +83,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
               {format(new Date(txn.date), 'MM/dd/yyyy')}
             </span>
             <p className="font-medium text-theme truncate min-w-0">
-              {txn.merchant || 'Unknown'}
+              {txn.merchant || t('merchant')}
             </p>
           </div>
 
@@ -87,7 +94,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
               onChange={(e) => onBucketChange(txn.id, e.target.value)}
               className="h-7 w-32 rounded border border-theme px-2 text-xs bg-theme-elevated"
             >
-              <option value="">No Bucket</option>
+              <option value="">{t('bucket')}</option>
               {bucketTags.map((tag) => (
                 <option key={tag.id} value={tag.value}>
                   {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
@@ -100,7 +107,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
               onChange={(e) => onAccountChange(txn.id, e.target.value)}
               className="h-7 w-40 rounded border border-theme px-2 text-xs bg-theme-elevated"
             >
-              <option value="">No Account</option>
+              <option value="">{t('account')}</option>
               {accountTags.map((tag) => (
                 <option key={tag.id} value={tag.value}>
                   {tag.description || tag.value}
@@ -110,8 +117,8 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
 
             <div className="flex items-center gap-1 ml-auto flex-shrink-0">
               {txn.is_transfer && (
-                <span className="px-1.5 py-0.5 text-xs rounded bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" title="Internal transfer - excluded from spending">
-                  Transfer
+                <span className="px-1.5 py-0.5 text-xs rounded bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" title={t('transferExcluded')}>
+                  {t('transfer')}
                 </span>
               )}
               <span className={`font-semibold text-sm ${txn.is_transfer ? 'text-theme-muted' : txn.amount >= 0 ? 'text-positive' : 'text-negative'}`}>
@@ -120,7 +127,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
               <button
                 onClick={() => onToggleExpand(txn.id)}
                 className="text-theme-muted hover:text-theme p-0.5"
-                title={isExpanded ? 'Collapse' : 'Expand'}
+                title={isExpanded ? tCommon('collapse') : tCommon('expand')}
               >
                 <svg
                   className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
@@ -158,7 +165,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
                   autoFocus
                   onBlur={onCancelAddTag}
                 >
-                  <option value="">Select...</option>
+                  <option value="">{tCommon('search')}...</option>
                   {availableTags.map((tag) => (
                     <option key={tag.id} value={`${tag.namespace}:${tag.value}`}>
                       {tag.namespace}:{tag.value}
@@ -176,7 +183,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
               <button
                 onClick={() => onStartAddTag(txn.id)}
                 className="text-xs text-blue-500 hover:text-blue-700 whitespace-nowrap flex-shrink-0"
-                title="Add tag"
+                title={tCommon('add')}
               >
                 + tag
               </button>
@@ -237,7 +244,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
             <div className="flex justify-between items-start gap-2">
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-theme truncate">
-                  {txn.merchant || 'Unknown'}
+                  {txn.merchant || t('merchant')}
                 </p>
                 <p className="text-xs text-theme-muted">
                   {format(new Date(txn.date), 'MM/dd/yyyy')}
@@ -245,7 +252,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
               </div>
               <div className="flex items-center gap-1">
                 {txn.is_transfer && (
-                  <span className="px-1 py-0.5 text-xs rounded bg-blue-100 text-blue-700" title="Transfer">
+                  <span className="px-1 py-0.5 text-xs rounded bg-blue-100 text-blue-700" title={t('transfer')}>
                     T
                   </span>
                 )}
@@ -275,7 +282,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
                 onChange={(e) => onBucketChange(txn.id, e.target.value)}
                 className="h-7 rounded border border-theme px-2 text-xs bg-theme-elevated"
               >
-                <option value="">Bucket</option>
+                <option value="">{t('bucket')}</option>
                 {bucketTags.map((tag) => (
                   <option key={tag.id} value={tag.value}>
                     {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
@@ -288,7 +295,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
                 onChange={(e) => onAccountChange(txn.id, e.target.value)}
                 className="h-7 rounded border border-theme px-2 text-xs bg-theme-elevated"
               >
-                <option value="">Account</option>
+                <option value="">{t('account')}</option>
                 {accountTags.map((tag) => (
                   <option key={tag.id} value={tag.value}>
                     {tag.description || tag.value}
@@ -329,17 +336,17 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
             {/* Left column: metadata */}
             <div className="space-y-2">
               <div className="flex gap-2">
-                <span className="text-theme-muted w-24">Status:</span>
+                <span className="text-theme-muted w-24">{tFields('status')}:</span>
                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                   txn.reconciliation_status === 'matched' ? 'bg-green-100 text-green-800' :
                   txn.reconciliation_status === 'ignored' ? 'bg-gray-100 text-gray-600' :
                   'bg-yellow-100 text-yellow-800'
                 }`}>
-                  {txn.reconciliation_status}
+                  {t(`status.${statusKey}`)}
                 </span>
               </div>
               <div className="flex gap-2">
-                <span className="text-theme-muted w-24">Description:</span>
+                <span className="text-theme-muted w-24">{tFields('description')}:</span>
                 <span className="text-theme">{txn.description}</span>
               </div>
               {txn.account_source && (
@@ -360,7 +367,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
               </div>
               {/* Transfer controls */}
               <div className="flex gap-2 items-center">
-                <span className="text-theme-muted w-24">Transfer:</span>
+                <span className="text-theme-muted w-24">{t('transfer')}:</span>
                 <button
                   onClick={() => onToggleTransfer(txn.id, txn.is_transfer || false)}
                   className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
@@ -391,13 +398,13 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
             {/* Middle column: notes */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-theme-muted">Notes:</span>
+                <span className="text-theme-muted">{tFields('notes')}:</span>
                 {!isEditingNote && (
                   <button
                     onClick={() => onStartEditNote(txn)}
                     className="text-xs text-blue-500 hover:text-blue-700"
                   >
-                    {txn.notes ? 'Edit' : 'Add note'}
+                    {txn.notes ? tCommon('edit') : 'Add note'}
                   </button>
                 )}
               </div>
@@ -416,13 +423,13 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
                       onClick={() => onSaveNote(txn.id)}
                       className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
                     >
-                      Save
+                      {tCommon('save')}
                     </button>
                     <button
                       onClick={onCancelEditNote}
                       className="px-2 py-1 text-xs border border-theme rounded hover:bg-[var(--color-bg-hover)]"
                     >
-                      Cancel
+                      {tCommon('cancel')}
                     </button>
                   </div>
                 </div>
@@ -446,7 +453,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
                   onClick={() => onDelete(txn.id)}
                   className="px-2 py-1 text-xs text-red-500 border border-red-300 rounded hover:bg-red-50"
                 >
-                  Delete Transaction
+                  {tCommon('delete')} Transaction
                 </button>
               </div>
             </div>

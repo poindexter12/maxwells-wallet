@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Tag, TagTabConfig } from '@/types/admin'
 
 interface CreateTagModalProps {
@@ -21,11 +22,18 @@ export function CreateTagModal({
   onClose,
   onCreate
 }: CreateTagModalProps) {
+  const t = useTranslations('admin.tagModal')
+  const tCommon = useTranslations('common')
+
+  const isAccount = currentTagTab.namespace === 'account'
+  const exampleValue = isAccount ? 'chase-checking' : 'vacation'
+  const exampleDisplay = isAccount ? 'Chase Checking Account' : ''
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="card p-6 max-w-md w-full mx-4">
         <h2 className="text-xl font-semibold text-theme mb-4">
-          Add {currentTagTab.label.replace(/s$/, '')}
+          {t('addLabel', { type: currentTagTab.label.replace(/s$/, '') })}
         </h2>
 
         {tagError && (
@@ -37,29 +45,29 @@ export function CreateTagModal({
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-theme mb-1">
-              Value
+              {t('value')}
             </label>
             <input
               type="text"
               value={newTag.value}
               onChange={(e) => setNewTag({ ...newTag, value: e.target.value })}
-              placeholder={currentTagTab.namespace === 'account' ? 'e.g., chase-checking' : 'e.g., vacation'}
+              placeholder={t('valuePlaceholder', { example: exampleValue })}
               className="input w-full"
             />
             <p className="mt-1 text-xs text-theme-muted">
-              Will be normalized to: {newTag.value.trim().toLowerCase().replace(/\s+/g, '-') || '...'}
+              {t('normalized', { value: newTag.value.trim().toLowerCase().replace(/\s+/g, '-') || '...' })}
             </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-theme mb-1">
-              {currentTagTab.namespace === 'account' ? 'Display Name' : 'Description'} (optional)
+              {isAccount ? t('displayNameOptional') : t('descriptionOptional')}
             </label>
             <input
               type="text"
               value={newTag.description}
               onChange={(e) => setNewTag({ ...newTag, description: e.target.value })}
-              placeholder={currentTagTab.namespace === 'account' ? 'e.g., Chase Checking Account' : 'Brief description'}
+              placeholder={isAccount ? t('displayNamePlaceholder', { example: exampleDisplay }) : t('descriptionPlaceholder')}
               className="input w-full"
             />
           </div>
@@ -70,14 +78,14 @@ export function CreateTagModal({
             onClick={onClose}
             className="px-4 py-2 text-theme hover:bg-[var(--color-bg-hover)] rounded-md"
           >
-            Cancel
+            {tCommon('cancel')}
           </button>
           <button
             onClick={onCreate}
             disabled={saving || !newTag.value.trim()}
             className="btn-primary disabled:opacity-50"
           >
-            {saving ? 'Creating...' : 'Create'}
+            {saving ? t('creating') : t('create')}
           </button>
         </div>
       </div>
@@ -102,11 +110,16 @@ export function EditTagModal({
   onClose,
   onSave
 }: EditTagModalProps) {
+  const t = useTranslations('admin.tagModal')
+  const tCommon = useTranslations('common')
+
+  const isAccount = editingTag.namespace === 'account'
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="card p-6 max-w-md w-full mx-4">
         <h2 className="text-xl font-semibold text-theme mb-4">
-          Edit Tag
+          {t('edit')}
         </h2>
 
         {tagError && (
@@ -118,7 +131,7 @@ export function EditTagModal({
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-theme mb-1">
-              Namespace
+              {t('namespace')}
             </label>
             <input
               type="text"
@@ -130,27 +143,27 @@ export function EditTagModal({
 
           <div>
             <label className="block text-sm font-medium text-theme mb-1">
-              Value (ID)
+              {t('valueId')}
             </label>
             <input
               type="text"
               value={editingTag.value}
               onChange={(e) => setEditingTag({ ...editingTag, value: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
               className="input w-full font-mono"
-              placeholder="e.g., groceries, vacation"
+              placeholder={t('valuePlaceholder', { example: 'groceries, vacation' })}
             />
-            <p className="mt-1 text-xs text-theme-muted">Unique identifier within the namespace</p>
+            <p className="mt-1 text-xs text-theme-muted">{t('valueIdHint')}</p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-theme mb-1">
-              {editingTag.namespace === 'account' ? 'Display Name' : 'Description'}
+              {isAccount ? t('displayName') : t('description')}
             </label>
             <input
               type="text"
               value={editingTag.description || ''}
               onChange={(e) => setEditingTag({ ...editingTag, description: e.target.value })}
-              placeholder={editingTag.namespace === 'account' ? 'Display name for this account' : 'Brief description'}
+              placeholder={isAccount ? t('displayNamePlaceholder', { example: 'Display name for this account' }) : t('descriptionPlaceholder')}
               className="input w-full"
             />
           </div>
@@ -161,14 +174,14 @@ export function EditTagModal({
             onClick={onClose}
             className="px-4 py-2 text-theme hover:bg-[var(--color-bg-hover)] rounded-md"
           >
-            Cancel
+            {tCommon('cancel')}
           </button>
           <button
             onClick={onSave}
             disabled={saving || !editingTag.value.trim()}
             className="btn-primary disabled:opacity-50"
           >
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? t('saving') : tCommon('save')}
           </button>
         </div>
       </div>

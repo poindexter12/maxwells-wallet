@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useDashboard, Dashboard, DateRangeType } from '@/contexts/DashboardContext'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 interface DashboardTabsProps {
   onDashboardChange?: (dashboard: Dashboard) => void
@@ -12,6 +13,8 @@ export default function DashboardTabs({ onDashboardChange }: DashboardTabsProps)
   const { dashboards, currentDashboard, setCurrentDashboard, createDashboard, loading } = useDashboard()
   const [isCreating, setIsCreating] = useState(false)
   const [newName, setNewName] = useState('')
+  const t = useTranslations('common')
+  const tDashboard = useTranslations('dashboard')
 
   const handleTabClick = (dashboard: Dashboard) => {
     setCurrentDashboard(dashboard)
@@ -92,7 +95,7 @@ export default function DashboardTabs({ onDashboardChange }: DashboardTabsProps)
                 setIsCreating(false)
               }
             }}
-            placeholder="Dashboard name"
+            placeholder={tDashboard('title')}
             className="w-32 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             autoFocus
           />
@@ -102,7 +105,7 @@ export default function DashboardTabs({ onDashboardChange }: DashboardTabsProps)
           onClick={() => setIsCreating(true)}
           data-chaos-target="create-dashboard"
           className="px-3 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-t-lg transition-colors"
-          title="Create new dashboard"
+          title={tDashboard('createDashboard')}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -115,7 +118,7 @@ export default function DashboardTabs({ onDashboardChange }: DashboardTabsProps)
         href="/dashboard/manage"
         className="ml-auto px-3 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
       >
-        Manage
+        {t('manage')}
       </Link>
     </div>
   )

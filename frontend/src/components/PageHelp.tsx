@@ -1,14 +1,11 @@
 'use client'
 
 import { useState, useEffect, ReactNode } from 'react'
+import { useTranslations } from 'next-intl'
 import { TEST_IDS } from '@/test-ids'
 
 interface PageHelpProps {
-  pageId: string  // Unique ID for localStorage persistence
-  title: string
-  description: string
-  steps?: string[]
-  tips?: string[]
+  pageId: string  // Unique ID for localStorage persistence and translation lookup
   children?: ReactNode  // For custom content
 }
 
@@ -16,12 +13,17 @@ type HelpState = 'first-visit' | 'dismissed' | 'minimized'
 
 export function PageHelp({
   pageId,
-  title,
-  description,
-  steps,
-  tips,
   children,
 }: PageHelpProps) {
+  const t = useTranslations('help')
+  const tPage = useTranslations(`help.${pageId}`)
+
+  // Get translated content from help.{pageId}.* namespace
+  const title = tPage('title')
+  const description = tPage('description')
+  // Steps and tips are arrays - use raw to get them
+  const steps = tPage.raw('steps') as string[] | undefined
+  const tips = tPage.raw('tips') as string[] | undefined
   const [helpState, setHelpState] = useState<HelpState>('first-visit')
   const [isExpanded, setIsExpanded] = useState(false)
   const [hasLoaded, setHasLoaded] = useState(false)
@@ -75,7 +77,7 @@ export function PageHelp({
         <button
           onClick={() => setIsExpanded(true)}
           className="flex items-center gap-1.5 px-2 py-1 text-xs text-theme-muted hover:text-theme hover:bg-[var(--color-bg-hover)] rounded-md transition-colors"
-          title="Show help"
+          title={t('showHelp')}
         >
           <svg
             className="w-4 h-4"
@@ -90,7 +92,7 @@ export function PageHelp({
               d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <span>Help</span>
+          <span>{t('showHelp')}</span>
         </button>
       </div>
     )
@@ -120,7 +122,7 @@ export function PageHelp({
           <span className="font-medium text-theme">{title}</span>
           {helpState === 'first-visit' && (
             <span className="text-xs bg-[var(--color-accent)]/20 text-[var(--color-accent)] px-1.5 py-0.5 rounded">
-              New
+              {t('newFeature')}
             </span>
           )}
         </div>
@@ -130,7 +132,7 @@ export function PageHelp({
               onClick={(e) => { e.stopPropagation(); setIsExpanded(false) }}
               className="text-xs text-theme-muted hover:text-theme"
             >
-              Close
+              {t('hideHelp')}
             </span>
           )}
           <svg
@@ -158,7 +160,7 @@ export function PageHelp({
           {/* How to use steps */}
           {steps && steps.length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-theme mb-2">How to use</h4>
+              <h4 className="text-sm font-medium text-theme mb-2">{t('howToUse')}</h4>
               <ul className="space-y-1.5">
                 {steps.map((step, index) => (
                   <li key={index} className="flex items-start gap-2 text-sm text-theme-muted">
@@ -177,7 +179,7 @@ export function PageHelp({
                 <svg className="w-4 h-4 text-[var(--color-accent)]" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
-                Tips
+                {t('tipsTitle')}
               </h4>
               <ul className="space-y-1">
                 {tips.map((tip, index) => (
@@ -200,7 +202,7 @@ export function PageHelp({
                 onClick={handleDismiss}
                 className="px-3 py-1.5 text-sm bg-[var(--color-accent)] text-[var(--color-primary-text)] rounded-md hover:opacity-90 transition-opacity"
               >
-                Got it
+                {t('dismiss')}
               </button>
             </div>
           )}

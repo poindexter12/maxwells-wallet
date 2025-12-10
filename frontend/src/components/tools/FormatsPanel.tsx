@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
 import { CustomFormatMapper, CustomConfig } from '@/components/CustomFormatMapper'
+import { useTranslations } from 'next-intl'
 
 type ConfigWithDescription = CustomConfig & { description?: string }
 
@@ -27,6 +28,9 @@ interface ParsedTransaction {
 type ViewMode = 'list' | 'create' | 'edit'
 
 export default function FormatsPanel() {
+  const t = useTranslations('tools.formats')
+  const tCommon = useTranslations('common')
+  const tFields = useTranslations('fields')
   const [formats, setFormats] = useState<SavedFormatConfig[]>([])
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState<ViewMode>('list')
@@ -60,7 +64,7 @@ export default function FormatsPanel() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm('Delete this format configuration?')) return
+    if (!confirm(t('confirmDelete'))) return
     setDeleting(id)
     try {
       const res = await fetch(`/api/v1/import/custom/configs/${id}`, { method: 'DELETE' })
@@ -199,7 +203,7 @@ export default function FormatsPanel() {
   if (loading) {
     return (
       <div className="text-center py-12 text-theme-muted" data-testid="formats-loading">
-        Loading...
+        {tCommon('loading')}
       </div>
     )
   }
@@ -224,10 +228,10 @@ export default function FormatsPanel() {
             className="px-3 py-1.5 text-sm text-theme-muted hover:text-theme border border-theme rounded-md hover:bg-theme-elevated"
             data-testid="back-to-list-btn"
           >
-            ← Back to Formats
+            ← {t('backToFormats')}
           </button>
           <h2 className="text-xl font-semibold text-theme">
-            {editingFormat ? 'Edit Format Configuration' : 'Create New Format'}
+            {editingFormat ? t('editFormatConfig') : t('createNewFormat')}
           </h2>
           <span className="text-sm text-theme-muted">({selectedFile.name})</span>
         </div>
@@ -259,17 +263,16 @@ export default function FormatsPanel() {
             className="px-3 py-1.5 text-sm text-theme-muted hover:text-theme border border-theme rounded-md hover:bg-theme-elevated"
             data-testid="back-to-list-btn"
           >
-            ← Back to Formats
+            ← {t('backToFormats')}
           </button>
           <h2 className="text-xl font-semibold text-theme">
-            Edit Format: {editingFormat.name}
+            {t('editFormat')}: {editingFormat.name}
           </h2>
         </div>
 
         <div className="card p-8 text-center">
           <p className="text-theme-muted mb-6">
-            Upload a sample CSV file to edit the format configuration.
-            This helps verify your column mappings are correct.
+            {t('uploadSampleCsv')}
           </p>
           <input
             ref={createFileInputRef}
@@ -284,7 +287,7 @@ export default function FormatsPanel() {
             className="btn-primary"
             data-testid="select-csv-btn"
           >
-            Select CSV File
+            {t('selectCsvFile')}
           </button>
         </div>
       </div>
@@ -296,14 +299,14 @@ export default function FormatsPanel() {
     <div className="space-y-6" data-testid="formats-panel">
       <div className="flex justify-between items-center">
         <p className="text-sm text-theme-muted">
-          Create reusable import configurations for different bank CSV formats
+          {t('description')}
         </p>
         <button
           onClick={handleCreate}
           className="btn-primary text-sm"
           data-testid="new-format-btn"
         >
-          + New Format
+          + {t('newFormat')}
         </button>
       </div>
 
@@ -330,8 +333,8 @@ export default function FormatsPanel() {
         <div className="card p-4 border-2 border-blue-500" data-testid="test-results">
           <div className="flex justify-between items-center mb-3">
             <h3 className="font-semibold text-theme">
-              Test Results: {testResults.transactions.length} transactions parsed
-              {testFile && <span className="text-sm font-normal text-theme-muted ml-2">from {testFile.name}</span>}
+              {t('testResults')}: {t('transactionsParsed', { count: testResults.transactions.length })}
+              {testFile && <span className="text-sm font-normal text-theme-muted ml-2">{t('from')} {testFile.name}</span>}
             </h3>
             <button
               onClick={() => { setTestResults(null); setTestFile(null); setTestingFormatId(null) }}
@@ -351,10 +354,10 @@ export default function FormatsPanel() {
               <table className="min-w-full text-sm">
                 <thead className="bg-theme-elevated">
                   <tr>
-                    <th className="px-3 py-2 text-left">Date</th>
-                    <th className="px-3 py-2 text-left">Merchant</th>
-                    <th className="px-3 py-2 text-left">Description</th>
-                    <th className="px-3 py-2 text-right">Amount</th>
+                    <th className="px-3 py-2 text-left">{tFields('date')}</th>
+                    <th className="px-3 py-2 text-left">{tFields('merchant')}</th>
+                    <th className="px-3 py-2 text-left">{tFields('description')}</th>
+                    <th className="px-3 py-2 text-right">{tFields('amount')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -372,7 +375,7 @@ export default function FormatsPanel() {
               </table>
               {testResults.transactions.length > 5 && (
                 <div className="px-3 py-2 text-sm text-theme-muted">
-                  Showing 5 of {testResults.transactions.length} transactions
+                  {t('showingOf', { shown: 5, total: testResults.transactions.length })}
                 </div>
               )}
             </div>
@@ -384,9 +387,9 @@ export default function FormatsPanel() {
       <div className="card" data-testid="formats-list">
         {formats.length === 0 ? (
           <div className="p-8 text-center" data-testid="no-formats">
-            <p className="text-theme-muted mb-4">No custom CSV formats created yet.</p>
+            <p className="text-theme-muted mb-4">{t('noFormats')}</p>
             <p className="text-sm text-theme-muted">
-              Create a format configuration to reuse when importing CSV files from your banks.
+              {t('noFormatsDescription')}
             </p>
           </div>
         ) : (
@@ -412,7 +415,7 @@ export default function FormatsPanel() {
                     )}
                     <p className="text-xs text-theme-muted">{parseConfigSummary(fmt.config_json)}</p>
                     <p className="text-xs text-theme-muted mt-1">
-                      Created {format(new Date(fmt.created_at), 'MMM d, yyyy')}
+                      {t('created')} {format(new Date(fmt.created_at), 'MMM d, yyyy')}
                     </p>
                   </div>
                   <div className="flex gap-2 ml-4">
@@ -428,7 +431,7 @@ export default function FormatsPanel() {
                       className="px-3 py-1.5 text-sm text-theme-muted hover:text-theme border border-theme rounded-md hover:bg-theme-elevated"
                       data-testid={`edit-format-${fmt.id}`}
                     >
-                      Edit
+                      {tCommon('edit')}
                     </button>
                     <button
                       onClick={() => handleDelete(fmt.id)}
@@ -436,7 +439,7 @@ export default function FormatsPanel() {
                       className="px-3 py-1.5 text-sm text-red-500 hover:text-red-700 border border-red-300 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
                       data-testid={`delete-format-${fmt.id}`}
                     >
-                      {deleting === fmt.id ? 'Deleting...' : 'Delete'}
+                      {deleting === fmt.id ? t('deleting') : tCommon('delete')}
                     </button>
                   </div>
                 </div>

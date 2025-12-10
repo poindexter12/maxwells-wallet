@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { formatCurrency } from '@/lib/format'
 import { Widget, TrendsData } from './types'
@@ -11,10 +12,12 @@ interface TrendsChartProps {
 }
 
 export function TrendsChart({ widget, data, isMonthlyScale }: TrendsChartProps) {
+  const t = useTranslations('dashboard.widgets')
+
   if (!data || !data.data || data.data.length === 0) return null
 
   const isWeekly = data.group_by === 'week'
-  const title = widget?.title || (isMonthlyScale ? '12-Week Trend' : '12-Month Trend')
+  const title = widget?.title || t('trends')
 
   const formatPeriodLabel = (period: string) => {
     if (isWeekly) {

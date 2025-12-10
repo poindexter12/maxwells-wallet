@@ -38,7 +38,8 @@ describe('ThemeSwitcher', () => {
     render(<ThemeSwitcher />)
 
     await waitFor(() => {
-      expect(screen.getByRole('combobox', { name: /select theme/i })).toBeInTheDocument()
+      // aria-label is translated "Theme"
+      expect(screen.getByRole('combobox', { name: /theme/i })).toBeInTheDocument()
     })
   })
 
@@ -57,7 +58,7 @@ describe('ThemeSwitcher', () => {
     render(<ThemeSwitcher />)
 
     await waitFor(() => {
-      const select = screen.getByRole('combobox', { name: /select theme/i })
+      const select = screen.getByRole('combobox', { name: /theme/i })
       expect(select).toHaveValue('ledger')
     })
   })
@@ -68,7 +69,7 @@ describe('ThemeSwitcher', () => {
     render(<ThemeSwitcher />)
 
     await waitFor(() => {
-      const select = screen.getByRole('combobox', { name: /select theme/i })
+      const select = screen.getByRole('combobox', { name: /theme/i })
       expect(select).toHaveValue('dark')
     })
   })
@@ -81,7 +82,7 @@ describe('ThemeSwitcher', () => {
       expect(screen.getByRole('combobox')).toBeEnabled()
     })
 
-    const select = screen.getByRole('combobox', { name: /select theme/i })
+    const select = screen.getByRole('combobox', { name: /theme/i })
     await user.selectOptions(select, 'cyberpunk')
 
     expect(localStorageMock.getItem('maxwell-wallet-theme')).toBe('cyberpunk')
@@ -95,7 +96,7 @@ describe('ThemeSwitcher', () => {
       expect(screen.getByRole('combobox')).toBeEnabled()
     })
 
-    const select = screen.getByRole('combobox', { name: /select theme/i })
+    const select = screen.getByRole('combobox', { name: /theme/i })
     await user.selectOptions(select, 'soft')
 
     expect(document.documentElement.getAttribute('data-theme')).toBe('soft')
@@ -107,7 +108,7 @@ describe('ThemeSwitcher', () => {
     render(<ThemeSwitcher />)
 
     await waitFor(() => {
-      const select = screen.getByRole('combobox', { name: /select theme/i })
+      const select = screen.getByRole('combobox', { name: /theme/i })
       expect(select).toHaveValue('cyberpunk')
     })
 

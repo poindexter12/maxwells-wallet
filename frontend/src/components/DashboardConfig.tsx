@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 
 interface Widget {
@@ -32,12 +33,31 @@ const WIDGET_ICONS: Record<string, string> = {
   heatmap: '🗓️'
 }
 
+// Map widget_type to translation key (e.g., 'bucket_pie' -> 'bucketPie')
+const WIDGET_TYPE_TO_KEY: Record<string, string> = {
+  summary: 'summary',
+  velocity: 'velocity',
+  anomalies: 'anomalies',
+  bucket_pie: 'bucketPie',
+  top_merchants: 'topMerchants',
+  trends: 'trends',
+  sankey: 'sankey',
+  treemap: 'treemap',
+  heatmap: 'heatmap',
+  budget_status: 'budgetStatus',
+  credit_cards: 'creditCards',
+  recurring: 'recurring'
+}
+
 export function DashboardConfig({
   widgets,
   onToggleVisibility,
   onMoveUp,
   onMoveDown
 }: DashboardConfigProps) {
+  const t = useTranslations('common')
+  const tDash = useTranslations('dashboard')
+  const tWidgets = useTranslations('dashboard.widgets')
   const [isOpen, setIsOpen] = useState(false)
 
   const sortedWidgets = [...widgets].sort((a, b) => a.position - b.position)
@@ -57,13 +77,13 @@ export function DashboardConfig({
         onClick={() => setIsOpen(!isOpen)}
         data-chaos-target="customize-dashboard"
         className="flex items-center gap-2 px-3 py-2 text-sm rounded-md border border-theme hover:bg-[var(--color-bg-hover)] transition-colors"
-        title="Configure dashboard"
+        title={t('customize')}
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
-        <span>Customize</span>
+        <span>{t('customize')}</span>
       </button>
 
       {isOpen && (
@@ -77,9 +97,9 @@ export function DashboardConfig({
           {/* Config Panel */}
           <div className="absolute right-0 mt-2 w-72 bg-theme-elevated border border-theme rounded-lg shadow-xl z-50">
             <div className="p-3 border-b border-theme">
-              <h3 className="font-medium text-theme">Quick Widget Toggle</h3>
+              <h3 className="font-medium text-theme">{tDash('quickWidgetToggle')}</h3>
               <p className="text-xs text-theme-muted mt-1">
-                Show/hide widgets. For more options, use the full configuration page.
+                {tDash('quickWidgetToggleDescription')}
               </p>
             </div>
 
@@ -103,7 +123,7 @@ export function DashboardConfig({
                           ? 'bg-blue-500 text-white'
                           : 'border border-theme'
                       }`}
-                      title={widget.is_visible ? 'Hide widget' : 'Show widget'}
+                      title={widget.is_visible ? tDash('hideWidget') : tDash('showWidget')}
                     >
                       {widget.is_visible && '✓'}
                     </button>
@@ -114,10 +134,10 @@ export function DashboardConfig({
                     </span>
                     <div className="flex-1 min-w-0">
                       <span className="text-sm text-theme truncate block">
-                        {widget.title || widget.widget_type}
+                        {widget.title || (WIDGET_TYPE_TO_KEY[widget.widget_type] ? tWidgets(WIDGET_TYPE_TO_KEY[widget.widget_type] as any) : widget.widget_type)}
                       </span>
                       {hasFilter && (
-                        <span className="text-xs text-blue-500">Filtered</span>
+                        <span className="text-xs text-blue-500">{t('filter')}</span>
                       )}
                     </div>
 
@@ -127,7 +147,7 @@ export function DashboardConfig({
                         onClick={() => onMoveUp(widget.id)}
                         disabled={index === 0}
                         className="text-theme-muted hover:text-theme disabled:opacity-30 p-0.5"
-                        title="Move up"
+                        title={tDash('moveUp')}
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -137,7 +157,7 @@ export function DashboardConfig({
                         onClick={() => onMoveDown(widget.id)}
                         disabled={index === sortedWidgets.length - 1}
                         className="text-theme-muted hover:text-theme disabled:opacity-30 p-0.5"
-                        title="Move down"
+                        title={tDash('moveDown')}
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -158,10 +178,10 @@ export function DashboardConfig({
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                 </svg>
-                Full Configuration
+                {tDash('fullConfiguration')}
               </Link>
               <p className="text-xs text-theme-muted text-center mt-2">
-                Duplicate widgets, configure filters, and more
+                {tDash('fullConfigurationDescription')}
               </p>
             </div>
           </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { format } from 'date-fns'
+import { useTranslations } from 'next-intl'
 import { formatCurrency } from '@/lib/format'
 import { TEST_IDS } from '@/test-ids'
 import { AccountTag, SavedCustomFormat, FORMAT_NAMES } from '@/types/import'
@@ -42,12 +43,16 @@ export function SingleFileImport({
   onCancelPreview,
   onFormatChange
 }: SingleFileImportProps) {
+  const t = useTranslations('import')
+  const tCommon = useTranslations('common')
+  const tFields = useTranslations('fields')
+
   return (
     <>
       <div className="bg-white rounded-lg shadow p-6 space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Import File
+            {t('importFile')}
           </label>
           <input
             data-testid={TEST_IDS.IMPORT_FILE_INPUT}
@@ -63,7 +68,7 @@ export function SingleFileImport({
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-gray-700">
-                Account Source <span className="text-red-500">*</span>
+                {t('accountSource')} <span className="text-red-500">*</span>
               </label>
               {accounts.length > 0 && (
                 <div className="flex gap-1">
@@ -76,7 +81,7 @@ export function SingleFileImport({
                     className={`px-2 py-0.5 text-xs rounded ${accountMode === 'existing' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
                     data-chaos-target="import-account-mode-existing"
                   >
-                    Existing
+                    {t('existing')}
                   </button>
                   <button
                     type="button"
@@ -87,7 +92,7 @@ export function SingleFileImport({
                     className={`px-2 py-0.5 text-xs rounded ${accountMode === 'new' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
                     data-chaos-target="import-account-mode-new"
                   >
-                    New
+                    {t('new')}
                   </button>
                 </div>
               )}
@@ -100,7 +105,7 @@ export function SingleFileImport({
                 onChange={(e) => setAccountSource(e.target.value)}
                 className={`w-full px-4 py-2 border rounded-md ${!accountSource ? 'border-yellow-400' : ''}`}
               >
-                <option value="">-- Select Account --</option>
+                <option value="">{t('selectAccount')}</option>
                 {accounts.map((acct) => (
                   <option key={acct.id} value={acct.value}>
                     {acct.value}
@@ -110,7 +115,7 @@ export function SingleFileImport({
             ) : (
               <input
                 type="text"
-                placeholder="e.g., BOFA-Checking, AMEX-53004"
+                placeholder={t('accountPlaceholder')}
                 value={accountSource}
                 onChange={(e) => setAccountSource(e.target.value)}
                 className={`w-full px-4 py-2 border rounded-md ${!accountSource ? 'border-yellow-400' : ''}`}
@@ -119,14 +124,14 @@ export function SingleFileImport({
             )}
             {!accountSource && (
               <p className="text-xs text-yellow-600 mt-1">
-                Required for accurate duplicate detection
+                {t('accountRequired')}
               </p>
             )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Format (Optional)
+              {t('formatOptional')}
             </label>
             <select
               data-testid={TEST_IDS.IMPORT_FORMAT_SELECT}
@@ -135,13 +140,13 @@ export function SingleFileImport({
               onChange={(e) => onFormatChange(e.target.value)}
               className="w-full px-4 py-2 border rounded-md"
             >
-              <option value="">Auto-detect</option>
-              <optgroup label="Standard File Formats">
+              <option value="">{t('autoDetect')}</option>
+              <optgroup label={t('standardFormats')}>
                 <option value="qif">Quicken (QIF)</option>
                 <option value="qfx">Quicken/OFX (QFX)</option>
               </optgroup>
               {savedFormats.length > 0 && (
-                <optgroup label="Saved Custom Formats">
+                <optgroup label={t('savedCustomFormats')}>
                   {savedFormats.map(fmt => (
                     <option key={fmt.id} value={`custom:${fmt.id}`}>
                       {fmt.name}
@@ -152,7 +157,7 @@ export function SingleFileImport({
             </select>
             {selectedCustomFormat && (
               <p className="mt-1 text-xs text-purple-600">
-                Using saved format: {selectedCustomFormat.name}
+                {t('usingFormat', { name: selectedCustomFormat.name })}
               </p>
             )}
           </div>
@@ -165,7 +170,7 @@ export function SingleFileImport({
           disabled={!file || !accountSource}
           className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
-          {!accountSource ? 'Select an Account to Preview' : 'Preview Import'}
+          {!accountSource ? t('selectAccountToPreview') : t('previewImport')}
         </button>
       </div>
 
@@ -173,7 +178,7 @@ export function SingleFileImport({
       {preview && (
         <div className="bg-white rounded-lg shadow p-6 space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Preview</h2>
+            <h2 className="text-xl font-semibold">{t('preview')}</h2>
             <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
               {selectedCustomFormat
                 ? selectedCustomFormat.name
@@ -183,7 +188,7 @@ export function SingleFileImport({
 
           {preview.errors && preview.errors.length > 0 && (
             <div className="p-3 bg-red-50 border border-red-200 rounded">
-              <p className="text-sm font-medium text-red-800">Parsing Errors:</p>
+              <p className="text-sm font-medium text-red-800">{t('parsingErrors')}</p>
               <ul className="mt-1 text-sm text-red-600 list-disc list-inside">
                 {preview.errors.slice(0, 3).map((err: string, idx: number) => (
                   <li key={idx}>{err}</li>
@@ -194,11 +199,11 @@ export function SingleFileImport({
 
           <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded">
             <div>
-              <p className="text-sm text-gray-600">Transactions</p>
+              <p className="text-sm text-gray-600">{t('transactions')}</p>
               <p className="text-2xl font-bold">{preview.transaction_count}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total Amount</p>
+              <p className="text-sm text-gray-600">{t('totalAmount')}</p>
               <p className={`text-2xl font-bold ${preview.total_amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(preview.total_amount)}
               </p>
@@ -209,10 +214,10 @@ export function SingleFileImport({
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Merchant</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Bucket</th>
-                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{tFields('date')}</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{tFields('merchant')}</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{tFields('bucket')}</th>
+                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">{tFields('amount')}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -221,7 +226,7 @@ export function SingleFileImport({
                     <td className="px-4 py-2 text-sm">{format(new Date(txn.date), 'MM/dd/yyyy')}</td>
                     <td className="px-4 py-2 text-sm">{txn.merchant}</td>
                     <td className="px-4 py-2 text-sm">
-                      <span className="px-2 py-1 bg-gray-100 rounded text-xs">{txn.bucket || 'No Bucket'}</span>
+                      <span className="px-2 py-1 bg-gray-100 rounded text-xs">{txn.bucket || t('noBucket')}</span>
                     </td>
                     <td className={`px-4 py-2 text-sm text-right ${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {formatCurrency(txn.amount, true)}
@@ -232,7 +237,7 @@ export function SingleFileImport({
             </table>
             {preview.transactions.length > 10 && (
               <p className="text-center text-sm text-gray-500 mt-4">
-                Showing first 10 of {preview.transaction_count} transactions
+                {t('showingFirstOfTotal', { shown: 10, total: preview.transaction_count })}
               </p>
             )}
           </div>
@@ -245,14 +250,14 @@ export function SingleFileImport({
               disabled={importing}
               className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
-              {importing ? 'Importing...' : 'Confirm Import'}
+              {importing ? t('importing') : t('confirm')}
             </button>
             <button
               onClick={onCancelPreview}
               className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
               data-chaos-target="import-cancel-button"
             >
-              Cancel
+              {tCommon('cancel')}
             </button>
           </div>
         </div>

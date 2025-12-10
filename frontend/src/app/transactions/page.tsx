@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { PageHelp } from '@/components/PageHelp'
 import { VirtualTransactionList } from '@/components/transactions'
@@ -43,14 +44,22 @@ const PAGE_SIZE = 50
 // Wrapper component with Suspense boundary for useSearchParams
 export default function TransactionsPage() {
   return (
-    <Suspense fallback={<div className="text-center py-12">Loading...</div>}>
+    <Suspense fallback={<TransactionsLoadingFallback />}>
       <TransactionsContent />
     </Suspense>
   )
 }
 
+function TransactionsLoadingFallback() {
+  const t = useTranslations('common')
+  return <div className="text-center py-12">{t('loading')}</div>
+}
+
 function TransactionsContent() {
   const searchParams = useSearchParams()
+  const t = useTranslations('transactions')
+  const tCommon = useTranslations('common')
+  const tFields = useTranslations('fields')
 
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [totalCount, setTotalCount] = useState<number>(0)
@@ -567,7 +576,7 @@ function TransactionsContent() {
 
   // Delete a transaction
   async function handleDeleteTransaction(txnId: number) {
-    if (!confirm('Are you sure you want to delete this transaction?')) {
+    if (!confirm(t('confirmDelete'))) {
       return
     }
     try {
@@ -593,35 +602,19 @@ function TransactionsContent() {
   }
 
   if (loading) {
-    return <div className="text-center py-12">Loading...</div>
+    return <div className="text-center py-12">{tCommon('loading')}</div>
   }
 
   return (
     <div className="space-y-6">
-      <PageHelp
-        pageId="transactions"
-        title="Transactions Help"
-        description="View, filter, and categorize all your imported transactions. Use buckets for spending categories and tags for special tracking like trips or projects."
-        steps={[
-          "Use the Bucket dropdown to categorize each transaction (groceries, dining, etc.)",
-          "Add occasion tags for trips, events, or projects you want to track separately",
-          "Select multiple transactions with checkboxes for bulk categorization",
-          "Click the expand arrow (▼) to see full details, add notes, or edit metadata",
-          "Use filters to find specific transactions by date, amount, account, or text search"
-        ]}
-        tips={[
-          "Set up Rules to automatically categorize recurring merchants",
-          "Shift+click accounts in the filter to exclude them instead of include",
-          "The colored left border shows the bucket category at a glance"
-        ]}
-      />
+      <PageHelp pageId="transactions" />
 
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-theme">Transactions</h1>
+          <h1 className="text-3xl font-bold text-theme">{t('title')}</h1>
           {totalCount > 0 && (
             <p className="text-sm text-theme-muted mt-1">
-              Showing {transactions.length.toLocaleString()} of {totalCount.toLocaleString()} transactions
+              {t('subtitle', { count: transactions.length.toLocaleString(), total: totalCount.toLocaleString() })}
             </p>
           )}
         </div>
@@ -629,7 +622,7 @@ function TransactionsContent() {
           href="/import"
           className="btn-primary"
         >
-          Import CSV
+          {t('importCsv', { defaultValue: 'Import CSV' })}
         </Link>
       </div>
 
@@ -638,7 +631,7 @@ function TransactionsContent() {
         <div className="flex flex-wrap gap-4">
           {/* Date Range Quick Filters */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-theme-muted font-medium uppercase tracking-wide">Date:</span>
+            <span className="text-xs text-theme-muted font-medium uppercase tracking-wide">{t('filters.date')}</span>
             <button
               data-testid={TEST_IDS.QUICK_FILTER_THIS_MONTH}
               data-chaos-target="txn-quick-this-month"
@@ -655,7 +648,7 @@ function TransactionsContent() {
               }}
               className="px-3 py-1.5 text-xs rounded-full border border-theme hover:bg-[var(--color-bg-hover)] transition-colors"
             >
-              This Month
+              {t('filters.thisMonth')}
             </button>
             <button
               data-testid={TEST_IDS.QUICK_FILTER_LAST_MONTH}
@@ -674,7 +667,7 @@ function TransactionsContent() {
               className="px-3 py-1.5 text-xs rounded-full border border-theme hover:bg-[var(--color-bg-hover)] transition-colors"
               title={`${new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`}
             >
-              Last Month
+              {t('filters.lastMonth')}
             </button>
             <button
               data-testid={TEST_IDS.QUICK_FILTER_THIS_YEAR}
@@ -692,7 +685,7 @@ function TransactionsContent() {
               }}
               className="px-3 py-1.5 text-xs rounded-full border border-theme hover:bg-[var(--color-bg-hover)] transition-colors"
             >
-              This Year
+              {t('filters.thisYear')}
             </button>
             <button
               data-testid={TEST_IDS.QUICK_FILTER_YTD}
@@ -709,7 +702,7 @@ function TransactionsContent() {
               }}
               className="px-3 py-1.5 text-xs rounded-full border border-theme hover:bg-[var(--color-bg-hover)] transition-colors"
             >
-              YTD
+              {t('filters.ytd')}
             </button>
             <button
               data-testid={TEST_IDS.QUICK_FILTER_LAST_90_DAYS}
@@ -726,7 +719,7 @@ function TransactionsContent() {
               }}
               className="px-3 py-1.5 text-xs rounded-full border border-theme hover:bg-[var(--color-bg-hover)] transition-colors"
             >
-              Last 90 Days
+              {t('filters.last90Days')}
             </button>
           </div>
 
@@ -734,7 +727,7 @@ function TransactionsContent() {
 
           {/* Insight Quick Filters */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-theme-muted font-medium uppercase tracking-wide">Quick:</span>
+            <span className="text-xs text-theme-muted font-medium uppercase tracking-wide">{t('filters.quick')}</span>
             <button
               data-testid={TEST_IDS.QUICK_FILTER_LARGE_DYNAMIC}
               onClick={() => {
@@ -775,7 +768,7 @@ function TransactionsContent() {
               className="px-3 py-1.5 text-xs rounded-full border border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors dark:border-blue-700 dark:text-blue-300 dark:bg-blue-900/30 dark:hover:bg-blue-900/50"
               title="Top spending this month (over $50)"
             >
-              🏪 Top Spending
+              🏪 {t('filters.topSpending')}
             </button>
             <button
               data-testid={TEST_IDS.QUICK_FILTER_LARGE}
@@ -790,7 +783,7 @@ function TransactionsContent() {
               className="px-3 py-1.5 text-xs rounded-full border border-red-300 text-red-700 bg-red-50 hover:bg-red-100 transition-colors dark:border-red-700 dark:text-red-300 dark:bg-red-900/30 dark:hover:bg-red-900/50"
               title="Transactions over $100"
             >
-              💰 Large ($100+)
+              💰 {t('filters.large')}
             </button>
             <button
               data-testid={TEST_IDS.QUICK_FILTER_UNRECONCILED}
@@ -804,7 +797,7 @@ function TransactionsContent() {
               className="px-3 py-1.5 text-xs rounded-full border border-yellow-300 text-yellow-700 bg-yellow-50 hover:bg-yellow-100 transition-colors dark:border-yellow-700 dark:text-yellow-300 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50"
               title="Transactions needing review"
             >
-              📋 Unreconciled
+              📋 {t('status.unreconciled')}
             </button>
           </div>
         </div>
@@ -818,7 +811,7 @@ function TransactionsContent() {
             data-testid={TEST_IDS.FILTER_SEARCH}
             data-chaos-target="txn-filter-search"
             type="text"
-            placeholder="Search merchant or description..."
+            placeholder={t('searchPlaceholder')}
             className="input"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -835,7 +828,7 @@ function TransactionsContent() {
             value={filters.bucket}
             onChange={(e) => setFilters({ ...filters, bucket: e.target.value })}
           >
-            <option value="">All Buckets</option>
+            <option value="">{t('allBuckets')}</option>
             {bucketTags.map((tag) => (
               <option key={tag.id} value={tag.value}>
                 {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
@@ -849,7 +842,7 @@ function TransactionsContent() {
             value={filters.occasion}
             onChange={(e) => setFilters({ ...filters, occasion: e.target.value })}
           >
-            <option value="">All Occasions</option>
+            <option value="">{t('allOccasions')}</option>
             {occasionTags.map((tag) => (
               <option key={tag.id} value={tag.value}>
                 {tag.value.charAt(0).toUpperCase() + tag.value.slice(1).replace(/-/g, ' ')}
@@ -868,7 +861,7 @@ function TransactionsContent() {
                   ? `${filters.accounts.length} selected`
                   : filters.accountsExclude.length > 0
                     ? `Excluding ${filters.accountsExclude.length}`
-                    : 'All Accounts'}
+                    : t('allAccounts')}
               </span>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -877,7 +870,7 @@ function TransactionsContent() {
             {showAccountDropdown && (
               <div className="absolute z-20 mt-1 w-72 bg-theme-elevated border border-theme rounded-md shadow-lg max-h-64 overflow-y-auto">
                 <div className="p-2 border-b border-theme text-xs text-theme-muted">
-                  Click to include, Shift+Click to exclude
+                  {t('filters.clickToInclude')}
                 </div>
                 {accountTags.map((tag) => {
                   const isIncluded = filters.accounts.includes(tag.value)
@@ -940,7 +933,7 @@ function TransactionsContent() {
                       onClick={() => setFilters({ ...filters, accounts: [], accountsExclude: [] })}
                       className="text-xs text-theme-muted hover:text-theme"
                     >
-                      Clear selection
+                      {t('bulk.clearSelection')}
                     </button>
                   </div>
                 )}
@@ -952,13 +945,13 @@ function TransactionsContent() {
               onClick={() => setFilters({ ...filters, search: searchInput })}
               className="flex-1 btn-primary"
             >
-              Search
+              {tCommon('search')}
             </button>
             <button
               data-testid={TEST_IDS.FILTER_ADVANCED_TOGGLE}
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
               className={`px-3 py-2 border border-theme rounded-md ${showAdvancedFilters ? 'bg-[var(--color-bg-hover)]' : ''}`}
-              title="Advanced filters"
+              title={t('filters.advanced')}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
@@ -978,11 +971,11 @@ function TransactionsContent() {
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
               >
-                <option value="">All Status</option>
-                <option value="unreconciled">Unreconciled</option>
-                <option value="matched">Matched</option>
-                <option value="manually_entered">Manually Entered</option>
-                <option value="ignored">Ignored</option>
+                <option value="">{t('allStatus')}</option>
+                <option value="unreconciled">{t('status.unreconciled')}</option>
+                <option value="matched">{t('status.matched')}</option>
+                <option value="manually_entered">{t('status.manuallyEntered')}</option>
+                <option value="ignored">{t('status.ignored')}</option>
               </select>
               <select
                 data-testid={TEST_IDS.FILTER_TRANSFERS}
@@ -992,16 +985,16 @@ function TransactionsContent() {
                 onChange={(e) => setFilters({ ...filters, transfers: e.target.value as 'all' | 'hide' | 'only' })}
                 title="Filter internal transfers (CC payments, bank transfers)"
               >
-                <option value="hide">Hide Transfers</option>
-                <option value="all">All Transactions</option>
-                <option value="only">Transfers Only</option>
+                <option value="hide">{t('hideTransfers')}</option>
+                <option value="all">{t('showTransfers')}</option>
+                <option value="only">{t('transfersOnly')}</option>
               </select>
               <div className="flex gap-2 items-center">
                 <input
                   data-testid={TEST_IDS.FILTER_AMOUNT_MIN}
                   data-chaos-target="txn-filter-amount-min"
                   type="number"
-                  placeholder="Min $"
+                  placeholder={t('minAmount', { defaultValue: 'Min $' })}
                   className="input w-full"
                   value={filters.amountMin}
                   onChange={(e) => setFilters({ ...filters, amountMin: e.target.value })}
@@ -1011,7 +1004,7 @@ function TransactionsContent() {
                   data-testid={TEST_IDS.FILTER_AMOUNT_MAX}
                   data-chaos-target="txn-filter-amount-max"
                   type="number"
-                  placeholder="Max $"
+                  placeholder={t('maxAmount', { defaultValue: 'Max $' })}
                   className="input w-full"
                   value={filters.amountMax}
                   onChange={(e) => setFilters({ ...filters, amountMax: e.target.value })}
@@ -1024,7 +1017,7 @@ function TransactionsContent() {
                 className="input"
                 value={filters.startDate}
                 onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                title="Start date"
+                title={t('startDate', { defaultValue: 'Start date' })}
               />
               <input
                 data-testid={TEST_IDS.FILTER_DATE_END}
@@ -1033,7 +1026,7 @@ function TransactionsContent() {
                 className="input"
                 value={filters.endDate}
                 onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                title="End date"
+                title={t('endDate', { defaultValue: 'End date' })}
               />
               <button
                 data-testid={TEST_IDS.FILTER_CLEAR}
@@ -1057,7 +1050,7 @@ function TransactionsContent() {
                 }}
                 className="px-4 py-2 text-theme-muted border border-theme rounded-md hover:bg-[var(--color-bg-hover)]"
               >
-                Clear All
+                {t('filters.clearAll')}
               </button>
             </div>
           </div>
@@ -1068,19 +1061,19 @@ function TransactionsContent() {
           <div className="flex flex-wrap gap-2 pt-2">
             {filters.bucket && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
-                Bucket: {filters.bucket}
+                {t('bucket')}: {filters.bucket}
                 <button onClick={() => setFilters({ ...filters, bucket: '' })} className="hover:text-green-900">×</button>
               </span>
             )}
             {filters.occasion && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">
-                Occasion: {filters.occasion.replace(/-/g, ' ')}
+                {t('occasion')}: {filters.occasion.replace(/-/g, ' ')}
                 <button onClick={() => setFilters({ ...filters, occasion: '' })} className="hover:text-purple-900">×</button>
               </span>
             )}
             {filters.accounts.map(acc => (
               <span key={`inc-${acc}`} className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                Account: {accountTags.find(t => t.value === acc)?.description || acc}
+                {t('account')}: {accountTags.find(t => t.value === acc)?.description || acc}
                 <button onClick={() => setFilters({ ...filters, accounts: filters.accounts.filter(a => a !== acc) })} className="hover:text-blue-900">×</button>
               </span>
             ))}
@@ -1092,25 +1085,25 @@ function TransactionsContent() {
             ))}
             {filters.status && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
-                Status: {filters.status}
+                {tFields('status')}: {filters.status}
                 <button onClick={() => setFilters({ ...filters, status: '' })} className="hover:text-yellow-900">×</button>
               </span>
             )}
             {(filters.amountMin || filters.amountMax) && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs">
-                Amount: {filters.amountMin || '∞'} – {filters.amountMax || '∞'}
+                {tFields('amount')}: {filters.amountMin || '∞'} – {filters.amountMax || '∞'}
                 <button onClick={() => setFilters({ ...filters, amountMin: '', amountMax: '' })} className="hover:text-orange-900">×</button>
               </span>
             )}
             {(filters.startDate || filters.endDate) && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
-                Date: {filters.startDate || '...'} – {filters.endDate || '...'}
+                {tFields('date')}: {filters.startDate || '...'} – {filters.endDate || '...'}
                 <button onClick={() => setFilters({ ...filters, startDate: '', endDate: '' })} className="hover:text-gray-900">×</button>
               </span>
             )}
             {filters.transfers !== 'hide' && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                {filters.transfers === 'all' ? 'Including Transfers' : 'Transfers Only'}
+                {filters.transfers === 'all' ? t('showTransfers') : t('transfersOnly')}
                 <button onClick={() => setFilters({ ...filters, transfers: 'hide' })} className="hover:text-blue-900">×</button>
               </span>
             )}
@@ -1140,8 +1133,8 @@ function TransactionsContent() {
             />
             <span className={`text-sm font-medium ${selectedIds.size > 0 ? 'text-[var(--color-accent)]' : 'text-theme-muted'}`}>
               {selectedIds.size > 0
-                ? `${selectedIds.size} of ${totalCount.toLocaleString()} selected`
-                : `Select all (${transactions.length} loaded)`}
+                ? t('bulk.selected', { count: selectedIds.size, total: totalCount.toLocaleString() })
+                : t('bulk.selectAll', { count: transactions.length })}
             </span>
           </div>
 
@@ -1150,7 +1143,7 @@ function TransactionsContent() {
               <div className="h-6 w-px bg-[var(--color-accent)]/30" />
 
               <div className="flex items-center gap-2">
-                <span className="text-sm text-[var(--color-accent)]">Assign:</span>
+                <span className="text-sm text-[var(--color-accent)]">{t('bulk.assign')}</span>
                 <select
                   data-testid={TEST_IDS.BULK_ACTION_SELECT}
                   value={bulkAction}
@@ -1160,10 +1153,10 @@ function TransactionsContent() {
                   }}
                   className="px-3 py-1.5 border border-[var(--color-accent)]/30 rounded-md text-sm bg-theme-elevated focus:ring-2 focus:ring-[var(--color-accent)]"
                 >
-                  <option value="">Choose type...</option>
-                  <option value="bucket">Bucket</option>
-                  <option value="occasion">Occasion</option>
-                  <option value="account">Account</option>
+                  <option value="">{t('bulk.chooseType')}</option>
+                  <option value="bucket">{t('bucket')}</option>
+                  <option value="occasion">{t('occasion')}</option>
+                  <option value="account">{t('account')}</option>
                 </select>
 
                 {bulkAction === 'bucket' && (
@@ -1172,7 +1165,7 @@ function TransactionsContent() {
                     onChange={(e) => setBulkValue(e.target.value)}
                     className="px-3 py-1.5 border border-[var(--color-accent)]/30 rounded-md text-sm bg-theme-elevated focus:ring-2 focus:ring-[var(--color-accent)]"
                   >
-                    <option value="">Select bucket...</option>
+                    <option value="">{t('bulk.selectBucket')}</option>
                     {bucketTags.map((tag) => (
                       <option key={tag.id} value={`bucket:${tag.value}`}>
                         {tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
@@ -1187,7 +1180,7 @@ function TransactionsContent() {
                     onChange={(e) => setBulkValue(e.target.value)}
                     className="px-3 py-1.5 border border-[var(--color-accent)]/30 rounded-md text-sm bg-theme-elevated focus:ring-2 focus:ring-[var(--color-accent)]"
                   >
-                    <option value="">Select occasion...</option>
+                    <option value="">{t('bulk.selectOccasion')}</option>
                     {occasionTags.map((tag) => (
                       <option key={tag.id} value={`occasion:${tag.value}`}>
                         {tag.value.charAt(0).toUpperCase() + tag.value.slice(1).replace(/-/g, ' ')}
@@ -1202,7 +1195,7 @@ function TransactionsContent() {
                     onChange={(e) => setBulkValue(e.target.value)}
                     className="px-3 py-1.5 border border-[var(--color-accent)]/30 rounded-md text-sm bg-theme-elevated focus:ring-2 focus:ring-[var(--color-accent)]"
                   >
-                    <option value="">Select account...</option>
+                    <option value="">{t('bulk.selectAccount')}</option>
                     {accountTags.map((tag) => (
                       <option key={tag.id} value={`account:${tag.value}`}>
                         {tag.description || tag.value}
@@ -1225,10 +1218,10 @@ function TransactionsContent() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
-                      Applying...
+                      {t('bulk.applying')}
                     </span>
                   ) : (
-                    `Apply to ${selectedIds.size}`
+                    t('bulk.apply', { count: selectedIds.size })
                   )}
                 </button>
               )}
@@ -1241,7 +1234,7 @@ function TransactionsContent() {
                 }}
                 className="ml-auto text-sm text-[var(--color-accent)] hover:opacity-80 font-medium"
               >
-                Clear selection
+                {t('bulk.clearSelection')}
               </button>
             </>
           )}

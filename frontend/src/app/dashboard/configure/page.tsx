@@ -197,17 +197,7 @@ export default function DashboardConfigurePage() {
 
   return (
     <div className="space-y-6">
-      <PageHelp
-        pageId="dashboard-configure"
-        title="Dashboard Configuration"
-        description="Customize which widgets appear on your dashboard, their order, and configure filtered views."
-        tips={[
-          "Toggle visibility to show/hide widgets on the dashboard",
-          "Use the arrows to reorder widgets",
-          "Duplicate widgets to create filtered views (e.g., 'Groceries Spending' treemap)",
-          "Configure bucket filters to focus widgets on specific spending categories"
-        ]}
-      />
+      <PageHelp pageId="dashboardConfigure" />
 
       {/* Header */}
       <div className="flex items-center justify-between">
