@@ -22,8 +22,9 @@ const productionLocales = ['en-US', 'en-GB', 'es', 'fr', 'it', 'pt', 'de', 'nl']
 const devLocales = ['pseudo'] as const;
 
 // Combined locales based on environment
-const isDev = process.env.NODE_ENV === 'development';
-export const locales = isDev
+// Pseudo locale is available in development OR when explicitly enabled (e.g., Docker QA builds)
+const enablePseudo = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_ENABLE_PSEUDO === 'true';
+export const locales = enablePseudo
   ? ([...productionLocales, ...devLocales] as const)
   : productionLocales;
 
