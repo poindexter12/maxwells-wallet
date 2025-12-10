@@ -5,6 +5,31 @@ All notable changes to Maxwell's Wallet will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0-beta] - 2025-12-10
+
+### Added
+
+#### Internationalization (i18n)
+- **Multi-language Support** - Complete i18n infrastructure with next-intl
+  - Language switcher in settings (Auto/English/l33t speak)
+  - All UI strings externalized to message files
+  - l33t speak translation for testing/fun
+- **Structured Error Codes** - API errors now include machine-readable codes
+  - `error_code` field for frontend translation lookup
+  - `context` field for dynamic interpolation (e.g., `{count}` placeholders)
+  - All 40+ error types documented with unique codes
+- **Translation Coverage Test** - Automated test ensures all locales have complete translations
+
+### Changed
+- **Node.js Version** - Pinned to LTS v22 via `.nvmrc`
+  - `make check-node` target auto-installs via nvm if needed
+  - Fixes deprecation warnings from Node 25
+
+### Fixed
+- **Dashboard Widget Performance** - Removed lazy widget creation from GET endpoints
+  - Widgets now initialized at dashboard creation time only
+  - Eliminates INSERT queries during read operations
+
 ## [0.8.0] - 2025-12-09
 
 ### Added
