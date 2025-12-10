@@ -117,3 +117,16 @@ class TestTransactionManagement:
 
         assert len(income_transactions) == 2
         assert len(expense_transactions) == 4
+
+    @pytest.mark.asyncio
+    async def test_bulk_update_nonexistent_transactions(self, client: AsyncClient):
+        """Bulk update with nonexistent transaction IDs returns 404"""
+        response = await client.post(
+            "/api/v1/transactions/bulk-update",
+            json={
+                "transaction_ids": [99998, 99999],
+                "updates": {"category": "Other"}
+            }
+        )
+        assert response.status_code == 404
+        assert response.json()["detail"]["error_code"] == "TRANSACTIONS_NOT_FOUND"
