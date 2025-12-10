@@ -246,8 +246,8 @@ class TestDashboardWidgets:
         assert response.status_code == 404
 
     @pytest.mark.asyncio
-    async def test_list_widgets_adds_missing_types(self, client: AsyncClient):
-        """Listing widgets adds any missing default widget types"""
+    async def test_deleted_widget_stays_deleted(self, client: AsyncClient):
+        """Deleting a widget removes it permanently (use reset to restore)"""
         # First get widgets - this initializes defaults
         response1 = await client.get("/api/v1/dashboard/widgets")
         widgets1 = response1.json()
@@ -257,10 +257,11 @@ class TestDashboardWidgets:
         widget_to_delete = next(w for w in widgets1 if w["widget_type"] == "velocity")
         await client.delete(f"/api/v1/dashboard/widgets/{widget_to_delete['id']}")
 
-        # List again - should add the missing type back
+        # List again - deleted widget should stay deleted
         response2 = await client.get("/api/v1/dashboard/widgets")
         widgets2 = response2.json()
 
-        # Should have added the missing velocity widget back
+        # Widget should remain deleted (use POST /reset to restore defaults)
+        assert len(widgets2) == initial_count - 1
         widget_types = [w["widget_type"] for w in widgets2]
-        assert "velocity" in widget_types
+        assert "velocity" not in widget_types
