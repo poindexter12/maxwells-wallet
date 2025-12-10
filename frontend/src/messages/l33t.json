@@ -131,7 +131,7 @@
     "selectCategory": "53l3c7 4 c473g0ry...",
     "monthly": "m0n7hly",
     "yearly": "y34rly",
-    "rollover": "3n4bl3 r0ll0v3r",
+    "rollover": "3n4bl3 r0ll0v3r (unu53d bud937 c4rr135 70 n3x7 p3r10d)",
     "status": {
       "onTrack": "0n 7r4ck",
       "warning": "w4rn1ng",
@@ -269,12 +269,31 @@
     "unauthorized": "y0u 4r3 n07 4u7h0r1z3d.",
     "unknownCode": "unkn0wn 3rr0r: {code}",
     "TRANSACTION_NOT_FOUND": "7r4n54c710n n07 f0und.",
+    "TRANSACTIONS_NOT_FOUND": "7r4n54c710n5 n07 f0und.",
     "TAG_NOT_FOUND": "749 n07 f0und.",
     "TAG_ALREADY_EXISTS": "4 749 w17h 7h15 n4m3 4lr34dy 3x1575.",
     "TAG_IN_USE": "c4nn07 d3l373 749: u53d by {count} 7r4n54c710n(5).",
+    "TAG_NOT_APPLIED": "7h15 749 15 n07 4ppl13d 70 7h15 7r4n54c710n.",
+    "TAG_INVALID_FORMAT": "1nv4l1d 749 f0rm47.",
     "BUDGET_NOT_FOUND": "bud937 n07 f0und.",
+    "BUDGET_ALREADY_EXISTS": "4 bud937 4lr34dy 3x1575 f0r {tag} ({period}).",
+    "IMPORT_NO_TRANSACTIONS": "n0 7r4n54c710n5 f0und 1n f1l3.",
+    "IMPORT_FORMAT_NOT_FOUND": "1mp0r7 f0rm47 n07 f0und.",
+    "IMPORT_UNSUPPORTED_FORMAT": "un5upp0r73d f1l3 f0rm47.",
+    "IMPORT_NO_FILES": "n0 f1l35 pr0v1d3d.",
+    "IMPORT_SESSION_NOT_FOUND": "1mp0r7 53551on n07 f0und.",
     "DASHBOARD_NOT_FOUND": "d45hb04rd n07 f0und.",
-    "WIDGET_NOT_FOUND": "w1d937 n07 f0und."
+    "WIDGET_NOT_FOUND": "w1d937 n07 f0und.",
+    "CANNOT_DELETE_LAST_DASHBOARD": "c4nn07 d3l373 7h3 l457 d45hb04rd.",
+    "FILTER_NOT_FOUND": "f1l73r n07 f0und.",
+    "ACCOUNT_NOT_FOUND": "4cc0un7 n07 f0und.",
+    "RULE_NOT_FOUND": "rul3 n07 f0und.",
+    "ALIAS_ALREADY_EXISTS": "4l145 4lr34dy 3x1575.",
+    "RECURRING_NOT_FOUND": "r3curr1ng p4773rn n07 f0und.",
+    "CONFIRMATION_REQUIRED": "c0nf1rm4710n r3qu1r3d.",
+    "VALIDATION_ERROR": "v4l1d4710n 3rr0r.",
+    "NO_TRANSACTION_IDS": "n0 7r4n54c710n 1d5 pr0v1d3d.",
+    "TRANSACTION_NOT_LINKED": "7r4n54c710n 15 n07 l1nk3d."
   },
   "help": {
     "dismiss": "907 17",
@@ -283,27 +302,89 @@
     "newFeature": "n3w",
     "transactions": {
       "title": "7r4n54c710n5 h3lp",
-      "description": "v13w, f1l73r, 4nd c4739or1z3 4ll y0ur 7r4n54c710n5."
+      "description": "v13w, f1l73r, 4nd c4739or1z3 4ll y0ur 7r4n54c710n5.",
+      "steps": [
+        "u53 f1l73r5 70 n4rr0w d0wn 7r4n54c710n5 by d473, c473g0ry, 0r 4m0un7",
+        "cl1ck 0n 4 7r4n54c710n 70 v13w d3741l5 4nd 3d17",
+        "u53 bulk 4c710n5 70 c4739or1z3 mul71pl3 7r4n54c710n5 47 0nc3",
+        "70ggl3 7r4n5f3r v15lb1l17y 70 f0cu5 0n 5p3nd1ng 0r 533 4ll m0v3m3n75"
+      ],
+      "tips": [
+        "h0ld 5h1f7 wh1l3 cl1ck1ng 4 f1l73r 70 3xclud3 1n573ad 0f 1nclud3",
+        "u53 7h3 534rch b4r 70 f1nd 7r4n54c710n5 by m3rch4n7 0r d35cr1p710n",
+        "cl1ck c0lumn h34d3r5 70 50r7 7r4n54c710n5"
+      ]
     },
     "budgets": {
       "title": "bud9375 h3lp",
-      "description": "537 5p3nd1ng l1m175 4nd 7r4ck y0ur pr09r355."
+      "description": "537 5p3nd1ng l1m175 4nd 7r4ck y0ur pr09r355.",
+      "steps": [
+        "cl1ck 'n3w bud937' 70 cr3473 4 bud937 f0r 4 buck37, 0cc4510n, 0r 4cc0un7",
+        "537 m0n7hly 0r y34rly l1m175",
+        "m0n170r 7h3 pr09r355 b4r 70 533 h0w much y0u'v3 5p3n7",
+        "3n4bl3 r0ll0v3r 70 c4rry unu53d bud937 70 7h3 n3x7 p3r10d"
+      ],
+      "tips": [
+        "bud9375 7urn y3ll0w 47 80% 4nd r3d 47 100%",
+        "cl1ck 0n 4 bud937 70 533 d3741l3d 5p3nd1ng br34kd0wn"
+      ]
     },
     "dashboard": {
       "title": "d45hb04rd h3lp",
-      "description": "937 4 qu1ck 0v3rv13w 0f y0ur f1n4nc14l h34l7h."
+      "description": "937 4 qu1ck 0v3rv13w 0f y0ur f1n4nc14l h34l7h.",
+      "steps": [
+        "u53 d473 r4ng3 53l3c70r 70 v13w d1ff3r3n7 71m3 p3r10d5",
+        "cl1ck 'm4n493' 70 5h0w/h1d3 w1d9375",
+        "dr49 w1d9375 70 r30rd3r 7h3m",
+        "cr3473 mul71pl3 d45hb04rd5 f0r d1ff3r3n7 v13w5"
+      ],
+      "tips": [
+        "cl1ck 0n ch4r7 3l3m3n75 70 dr1ll d0wn 1n70 7r4n54c710n5",
+        "4n0m4l135 h1ghl1gh7 unu5u4l 5p3nd1ng p4773rn5"
+      ]
     },
     "import": {
       "title": "1mp0r7 h3lp",
-      "description": "1mp0r7 7r4n54c710n5 fr0m y0ur b4nk's f1l35."
+      "description": "1mp0r7 7r4n54c710n5 fr0m y0ur b4nk's f1l35.",
+      "steps": [
+        "53l3c7 7h3 f1l3 fr0m y0ur b4nk'5 3xp0r7",
+        "ch0053 7h3 4cc0un7 (r3qu1r3d f0r dupl1c473 d373c710n)",
+        "pr3v13w 7h3 7r4n54c710n5 b3f0r3 1mp0r71ng",
+        "c0nf1rm 70 4dd 7r4n54c710n5 70 y0ur r3c0rd5"
+      ],
+      "tips": [
+        "u53 b47ch 1mp0r7 f0r mul71pl3 f1l35 47 0nc3",
+        "7h3 f0rm47 15 u5u4lly 4u70-d373c73d",
+        "dupl1c4735 4r3 4u70m471c4lly 5k1pp3d"
+      ]
     },
     "admin": {
       "title": "4dm1n h3lp",
-      "description": "m4n493 7495, v13w 1mp0r7 h1570ry, 4nd m0n170r 5y573m h34l7h."
+      "description": "m4n493 7495, v13w 1mp0r7 h1570ry, 4nd m0n170r 5y573m h34l7h.",
+      "steps": [
+        "u53 74b5 70 n4v1g473 b37w33n d1ff3r3n7 4dm1n 53c710n5",
+        "cr3473 4nd 0r94n1z3 7495 f0r c4739or1z4710n",
+        "v13w 1mp0r7 h1570ry 4nd 57471571c5",
+        "m0n170r 5y573m h34l7h m37r1c5"
+      ],
+      "tips": [
+        "d3l373 unu53d 7495 70 k33p y0ur c473g0r135 cl34n",
+        "ch3ck 7h3 h34l7h 74b f0r p3rf0rm4nc3 m37r1c5"
+      ]
     },
     "tools": {
       "title": "700l5 h3lp",
-      "description": "537 up 4u70m4710n rul35 f0r c4739or1z1ng 7r4n54c710n5."
+      "description": "537 up 4u70m4710n rul35 f0r c4739or1z1ng 7r4n54c710n5.",
+      "steps": [
+        "cr3473 c4739ory rul35 70 4u70-4551gn 7495 b453d 0n m3rch4n7 0r d35cr1p710n",
+        "537 up m3rch4n7 4l14535 70 n0rm4l1z3 m355y b4nk n4m35",
+        "d373c7 4nd l1nk 1n73rn4l 7r4n5f3r5",
+        "54v3 f1l73r5 f0r qu1ck 4cc355 70 c0mm0n v13w5"
+      ],
+      "tips": [
+        "rul35 4r3 4ppl13d 1n pr10r17y 0rd3r",
+        "7357 rul35 b3f0r3 4pply1ng 70 533 wh1ch 7r4n54c710n5 m47ch"
+      ]
     }
   }
 }
