@@ -161,21 +161,46 @@ Use this section for quick reference. Canonical skill cards live in `.claude/ski
 - Add indexes for foreign keys and common predicates; evaluate partial indexes for sparse data.
 - Write migrations to be idempotent and reversible; include comments on rollback steps.
 
-### E2E Testing (Playwright)
+### Testing (E2E + Unit)
+
+#### Test ID Usage (REQUIRED for all tests)
 - **Always use `data-testid` attributes** for element selection in tests. Never rely on text content, CSS classes, or DOM structure.
-- Naming convention: `data-testid="<component>-<element>"` (e.g., `filter-search`, `transactions-list`, `help-dismiss`)
-- When adding new UI components that tests will interact with, add test IDs proactively.
-- **Two groups of test IDs** in `frontend/src/test-ids.ts`:
-  - `TEST_IDS`: Normal elements - safe for chaos testing to interact with
-  - `CHAOS_EXCLUDED_IDS`: Destructive actions (delete, purge) - chaos tests automatically skip these
+- **This applies to BOTH E2E tests AND unit tests (Vitest/React Testing Library)**
+- Reason: Text content changes when translations are added/modified. Test IDs are translation-agnostic.
+- All test IDs are centralized in `frontend/src/test-ids.ts` - add new IDs there before using them.
+
+#### Test ID Constants Pattern
+```tsx
+// In component:
+import { TEST_IDS } from '@/test-ids';
+<div data-testid={TEST_IDS.IMPORT_RESULT}>...</div>
+
+// In unit test:
+import { TEST_IDS } from '@/test-ids';
+expect(screen.getByTestId(TEST_IDS.IMPORT_RESULT)).toBeInTheDocument();
+
+// In E2E test:
+import { TEST_IDS } from '../src/test-ids';
+await page.locator(`[data-testid="${TEST_IDS.IMPORT_RESULT}"]`).click();
+```
+
+#### Naming Convention
+- Format: `<component>-<element>` (e.g., `filter-search`, `transactions-list`, `help-dismiss`)
+- Page containers: `<page>-page` (e.g., `transactions-page`)
+- Lists/tables: `<name>-list` (e.g., `transactions-list`)
+- Form inputs: `<form>-<field>` (e.g., `filter-search`, `filter-bucket`)
+- Buttons: `<action>-button` (e.g., `help-dismiss`, `import-confirm`)
+- Values/counts: `<component>-<field>-value` (e.g., `overview-stat-total-transactions-value`)
+
+#### Two Groups of Test IDs
+- `TEST_IDS`: Normal elements - safe for chaos testing to interact with
+- `CHAOS_EXCLUDED_IDS`: Destructive actions (delete, purge) - chaos tests automatically skip these
 - When adding a destructive button (delete, purge, remove), use `CHAOS_EXCLUDED_IDS` not `TEST_IDS`.
-- Common test IDs to use:
-  - Page containers: `data-testid="<page>-page"` (e.g., `transactions-page`)
-  - Lists/tables: `data-testid="<name>-list"` (e.g., `transactions-list`)
-  - Form inputs: `data-testid="<form>-<field>"` (e.g., `filter-search`, `filter-bucket`)
-  - Buttons: `data-testid="<action>-button"` (e.g., `help-dismiss`, `import-confirm`)
+
+#### Test Locations
 - E2E tests live in `frontend/e2e/`. Run with `make test-e2e` or `npx playwright test`.
-- See `frontend/e2e/README.md` for detailed testing conventions.
+- Unit tests live alongside components as `*.test.tsx`. Run with `make test-frontend` or `npx vitest`.
+- See `frontend/e2e/README.md` for detailed E2E testing conventions.
 
 ### Chaos Testing (`data-chaos-target`)
 - **Use `data-chaos-target` attribute** to mark interactive elements for chaos/monkey testing.

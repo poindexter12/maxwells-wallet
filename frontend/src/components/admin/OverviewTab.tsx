@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { formatCurrency } from '@/lib/format'
-import { CHAOS_EXCLUDED_IDS } from '@/test-ids'
+import { TEST_IDS, CHAOS_EXCLUDED_IDS } from '@/test-ids'
 import { AdminStats } from '@/types/admin'
 
 interface OverviewTabProps {
@@ -27,24 +27,24 @@ export function OverviewTab({
     <div className="space-y-8">
       {/* Stats Overview */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="card p-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4" data-testid={TEST_IDS.OVERVIEW_STATS}>
+          <div className="card p-4" data-testid={TEST_IDS.OVERVIEW_STAT_TOTAL_TRANSACTIONS}>
             <p className="text-sm text-theme-muted">{t('stats.totalTransactions')}</p>
-            <p className="text-2xl font-bold text-theme">{stats.total_transactions.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-theme" data-testid={TEST_IDS.OVERVIEW_STAT_TOTAL_TRANSACTIONS_VALUE}>{stats.total_transactions.toLocaleString()}</p>
           </div>
-          <div className="card p-4">
+          <div className="card p-4" data-testid={TEST_IDS.OVERVIEW_STAT_IMPORT_SESSIONS}>
             <p className="text-sm text-theme-muted">{t('stats.importSessions')}</p>
-            <p className="text-2xl font-bold text-theme">{stats.total_import_sessions}</p>
+            <p className="text-2xl font-bold text-theme" data-testid={TEST_IDS.OVERVIEW_STAT_IMPORT_SESSIONS_VALUE}>{stats.total_import_sessions}</p>
           </div>
-          <div className="card p-4">
+          <div className="card p-4" data-testid={TEST_IDS.OVERVIEW_STAT_COMPLETED_IMPORTS}>
             <p className="text-sm text-theme-muted">{t('stats.completedImports')}</p>
-            <p className="text-2xl font-bold text-positive">
+            <p className="text-2xl font-bold text-positive" data-testid={TEST_IDS.OVERVIEW_STAT_COMPLETED_IMPORTS_VALUE}>
               {stats.import_session_status.completed || 0}
             </p>
           </div>
-          <div className="card p-4">
+          <div className="card p-4" data-testid={TEST_IDS.OVERVIEW_STAT_ROLLED_BACK}>
             <p className="text-sm text-theme-muted">{t('stats.rolledBack')}</p>
-            <p className="text-2xl font-bold text-negative">
+            <p className="text-2xl font-bold text-negative" data-testid={TEST_IDS.OVERVIEW_STAT_ROLLED_BACK_VALUE}>
               {stats.import_session_status.rolled_back || 0}
             </p>
           </div>
@@ -53,7 +53,7 @@ export function OverviewTab({
 
       {/* Account Stats */}
       {stats && stats.account_stats.length > 0 && (
-        <div className="card p-6">
+        <div className="card p-6" data-testid={TEST_IDS.OVERVIEW_ACCOUNT_STATS}>
           <h2 className="text-lg font-semibold text-theme mb-4">{t('transactionsByAccount')}</h2>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-[var(--color-border)]">
@@ -81,7 +81,7 @@ export function OverviewTab({
       )}
 
       {/* Danger Zone */}
-      <div className="bg-negative border border-[var(--color-negative)] rounded-lg p-6">
+      <div className="bg-negative border border-[var(--color-negative)] rounded-lg p-6" data-testid={TEST_IDS.OVERVIEW_DANGER_ZONE}>
         <h2 className="text-lg font-semibold text-negative mb-4">{t('dangerZone')}</h2>
         <p className="text-sm text-negative mb-4">
           {t('dangerZoneWarning')}

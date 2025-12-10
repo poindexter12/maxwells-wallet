@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { SplitTransaction } from './SplitTransaction'
 import { mockBucketTags } from '@/test/mocks/fixtures'
 import { resetTransactionSplits } from '@/test/mocks/handlers'
+import { TEST_IDS } from '@/test-ids'
 
 // Transaction ID 1 exists in mock data with amount -45.50
 const TRANSACTION_ID = 1
@@ -33,18 +34,18 @@ describe('SplitTransaction', () => {
     it('shows loading state initially', () => {
       renderComponent()
 
-      expect(screen.getByTestId('split-loading')).toBeInTheDocument()
+      expect(screen.getByTestId(TEST_IDS.SPLIT_LOADING)).toBeInTheDocument()
     })
 
     it('loads and displays split form after fetch', async () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       // Check for bucket select dropdown (form is rendered)
-      expect(screen.getByTestId('split-bucket-select')).toBeInTheDocument()
+      expect(screen.getByTestId(TEST_IDS.SPLIT_BUCKET_SELECT)).toBeInTheDocument()
     })
   })
 
@@ -53,7 +54,7 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       expect(screen.getByText('0%')).toBeInTheDocument()
@@ -64,7 +65,7 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       expect(screen.getByText('+$45.50 unallocated')).toBeInTheDocument()
@@ -76,14 +77,14 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
-      const select = screen.getByTestId('split-bucket-select')
+      const select = screen.getByTestId(TEST_IDS.SPLIT_BUCKET_SELECT)
       expect(select).toBeInTheDocument()
 
       // All bucket tags should be options (showing description as label)
-      expect(screen.getByTestId('split-bucket-placeholder')).toBeInTheDocument()
+      expect(screen.getByTestId(TEST_IDS.SPLIT_BUCKET_PLACEHOLDER)).toBeInTheDocument()
       expect(screen.getByRole('option', { name: /food and groceries/i })).toBeInTheDocument()
       expect(screen.getByRole('option', { name: /restaurants and takeout/i })).toBeInTheDocument()
     })
@@ -92,7 +93,7 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       expect(screen.getByPlaceholderText('0.00')).toBeInTheDocument()
@@ -102,7 +103,7 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       const addButton = screen.getByRole('button', { name: /add/i })
@@ -114,7 +115,7 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       const select = screen.getByRole('combobox')
@@ -132,7 +133,7 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       const select = screen.getByRole('combobox')
@@ -158,7 +159,7 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       await user.selectOptions(screen.getByRole('combobox'), 'groceries')
@@ -175,7 +176,7 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       await user.selectOptions(screen.getByRole('combobox'), 'groceries')
@@ -192,7 +193,7 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       const select = screen.getByRole('combobox')
@@ -213,7 +214,7 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       await user.selectOptions(screen.getByRole('combobox'), 'dining')
@@ -233,7 +234,7 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       // Add a split first
@@ -246,7 +247,7 @@ describe('SplitTransaction', () => {
         expect(screen.getByText('+$20.00')).toBeInTheDocument()
       })
 
-      const removeButtons = screen.getAllByTestId('split-remove-button')
+      const removeButtons = screen.getAllByTestId(TEST_IDS.SPLIT_REMOVE_BUTTON)
       expect(removeButtons.length).toBeGreaterThan(0)
     })
 
@@ -255,7 +256,7 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       // Add a split
@@ -268,7 +269,7 @@ describe('SplitTransaction', () => {
       })
 
       // Remove it (get the first remove button)
-      const removeButtons = screen.getAllByTestId('split-remove-button')
+      const removeButtons = screen.getAllByTestId(TEST_IDS.SPLIT_REMOVE_BUTTON)
       await user.click(removeButtons[0])
 
       await waitFor(() => {
@@ -286,7 +287,7 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       // No clear all initially
@@ -311,7 +312,7 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       // Add a split
@@ -350,7 +351,7 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       expect(screen.getByText(/quick: allocate remaining/i)).toBeInTheDocument()
@@ -361,7 +362,7 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       // Find groceries quick button
@@ -382,7 +383,7 @@ describe('SplitTransaction', () => {
       renderComponent()
 
       await waitFor(() => {
-        expect(screen.queryByTestId('split-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId(TEST_IDS.SPLIT_LOADING)).not.toBeInTheDocument()
       })
 
       await user.selectOptions(screen.getByRole('combobox'), 'groceries')

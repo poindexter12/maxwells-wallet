@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { formatCurrency } from '@/lib/format'
+import { TEST_IDS } from '@/test-ids'
 
 interface Tag {
   id: number
@@ -160,7 +161,7 @@ export function SplitTransaction({
 
   if (loading) {
     return (
-      <div className="py-2 text-sm text-theme-muted" data-testid="split-loading">
+      <div className="py-2 text-sm text-theme-muted" data-testid={TEST_IDS.SPLIT_LOADING}>
         {tCommon('loading')}
       </div>
     )
@@ -241,7 +242,7 @@ export function SplitTransaction({
                     disabled={saving}
                     className="text-theme-muted hover:text-red-500 disabled:opacity-50"
                     title={tCommon('remove')}
-                    data-testid="split-remove-button"
+                    data-testid={TEST_IDS.SPLIT_REMOVE_BUTTON}
                   >
                     ×
                   </button>
@@ -259,9 +260,9 @@ export function SplitTransaction({
           onChange={(e) => setNewBucket(e.target.value)}
           className="flex-1 h-8 text-sm border border-theme rounded px-2 bg-theme-elevated"
           disabled={saving}
-          data-testid="split-bucket-select"
+          data-testid={TEST_IDS.SPLIT_BUCKET_SELECT}
         >
-          <option value="" data-testid="split-bucket-placeholder">{tCommon('search')} {t('bucket').toLowerCase()}...</option>
+          <option value="" data-testid={TEST_IDS.SPLIT_BUCKET_PLACEHOLDER}>{tCommon('search')} {t('bucket').toLowerCase()}...</option>
           {bucketTags.map((tag) => (
             <option key={tag.id} value={tag.value}>
               {tag.description || tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
