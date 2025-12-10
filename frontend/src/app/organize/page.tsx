@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { formatCurrency } from '@/lib/format'
 import { PageHelp } from '@/components/PageHelp'
 
@@ -18,6 +19,7 @@ interface TagStats {
 }
 
 export default function OrganizePage() {
+  const t = useTranslations('organize')
   const [activeTab, setActiveTab] = useState<OrganizeTab>('buckets')
   const [buckets, setBuckets] = useState<TagStats[]>([])
   const [occasions, setOccasions] = useState<TagStats[]>([])
@@ -50,45 +52,33 @@ export default function OrganizePage() {
   }
 
   const tabs = [
-    { id: 'buckets' as const, label: 'Buckets', count: buckets.length },
-    { id: 'occasions' as const, label: 'Occasions', count: occasions.length },
-    { id: 'accounts' as const, label: 'Accounts', count: accounts.length },
+    { id: 'buckets' as const, label: t('tabs.buckets'), count: buckets.length },
+    { id: 'occasions' as const, label: t('tabs.occasions'), count: occasions.length },
+    { id: 'accounts' as const, label: t('tabs.accounts'), count: accounts.length },
   ]
 
+  const tCommon = useTranslations('common')
+
   if (loading) {
-    return <div className="text-center py-12 text-theme-muted">Loading...</div>
+    return <div className="text-center py-12 text-theme-muted">{tCommon('loading')}</div>
   }
 
   return (
     <div className="space-y-6">
-      <PageHelp
-        pageId="organize"
-        title="Organize Your Transactions"
-        description="Manage the three types of tags used to categorize your transactions: Buckets for spending categories, Occasions for special events, and Accounts for bank accounts."
-        steps={[
-          "Buckets are spending categories like groceries, dining, entertainment",
-          "Occasions track special events like vacations, holidays, or projects",
-          "Accounts are created automatically when you import transactions",
-          "Click any item to see its transactions"
-        ]}
-        tips={[
-          "Create and edit tags in Admin > Tags",
-          "Set budgets for any bucket, occasion, or account"
-        ]}
-      />
+      <PageHelp pageId="organize" />
 
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-theme">Organize</h1>
+          <h1 className="text-3xl font-bold text-theme">{t('title')}</h1>
           <p className="mt-1 text-sm text-theme-muted">
-            Buckets, occasions, and accounts for categorizing transactions
+            {t('subtitle')}
           </p>
         </div>
         <Link
           href="/admin"
           className="px-4 py-2 text-sm text-theme-muted border border-theme rounded-md hover:bg-theme-elevated"
         >
-          Manage in Admin
+          {t('manageInAdmin')}
         </Link>
       </div>
 
@@ -130,27 +120,28 @@ export default function OrganizePage() {
 }
 
 function BucketsContent({ buckets }: { buckets: TagStats[] }) {
+  const t = useTranslations('organize.buckets')
   const totalTransactions = buckets.reduce((sum, b) => sum + b.transaction_count, 0)
   const totalSpending = buckets.reduce((sum, b) => sum + Math.abs(b.total_amount), 0)
 
   return (
     <div className="space-y-6">
       <p className="text-sm text-theme-muted">
-        Spending categories like groceries, dining, entertainment
+        {t('description')}
       </p>
 
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card p-4">
-          <div className="text-sm text-theme-muted">Total Buckets</div>
+          <div className="text-sm text-theme-muted">{t('totalBuckets')}</div>
           <div className="text-2xl font-bold text-theme">{buckets.length}</div>
         </div>
         <div className="card p-4">
-          <div className="text-sm text-theme-muted">Tagged Transactions</div>
+          <div className="text-sm text-theme-muted">{t('taggedTransactions')}</div>
           <div className="text-2xl font-bold text-theme">{totalTransactions.toLocaleString()}</div>
         </div>
         <div className="card p-4">
-          <div className="text-sm text-theme-muted">Total Categorized</div>
+          <div className="text-sm text-theme-muted">{t('totalCategorized')}</div>
           <div className="text-2xl font-bold text-negative">{formatCurrency(-totalSpending)}</div>
         </div>
       </div>
@@ -158,7 +149,7 @@ function BucketsContent({ buckets }: { buckets: TagStats[] }) {
       {/* Grid */}
       {buckets.length === 0 ? (
         <div className="card p-12 text-center">
-          <p className="text-theme-muted">No buckets yet. Create buckets in Admin.</p>
+          <p className="text-theme-muted">{t('noBuckets')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -183,7 +174,7 @@ function BucketsContent({ buckets }: { buckets: TagStats[] }) {
                     {formatCurrency(bucket.total_amount)}
                   </div>
                   <div className="text-xs text-theme-muted">
-                    {bucket.transaction_count} txn{bucket.transaction_count !== 1 ? 's' : ''}
+                    {bucket.transaction_count === 1 ? t('transactions', { count: bucket.transaction_count }) : t('transactionsPlural', { count: bucket.transaction_count })}
                   </div>
                 </div>
               </div>
@@ -199,7 +190,7 @@ function BucketsContent({ buckets }: { buckets: TagStats[] }) {
                     />
                   </div>
                   <div className="text-xs text-theme-muted mt-1 text-right">
-                    {((Math.abs(bucket.total_amount) / totalSpending) * 100).toFixed(1)}% of spending
+                    {t('percentOfSpending', { percent: ((Math.abs(bucket.total_amount) / totalSpending) * 100).toFixed(1) })}
                   </div>
                 </div>
               )}
@@ -212,27 +203,28 @@ function BucketsContent({ buckets }: { buckets: TagStats[] }) {
 }
 
 function OccasionsContent({ occasions }: { occasions: TagStats[] }) {
+  const t = useTranslations('organize.occasions')
   const totalTransactions = occasions.reduce((sum, o) => sum + o.transaction_count, 0)
   const totalSpending = occasions.reduce((sum, o) => sum + Math.abs(o.total_amount), 0)
 
   return (
     <div className="space-y-6">
       <p className="text-sm text-theme-muted">
-        Special events like vacations, holidays, weddings, or projects
+        {t('description')}
       </p>
 
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card p-4">
-          <div className="text-sm text-theme-muted">Total Occasions</div>
+          <div className="text-sm text-theme-muted">{t('totalOccasions')}</div>
           <div className="text-2xl font-bold text-theme">{occasions.length}</div>
         </div>
         <div className="card p-4">
-          <div className="text-sm text-theme-muted">Tagged Transactions</div>
+          <div className="text-sm text-theme-muted">{t('taggedTransactions')}</div>
           <div className="text-2xl font-bold text-theme">{totalTransactions.toLocaleString()}</div>
         </div>
         <div className="card p-4">
-          <div className="text-sm text-theme-muted">Total Occasion Spending</div>
+          <div className="text-sm text-theme-muted">{t('totalOccasionSpending')}</div>
           <div className="text-2xl font-bold text-negative">{formatCurrency(-totalSpending)}</div>
         </div>
       </div>
@@ -240,7 +232,7 @@ function OccasionsContent({ occasions }: { occasions: TagStats[] }) {
       {/* Grid */}
       {occasions.length === 0 ? (
         <div className="card p-12 text-center">
-          <p className="text-theme-muted">No occasions yet. Create occasions in Admin.</p>
+          <p className="text-theme-muted">{t('noOccasions')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -265,7 +257,7 @@ function OccasionsContent({ occasions }: { occasions: TagStats[] }) {
                     {formatCurrency(occasion.total_amount)}
                   </div>
                   <div className="text-xs text-theme-muted">
-                    {occasion.transaction_count} txn{occasion.transaction_count !== 1 ? 's' : ''}
+                    {occasion.transaction_count === 1 ? t('transactions', { count: occasion.transaction_count }) : t('transactionsPlural', { count: occasion.transaction_count })}
                   </div>
                 </div>
               </div>
@@ -281,7 +273,7 @@ function OccasionsContent({ occasions }: { occasions: TagStats[] }) {
                     />
                   </div>
                   <div className="text-xs text-theme-muted mt-1 text-right">
-                    {((Math.abs(occasion.total_amount) / totalSpending) * 100).toFixed(1)}% of occasion spending
+                    {t('percentOfOccasionSpending', { percent: ((Math.abs(occasion.total_amount) / totalSpending) * 100).toFixed(1) })}
                   </div>
                 </div>
               )}
@@ -294,27 +286,28 @@ function OccasionsContent({ occasions }: { occasions: TagStats[] }) {
 }
 
 function AccountsContent({ accounts }: { accounts: TagStats[] }) {
+  const t = useTranslations('organize.accounts')
   const totalTransactions = accounts.reduce((sum, a) => sum + a.transaction_count, 0)
   const totalNet = accounts.reduce((sum, a) => sum + a.total_amount, 0)
 
   return (
     <div className="space-y-6">
       <p className="text-sm text-theme-muted">
-        Bank accounts and credit cards. Auto-created when you import transactions.
+        {t('description')}
       </p>
 
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card p-4">
-          <div className="text-sm text-theme-muted">Total Accounts</div>
+          <div className="text-sm text-theme-muted">{t('totalAccounts')}</div>
           <div className="text-2xl font-bold text-theme">{accounts.length}</div>
         </div>
         <div className="card p-4">
-          <div className="text-sm text-theme-muted">Total Transactions</div>
+          <div className="text-sm text-theme-muted">{t('totalTransactions')}</div>
           <div className="text-2xl font-bold text-theme">{totalTransactions.toLocaleString()}</div>
         </div>
         <div className="card p-4">
-          <div className="text-sm text-theme-muted">Net Flow</div>
+          <div className="text-sm text-theme-muted">{t('netFlow')}</div>
           <div className={`text-2xl font-bold ${totalNet >= 0 ? 'text-positive' : 'text-negative'}`}>
             {formatCurrency(totalNet)}
           </div>
@@ -324,9 +317,9 @@ function AccountsContent({ accounts }: { accounts: TagStats[] }) {
       {/* Grid */}
       {accounts.length === 0 ? (
         <div className="card p-12 text-center">
-          <p className="text-theme-muted mb-4">No accounts yet. Import transactions to create accounts automatically.</p>
+          <p className="text-theme-muted mb-4">{t('noAccounts')}</p>
           <Link href="/import" className="text-blue-500 hover:text-blue-400">
-            Import transactions
+            {t('importTransactions')}
           </Link>
         </div>
       ) : (
@@ -350,7 +343,7 @@ function AccountsContent({ accounts }: { accounts: TagStats[] }) {
                     {formatCurrency(account.total_amount)}
                   </div>
                   <div className="text-xs text-theme-muted">
-                    {account.transaction_count} txn{account.transaction_count !== 1 ? 's' : ''}
+                    {account.transaction_count === 1 ? t('transactions', { count: account.transaction_count }) : t('transactionsPlural', { count: account.transaction_count })}
                   </div>
                 </div>
               </div>
@@ -366,7 +359,7 @@ function AccountsContent({ accounts }: { accounts: TagStats[] }) {
                     />
                   </div>
                   <div className="text-xs text-theme-muted mt-1 text-right">
-                    {((account.transaction_count / totalTransactions) * 100).toFixed(1)}% of transactions
+                    {t('percentOfTransactions', { percent: ((account.transaction_count / totalTransactions) * 100).toFixed(1) })}
                   </div>
                 </div>
               )}

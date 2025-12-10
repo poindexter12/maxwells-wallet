@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useCallback, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { TransactionRow } from './TransactionRow'
 import { Transaction, Tag } from './types'
@@ -84,6 +85,8 @@ export function VirtualTransactionList({
   onLoadMore,
   estimatedRowHeight = 76, // Default collapsed row height
 }: VirtualTransactionListProps) {
+  const t = useTranslations('transactions')
+  const tCommon = useTranslations('common')
   const parentRef = useRef<HTMLDivElement>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
@@ -133,7 +136,7 @@ export function VirtualTransactionList({
   if (transactions.length === 0) {
     return (
       <div className="text-center py-12 text-theme-muted">
-        No transactions found
+        {t('title')}
       </div>
     )
   }
@@ -202,7 +205,7 @@ export function VirtualTransactionList({
       {/* Loading more indicator / Intersection Observer target */}
       <div ref={loadMoreRef} className="py-4 text-center">
         {loadingMore && (
-          <span className="text-theme-muted">Loading more transactions...</span>
+          <span className="text-theme-muted">{tCommon('loading')}...</span>
         )}
         {!hasMore && transactions.length > 0 && (
           <span className="text-theme-muted text-sm">

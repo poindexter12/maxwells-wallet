@@ -87,7 +87,8 @@ describe('DashboardTabs', () => {
     const createButton = screen.getByRole('button', { name: /create new dashboard/i })
     await user.click(createButton)
 
-    expect(screen.getByPlaceholderText('Dashboard name')).toBeInTheDocument()
+    // Placeholder is translated: dashboard.title = "Dashboard"
+    expect(screen.getByPlaceholderText('Dashboard')).toBeInTheDocument()
   })
 
   it('calls createDashboard when Enter is pressed', async () => {
@@ -99,7 +100,8 @@ describe('DashboardTabs', () => {
     const createButton = screen.getByRole('button', { name: /create new dashboard/i })
     await user.click(createButton)
 
-    const input = screen.getByPlaceholderText('Dashboard name')
+    // Placeholder is translated: dashboard.title = "Dashboard"
+    const input = screen.getByPlaceholderText('Dashboard')
     await user.type(input, 'New Dashboard{enter}')
 
     expect(mockCreateDashboard).toHaveBeenCalledWith({
@@ -115,10 +117,11 @@ describe('DashboardTabs', () => {
     const createButton = screen.getByRole('button', { name: /create new dashboard/i })
     await user.click(createButton)
 
-    const input = screen.getByPlaceholderText('Dashboard name')
+    // Placeholder is translated: dashboard.title = "Dashboard"
+    const input = screen.getByPlaceholderText('Dashboard')
     await user.type(input, '{escape}')
 
-    expect(screen.queryByPlaceholderText('Dashboard name')).not.toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('Dashboard')).not.toBeInTheDocument()
   })
 
   it('shows Manage link', () => {

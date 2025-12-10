@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { formatCurrency } from '@/lib/format'
 import { Widget, COLORS } from './types'
@@ -10,9 +11,11 @@ interface BucketPieChartProps {
 }
 
 export function BucketPieChart({ widget, bucketData }: BucketPieChartProps) {
+  const t = useTranslations('dashboard.widgets')
+
   return (
     <div className="card p-6">
-      <h2 className="text-lg font-semibold text-theme mb-4">{widget?.title || 'Spending by Bucket'}</h2>
+      <h2 className="text-lg font-semibold text-theme mb-4">{widget?.title || t('bucketPie')}</h2>
       {bucketData.length > 0 ? (
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>

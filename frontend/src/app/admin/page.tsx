@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { TEST_IDS } from '@/test-ids'
 import { PageHelp } from '@/components/PageHelp'
 import { OverviewTab } from '@/components/admin/OverviewTab'
@@ -18,6 +19,9 @@ import {
 } from '@/types/admin'
 
 export default function AdminPage() {
+  const t = useTranslations('admin')
+  const tCommon = useTranslations('common')
+  const tTags = useTranslations('admin.tags')
   const [activeTab, setActiveTab] = useState<AdminTab>('overview')
   const [sessions, setSessions] = useState<ImportSession[]>([])
   const [stats, setStats] = useState<AdminStats | null>(null)
@@ -224,7 +228,7 @@ export default function AdminPage() {
   }
 
   async function handleDeleteTag(tag: Tag) {
-    if (!confirm(`Delete "${tag.namespace}:${tag.value}"? This cannot be undone.`)) return
+    if (!confirm(tTags('deleteConfirm', { namespace: tag.namespace, value: tag.value }))) return
     if (!currentTagTab) return
 
     try {
@@ -242,31 +246,17 @@ export default function AdminPage() {
   }
 
   if (loading) {
-    return <div className="text-center py-12">Loading...</div>
+    return <div className="text-center py-12">{tCommon('loading')}</div>
   }
 
   return (
     <div className="space-y-6">
-      <PageHelp
-        pageId="admin"
-        title="Admin Help"
-        description="Manage your data, import history, and tag configuration. Use the tabs to navigate between different admin sections."
-        steps={[
-          "Overview: See database stats and account summaries",
-          "Imports: View import history and roll back imports if needed",
-          "Tags: Manage buckets, accounts, occasions, and expense types"
-        ]}
-        tips={[
-          "Rolling back an import deletes all transactions from that import",
-          "Tags are organized by namespace (bucket, account, occasion, expense)",
-          "You can edit tag descriptions to give them friendly display names"
-        ]}
-      />
+      <PageHelp pageId="admin" />
 
       <div>
-        <h1 className="text-3xl font-bold text-theme">Admin</h1>
+        <h1 className="text-3xl font-bold text-theme">{t('title')}</h1>
         <p className="mt-2 text-sm text-theme-muted">
-          Database management, imports, and tag configuration
+          {t('subtitle')}
         </p>
       </div>
 
@@ -283,7 +273,7 @@ export default function AdminPage() {
                 : 'border-transparent text-theme-muted hover:text-theme hover:border-[var(--color-border-strong)]'
             }`}
           >
-            Overview
+            {t('tabs.overview')}
           </button>
           <button
             data-testid={TEST_IDS.ADMIN_TAB_IMPORTS}
@@ -295,7 +285,7 @@ export default function AdminPage() {
                 : 'border-transparent text-theme-muted hover:text-theme hover:border-[var(--color-border-strong)]'
             }`}
           >
-            Imports
+            {t('tabs.imports')}
           </button>
           <button
             data-chaos-target="admin-tab-health"
@@ -306,7 +296,7 @@ export default function AdminPage() {
                 : 'border-transparent text-theme-muted hover:text-theme hover:border-[var(--color-border-strong)]'
             }`}
           >
-            Health
+            {t('tabs.health')}
           </button>
           {TAG_TABS.map((tab) => (
             <button
@@ -319,7 +309,7 @@ export default function AdminPage() {
                   : 'border-transparent text-theme-muted hover:text-theme hover:border-[var(--color-border-strong)]'
               }`}
             >
-              {tab.label}
+              {t(`tabs.${tab.id === 'all-tags' ? 'allTags' : tab.id === 'expense-types' ? 'expenses' : tab.id}`)}
             </button>
           ))}
         </nav>

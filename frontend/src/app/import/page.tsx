@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { TEST_IDS } from '@/test-ids'
 import { PageHelp } from '@/components/PageHelp'
 import { BatchImport } from '@/components/import/BatchImport'
@@ -14,6 +15,7 @@ import {
 } from '@/types/import'
 
 export default function ImportPage() {
+  const t = useTranslations('import')
   const [files, setFiles] = useState<File[]>([])
   const [batchMode, setBatchMode] = useState(false)
   const [batchPreviews, setBatchPreviews] = useState<FilePreview[]>([])
@@ -191,7 +193,7 @@ export default function ImportPage() {
   async function handleBatchConfirm() {
     const selectedFiles = batchPreviews.filter(p => p.selected)
     if (selectedFiles.length === 0) {
-      alert('Please select at least one file to import')
+      alert(t('noFilesSelected'))
       return
     }
 
@@ -265,25 +267,9 @@ export default function ImportPage() {
 
   return (
     <div className="space-y-6">
-      <PageHelp
-        pageId="import"
-        title="Import Help"
-        description="Import transactions from your bank's CSV, QIF, or QFX export files."
-        steps={[
-          "Download an export file from your bank's website",
-          "Select the file using the file picker below",
-          "Specify an account name to organize your data",
-          "Click 'Preview Import' to see what will be imported",
-          "Review the preview, then click 'Confirm Import' to save"
-        ]}
-        tips={[
-          "The system auto-detects your bank's file format",
-          "Duplicate transactions are automatically skipped",
-          "Create custom CSV formats in Tools > CSV Formats"
-        ]}
-      />
+      <PageHelp pageId="import" />
 
-      <h1 className="text-3xl font-bold text-theme">Import Transactions</h1>
+      <h1 className="text-3xl font-bold text-theme">{t('title')}</h1>
 
       {/* Import Mode Toggle */}
       <div data-testid={TEST_IDS.IMPORT_MODE_TOGGLE} className="flex gap-4 bg-white rounded-lg shadow p-4">
@@ -296,7 +282,7 @@ export default function ImportPage() {
           className={`flex-1 px-4 py-2 rounded-md ${!batchMode ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
           data-chaos-target="import-mode-single"
         >
-          Single File Import
+          {t('singleFile')}
         </button>
         <button
           onClick={() => {
@@ -307,7 +293,7 @@ export default function ImportPage() {
           className={`flex-1 px-4 py-2 rounded-md ${batchMode ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
           data-chaos-target="import-mode-batch"
         >
-          Batch Import (Multiple Files)
+          {t('batchImport')}
         </button>
       </div>
 

@@ -2,6 +2,7 @@
 
 import { format } from 'date-fns'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { CHAOS_EXCLUDED_IDS } from '@/test-ids'
 import { ImportSession, FORMAT_NAMES } from '@/types/admin'
 
@@ -20,42 +21,45 @@ export function ImportsTab({
   onDeleteSession,
   onCancelDelete
 }: ImportsTabProps) {
+  const t = useTranslations('admin.imports')
+  const tCommon = useTranslations('common')
+
   return (
     <div className="card">
       <div className="px-6 py-4 border-b border-theme flex justify-between items-start">
         <div>
-          <h2 className="text-lg font-semibold text-theme">Import Sessions</h2>
+          <h2 className="text-lg font-semibold text-theme">{t('title')}</h2>
           <p className="text-sm text-theme-muted">
-            History of all CSV imports. You can roll back individual imports by deleting their sessions.
+            {t('subtitle')}
           </p>
         </div>
         <Link
           href="/import"
           className="btn-primary"
         >
-          Import New
+          {t('importNew')}
         </Link>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-[var(--color-border)]">
           <thead className="table-header">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">Date</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">File</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">Format</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">Account</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-theme-muted uppercase">Imported</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-theme-muted uppercase">Duplicates</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">Date Range</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">Status</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-theme-muted uppercase">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">{t('tableHeaders.date')}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">{t('tableHeaders.file')}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">{t('tableHeaders.format')}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">{t('tableHeaders.account')}</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-theme-muted uppercase">{t('tableHeaders.imported')}</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-theme-muted uppercase">{t('tableHeaders.duplicates')}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">{t('tableHeaders.dateRange')}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-muted uppercase">{t('tableHeaders.status')}</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-theme-muted uppercase">{t('tableHeaders.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--color-border)]">
             {sessions.length === 0 ? (
               <tr>
                 <td colSpan={9} className="px-4 py-8 text-center text-theme-muted">
-                  No import sessions found
+                  {t('noSessions')}
                 </td>
               </tr>
             ) : (
@@ -104,14 +108,14 @@ export function ImportsTab({
                               : 'bg-negative text-negative hover:opacity-80'
                           } disabled:opacity-50`}
                         >
-                          {confirmDelete === session.id ? 'Confirm Delete' : 'Roll Back'}
+                          {confirmDelete === session.id ? t('confirmDelete') : t('rollBack')}
                         </button>
                         {confirmDelete === session.id && (
                           <button
                             onClick={onCancelDelete}
                             className="ml-1 px-2 py-1 bg-theme-elevated text-theme rounded text-xs hover:opacity-80 border border-theme"
                           >
-                            Cancel
+                            {tCommon('cancel')}
                           </button>
                         )}
                       </>

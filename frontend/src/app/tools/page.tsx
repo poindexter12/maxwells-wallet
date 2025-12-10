@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { PageHelp } from '@/components/PageHelp'
 import TransfersPanel from '@/components/tools/TransfersPanel'
 import RulesPanel from '@/components/tools/RulesPanel'
@@ -11,15 +12,16 @@ type ToolsTab = 'transfers' | 'rules' | 'merchants' | 'formats'
 
 const VALID_TABS: ToolsTab[] = ['transfers', 'rules', 'merchants', 'formats']
 
-const TAB_LABELS: Record<ToolsTab, string> = {
-  transfers: 'Transfers',
-  rules: 'Rules',
-  merchants: 'Merchants',
-  formats: 'CSV Formats'
-}
-
 export default function ToolsPage() {
+  const t = useTranslations('tools')
   const [activeTab, setActiveTab] = useState<ToolsTab>('transfers')
+
+  const TAB_LABELS: Record<ToolsTab, string> = {
+    transfers: t('tabs.transfers'),
+    rules: t('tabs.rules'),
+    merchants: t('tabs.merchants'),
+    formats: t('tabs.formats')
+  }
 
   // Read hash from URL on mount and listen for changes
   useEffect(() => {
@@ -46,28 +48,12 @@ export default function ToolsPage() {
 
   return (
     <div className="space-y-6" data-testid="tools-page">
-      <PageHelp
-        pageId="tools"
-        title="Automation Tools"
-        description="Utilities to automate categorization and clean up your transaction data."
-        steps={[
-          "Transfers: Identify and mark internal transfers between your accounts",
-          "Rules: Create auto-categorization rules based on merchant, description, or amount",
-          "Merchants: Normalize messy bank merchant names into clean, consistent names",
-          "CSV Formats: Create reusable import configurations for different bank CSV formats"
-        ]}
-        tips={[
-          "Transfers are excluded from spending calculations",
-          "Rules run automatically when you import new transactions",
-          "Preview merchant alias changes before applying them",
-          "Custom CSV formats can be selected during import"
-        ]}
-      />
+      <PageHelp pageId="tools" />
 
       <div>
-        <h1 className="text-3xl font-bold text-theme">Tools</h1>
+        <h1 className="text-3xl font-bold text-theme">{t('title')}</h1>
         <p className="mt-1 text-sm text-theme-muted">
-          Automation and cleanup utilities
+          {t('subtitle')}
         </p>
       </div>
 

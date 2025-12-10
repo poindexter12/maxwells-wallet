@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
+import { useTranslations } from 'next-intl'
 
 interface TransferSuggestion {
   id: number
@@ -21,6 +22,9 @@ interface TransferStats {
 }
 
 export default function TransfersPanel() {
+  const t = useTranslations('tools.transfers')
+  const tCommon = useTranslations('common')
+  const tFields = useTranslations('fields')
   const [suggestions, setSuggestions] = useState<TransferSuggestion[]>([])
   const [stats, setStats] = useState<TransferStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -86,7 +90,7 @@ export default function TransfersPanel() {
   if (loading) {
     return (
       <div className="text-center py-12 text-theme-muted" data-testid="transfers-loading">
-        Loading...
+        {tCommon('loading')}
       </div>
     )
   }
@@ -94,22 +98,22 @@ export default function TransfersPanel() {
   return (
     <div className="space-y-6" data-testid="transfers-panel">
       <p className="text-sm text-theme-muted">
-        Identify internal transfers to exclude from spending calculations
+        {t('description')}
       </p>
 
       {/* Stats */}
       {stats && (
         <div className="grid grid-cols-3 gap-4" data-testid="transfers-stats">
           <div className="card p-4">
-            <div className="text-sm text-theme-muted">Marked as Transfer</div>
+            <div className="text-sm text-theme-muted">{t('markedAsTransfer')}</div>
             <div className="text-2xl font-bold text-theme">{stats.transfer_count}</div>
           </div>
           <div className="card p-4">
-            <div className="text-sm text-theme-muted">Transfer Total</div>
+            <div className="text-sm text-theme-muted">{t('transferTotal')}</div>
             <div className="text-2xl font-bold text-theme">{formatCurrency(stats.transfer_total)}</div>
           </div>
           <div className="card p-4">
-            <div className="text-sm text-theme-muted">Linked Pairs</div>
+            <div className="text-sm text-theme-muted">{t('linkedPairs')}</div>
             <div className="text-2xl font-bold text-theme">{stats.linked_pairs}</div>
           </div>
         </div>
@@ -119,8 +123,8 @@ export default function TransfersPanel() {
       <div className="card" data-testid="transfers-suggestions">
         <div className="p-4 border-b border-theme flex justify-between items-center">
           <div>
-            <h2 className="text-lg font-semibold text-theme">Suggested Transfers</h2>
-            <p className="text-sm text-theme-muted">{suggestions.length} transactions look like transfers</p>
+            <h2 className="text-lg font-semibold text-theme">{t('suggestedTransfers')}</h2>
+            <p className="text-sm text-theme-muted">{t('looksLikeTransfers', { count: suggestions.length })}</p>
           </div>
           {selectedIds.size > 0 && (
             <div className="flex gap-2">
@@ -129,7 +133,7 @@ export default function TransfersPanel() {
                 className="px-3 py-1.5 text-sm border border-theme rounded-md hover:bg-theme-elevated"
                 data-testid="dismiss-btn"
               >
-                Dismiss ({selectedIds.size})
+                {tCommon('dismiss')} ({selectedIds.size})
               </button>
               <button
                 onClick={markAsTransfers}
@@ -137,7 +141,7 @@ export default function TransfersPanel() {
                 className="btn-primary text-sm disabled:opacity-50"
                 data-testid="mark-transfers-btn"
               >
-                {processing ? 'Processing...' : `Mark as Transfers (${selectedIds.size})`}
+                {processing ? t('processing') : t('markAsTransfers', { count: selectedIds.size })}
               </button>
             </div>
           )}
@@ -145,7 +149,7 @@ export default function TransfersPanel() {
 
         {suggestions.length === 0 ? (
           <div className="p-8 text-center text-theme-muted" data-testid="no-suggestions">
-            No transfer suggestions found. All detected transfers have been processed.
+            {t('noSuggestions')}
           </div>
         ) : (
           <div className="divide-y divide-theme">
@@ -157,11 +161,11 @@ export default function TransfersPanel() {
                 className="rounded"
                 data-testid="select-all-checkbox"
               />
-              <span className="w-24">Date</span>
-              <span className="w-28 text-right">Amount</span>
-              <span className="flex-1">Description</span>
-              <span className="w-32">Account</span>
-              <span className="w-48">Match Reason</span>
+              <span className="w-24">{t('date')}</span>
+              <span className="w-28 text-right">{tFields('amount')}</span>
+              <span className="flex-1">{tFields('description')}</span>
+              <span className="w-32">{tFields('account')}</span>
+              <span className="w-48">{t('matchReason')}</span>
             </div>
             {suggestions.map((suggestion) => (
               <div

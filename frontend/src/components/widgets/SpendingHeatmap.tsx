@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
 import { Widget, HEATMAP_VARS } from './types'
@@ -19,7 +20,8 @@ export function SpendingHeatmap({
   selectedYear,
   selectedMonth
 }: SpendingHeatmapProps) {
-  const title = widget?.title || (isMonthlyScale ? 'Spending Calendar' : 'Monthly Spending Overview')
+  const t = useTranslations('dashboard.widgets')
+  const title = widget?.title || t('heatmap')
 
   if (!data || !data.days) {
     return (

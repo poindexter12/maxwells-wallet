@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import { HealthStats } from '@/types/admin'
 
 function formatUptime(seconds: number): string {
@@ -58,6 +59,8 @@ function getStatusBgColor(status: string): string {
 }
 
 export function HealthTab() {
+  const tCommon = useTranslations('common')
+
   const [stats, setStats] = useState<HealthStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -88,7 +91,7 @@ export function HealthTab() {
   }, [fetchStats])
 
   if (loading && !stats) {
-    return <div className="text-center py-12 text-theme-muted">Loading health stats...</div>
+    return <div className="text-center py-12 text-theme-muted">{tCommon('loading')}</div>
   }
 
   if (error && !stats) {

@@ -4,9 +4,11 @@ import Link from 'next/link'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 
 export function NavBar() {
   const pathname = usePathname()
+  const t = useTranslations('nav')
 
   // Helper to determine if a link is active
   function isActive(href: string): boolean {
@@ -28,26 +30,26 @@ export function NavBar() {
           <div className="flex">
             <Link href="/" className="nav-brand flex items-center px-2 gap-2" data-chaos-target="nav-home">
               <img src="/favicon.svg" alt="" className="w-6 h-6" />
-              Maxwell&apos;s Wallet
+              {t('brand')}
             </Link>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-6 sm:items-center">
               <Link href="/" className={linkClass('/')} data-chaos-target="nav-dashboard">
-                Dashboard
+                {t('dashboard')}
               </Link>
               <Link href="/transactions" className={linkClass('/transactions')} data-chaos-target="nav-transactions">
-                Transactions
+                {t('transactions')}
               </Link>
               <Link href="/budgets" className={linkClass('/budgets')} data-chaos-target="nav-budgets">
-                Budgets
+                {t('budgets')}
               </Link>
               <Link href="/organize" className={linkClass('/organize')} data-chaos-target="nav-organize">
-                Organize
+                {t('organize')}
               </Link>
               <Link href="/tools" className={linkClass('/tools')} data-chaos-target="nav-tools">
-                Tools
+                {t('tools')}
               </Link>
               <Link href="/admin" className={linkClass('/admin')} data-chaos-target="nav-admin">
-                Admin
+                {t('admin')}
               </Link>
             </div>
           </div>

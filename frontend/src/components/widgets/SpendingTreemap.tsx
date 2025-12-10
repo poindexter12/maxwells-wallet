@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Treemap, Tooltip, ResponsiveContainer } from 'recharts'
 import { formatCurrency } from '@/lib/format'
 import { Widget, CHART_VARS } from './types'
@@ -18,7 +19,8 @@ function truncateText(text: string, maxWidth: number, fontSize: number): string 
 }
 
 export function SpendingTreemap({ widget, data }: SpendingTreemapProps) {
-  const title = widget?.title || 'Spending Breakdown'
+  const t = useTranslations('dashboard.widgets')
+  const title = widget?.title || t('treemap')
 
   if (!data || !data.data || data.data.children.length === 0) {
     return (

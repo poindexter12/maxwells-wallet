@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 
 interface Merchant {
   name: string
@@ -39,6 +40,9 @@ const initialAliasForm: AliasFormData = {
 }
 
 export default function MerchantsPanel() {
+  const t = useTranslations('tools.merchants')
+  const tCommon = useTranslations('common')
+  const tFields = useTranslations('fields')
   const [merchants, setMerchants] = useState<Merchant[]>([])
   const [aliases, setAliases] = useState<MerchantAlias[]>([])
   const [loading, setLoading] = useState(true)
@@ -100,7 +104,7 @@ export default function MerchantsPanel() {
   }
 
   async function handleDeleteAlias(id: number) {
-    if (!confirm('Delete this alias?')) return
+    if (!confirm(t('confirmDelete'))) return
     await fetch(`/api/v1/merchants/aliases/${id}`, { method: 'DELETE' })
     await fetchData()
   }
@@ -119,7 +123,7 @@ export default function MerchantsPanel() {
   }
 
   async function handleApply() {
-    if (!confirm(`Apply aliases to ${previewResults?.length || 0} transactions?`)) return
+    if (!confirm(t('confirmApply', { count: previewResults?.length || 0 }))) return
     setApplying(true)
     try {
       await fetch('/api/v1/merchants/aliases/apply?dry_run=false', { method: 'POST' })
@@ -161,7 +165,7 @@ export default function MerchantsPanel() {
   if (loading) {
     return (
       <div className="text-center py-12 text-theme-muted" data-testid="merchants-loading">
-        Loading...
+        {tCommon('loading')}
       </div>
     )
   }
@@ -170,7 +174,7 @@ export default function MerchantsPanel() {
     <div className="space-y-6" data-testid="merchants-panel">
       <div className="flex justify-between items-center">
         <p className="text-sm text-theme-muted">
-          Normalize messy bank merchant names into clean, consistent names
+          {t('description')}
         </p>
         <div className="flex gap-2">
           <button
@@ -179,14 +183,14 @@ export default function MerchantsPanel() {
             className="px-3 py-1.5 text-sm border border-theme rounded-md hover:bg-theme-elevated disabled:opacity-50"
             data-testid="preview-btn"
           >
-            {applying ? 'Checking...' : 'Preview Changes'}
+            {applying ? t('checking') : t('previewChanges')}
           </button>
           <button
             onClick={() => { setEditingAlias(null); resetForm(); setShowForm(true) }}
             className="btn-primary text-sm"
             data-testid="new-alias-btn"
           >
-            + New Alias
+            + {t('newAlias')}
           </button>
         </div>
       </div>
@@ -196,7 +200,7 @@ export default function MerchantsPanel() {
         <div className="card p-4 border-2 border-blue-500" data-testid="preview-results">
           <div className="flex justify-between items-center mb-3">
             <h3 className="font-semibold text-theme">
-              Preview: {previewResults.length} transactions would be updated
+              {t('previewResult', { count: previewResults.length })}
             </h3>
             <div className="flex gap-2">
               <button
@@ -204,7 +208,7 @@ export default function MerchantsPanel() {
                 className="px-3 py-1 text-sm border border-theme rounded"
                 data-testid="dismiss-preview-btn"
               >
-                Dismiss
+                {t('dismiss')}
               </button>
               <button
                 onClick={handleApply}
@@ -212,14 +216,14 @@ export default function MerchantsPanel() {
                 className="btn-primary text-sm disabled:opacity-50"
                 data-testid="apply-changes-btn"
               >
-                {applying ? 'Applying...' : 'Apply Changes'}
+                {applying ? t('applying') : t('applyChanges')}
               </button>
             </div>
           </div>
           <div className="max-h-48 overflow-y-auto divide-y divide-theme">
             {previewResults.slice(0, 20).map((u, i) => (
               <div key={i} className="py-2 text-sm">
-                <span className="text-theme-muted">{u.old_merchant || '(none)'}</span>
+                <span className="text-theme-muted">{u.old_merchant || t('none')}</span>
                 <span className="mx-2">→</span>
                 <span className="text-theme font-medium">{u.new_merchant}</span>
                 <span className="ml-2 text-xs text-theme-muted">({u.matched_pattern})</span>
@@ -237,13 +241,13 @@ export default function MerchantsPanel() {
       {previewResults && previewResults.length === 0 && (
         <div className="card p-4 bg-theme-elevated" data-testid="no-preview-changes">
           <p className="text-sm text-theme-muted">
-            No transactions would be updated. All merchants already match aliases.
+            {t('noChanges')}
           </p>
           <button
             onClick={() => setPreviewResults(null)}
             className="mt-2 text-sm text-theme-muted hover:text-theme"
           >
-            Dismiss
+            {t('dismiss')}
           </button>
         </div>
       )}
@@ -254,7 +258,7 @@ export default function MerchantsPanel() {
           <form onSubmit={handleSaveAlias} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-theme mb-1">Pattern to Match</label>
+                <label className="block text-sm font-medium text-theme mb-1">{t('patternToMatch')}</label>
                 <input
                   type="text"
                   value={aliasForm.pattern}
@@ -266,7 +270,7 @@ export default function MerchantsPanel() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-theme mb-1">Display As</label>
+                <label className="block text-sm font-medium text-theme mb-1">{t('displayAs')}</label>
                 <input
                   type="text"
                   value={aliasForm.canonical_name}
@@ -278,20 +282,20 @@ export default function MerchantsPanel() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-theme mb-1">Match Type</label>
+                <label className="block text-sm font-medium text-theme mb-1">{t('matchType')}</label>
                 <select
                   value={aliasForm.match_type}
                   onChange={(e) => setAliasForm({ ...aliasForm, match_type: e.target.value as 'exact' | 'contains' | 'regex' })}
                   className="w-full px-3 py-2 bg-theme border border-theme rounded-md"
                   data-testid="alias-match-type-select"
                 >
-                  <option value="contains">Contains</option>
-                  <option value="exact">Exact Match</option>
-                  <option value="regex">Regex</option>
+                  <option value="contains">{t('contains')}</option>
+                  <option value="exact">{t('exactMatch')}</option>
+                  <option value="regex">{t('regex')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-theme mb-1">Priority</label>
+                <label className="block text-sm font-medium text-theme mb-1">{tFields('priority')}</label>
                 <input
                   type="number"
                   value={aliasForm.priority}
@@ -299,7 +303,7 @@ export default function MerchantsPanel() {
                   className="w-full px-3 py-2 bg-theme border border-theme rounded-md"
                   data-testid="alias-priority-input"
                 />
-                <p className="text-xs text-theme-muted mt-1">Higher = checked first</p>
+                <p className="text-xs text-theme-muted mt-1">{t('higherCheckedFirst')}</p>
               </div>
             </div>
             <div className="flex justify-end gap-2">
@@ -309,14 +313,14 @@ export default function MerchantsPanel() {
                 className="px-4 py-2 border border-theme rounded-md"
                 data-testid="alias-cancel-btn"
               >
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button
                 type="submit"
                 className="btn-primary"
                 data-testid="alias-submit-btn"
               >
-                {editingAlias ? 'Update' : 'Create'}
+                {editingAlias ? tCommon('update') : tCommon('create')}
               </button>
             </div>
           </form>
@@ -327,11 +331,11 @@ export default function MerchantsPanel() {
         {/* Aliases */}
         <div className="card" data-testid="aliases-list">
           <div className="p-4 border-b border-theme">
-            <h3 className="font-semibold text-theme">Aliases ({aliases.length})</h3>
+            <h3 className="font-semibold text-theme">{t('aliases')} ({aliases.length})</h3>
           </div>
           {aliases.length === 0 ? (
             <div className="p-8 text-center text-theme-muted text-sm" data-testid="no-aliases">
-              No aliases yet
+              {t('noAliases')}
             </div>
           ) : (
             <div className="divide-y divide-theme max-h-[400px] overflow-y-auto">
@@ -358,7 +362,7 @@ export default function MerchantsPanel() {
                         }`}>
                           {alias.match_type}
                         </span>
-                        <span>Used {alias.match_count}x</span>
+                        <span>{t('used')} {alias.match_count}x</span>
                       </div>
                     </div>
                     <div className="flex gap-1 ml-2">
@@ -367,14 +371,14 @@ export default function MerchantsPanel() {
                         className="px-2 py-1 text-xs text-theme-muted hover:text-theme"
                         data-testid={`edit-alias-${alias.id}`}
                       >
-                        Edit
+                        {tCommon('edit')}
                       </button>
                       <button
                         onClick={() => handleDeleteAlias(alias.id)}
                         className="px-2 py-1 text-xs text-red-500 hover:text-red-700"
                         data-testid={`delete-alias-${alias.id}`}
                       >
-                        Delete
+                        {tCommon('delete')}
                       </button>
                     </div>
                   </div>
@@ -388,13 +392,13 @@ export default function MerchantsPanel() {
         <div className="card" data-testid="merchants-list">
           <div className="p-4 border-b border-theme">
             <div className="flex justify-between items-center">
-              <h3 className="font-semibold text-theme">All Merchants ({merchants.length})</h3>
+              <h3 className="font-semibold text-theme">{t('allMerchants')} ({merchants.length})</h3>
             </div>
             <input
               type="text"
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
-              placeholder="Filter merchants..."
+              placeholder={t('filterMerchants')}
               className="mt-2 w-full px-3 py-1.5 text-sm bg-theme border border-theme rounded-md"
               data-testid="merchant-search-input"
             />
@@ -408,7 +412,7 @@ export default function MerchantsPanel() {
                 data-testid={`merchant-row-${idx}`}
               >
                 <span className="font-mono text-sm truncate flex-1">{merchant.name}</span>
-                <span className="text-xs text-theme-muted ml-2">{merchant.transaction_count} txns</span>
+                <span className="text-xs text-theme-muted ml-2">{merchant.transaction_count} {t('txns')}</span>
               </div>
             ))}
           </div>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { formatCurrency } from '@/lib/format'
 import { SummaryData, SpendingVelocityData } from './types'
 
@@ -16,6 +17,8 @@ export function SpendingVelocity({
   spendingVelocity,
   selectedYear
 }: SpendingVelocityProps) {
+  const t = useTranslations('dashboard.widgets')
+
   const now = new Date()
   // Guard against invalid year values
   const safeYear = !isNaN(selectedYear) ? selectedYear : now.getFullYear()
@@ -29,7 +32,7 @@ export function SpendingVelocity({
 
     return (
       <div className="card p-6">
-        <h2 className="text-lg font-semibold text-theme mb-4">Annual Spending Rate</h2>
+        <h2 className="text-lg font-semibold text-theme mb-4">{t('velocity')}</h2>
         <div className="space-y-4">
           <div>
             <p className="text-sm text-theme-muted">Daily Average</p>
@@ -59,7 +62,7 @@ export function SpendingVelocity({
 
   return (
     <div className="card p-6">
-      <h2 className="text-lg font-semibold text-theme mb-4">Daily Burn Rate</h2>
+      <h2 className="text-lg font-semibold text-theme mb-4">{t('velocity')}</h2>
       <div className="space-y-4">
         <div>
           <p className="text-sm text-theme-muted">Daily Spending Rate</p>
