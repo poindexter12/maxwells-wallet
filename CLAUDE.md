@@ -8,8 +8,8 @@ This file provides guidance to AI coding agents when working with code in this r
 - **Frontend**: Next.js 16 + TypeScript (App Router)
 - **Backend**: FastAPI + Python (async)
 - **Database**: SQLite (dev) with SQLModel ORM (Postgres-ready for prod)
-- **Package Management**: pnpm (frontend), uv (backend)
-- **i18n**: next-intl with 10 locales (en-US, en-GB, es, fr, it, pt, de, nl, l33t)
+- **Package Management**: npm (frontend), uv (backend)
+- **i18n**: next-intl with 8 locales (en-US, en-GB, es, fr, it, pt, de, nl) + pseudo locale for dev/QA
 
 ## Repository Structure
 
