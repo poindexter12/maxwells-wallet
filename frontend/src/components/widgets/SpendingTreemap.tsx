@@ -3,11 +3,21 @@
 import { useTranslations } from 'next-intl'
 import { Treemap, Tooltip, ResponsiveContainer } from 'recharts'
 import { formatCurrency } from '@/lib/format'
-import { Widget, CHART_VARS } from './types'
+import { Widget, TreemapData, CHART_VARS } from './types'
 
 interface SpendingTreemapProps {
   widget?: Widget
-  data: any
+  data: TreemapData | null
+}
+
+interface TreemapContentProps {
+  x: number
+  y: number
+  width: number
+  height: number
+  name: string
+  value: number
+  index: number
 }
 
 // Truncate text to fit within available width
@@ -42,7 +52,7 @@ export function SpendingTreemap({ widget, data }: SpendingTreemapProps) {
           aspectRatio={4/3}
           stroke="#fff"
           fill="#8884d8"
-          content={({ x, y, width, height, name, value, index }: any) => {
+          content={({ x, y, width, height, name, value, index }: TreemapContentProps) => {
             // Guard against invalid dimensions from Recharts edge cases
             const safeWidth = Math.max(0, width || 0)
             const safeHeight = Math.max(0, height || 0)

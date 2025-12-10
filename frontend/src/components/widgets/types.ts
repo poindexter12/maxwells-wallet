@@ -12,7 +12,7 @@ export interface Widget {
 
 export interface WidgetProps {
   widget?: Widget
-  customData?: any
+  customData?: Record<string, unknown>
 }
 
 export interface SummaryData {
@@ -72,6 +72,66 @@ export interface TrendsData {
 
 export interface TopMerchantsData {
   merchants: Array<{ merchant: string; amount: number }>
+}
+
+// Sankey chart data types
+export interface SankeyNode {
+  name: string
+}
+
+export interface SankeyLink {
+  source: number
+  target: number
+  value: number
+}
+
+export interface SankeyData {
+  nodes: SankeyNode[]
+  links: SankeyLink[]
+}
+
+// Treemap data types
+export interface TreemapChild {
+  name: string
+  value: number
+  children?: TreemapChild[]
+}
+
+export interface TreemapData {
+  data: {
+    name: string
+    children: TreemapChild[]
+  }
+}
+
+// Heatmap data types
+export interface HeatmapDay {
+  day: number
+  weekday: number
+  amount: number
+  count: number
+  intensity: number
+}
+
+export interface HeatmapMonth {
+  month: number
+  month_name: string
+  amount: number
+  count: number
+  intensity: number
+}
+
+export interface HeatmapSummary {
+  total_spending: number
+  max_daily: number
+  max_monthly?: number
+  days_with_spending: number
+  months_with_spending?: number
+}
+
+export interface HeatmapData {
+  days: (HeatmapDay | HeatmapMonth)[]
+  summary: HeatmapSummary
 }
 
 // Chart color constants

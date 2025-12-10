@@ -15,7 +15,10 @@ import {
   SpendingVelocityData,
   AnomaliesData,
   TrendsData,
-  TopMerchantsData
+  TopMerchantsData,
+  SankeyData,
+  TreemapData,
+  HeatmapData
 } from '@/components/widgets'
 
 export default function Dashboard() {
@@ -41,11 +44,11 @@ export default function Dashboard() {
   const [monthOverMonth, setMonthOverMonth] = useState<MonthOverMonthData | null>(null)
   const [spendingVelocity, setSpendingVelocity] = useState<SpendingVelocityData | null>(null)
   const [anomalies, setAnomalies] = useState<AnomaliesData | null>(null)
-  const [sankeyData, setSankeyData] = useState<any>(null)
-  const [treemapData, setTreemapData] = useState<any>(null)
-  const [heatmapData, setHeatmapData] = useState<any>(null)
+  const [sankeyData, setSankeyData] = useState<SankeyData | null>(null)
+  const [treemapData, setTreemapData] = useState<TreemapData | null>(null)
+  const [heatmapData, setHeatmapData] = useState<HeatmapData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [widgetData, setWidgetData] = useState<Record<number, any>>({})
+  const [widgetData, setWidgetData] = useState<Record<number, unknown>>({})
 
   // Extract date info from current dashboard with fallback validation
   const startDate = currentDashboard?.date_range?.start_date || ''

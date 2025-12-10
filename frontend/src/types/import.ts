@@ -14,6 +14,13 @@ export interface SavedCustomFormat {
   use_count: number
 }
 
+export interface PreviewTransaction {
+  date: string
+  amount: number
+  description: string
+  merchant?: string
+}
+
 export interface FilePreview {
   filename: string
   account_source: string | null
@@ -24,7 +31,7 @@ export interface FilePreview {
   total_amount: number
   date_range_start: string | null
   date_range_end: string | null
-  transactions: any[]
+  transactions: PreviewTransaction[]
   selected: boolean
   accountSourceOverride?: string
 }
