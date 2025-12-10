@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { usePathname } from 'next/navigation'
@@ -29,7 +30,7 @@ export function NavBar() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <Link href="/" className="nav-brand flex items-center px-2 gap-2" data-chaos-target="nav-home">
-              <img src="/favicon.svg" alt="" className="w-6 h-6" />
+              <Image src="/favicon.svg" alt="" width={24} height={24} />
               {t('brand')}
             </Link>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-6 sm:items-center">

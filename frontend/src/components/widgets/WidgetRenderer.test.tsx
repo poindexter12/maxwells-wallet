@@ -5,7 +5,7 @@ import { Widget, SummaryData } from './types'
 
 // Mock all child widget components
 vi.mock('./SummaryCards', () => ({
-  SummaryCards: ({ summary }: any) => <div data-testid="summary-cards">SummaryCards: {summary.net}</div>
+  SummaryCards: ({ summary }: { summary: SummaryData }) => <div data-testid="summary-cards">SummaryCards: {summary.net}</div>
 }))
 
 vi.mock('./SpendingVelocity', () => ({
@@ -21,7 +21,7 @@ vi.mock('./BucketPieChart', () => ({
 }))
 
 vi.mock('./TopMerchantsList', () => ({
-  TopMerchantsList: ({ data: _data }: any) => <div data-testid="top-merchants-list">TopMerchantsList</div>
+  TopMerchantsList: ({ data: _data }: { data: unknown }) => <div data-testid="top-merchants-list">TopMerchantsList</div>
 }))
 
 vi.mock('./TrendsChart', () => ({

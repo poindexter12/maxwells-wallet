@@ -37,6 +37,7 @@ export interface SuggestedConfig {
 
 export interface CustomConfig {
   name: string
+  description?: string
   account_source: string
   date_column: string | number
   amount_column: string | number

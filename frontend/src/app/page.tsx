@@ -15,7 +15,10 @@ import {
   SpendingVelocityData,
   AnomaliesData,
   TrendsData,
-  TopMerchantsData
+  TopMerchantsData,
+  SankeyData,
+  TreemapData,
+  HeatmapData
 } from '@/components/widgets'
 
 export default function Dashboard() {
@@ -41,11 +44,13 @@ export default function Dashboard() {
   const [monthOverMonth, setMonthOverMonth] = useState<MonthOverMonthData | null>(null)
   const [spendingVelocity, setSpendingVelocity] = useState<SpendingVelocityData | null>(null)
   const [anomalies, setAnomalies] = useState<AnomaliesData | null>(null)
-  const [sankeyData, setSankeyData] = useState<any>(null)
-  const [treemapData, setTreemapData] = useState<any>(null)
-  const [heatmapData, setHeatmapData] = useState<any>(null)
+  const [sankeyData, setSankeyData] = useState<SankeyData | null>(null)
+  const [treemapData, setTreemapData] = useState<TreemapData | null>(null)
+  const [heatmapData, setHeatmapData] = useState<HeatmapData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [widgetData, setWidgetData] = useState<Record<number, any>>({})
+  // Widget data can be any of the supported custom data types
+  type CustomWidgetData = TrendsData | TopMerchantsData | SankeyData | TreemapData | HeatmapData | null
+  const [widgetData, setWidgetData] = useState<Record<number, CustomWidgetData>>({})
 
   // Extract date info from current dashboard with fallback validation
   const startDate = currentDashboard?.date_range?.start_date || ''
@@ -148,7 +153,7 @@ export default function Dashboard() {
       const groupBy = isMonthlyScale ? 'week' : 'month'
       const monthParam = isMonthlyScale ? `&month=${selectedMonth}` : ''
 
-      const newWidgetData: Record<number, any> = {}
+      const newWidgetData: Record<number, TrendsData | TopMerchantsData | SankeyData | TreemapData | HeatmapData> = {}
 
       for (const widget of filteredWidgets) {
         const config = JSON.parse(widget.config!)
@@ -226,7 +231,7 @@ export default function Dashboard() {
   const rangeType = currentDashboard.date_range_type
   const isMonthlyScale = rangeType === 'mtd' || rangeType === 'last_30_days'
 
-  const bucketData = Object.entries(summary.bucket_breakdown || {}).map(([name, data]: [string, any]) => ({
+  const bucketData = Object.entries(summary.bucket_breakdown || {}).map(([name, data]) => ({
     name: name.charAt(0).toUpperCase() + name.slice(1),
     value: data.amount,
     count: data.count

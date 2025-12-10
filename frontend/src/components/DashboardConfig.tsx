@@ -33,8 +33,11 @@ const WIDGET_ICONS: Record<string, string> = {
   heatmap: '🗓️'
 }
 
+// Widget translation key type for type-safe translations
+type WidgetTranslationKey = 'summary' | 'velocity' | 'anomalies' | 'bucketPie' | 'topMerchants' | 'trends' | 'sankey' | 'treemap' | 'heatmap' | 'budgetStatus' | 'creditCards' | 'recurring'
+
 // Map widget_type to translation key (e.g., 'bucket_pie' -> 'bucketPie')
-const WIDGET_TYPE_TO_KEY: Record<string, string> = {
+const WIDGET_TYPE_TO_KEY: Record<string, WidgetTranslationKey> = {
   summary: 'summary',
   velocity: 'velocity',
   anomalies: 'anomalies',
@@ -134,7 +137,7 @@ export function DashboardConfig({
                     </span>
                     <div className="flex-1 min-w-0">
                       <span className="text-sm text-theme truncate block">
-                        {widget.title || (WIDGET_TYPE_TO_KEY[widget.widget_type] ? tWidgets(WIDGET_TYPE_TO_KEY[widget.widget_type] as any) : widget.widget_type)}
+                        {widget.title || (WIDGET_TYPE_TO_KEY[widget.widget_type] ? tWidgets(WIDGET_TYPE_TO_KEY[widget.widget_type]) : widget.widget_type)}
                       </span>
                       {hasFilter && (
                         <span className="text-xs text-blue-500">{t('filter')}</span>

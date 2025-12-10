@@ -4,7 +4,7 @@ import { format } from 'date-fns'
 import { useTranslations } from 'next-intl'
 import { formatCurrency } from '@/lib/format'
 import { TEST_IDS } from '@/test-ids'
-import { AccountTag, SavedCustomFormat, FORMAT_NAMES } from '@/types/import'
+import { AccountTag, SavedCustomFormat, FORMAT_NAMES, SingleFilePreviewResponse, PreviewTransaction } from '@/types/import'
 
 interface SingleFileImportProps {
   file: File | null
@@ -17,7 +17,7 @@ interface SingleFileImportProps {
   formatHint: string
   savedFormats: SavedCustomFormat[]
   selectedCustomFormat: SavedCustomFormat | null
-  preview: any
+  preview: SingleFilePreviewResponse | null
   importing: boolean
   onPreview: () => void
   onConfirm: () => void
@@ -221,7 +221,7 @@ export function SingleFileImport({
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {preview.transactions.slice(0, 10).map((txn: any, idx: number) => (
+                {preview.transactions.slice(0, 10).map((txn: PreviewTransaction, idx: number) => (
                   <tr key={idx}>
                     <td className="px-4 py-2 text-sm">{format(new Date(txn.date), 'MM/dd/yyyy')}</td>
                     <td className="px-4 py-2 text-sm">{txn.merchant}</td>
