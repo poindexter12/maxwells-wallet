@@ -1,21 +1,7 @@
 """Tests for the settings router."""
 
 import pytest
-from httpx import AsyncClient, ASGITransport
-from sqlmodel import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.main import app
-from app.models import AppSettings, LanguagePreference
-from app.database import get_session
-
-
-@pytest.fixture
-async def client():
-    """Create async test client."""
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        yield client
+from httpx import AsyncClient
 
 
 class TestSettingsEndpoints:
