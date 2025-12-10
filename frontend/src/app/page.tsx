@@ -151,7 +151,7 @@ export default function Dashboard() {
       const groupBy = isMonthlyScale ? 'week' : 'month'
       const monthParam = isMonthlyScale ? `&month=${selectedMonth}` : ''
 
-      const newWidgetData: Record<number, any> = {}
+      const newWidgetData: Record<number, TrendsData | TopMerchantsData | SankeyData | TreemapData | HeatmapData> = {}
 
       for (const widget of filteredWidgets) {
         const config = JSON.parse(widget.config!)
@@ -229,7 +229,7 @@ export default function Dashboard() {
   const rangeType = currentDashboard.date_range_type
   const isMonthlyScale = rangeType === 'mtd' || rangeType === 'last_30_days'
 
-  const bucketData = Object.entries(summary.bucket_breakdown || {}).map(([name, data]: [string, any]) => ({
+  const bucketData = Object.entries(summary.bucket_breakdown || {}).map(([name, data]) => ({
     name: name.charAt(0).toUpperCase() + name.slice(1),
     value: data.amount,
     count: data.count

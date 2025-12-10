@@ -11,7 +11,8 @@ import {
   AccountTag,
   SavedCustomFormat,
   FilePreview,
-  ImportResult as ImportResultType
+  ImportResult as ImportResultType,
+  SingleFilePreviewResponse
 } from '@/types/import'
 
 export default function ImportPage() {
@@ -30,7 +31,7 @@ export default function ImportPage() {
   const [file, setFile] = useState<File | null>(null)
   const [accountSource, setAccountSource] = useState('')
   const [formatHint, setFormatHint] = useState('')
-  const [preview, setPreview] = useState<any>(null)
+  const [preview, setPreview] = useState<SingleFilePreviewResponse | null>(null)
 
   // Custom format state
   const [savedFormats, setSavedFormats] = useState<SavedCustomFormat[]>([])
@@ -177,7 +178,7 @@ export default function ImportPage() {
       })
       const data = await res.json()
 
-      const previews = data.files.map((filePreview: any) => ({
+      const previews = data.files.map((filePreview: FilePreview) => ({
         ...filePreview,
         selected: true
       }))

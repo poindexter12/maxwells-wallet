@@ -111,14 +111,14 @@ describe('useWidgetManagement', () => {
       await result.current.fetchWidgets()
     })
 
-    const fetchCallCount = (fetch as any).mock.calls.length
+    const fetchCallCount = vi.mocked(fetch).mock.calls.length
 
     await act(async () => {
       await result.current.moveUp(1)
     })
 
     // Should not have made additional fetch calls
-    expect((fetch as any).mock.calls.length).toBe(fetchCallCount)
+    expect(vi.mocked(fetch).mock.calls.length).toBe(fetchCallCount)
   })
 
   it('resets widgets', async () => {

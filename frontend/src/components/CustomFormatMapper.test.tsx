@@ -92,7 +92,7 @@ vi.mock('./format-mapper/ConfidenceDisplay', () => ({
 }))
 
 vi.mock('./format-mapper/PreviewTable', () => ({
-  PreviewTable: ({ transactions, onHide }: { transactions: any[]; onHide: () => void }) => (
+  PreviewTable: ({ transactions, onHide }: { transactions: unknown[]; onHide: () => void }) => (
     <div data-testid="preview-table">
       <span>{transactions.length} transactions</span>
       <button onClick={onHide}>Hide Preview</button>
