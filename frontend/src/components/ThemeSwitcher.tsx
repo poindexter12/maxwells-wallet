@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { ThemeName, themes, defaultTheme } from '@/lib/themes'
 
 const STORAGE_KEY = 'maxwell-wallet-theme'
 
 export function ThemeSwitcher() {
+  const t = useTranslations('settings')
   const [theme, setThemeState] = useState<ThemeName>(defaultTheme)
   const [mounted, setMounted] = useState(false)
 
@@ -36,8 +38,8 @@ export function ThemeSwitcher() {
   // Prevent hydration mismatch
   if (!mounted) {
     return (
-      <select className="theme-switcher" aria-label="Select theme" disabled>
-        <option>Theme</option>
+      <select className="theme-switcher" aria-label={t('theme')} disabled>
+        <option>{t('theme')}</option>
       </select>
     )
   }
@@ -47,11 +49,11 @@ export function ThemeSwitcher() {
       value={theme}
       onChange={(e) => setTheme(e.target.value as ThemeName)}
       className="theme-switcher"
-      aria-label="Select theme"
+      aria-label={t('theme')}
     >
-      {themes.map((t) => (
-        <option key={t.name} value={t.name}>
-          {t.label}
+      {themes.map((themeOption) => (
+        <option key={themeOption.name} value={themeOption.name}>
+          {themeOption.label}
         </option>
       ))}
     </select>

@@ -113,7 +113,7 @@ describe('DashboardConfig', () => {
 
       expect(screen.getByText('Monthly Summary')).toBeInTheDocument()
       expect(screen.getByText('Spending by Category')).toBeInTheDocument()
-      expect(screen.getByText('trends')).toBeInTheDocument() // Falls back to widget_type when title is null
+      expect(screen.getByText('Trends')).toBeInTheDocument() // Falls back to translated widget_type when title is null
     })
 
     it('shows widget type icons', async () => {
@@ -134,7 +134,7 @@ describe('DashboardConfig', () => {
 
       await user.click(screen.getByRole('button', { name: /customize/i }))
 
-      expect(screen.getByText('Filtered')).toBeInTheDocument()
+      expect(screen.getByText('Filter')).toBeInTheDocument() // Translated as "Filter" from common.filter
     })
 
     it('shows checkmark for visible widgets', async () => {

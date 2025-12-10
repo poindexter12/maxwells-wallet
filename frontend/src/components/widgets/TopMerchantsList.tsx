@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { formatCurrency } from '@/lib/format'
 import { Widget, TopMerchantsData } from './types'
 
@@ -9,9 +10,11 @@ interface TopMerchantsListProps {
 }
 
 export function TopMerchantsList({ widget, data }: TopMerchantsListProps) {
+  const t = useTranslations('dashboard.widgets')
+
   return (
     <div className="card p-6">
-      <h2 className="text-lg font-semibold text-theme mb-4">{widget?.title || 'Top Merchants'}</h2>
+      <h2 className="text-lg font-semibold text-theme mb-4">{widget?.title || t('topMerchants')}</h2>
       {data && data.merchants.length > 0 ? (
         <div className="space-y-3">
           {data.merchants.slice(0, 10).map((merchant, index) => (

@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { formatCurrency } from '@/lib/format'
+import { TEST_IDS } from '@/test-ids'
 
 interface Tag {
   id: number
@@ -35,6 +37,8 @@ export function SplitTransaction({
   bucketTags,
   onSplitsChanged
 }: SplitTransactionProps) {
+  const t = useTranslations('transactions')
+  const tCommon = useTranslations('common')
   const [splits, setSplits] = useState<SplitItem[]>([])
   const [totalAmount, setTotalAmount] = useState(Math.abs(transactionAmount))
   const [unallocated, setUnallocated] = useState(Math.abs(transactionAmount))
@@ -157,8 +161,8 @@ export function SplitTransaction({
 
   if (loading) {
     return (
-      <div className="py-2 text-sm text-theme-muted">
-        Loading splits...
+      <div className="py-2 text-sm text-theme-muted" data-testid={TEST_IDS.SPLIT_LOADING}>
+        {tCommon('loading')}
       </div>
     )
   }
@@ -173,7 +177,7 @@ export function SplitTransaction({
             disabled={saving}
             className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
           >
-            Clear all
+            {tCommon('clear')} all
           </button>
         )}
       </div>
@@ -237,7 +241,8 @@ export function SplitTransaction({
                     onClick={() => handleRemoveSplit(index)}
                     disabled={saving}
                     className="text-theme-muted hover:text-red-500 disabled:opacity-50"
-                    title="Remove split"
+                    title={tCommon('remove')}
+                    data-testid={TEST_IDS.SPLIT_REMOVE_BUTTON}
                   >
                     ×
                   </button>
@@ -255,8 +260,9 @@ export function SplitTransaction({
           onChange={(e) => setNewBucket(e.target.value)}
           className="flex-1 h-8 text-sm border border-theme rounded px-2 bg-theme-elevated"
           disabled={saving}
+          data-testid={TEST_IDS.SPLIT_BUCKET_SELECT}
         >
-          <option value="">Select bucket...</option>
+          <option value="" data-testid={TEST_IDS.SPLIT_BUCKET_PLACEHOLDER}>{tCommon('search')} {t('bucket').toLowerCase()}...</option>
           {bucketTags.map((tag) => (
             <option key={tag.id} value={tag.value}>
               {tag.description || tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
@@ -284,7 +290,7 @@ export function SplitTransaction({
           disabled={saving || !newBucket || !newAmount}
           className="h-8 px-3 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {saving ? '...' : 'Add'}
+          {saving ? '...' : tCommon('add')}
         </button>
       </div>
 

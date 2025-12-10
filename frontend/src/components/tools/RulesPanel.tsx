@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 
 interface Tag {
   id: number
@@ -52,6 +53,9 @@ const initialFormData: RuleFormData = {
 }
 
 export default function RulesPanel() {
+  const t = useTranslations('tools.rules')
+  const tCommon = useTranslations('common')
+  const tFields = useTranslations('fields')
   const [rules, setRules] = useState<TagRule[]>([])
   const [bucketTags, setBucketTags] = useState<Tag[]>([])
   const [loading, setLoading] = useState(true)
@@ -124,7 +128,7 @@ export default function RulesPanel() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm('Delete this rule?')) return
+    if (!confirm(t('confirmDelete'))) return
     await fetch(`/api/v1/tag-rules/${id}`, { method: 'DELETE' })
     fetchRules()
   }
@@ -144,10 +148,10 @@ export default function RulesPanel() {
   }
 
   async function handleApplyRules() {
-    if (!confirm('Apply all active rules to untagged transactions?')) return
+    if (!confirm(t('confirmApplyAll'))) return
     const res = await fetch('/api/v1/tag-rules/apply', { method: 'POST' })
     const data = await res.json()
-    alert(`Applied rules to ${data.applied_count} transactions`)
+    alert(t('rulesApplied', { count: data.applied_count }))
     fetchRules()
   }
 
@@ -174,19 +178,19 @@ export default function RulesPanel() {
 
   function getRuleConditions(rule: TagRule): string[] {
     const conditions = []
-    if (rule.merchant_pattern) conditions.push(`Merchant: "${rule.merchant_pattern}"`)
-    if (rule.description_pattern) conditions.push(`Description: "${rule.description_pattern}"`)
+    if (rule.merchant_pattern) conditions.push(`${tFields('merchant')}: "${rule.merchant_pattern}"`)
+    if (rule.description_pattern) conditions.push(`${tFields('description')}: "${rule.description_pattern}"`)
     if (rule.amount_min || rule.amount_max) {
-      conditions.push(`Amount: ${rule.amount_min || 'any'} - ${rule.amount_max || 'any'}`)
+      conditions.push(`${tFields('amount')}: ${rule.amount_min || 'any'} - ${rule.amount_max || 'any'}`)
     }
-    if (rule.account_source) conditions.push(`Account: "${rule.account_source}"`)
+    if (rule.account_source) conditions.push(`${tFields('account')}: "${rule.account_source}"`)
     return conditions
   }
 
   if (loading) {
     return (
       <div className="text-center py-12 text-theme-muted" data-testid="rules-loading">
-        Loading...
+        {tCommon('loading')}
       </div>
     )
   }
@@ -195,7 +199,7 @@ export default function RulesPanel() {
     <div className="space-y-6" data-testid="rules-panel">
       <div className="flex justify-between items-center">
         <p className="text-sm text-theme-muted">
-          Automatically assign buckets to transactions based on patterns
+          {t('description')}
         </p>
         <div className="flex gap-3">
           <button
@@ -203,14 +207,14 @@ export default function RulesPanel() {
             className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
             data-testid="apply-rules-btn"
           >
-            Apply All Rules
+            {t('applyAllRules')}
           </button>
           <button
             onClick={() => { setEditingRule(null); resetForm(); setShowForm(true) }}
             className="btn-primary text-sm"
             data-testid="new-rule-btn"
           >
-            New Rule
+            {t('newRule')}
           </button>
         </div>
       </div>
@@ -219,7 +223,7 @@ export default function RulesPanel() {
       <div className="card" data-testid="rules-list">
         {rules.length === 0 ? (
           <p className="text-theme-muted text-center py-12" data-testid="no-rules">
-            No rules created yet
+            {t('noRules')}
           </p>
         ) : (
           <div className="divide-y divide-theme">
@@ -233,11 +237,11 @@ export default function RulesPanel() {
                         {rule.tag.split(':')[1] || rule.tag}
                       </span>
                       <span className="px-2 py-0.5 bg-theme-elevated text-xs rounded">
-                        Priority: {rule.priority}
+                        {t('priority')}: {rule.priority}
                       </span>
                       {!rule.enabled && (
                         <span className="px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded dark:bg-red-900/30 dark:text-red-300">
-                          Disabled
+                          {t('disabled')}
                         </span>
                       )}
                     </div>
@@ -248,15 +252,15 @@ export default function RulesPanel() {
                         </span>
                       ))}
                       <span className="text-xs text-theme-muted">
-                        ({rule.match_all ? 'ALL' : 'ANY'})
+                        ({rule.match_all ? t('all') : t('any')})
                       </span>
                     </div>
                     <div className="text-xs text-theme-muted">
-                      Matched: {rule.match_count} transactions
+                      {t('matched')}: {rule.match_count} {t('transactions')}
                     </div>
                     {testResults?.ruleId === rule.id && (
                       <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm">
-                        Test: {testResults.match_count} transactions would match
+                        {t('testResult', { count: testResults.match_count })}
                       </div>
                     )}
                   </div>
@@ -270,28 +274,28 @@ export default function RulesPanel() {
                       }`}
                       data-testid={`toggle-enabled-${rule.id}`}
                     >
-                      {rule.enabled ? 'Enabled' : 'Disabled'}
+                      {rule.enabled ? t('enabled') : t('disabled')}
                     </button>
                     <button
                       onClick={() => handleTestRule(rule.id)}
                       className="text-theme-muted hover:text-theme text-sm"
                       data-testid={`test-rule-${rule.id}`}
                     >
-                      Test
+                      {t('test')}
                     </button>
                     <button
                       onClick={() => handleEdit(rule)}
                       className="text-theme-muted hover:text-theme text-sm"
                       data-testid={`edit-rule-${rule.id}`}
                     >
-                      Edit
+                      {tCommon('edit')}
                     </button>
                     <button
                       onClick={() => handleDelete(rule.id)}
                       className="text-red-500 hover:text-red-700 text-sm"
                       data-testid={`delete-rule-${rule.id}`}
                     >
-                      Delete
+                      {tCommon('delete')}
                     </button>
                   </div>
                 </div>
@@ -306,12 +310,12 @@ export default function RulesPanel() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" data-testid="rule-form-modal">
           <div className="card p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-semibold text-theme mb-4">
-              {editingRule ? 'Edit Rule' : 'Create Rule'}
+              {editingRule ? t('editRule') : t('createRule')}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-theme mb-1">Rule Name *</label>
+                  <label className="block text-sm font-medium text-theme mb-1">{t('ruleName')} *</label>
                   <input
                     type="text"
                     value={formData.name}
@@ -322,7 +326,7 @@ export default function RulesPanel() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-theme mb-1">Target Bucket *</label>
+                  <label className="block text-sm font-medium text-theme mb-1">{t('targetBucket')} *</label>
                   <select
                     value={formData.tag}
                     onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
@@ -330,7 +334,7 @@ export default function RulesPanel() {
                     required
                     data-testid="rule-tag-select"
                   >
-                    <option value="">Select...</option>
+                    <option value="">{t('select')}</option>
                     {bucketTags.map((tag) => (
                       <option key={tag.id} value={`bucket:${tag.value}`}>
                         {tag.value}
@@ -340,7 +344,7 @@ export default function RulesPanel() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-theme mb-1">Priority</label>
+                <label className="block text-sm font-medium text-theme mb-1">{t('priority')}</label>
                 <input
                   type="number"
                   value={formData.priority}
@@ -350,10 +354,10 @@ export default function RulesPanel() {
                 />
               </div>
               <div className="border-t border-theme pt-4">
-                <p className="text-sm font-medium text-theme mb-3">Matching Conditions</p>
+                <p className="text-sm font-medium text-theme mb-3">{t('matchingConditions')}</p>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm text-theme-muted mb-1">Merchant Pattern</label>
+                    <label className="block text-sm text-theme-muted mb-1">{t('merchantPattern')}</label>
                     <input
                       type="text"
                       value={formData.merchant_pattern}
@@ -364,7 +368,7 @@ export default function RulesPanel() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-theme-muted mb-1">Description Pattern</label>
+                    <label className="block text-sm text-theme-muted mb-1">{t('descriptionPattern')}</label>
                     <input
                       type="text"
                       value={formData.description_pattern}
@@ -376,7 +380,7 @@ export default function RulesPanel() {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm text-theme-muted mb-1">Amount Min</label>
+                      <label className="block text-sm text-theme-muted mb-1">{t('amountMin')}</label>
                       <input
                         type="number"
                         step="0.01"
@@ -387,7 +391,7 @@ export default function RulesPanel() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-theme-muted mb-1">Amount Max</label>
+                      <label className="block text-sm text-theme-muted mb-1">{t('amountMax')}</label>
                       <input
                         type="number"
                         step="0.01"
@@ -399,7 +403,7 @@ export default function RulesPanel() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm text-theme-muted mb-1">Account Source</label>
+                    <label className="block text-sm text-theme-muted mb-1">{t('accountSource')}</label>
                     <input
                       type="text"
                       value={formData.account_source}
@@ -418,7 +422,7 @@ export default function RulesPanel() {
                     onChange={(e) => setFormData({ ...formData, match_all: e.target.checked })}
                     data-testid="rule-match-all-checkbox"
                   />
-                  All conditions must match (AND logic)
+                  {t('matchAll')}
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <input
@@ -427,7 +431,7 @@ export default function RulesPanel() {
                     onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
                     data-testid="rule-enabled-checkbox"
                   />
-                  Enable rule immediately
+                  {t('enableImmediately')}
                 </label>
               </div>
               <div className="flex gap-3 pt-4">
@@ -437,14 +441,14 @@ export default function RulesPanel() {
                   className="flex-1 px-4 py-2 border border-theme rounded-md hover:bg-theme-elevated"
                   data-testid="rule-cancel-btn"
                 >
-                  Cancel
+                  {tCommon('cancel')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 btn-primary"
                   data-testid="rule-submit-btn"
                 >
-                  {editingRule ? 'Update' : 'Create'}
+                  {editingRule ? tCommon('update') : tCommon('create')}
                 </button>
               </div>
             </form>

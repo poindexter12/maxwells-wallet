@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import { PageHelp } from '@/components/PageHelp'
 import { DashboardConfig } from '@/components/DashboardConfig'
 import DashboardTabs from '@/components/DashboardTabs'
@@ -17,18 +18,21 @@ import {
   TopMerchantsData
 } from '@/components/widgets'
 
-const DATE_RANGE_OPTIONS: { value: DateRangeType; label: string }[] = [
-  { value: 'mtd', label: 'Month to Date' },
-  { value: 'qtd', label: 'Quarter to Date' },
-  { value: 'ytd', label: 'Year to Date' },
-  { value: 'last_30_days', label: 'Last 30 Days' },
-  { value: 'last_90_days', label: 'Last 90 Days' },
-  { value: 'last_year', label: 'Last Year' },
-]
-
 export default function Dashboard() {
+  const t = useTranslations('dashboard')
+  const tCommon = useTranslations('common')
   const { currentDashboard, loading: dashboardLoading, updateDashboard } = useDashboard()
   const { widgets, fetchWidgets, toggleVisibility, moveUp, moveDown } = useWidgetManagement()
+
+  // Date range options
+  const DATE_RANGE_OPTIONS: { value: DateRangeType; label: string }[] = [
+    { value: 'mtd', label: t('dateRange.mtd') },
+    { value: 'qtd', label: t('dateRange.qtd') },
+    { value: 'ytd', label: t('dateRange.ytd') },
+    { value: 'last_30_days', label: t('dateRange.last30Days') },
+    { value: 'last_90_days', label: t('dateRange.last90Days') },
+    { value: 'last_year', label: t('dateRange.lastYear') },
+  ]
 
   // Dashboard data state
   const [summary, setSummary] = useState<SummaryData | null>(null)
@@ -207,15 +211,15 @@ export default function Dashboard() {
 
   // Loading states
   if (dashboardLoading || loading) {
-    return <div className="text-center py-12">Loading...</div>
+    return <div className="text-center py-12">{tCommon('loading')}</div>
   }
 
   if (!currentDashboard) {
-    return <div className="text-center py-12">No dashboard available</div>
+    return <div className="text-center py-12">{t('noDashboard')}</div>
   }
 
   if (!summary) {
-    return <div className="text-center py-12">No data available</div>
+    return <div className="text-center py-12">{tCommon('loading')}</div>
   }
 
   // Derived values
@@ -259,29 +263,13 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <PageHelp
-        pageId="dashboard"
-        title="Dashboard Help"
-        description="Your financial overview at a glance. See income, expenses, and spending trends for the current month."
-        steps={[
-          "View summary cards for income, expenses, and net for this month",
-          "Track your daily burn rate and projected spending",
-          "Review unusual activity and anomalies",
-          "See spending breakdown by bucket and top merchants"
-        ]}
-        tips={[
-          "Month-over-month comparisons show how you're doing vs last month",
-          "The spending velocity shows if you're on track for the month",
-          "Click through to Transactions for detailed views",
-          "Use the Customize button to show/hide and reorder widgets"
-        ]}
-      />
+      <PageHelp pageId="dashboard" />
 
       <DashboardTabs />
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-theme">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-theme">{t('title')}</h1>
           <p className="text-sm text-theme-muted mt-1">
             {startDate} to {endDate}
           </p>
@@ -309,7 +297,7 @@ export default function Dashboard() {
 
       {visibleWidgets.length === 0 ? (
         <div className="card p-12 text-center text-theme-muted">
-          <p>No widgets visible. Click &quot;Customize&quot; to configure your dashboard.</p>
+          <p>{t('noWidgets')}</p>
         </div>
       ) : (
         <>

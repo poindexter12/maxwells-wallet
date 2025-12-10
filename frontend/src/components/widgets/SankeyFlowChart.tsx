@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Sankey, Tooltip, ResponsiveContainer } from 'recharts'
 import { formatCurrency } from '@/lib/format'
 import { Widget, CHART_VARS } from './types'
@@ -10,7 +11,8 @@ interface SankeyFlowChartProps {
 }
 
 export function SankeyFlowChart({ widget, data }: SankeyFlowChartProps) {
-  const title = widget?.title || 'Money Flow'
+  const t = useTranslations('dashboard.widgets')
+  const title = widget?.title || t('sankey')
 
   if (!data || !data.nodes || data.nodes.length === 0) {
     return (

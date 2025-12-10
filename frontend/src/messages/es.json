@@ -290,6 +290,8 @@
     "showHelp": "Help",
     "hideHelp": "Hide help",
     "newFeature": "New",
+    "howToUse": "How to use",
+    "tipsTitle": "Tips",
     "transactions": {
       "title": "Transactions Help",
       "description": "View, filter, and categorize all your imported transactions.",

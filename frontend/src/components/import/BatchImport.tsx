@@ -1,6 +1,7 @@
 'use client'
 
 import { format } from 'date-fns'
+import { useTranslations } from 'next-intl'
 import { formatCurrency } from '@/lib/format'
 import { FilePreview, AccountTag, FORMAT_NAMES } from '@/types/import'
 
@@ -29,6 +30,9 @@ export function BatchImport({
   onToggleSelection,
   onUpdateAccountSource
 }: BatchImportProps) {
+  const t = useTranslations('import')
+  const tCommon = useTranslations('common')
+
   const selectedFiles = batchPreviews.filter(p => p.selected)
   const filesWithoutAccount = selectedFiles.filter(p => !(p.accountSourceOverride || p.account_source))
   const allHaveAccounts = filesWithoutAccount.length === 0
@@ -39,7 +43,7 @@ export function BatchImport({
       <div className="bg-white rounded-lg shadow p-6 space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Import Files (Multiple)
+            {t('importFiles')}
           </label>
           <input
             type="file"
@@ -51,7 +55,7 @@ export function BatchImport({
           />
           {files.length > 0 && (
             <p className="mt-2 text-sm text-gray-600">
-              {files.length} file{files.length !== 1 ? 's' : ''} selected
+              {t('filesSelected', { count: files.length })}
             </p>
           )}
         </div>
@@ -62,7 +66,7 @@ export function BatchImport({
           className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
           data-chaos-target="batch-preview-button"
         >
-          Preview Batch Import
+          {t('previewBatchImport')}
         </button>
       </div>
 
@@ -70,28 +74,28 @@ export function BatchImport({
       {batchPreviews.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6 space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Batch Import Preview</h2>
+            <h2 className="text-xl font-semibold">{t('batchImportPreview')}</h2>
             <div className="text-sm text-gray-600">
-              {selectedFiles.length} of {batchPreviews.length} files selected
+              {t('filesSelectedOfTotal', { selected: selectedFiles.length, total: batchPreviews.length })}
             </div>
           </div>
 
           {/* Summary Stats */}
           <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded">
             <div>
-              <p className="text-sm text-gray-600">Total Transactions</p>
+              <p className="text-sm text-gray-600">{t('totalTransactions')}</p>
               <p className="text-2xl font-bold">
                 {selectedFiles.reduce((sum, p) => sum + p.transaction_count, 0)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total Duplicates</p>
+              <p className="text-sm text-gray-600">{t('totalDuplicates')}</p>
               <p className="text-2xl font-bold text-yellow-600">
                 {selectedFiles.reduce((sum, p) => sum + p.duplicate_count + p.cross_file_duplicate_count, 0)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Net Amount</p>
+              <p className="text-sm text-gray-600">{t('netAmount')}</p>
               <p className={`text-2xl font-bold ${selectedFiles.reduce((sum, p) => sum + p.total_amount, 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(selectedFiles.reduce((sum, p) => sum + p.total_amount, 0))}
               </p>
@@ -122,19 +126,19 @@ export function BatchImport({
 
                     <div className="grid grid-cols-5 gap-3 text-sm">
                       <div>
-                        <p className="text-gray-600">Transactions</p>
+                        <p className="text-gray-600">{t('transactions')}</p>
                         <p className="font-semibold">{filePreview.transaction_count}</p>
                       </div>
                       <div>
-                        <p className="text-gray-600">DB Duplicates</p>
+                        <p className="text-gray-600">{t('dbDuplicates')}</p>
                         <p className="font-semibold text-yellow-600">{filePreview.duplicate_count}</p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Batch Duplicates</p>
+                        <p className="text-gray-600">{t('batchDuplicates')}</p>
                         <p className="font-semibold text-orange-600">{filePreview.cross_file_duplicate_count}</p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Date Range</p>
+                        <p className="text-gray-600">{t('dateRange')}</p>
                         <p className="font-semibold">
                           {filePreview.date_range_start && filePreview.date_range_end
                             ? `${format(new Date(filePreview.date_range_start), 'MM/dd/yy')} - ${format(new Date(filePreview.date_range_end), 'MM/dd/yy')}`
@@ -142,7 +146,7 @@ export function BatchImport({
                         </p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Total Amount</p>
+                        <p className="text-gray-600">{t('totalAmount')}</p>
                         <p className={`font-semibold ${filePreview.total_amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {formatCurrency(filePreview.total_amount)}
                         </p>
@@ -151,7 +155,7 @@ export function BatchImport({
 
                     <div>
                       <label className="block text-xs text-gray-600 mb-1">
-                        Account Source <span className="text-red-500">*</span>
+                        {t('accountSource')} <span className="text-red-500">*</span>
                       </label>
                       <div className="flex gap-2">
                         {accounts.length > 0 && (
@@ -161,7 +165,7 @@ export function BatchImport({
                             className={`flex-1 px-3 py-1 text-sm border rounded-md ${!(filePreview.accountSourceOverride || filePreview.account_source) ? 'border-yellow-400' : ''}`}
                             data-chaos-target={`batch-account-select-${filePreview.filename}`}
                           >
-                            <option value="">-- Select Account --</option>
+                            <option value="">{t('selectAccount')}</option>
                             {accounts.map((acct) => (
                               <option key={acct.id} value={acct.value}>
                                 {acct.value}
@@ -173,13 +177,13 @@ export function BatchImport({
                           type="text"
                           value={filePreview.accountSourceOverride || filePreview.account_source || ''}
                           onChange={(e) => onUpdateAccountSource(filePreview.filename, e.target.value)}
-                          placeholder={accounts.length > 0 ? "or type new" : "e.g., BOFA-Checking"}
+                          placeholder={accounts.length > 0 ? t('orTypeNew') : t('accountPlaceholder')}
                           className={`${accounts.length > 0 ? 'w-32' : 'flex-1'} px-3 py-1 text-sm border rounded-md ${!(filePreview.accountSourceOverride || filePreview.account_source) ? 'border-yellow-400' : ''}`}
                           data-chaos-target={`batch-account-input-${filePreview.filename}`}
                         />
                       </div>
                       {!(filePreview.accountSourceOverride || filePreview.account_source) && (
-                        <p className="text-xs text-yellow-600 mt-1">Required for duplicate detection</p>
+                        <p className="text-xs text-yellow-600 mt-1">{t('accountRequired')}</p>
                       )}
                     </div>
                   </div>
@@ -195,16 +199,16 @@ export function BatchImport({
               className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
               data-chaos-target="batch-confirm-button"
             >
-              {importing ? 'Importing...' :
-               !allHaveAccounts ? `${filesWithoutAccount.length} File${filesWithoutAccount.length !== 1 ? 's' : ''} Missing Account` :
-               `Import ${selectedFiles.length} Selected File${selectedFiles.length !== 1 ? 's' : ''}`}
+              {importing ? t('importing') :
+               !allHaveAccounts ? t('filesMissingAccount', { count: filesWithoutAccount.length }) :
+               t('importSelectedFiles', { count: selectedFiles.length })}
             </button>
             <button
               onClick={onCancel}
               className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
               data-chaos-target="batch-cancel-button"
             >
-              Cancel
+              {tCommon('cancel')}
             </button>
           </div>
         </div>

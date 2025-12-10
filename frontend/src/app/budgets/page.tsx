@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { formatCurrency } from '@/lib/format'
 import { PageHelp } from '@/components/PageHelp'
 
@@ -43,6 +44,11 @@ interface BudgetAlert {
 }
 
 export default function BudgetsPage() {
+  const t = useTranslations('budgets')
+  const tCommon = useTranslations('common')
+  const tFields = useTranslations('fields')
+  const tAdmin = useTranslations('admin.tabs')
+
   const [budgets, setBudgets] = useState<Budget[]>([])
   const [bucketTags, setBucketTags] = useState<Tag[]>([])
   const [occasionTags, setOccasionTags] = useState<Tag[]>([])
@@ -129,7 +135,7 @@ export default function BudgetsPage() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm('Are you sure you want to delete this budget?')) return
+    if (!confirm(t('confirmDelete'))) return
 
     try {
       await fetch(`/api/v1/budgets/${id}`, { method: 'DELETE' })
@@ -181,34 +187,18 @@ export default function BudgetsPage() {
   }
 
   if (loading) {
-    return <div className="text-center py-12">Loading...</div>
+    return <div className="text-center py-12">{tCommon('loading')}</div>
   }
 
   return (
     <div className="space-y-6">
-      <PageHelp
-        pageId="budgets"
-        title="Budgets Help"
-        description="Set spending limits for buckets, occasions, or accounts and track your progress. Get alerts when you're approaching or exceeding your limits."
-        steps={[
-          "Click 'New Budget' to create a budget for any bucket, occasion, or account",
-          "Set a monthly or yearly spending limit",
-          "Monitor the progress bars to see how you're tracking",
-          "Review alerts at the top when you're over 80% or exceeded"
-        ]}
-        tips={[
-          "Enable rollover to carry unused budget to the next period",
-          "Use occasion budgets for events like vacations or holidays",
-          "Account budgets help track spending per credit card or bank account",
-          "The status colors show: green (on track), yellow (warning), red (exceeded)"
-        ]}
-      />
+      <PageHelp pageId="budgets" />
 
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-theme">Budget Tracking</h1>
+          <h1 className="text-3xl font-bold text-theme">{t('title')}</h1>
           <p className="mt-2 text-sm text-theme-muted">
-            Monitor spending against budget limits for buckets, occasions, and accounts
+            {t('subtitle')}
           </p>
         </div>
         <button
@@ -220,14 +210,14 @@ export default function BudgetsPage() {
           className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
           data-chaos-target="budget-new"
         >
-          New Budget
+          {t('newBudget')}
         </button>
       </div>
 
       {/* Alerts */}
       {alerts.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4 text-red-600">Budget Alerts</h2>
+          <h2 className="text-lg font-semibold mb-4 text-red-600">{t('alerts')}</h2>
           <div className="space-y-3">
             {alerts.map((alert) => (
               <div
@@ -246,7 +236,7 @@ export default function BudgetsPage() {
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                     alert.status === 'exceeded' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
                   }`}>
-                    {alert.status === 'exceeded' ? 'Exceeded' : 'Warning'}
+                    {alert.status === 'exceeded' ? t('status.exceeded') : t('status.warning')}
                   </span>
                 </div>
               </div>
@@ -265,22 +255,22 @@ export default function BudgetsPage() {
                 <p className="text-sm text-gray-600">{status.period}</p>
               </div>
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status.status)}`}>
-                {status.status === 'on_track' ? 'On Track' :
-                 status.status === 'warning' ? 'Warning' : 'Exceeded'}
+                {status.status === 'on_track' ? t('status.onTrack') :
+                 status.status === 'warning' ? t('status.warning') : t('status.exceeded')}
               </span>
             </div>
 
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Spent</span>
+                <span className="text-gray-600">{t('spent')}</span>
                 <span className="font-semibold">{formatCurrency(status.actual_amount)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Budget</span>
+                <span className="text-gray-600">{t('budget')}</span>
                 <span className="font-semibold">{formatCurrency(status.budget_amount)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Remaining</span>
+                <span className="text-gray-600">{t('remaining')}</span>
                 <span className={`font-semibold ${status.remaining < 0 ? 'text-red-600' : 'text-green-600'}`}>
                   {formatCurrency(Math.abs(status.remaining))}
                 </span>
@@ -289,7 +279,7 @@ export default function BudgetsPage() {
               {/* Progress Bar */}
               <div className="pt-2">
                 <div className="flex justify-between text-xs text-gray-600 mb-1">
-                  <span>{status.percentage_used.toFixed(1)}% used</span>
+                  <span>{t('used', { percent: status.percentage_used.toFixed(1) })}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
@@ -306,18 +296,18 @@ export default function BudgetsPage() {
       {/* Budgets List */}
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b">
-          <h2 className="text-lg font-semibold">All Budgets</h2>
+          <h2 className="text-lg font-semibold">{t('allBudgets')}</h2>
         </div>
         <div className="divide-y">
           {budgets.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No budgets created yet</p>
+            <p className="text-gray-500 text-center py-8">{t('noBudgets')}</p>
           ) : (
             budgets.map((budget) => (
               <div key={budget.id} className="px-6 py-4 flex justify-between items-center">
                 <div>
                   <p className="font-medium text-gray-900">{formatTagDisplay(budget.tag)}</p>
                   <p className="text-sm text-gray-600">
-                    {formatCurrency(budget.amount)} / {budget.period}
+                    {formatCurrency(budget.amount)} / {budget.period === 'monthly' ? t('monthly') : t('yearly')}
                     {budget.rollover_enabled && ' • Rollover enabled'}
                   </p>
                 </div>
@@ -327,14 +317,14 @@ export default function BudgetsPage() {
                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                     data-chaos-target={`budget-edit-${budget.id}`}
                   >
-                    Edit
+                    {tCommon('edit')}
                   </button>
                   <button
                     onClick={() => handleDelete(budget.id)}
                     className="text-red-600 hover:text-red-800 text-sm font-medium"
                     data-chaos-exclude
                   >
-                    Delete
+                    {tCommon('delete')}
                   </button>
                 </div>
               </div>
@@ -348,12 +338,12 @@ export default function BudgetsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <h2 className="text-xl font-semibold mb-4">
-              {editingBudget ? 'Edit Budget' : 'Create Budget'}
+              {editingBudget ? t('editBudget') : t('createBudget')}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
+                  {tFields('category')}
                 </label>
                 <select
                   value={formData.tag}
@@ -362,9 +352,9 @@ export default function BudgetsPage() {
                   required
                   data-chaos-target="budget-form-category"
                 >
-                  <option value="">Select a category...</option>
+                  <option value="">{t('selectCategory')}</option>
                   {bucketTags.length > 0 && (
-                    <optgroup label="Buckets">
+                    <optgroup label={tAdmin('buckets')}>
                       {bucketTags.map((tag) => (
                         <option key={tag.id} value={`bucket:${tag.value}`}>
                           {tag.description || tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
@@ -373,7 +363,7 @@ export default function BudgetsPage() {
                     </optgroup>
                   )}
                   {occasionTags.length > 0 && (
-                    <optgroup label="Occasions">
+                    <optgroup label={tAdmin('occasions')}>
                       {occasionTags.map((tag) => (
                         <option key={tag.id} value={`occasion:${tag.value}`}>
                           {tag.description || tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
@@ -382,7 +372,7 @@ export default function BudgetsPage() {
                     </optgroup>
                   )}
                   {accountTags.length > 0 && (
-                    <optgroup label="Accounts">
+                    <optgroup label={tAdmin('accounts')}>
                       {accountTags.map((tag) => (
                         <option key={tag.id} value={`account:${tag.value}`}>
                           {tag.description || tag.value.charAt(0).toUpperCase() + tag.value.slice(1)}
@@ -394,7 +384,7 @@ export default function BudgetsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Amount
+                  {tFields('amount')}
                 </label>
                 <input
                   type="number"
@@ -408,7 +398,7 @@ export default function BudgetsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Period
+                  {tFields('period')}
                 </label>
                 <select
                   value={formData.period}
@@ -416,8 +406,8 @@ export default function BudgetsPage() {
                   className="w-full px-3 py-2 border rounded-md"
                   data-chaos-target="budget-form-period"
                 >
-                  <option value="monthly">Monthly</option>
-                  <option value="yearly">Yearly</option>
+                  <option value="monthly">{t('monthly')}</option>
+                  <option value="yearly">{t('yearly')}</option>
                 </select>
               </div>
               <div className="flex items-center">
@@ -430,7 +420,7 @@ export default function BudgetsPage() {
                   data-chaos-target="budget-form-rollover"
                 />
                 <label htmlFor="rollover" className="text-sm text-gray-700">
-                  Enable rollover (unused budget carries to next period)
+                  {t('rollover')}
                 </label>
               </div>
               <div className="flex gap-3 pt-4">
@@ -443,14 +433,14 @@ export default function BudgetsPage() {
                   className="flex-1 px-4 py-2 border rounded-md hover:bg-gray-50"
                   data-chaos-target="budget-form-cancel"
                 >
-                  Cancel
+                  {tCommon('cancel')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                   data-chaos-target="budget-form-submit"
                 >
-                  {editingBudget ? 'Update' : 'Create'}
+                  {editingBudget ? tCommon('update') : tCommon('create')}
                 </button>
               </div>
             </form>

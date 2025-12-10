@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/format'
 import { AnomaliesData } from './types'
@@ -11,6 +12,8 @@ interface AnomaliesPanelProps {
 }
 
 export function AnomaliesPanel({ anomalies, selectedYear, selectedMonth }: AnomaliesPanelProps) {
+  const t = useTranslations('dashboard.widgets')
+
   if (!anomalies) return null
   // Guard against invalid year/month values
   if (isNaN(selectedYear) || isNaN(selectedMonth)) return null
@@ -21,7 +24,7 @@ export function AnomaliesPanel({ anomalies, selectedYear, selectedMonth }: Anoma
 
   return (
     <div className="card p-6">
-      <h2 className="text-lg font-semibold text-theme mb-4">Unusual Activity</h2>
+      <h2 className="text-lg font-semibold text-theme mb-4">{t('anomalies')}</h2>
       {anomalies.summary.total_anomalies === 0 ? (
         <p className="text-theme-muted text-center py-8">No unusual activity detected</p>
       ) : (

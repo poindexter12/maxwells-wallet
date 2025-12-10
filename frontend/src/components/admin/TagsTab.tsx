@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { TagWithUsage, TagTabConfig } from '@/types/admin'
 
 interface TagsTabProps {
@@ -19,6 +20,9 @@ export function TagsTab({
   onEditTag,
   onDeleteTag
 }: TagsTabProps) {
+  const t = useTranslations('admin.tags')
+  const tCommon = useTranslations('common')
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -28,16 +32,16 @@ export function TagsTab({
             onClick={onAddTag}
             className="btn-primary"
           >
-            Add {currentTagTab.label.replace(/s$/, '')}
+            {tCommon('add')} {currentTagTab.label.replace(/s$/, '')}
           </button>
         )}
       </div>
 
       {tagsLoading ? (
-        <div className="text-center py-12 text-theme-muted">Loading...</div>
+        <div className="text-center py-12 text-theme-muted">{tCommon('loading')}</div>
       ) : tags.length === 0 ? (
         <div className="card p-12 text-center">
-          <p className="text-theme-muted mb-4">No {currentTagTab.label.toLowerCase()} configured yet.</p>
+          <p className="text-theme-muted mb-4">{t('noTags', { type: currentTagTab.label.toLowerCase() })}</p>
         </div>
       ) : (
         <div className="card overflow-hidden">
@@ -45,12 +49,12 @@ export function TagsTab({
             <thead className="table-header">
               <tr>
                 {currentTagTab.showNamespace && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-theme-muted uppercase">Namespace</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-theme-muted uppercase">{t('tableHeaders.namespace')}</th>
                 )}
-                <th className="px-6 py-3 text-left text-xs font-medium text-theme-muted uppercase">Value (ID)</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-theme-muted uppercase">Description / Display Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-theme-muted uppercase">Usage</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-theme-muted uppercase">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-theme-muted uppercase">{t('tableHeaders.value')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-theme-muted uppercase">{t('tableHeaders.description')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-theme-muted uppercase">{t('tableHeaders.usage')}</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-theme-muted uppercase">{t('tableHeaders.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)]">
@@ -70,12 +74,12 @@ export function TagsTab({
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm text-theme">
-                      {tag.description || <span className="text-theme-muted italic">Not set</span>}
+                      {tag.description || <span className="text-theme-muted italic">{t('notSet')}</span>}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="text-sm text-theme-muted">
-                      {tag.usage_count ?? 0} transaction{(tag.usage_count ?? 0) !== 1 ? 's' : ''}
+                      {(tag.usage_count ?? 0) !== 1 ? t('usageCountPlural', { count: tag.usage_count ?? 0 }) : t('usageCount', { count: tag.usage_count ?? 0 })}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
@@ -83,15 +87,15 @@ export function TagsTab({
                       onClick={() => onEditTag(tag)}
                       className="text-[var(--color-accent)] hover:opacity-80"
                     >
-                      Edit
+                      {tCommon('edit')}
                     </button>
                     <button
                       onClick={() => onDeleteTag(tag)}
                       className="text-negative hover:opacity-80 disabled:opacity-30"
                       disabled={(tag.usage_count ?? 0) > 0}
-                      title={(tag.usage_count ?? 0) > 0 ? 'Cannot delete: tag is in use' : 'Delete tag'}
+                      title={(tag.usage_count ?? 0) > 0 ? t('cannotDelete') : t('deleteTag')}
                     >
-                      Delete
+                      {tCommon('delete')}
                     </button>
                   </td>
                 </tr>

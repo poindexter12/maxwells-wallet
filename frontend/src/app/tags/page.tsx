@@ -291,22 +291,7 @@ export default function TagsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHelp
-        pageId="tags"
-        title="Tags Help"
-        description="Advanced tag management with full namespace control. For most users, the Admin page provides a simpler interface."
-        steps={[
-          "Select a namespace on the left to view its tags",
-          "Click 'Add Value' to create a new tag in the selected namespace",
-          "Edit or delete tags using the action buttons",
-          "Create custom namespaces for specialized categorization"
-        ]}
-        tips={[
-          "Built-in namespaces (bucket, account, occasion, expense) cover most use cases",
-          "Tags in use cannot be deleted until removed from all transactions",
-          "Use the Admin page for a simpler tag management experience"
-        ]}
-      />
+      <PageHelp pageId="tags" />
 
       <div className="flex justify-between items-center">
         <div>
