@@ -17,20 +17,7 @@
 export const CHAOS_EXCLUDED_IDS = {
   // Destructive data operations
   PURGE_ALL_DATA: 'purge-all-data', // Deletes ALL transactions
-  DELETE_ACCOUNT: 'delete-account', // Deletes an account and its transactions
   ROLLBACK_IMPORT: 'rollback-import', // Deletes an entire import session
-
-  // Bulk destructive operations
-  BULK_DELETE: 'bulk-delete', // Bulk delete selected items
-
-  // Format/config deletions
-  FORMAT_DELETE_BUTTON: 'format-delete-button', // Delete saved CSV format
-  RULE_DELETE_BUTTON: 'rule-delete-button', // Delete tag rule
-  TAG_DELETE_BUTTON: 'tag-delete-button', // Delete tag
-
-  // Confirmation buttons in destructive modals
-  CONFIRM_DELETE: 'confirm-delete', // Generic delete confirmation
-  CONFIRM_PURGE: 'confirm-purge', // Purge confirmation
 } as const;
 
 /**

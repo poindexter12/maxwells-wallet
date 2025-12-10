@@ -2,10 +2,8 @@
  * Admin page test IDs.
  */
 export const ADMIN_IDS = {
-  ADMIN_PAGE: 'admin-page',
   ADMIN_TAB_OVERVIEW: 'admin-tab-overview',
   ADMIN_TAB_IMPORTS: 'admin-tab-imports',
-  ADMIN_TAB_TAGS: 'admin-tab-tags',
 
   // Admin Overview
   OVERVIEW_STATS: 'overview-stats',
