@@ -20,7 +20,7 @@ from app.errors import ErrorCode, not_found, bad_request
 
 
 async def get_default_dashboard_id(session: AsyncSession) -> int:
-    """Get the default dashboard ID, creating one if needed."""
+    """Get the default dashboard ID, creating one with widgets if needed."""
     result = await session.execute(
         select(Dashboard).where(Dashboard.is_default == True)
     )
@@ -38,6 +38,12 @@ async def get_default_dashboard_id(session: AsyncSession) -> int:
         session.add(dashboard)
         await session.commit()
         await session.refresh(dashboard)
+
+        # Initialize with default widgets
+        for widget_data in DEFAULT_WIDGETS:
+            widget = DashboardWidget(dashboard_id=dashboard.id, **widget_data)
+            session.add(widget)
+        await session.commit()
 
     return dashboard.id
 
@@ -61,8 +67,7 @@ DEFAULT_WIDGETS = [
 async def list_widgets(session: AsyncSession = Depends(get_session)):
     """Get all dashboard widgets for the default dashboard, ordered by position.
 
-    If no widgets exist, initializes with default configuration.
-    Also adds any new widget types that don't exist yet.
+    Widgets are created when the default dashboard is first accessed.
     """
     dashboard_id = await get_default_dashboard_id(session)
 
@@ -72,45 +77,6 @@ async def list_widgets(session: AsyncSession = Depends(get_session)):
         .order_by(DashboardWidget.position)
     )
     widgets = list(result.scalars().all())
-
-    # Initialize with defaults if empty
-    if not widgets:
-        for widget_data in DEFAULT_WIDGETS:
-            widget = DashboardWidget(dashboard_id=dashboard_id, **widget_data)
-            session.add(widget)
-        await session.commit()
-
-        # Re-fetch after initialization
-        result = await session.execute(
-            select(DashboardWidget)
-            .where(DashboardWidget.dashboard_id == dashboard_id)
-            .order_by(DashboardWidget.position)
-        )
-        widgets = list(result.scalars().all())
-    else:
-        # Check for missing widget types and add them
-        existing_types = {w.widget_type for w in widgets}
-        max_position = max(w.position for w in widgets) if widgets else -1
-        added = False
-
-        for widget_data in DEFAULT_WIDGETS:
-            if widget_data["widget_type"] not in existing_types:
-                max_position += 1
-                widget = DashboardWidget(
-                    dashboard_id=dashboard_id,
-                    **{**widget_data, "position": max_position}
-                )
-                session.add(widget)
-                added = True
-
-        if added:
-            await session.commit()
-            result = await session.execute(
-                select(DashboardWidget)
-                .where(DashboardWidget.dashboard_id == dashboard_id)
-                .order_by(DashboardWidget.position)
-            )
-            widgets = list(result.scalars().all())
 
     return widgets
 

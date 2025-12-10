@@ -193,3 +193,73 @@ class TestFiltersComprehensive:
         if filter_id:
             response = await client.post(f"/api/v1/filters/{filter_id}/toggle-pin")
             assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_toggle_pin_nonexistent_filter(self, client: AsyncClient):
+        """Toggle pin on nonexistent filter returns 404"""
+        response = await client.post("/api/v1/filters/99999/toggle-pin")
+        assert response.status_code == 404
+        assert response.json()["detail"]["error_code"] == "FILTER_NOT_FOUND"
+
+    @pytest.mark.asyncio
+    async def test_apply_nonexistent_filter(self, client: AsyncClient):
+        """Apply nonexistent filter returns 404"""
+        response = await client.post("/api/v1/filters/99999/apply")
+        assert response.status_code == 404
+        assert response.json()["detail"]["error_code"] == "FILTER_NOT_FOUND"
+
+    @pytest.mark.asyncio
+    async def test_update_filter_with_accounts_list(self, client: AsyncClient):
+        """Update filter with accounts list"""
+        create_response = await client.post("/api/v1/filters", json={
+            "name": "Accounts List Test"
+        })
+        filter_id = create_response.json().get("id")
+
+        if filter_id:
+            response = await client.patch(f"/api/v1/filters/{filter_id}", json={
+                "accounts": ["account1", "account2"]
+            })
+            assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_update_filter_with_reconciliation_status(self, client: AsyncClient):
+        """Update filter with reconciliation status"""
+        create_response = await client.post("/api/v1/filters", json={
+            "name": "Reconciliation Test"
+        })
+        filter_id = create_response.json().get("id")
+
+        if filter_id:
+            response = await client.patch(f"/api/v1/filters/{filter_id}", json={
+                "reconciliation_status": "matched"
+            })
+            assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_create_and_apply_relative_date_filter(self, client: AsyncClient, seed_transactions):
+        """Create and apply filter with relative date range"""
+        create_response = await client.post("/api/v1/filters", json={
+            "name": "Relative Date Filter",
+            "date_range_type": "relative",
+            "relative_days": 30
+        })
+        filter_id = create_response.json().get("id")
+
+        if filter_id:
+            # Apply the filter - should calculate dates from relative_days
+            response = await client.post(f"/api/v1/filters/{filter_id}/apply")
+            assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_apply_filter_with_reconciliation_status(self, client: AsyncClient, seed_transactions):
+        """Apply filter with reconciliation status"""
+        create_response = await client.post("/api/v1/filters", json={
+            "name": "Reconciliation Apply Test",
+            "reconciliation_status": "unreconciled"
+        })
+        filter_id = create_response.json().get("id")
+
+        if filter_id:
+            response = await client.post(f"/api/v1/filters/{filter_id}/apply")
+            assert response.status_code == 200

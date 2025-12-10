@@ -337,6 +337,59 @@ class TestTransferLinking:
         assert response.status_code == 400
 
 
+class TestTransferEdgeCases:
+    """Edge case tests for transfers"""
+
+    @pytest.mark.asyncio
+    async def test_link_nonexistent_source_transaction(self, client: AsyncClient):
+        """Link with nonexistent source transaction returns 404"""
+        # Create one transaction
+        txn_response = await client.post("/api/v1/transactions", json={
+            "date": date.today().isoformat(),
+            "amount": 100.00,
+            "description": "Exists",
+            "merchant": "Test",
+            "account_source": "TEST",
+            "reference_id": "test_link_source_404"
+        })
+        txn_id = txn_response.json()["id"]
+
+        # Try to link from nonexistent transaction
+        response = await client.post("/api/v1/transfers/99999/link", json={
+            "linked_transaction_id": txn_id
+        })
+        assert response.status_code == 404
+        assert response.json()["detail"]["error_code"] == "TRANSACTION_NOT_FOUND"
+
+    @pytest.mark.asyncio
+    async def test_link_nonexistent_target_transaction(self, client: AsyncClient):
+        """Link with nonexistent target transaction returns 404"""
+        # Create one transaction
+        txn_response = await client.post("/api/v1/transactions", json={
+            "date": date.today().isoformat(),
+            "amount": -100.00,
+            "description": "Exists",
+            "merchant": "Test",
+            "account_source": "TEST",
+            "reference_id": "test_link_target_404"
+        })
+        txn_id = txn_response.json()["id"]
+
+        # Try to link to nonexistent transaction
+        response = await client.post(f"/api/v1/transfers/{txn_id}/link", json={
+            "linked_transaction_id": 99999
+        })
+        assert response.status_code == 404
+        assert response.json()["detail"]["error_code"] == "TRANSACTION_NOT_FOUND"
+
+    @pytest.mark.asyncio
+    async def test_unlink_nonexistent_transaction(self, client: AsyncClient):
+        """Unlink nonexistent transaction returns 404"""
+        response = await client.delete("/api/v1/transfers/99999/link")
+        assert response.status_code == 404
+        assert response.json()["detail"]["error_code"] == "TRANSACTION_NOT_FOUND"
+
+
 class TestTransferStats:
     """Tests for transfer statistics"""
 
