@@ -27,7 +27,7 @@ export function TopMerchantsList({ widget, data }: TopMerchantsListProps) {
           ))}
         </div>
       ) : (
-        <p className="text-theme-muted text-center py-12">No merchant data available</p>
+        <p className="text-theme-muted text-center py-12">{t('noMerchantData')}</p>
       )}
     </div>
   )

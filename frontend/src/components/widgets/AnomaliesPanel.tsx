@@ -26,7 +26,7 @@ export function AnomaliesPanel({ anomalies, selectedYear, selectedMonth }: Anoma
     <div className="card p-6">
       <h2 className="text-lg font-semibold text-theme mb-4">{t('anomalies')}</h2>
       {anomalies.summary.total_anomalies === 0 ? (
-        <p className="text-theme-muted text-center py-8">No unusual activity detected</p>
+        <p className="text-theme-muted text-center py-8">{t('noAnomalies')}</p>
       ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-2 text-center">
@@ -36,23 +36,23 @@ export function AnomaliesPanel({ anomalies, selectedYear, selectedMonth }: Anoma
               title={anomalies.summary.large_threshold_amount ? `Transactions over $${Math.round(anomalies.summary.large_threshold_amount)} (2σ above average)` : 'Large transactions'}
             >
               <p className="text-2xl font-bold text-negative">{anomalies.summary.large_transaction_count}</p>
-              <p className="text-xs text-theme-muted">Large</p>
+              <p className="text-xs text-theme-muted">{t('large')}</p>
             </Link>
             <Link
               href={`/transactions?${dateRange}`}
               className="bg-blue-500/20 rounded p-2 hover:opacity-80 transition-opacity cursor-pointer"
-              title="View transactions from new merchants"
+              title={t('viewNewMerchants')}
             >
               <p className="text-2xl font-bold text-blue-500">{anomalies.summary.new_merchant_count}</p>
-              <p className="text-xs text-theme-muted">New</p>
+              <p className="text-xs text-theme-muted">{t('new')}</p>
             </Link>
             <Link
               href={`/transactions?${dateRange}`}
               className="bg-orange-500/20 rounded p-2 hover:opacity-80 transition-opacity cursor-pointer"
-              title="View buckets with unusually high spending"
+              title={t('viewOverAvgBuckets')}
             >
               <p className="text-2xl font-bold text-orange-500">{anomalies.summary.unusual_bucket_count}</p>
-              <p className="text-xs text-theme-muted">Over Avg</p>
+              <p className="text-xs text-theme-muted">{t('overAvg')}</p>
             </Link>
           </div>
 

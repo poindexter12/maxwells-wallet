@@ -36,7 +36,7 @@ export function SpendingTreemap({ widget, data }: SpendingTreemapProps) {
     return (
       <div className="card p-6">
         <h2 className="text-lg font-semibold text-theme mb-4">{title}</h2>
-        <p className="text-theme-muted text-center py-12">No spending data available for this period</p>
+        <p className="text-theme-muted text-center py-12">{t('noSpendingDataPeriod')}</p>
       </div>
     )
   }
@@ -44,7 +44,7 @@ export function SpendingTreemap({ widget, data }: SpendingTreemapProps) {
   return (
     <div className="card p-6">
       <h2 className="text-lg font-semibold text-theme mb-4">{title}</h2>
-      <p className="text-sm text-theme-muted mb-4">Spending by category and merchant</p>
+      <p className="text-sm text-theme-muted mb-4">{t('treemapDescription')}</p>
       <ResponsiveContainer width="100%" height={400}>
         <Treemap
           data={data.data.children}

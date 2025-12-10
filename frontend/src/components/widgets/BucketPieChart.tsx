@@ -37,7 +37,7 @@ export function BucketPieChart({ widget, bucketData }: BucketPieChartProps) {
           </PieChart>
         </ResponsiveContainer>
       ) : (
-        <p className="text-theme-muted text-center py-12">No bucket data available</p>
+        <p className="text-theme-muted text-center py-12">{t('noBucketData')}</p>
       )}
     </div>
   )

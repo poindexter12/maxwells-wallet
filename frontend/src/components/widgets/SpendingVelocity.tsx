@@ -35,21 +35,21 @@ export function SpendingVelocity({
         <h2 className="text-lg font-semibold text-theme mb-4">{t('velocity')}</h2>
         <div className="space-y-4">
           <div>
-            <p className="text-sm text-theme-muted">Daily Average</p>
-            <p className="text-2xl font-bold text-theme">{formatCurrency(summary.daily_average || 0)}/day</p>
+            <p className="text-sm text-theme-muted">{t('dailyAverage')}</p>
+            <p className="text-2xl font-bold text-theme">{formatCurrency(summary.daily_average || 0)}{t('perDay')}</p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-theme-muted">Days Elapsed</p>
+              <p className="text-sm text-theme-muted">{t('daysElapsed')}</p>
               <p className="text-lg font-semibold text-theme">{summary.days_elapsed || daysInYear} / {daysTotal}</p>
             </div>
             <div>
-              <p className="text-sm text-theme-muted">Total Spending</p>
+              <p className="text-sm text-theme-muted">{t('totalSpending')}</p>
               <p className="text-lg font-semibold text-theme">{formatCurrency(summary.total_expenses)}</p>
             </div>
           </div>
           <div>
-            <p className="text-sm text-theme-muted">Transactions</p>
+            <p className="text-sm text-theme-muted">{t('transactions')}</p>
             <p className="text-xl font-bold text-theme">{summary.transaction_count}</p>
           </div>
         </div>
@@ -65,21 +65,21 @@ export function SpendingVelocity({
       <h2 className="text-lg font-semibold text-theme mb-4">{t('velocity')}</h2>
       <div className="space-y-4">
         <div>
-          <p className="text-sm text-theme-muted">Daily Spending Rate</p>
+          <p className="text-sm text-theme-muted">{t('dailySpendingRate')}</p>
           <p className="text-2xl font-bold text-theme">{spendingVelocity.insights.daily_burn_rate}</p>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-theme-muted">Days Elapsed</p>
+            <p className="text-sm text-theme-muted">{t('daysElapsed')}</p>
             <p className="text-lg font-semibold text-theme">{spendingVelocity.days_elapsed} / {spendingVelocity.days_in_month}</p>
           </div>
           <div>
-            <p className="text-sm text-theme-muted">Days Remaining</p>
+            <p className="text-sm text-theme-muted">{t('daysRemaining')}</p>
             <p className="text-lg font-semibold text-theme">{spendingVelocity.insights.days_remaining}</p>
           </div>
         </div>
         <div>
-          <p className="text-sm text-theme-muted">Projected Month Total</p>
+          <p className="text-sm text-theme-muted">{t('projectedMonthTotal')}</p>
           <p className="text-xl font-bold text-theme">{formatCurrency(spendingVelocity.projected_monthly.expenses)}</p>
           <div className="mt-2">
             <div className="flex items-center gap-2">
@@ -98,16 +98,16 @@ export function SpendingVelocity({
                 spendingVelocity.pace === 'under_budget' ? 'text-positive' :
                 'text-blue-500'
               }`}>
-                {spendingVelocity.pace === 'over_budget' ? 'Over Budget' :
-                 spendingVelocity.pace === 'under_budget' ? 'Under Budget' :
-                 'On Track'}
+                {spendingVelocity.pace === 'over_budget' ? t('overBudget') :
+                 spendingVelocity.pace === 'under_budget' ? t('underBudget') :
+                 t('onTrack')}
               </span>
             </div>
           </div>
         </div>
         <div className="text-xs text-theme-muted">
-          <p>Projected remaining: {formatCurrency(spendingVelocity.insights.projected_remaining_spending)}</p>
-          <p>Previous month: {formatCurrency(spendingVelocity.previous_month.expenses)}</p>
+          <p>{t('projectedRemaining')}: {formatCurrency(spendingVelocity.insights.projected_remaining_spending)}</p>
+          <p>{t('previousMonth')}: {formatCurrency(spendingVelocity.previous_month.expenses)}</p>
         </div>
       </div>
     </div>
