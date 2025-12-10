@@ -114,7 +114,7 @@ export default function ReconcilePage() {
     }
   }
 
-  async function bulkUpdate(updates: { reviewed?: boolean; bucket?: string }) {
+  async function bulkUpdate(updates: { reviewed?: boolean; bucket?: string; reconciliation_status?: string }) {
     if (selected.size === 0) return
 
     try {

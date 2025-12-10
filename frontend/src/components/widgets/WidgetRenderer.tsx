@@ -76,22 +76,22 @@ export function WidgetRenderer({
       return <BucketPieChart widget={widget} bucketData={bucketData} />
 
     case 'top_merchants':
-      return <TopMerchantsList widget={widget} data={customData || topMerchants} />
+      return <TopMerchantsList widget={widget} data={(customData as TopMerchantsData | null) || topMerchants} />
 
     case 'trends':
-      return <TrendsChart widget={widget} data={customData || trends} isMonthlyScale={isMonthlyScale} />
+      return <TrendsChart widget={widget} data={(customData as TrendsData | null) || trends} isMonthlyScale={isMonthlyScale} />
 
     case 'sankey':
-      return <SankeyFlowChart widget={widget} data={customData || sankeyData} />
+      return <SankeyFlowChart widget={widget} data={(customData as SankeyData | null) || sankeyData} />
 
     case 'treemap':
-      return <SpendingTreemap widget={widget} data={customData || treemapData} />
+      return <SpendingTreemap widget={widget} data={(customData as TreemapData | null) || treemapData} />
 
     case 'heatmap':
       return (
         <SpendingHeatmap
           widget={widget}
-          data={customData || heatmapData}
+          data={(customData as HeatmapData | null) || heatmapData}
           isMonthlyScale={isMonthlyScale}
           selectedYear={selectedYear}
           selectedMonth={selectedMonth}

@@ -95,6 +95,8 @@ export interface TreemapChild {
   name: string
   value: number
   children?: TreemapChild[]
+  // Index signature for Recharts Treemap compatibility
+  [key: string]: string | number | TreemapChild[] | undefined
 }
 
 export interface TreemapData {

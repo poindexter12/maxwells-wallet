@@ -48,7 +48,9 @@ export default function Dashboard() {
   const [treemapData, setTreemapData] = useState<TreemapData | null>(null)
   const [heatmapData, setHeatmapData] = useState<HeatmapData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [widgetData, setWidgetData] = useState<Record<number, unknown>>({})
+  // Widget data can be any of the supported custom data types
+  type CustomWidgetData = TrendsData | TopMerchantsData | SankeyData | TreemapData | HeatmapData | null
+  const [widgetData, setWidgetData] = useState<Record<number, CustomWidgetData>>({})
 
   // Extract date info from current dashboard with fallback validation
   const startDate = currentDashboard?.date_range?.start_date || ''

@@ -54,19 +54,22 @@ export interface ImportResult {
 
 // Single file preview response from API
 export interface SingleFilePreviewResponse {
-  filename: string
-  account_source: string | null
+  filename?: string
+  account_source?: string | null
   detected_format: string
-  format_confidence: number
+  format_confidence?: number
   transaction_count: number
-  duplicate_count: number
+  duplicate_count?: number
   total_amount: number
-  date_range_start: string | null
-  date_range_end: string | null
+  date_range_start?: string | null
+  date_range_end?: string | null
   transactions: PreviewTransaction[]
   needs_custom_config?: boolean
   headers?: string[]
   sample_rows?: string[][]
+  // Additional fields used for custom format previews
+  errors?: string[]
+  _customConfigId?: number
 }
 
 export const FORMAT_NAMES: Record<string, string> = {
