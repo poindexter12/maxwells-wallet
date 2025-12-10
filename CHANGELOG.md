@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `context` field for dynamic interpolation (e.g., `{count}` placeholders)
   - All 40+ error types documented with unique codes
 - **Translation Coverage Test** - Automated test ensures all locales have complete translations
+- **Widget Translations** - All dashboard widgets (charts, velocity, anomalies, etc.) fully i18n-enabled
 
 ### Changed
 - **Node.js Version** - Pinned to LTS v22 via `.nvmrc`

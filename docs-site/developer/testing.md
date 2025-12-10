@@ -2,6 +2,21 @@
 
 ## Running Tests
 
+### Frontend Unit Tests (Vitest)
+
+```bash
+# Run all frontend unit tests
+make test-frontend
+
+# Run with watch mode
+cd frontend && pnpm test
+
+# Run specific test file
+cd frontend && pnpm test src/components/widgets/WidgetRenderer.test.tsx
+```
+
+Frontend tests use Vitest with React Testing Library. All tests should use `data-testid` attributes from `frontend/src/test-ids.ts` for element selection (never rely on text content due to i18n).
+
 ### Backend Tests
 
 ```bash
@@ -46,6 +61,20 @@ make test-e2e-full    # Full workflow tests
 # Run both unit and E2E tests
 make test-all
 ```
+
+### i18n Translation Tests
+
+Translation completeness is verified automatically:
+
+```bash
+# Run i18n unit tests (checks all locales have matching keys)
+cd frontend && pnpm test src/test/i18n.test.ts
+```
+
+The i18n test ensures:
+- All keys in `en-US.json` exist in every other locale
+- No extra/orphaned keys in non-English locales
+- All translated strings are actually different from English (catches copy-paste errors)
 
 ### Frontend Linting
 
