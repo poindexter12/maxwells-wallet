@@ -1,40 +1,34 @@
 /**
  * i18n E2E Tests
  *
- * Tests that all UI strings are properly translated by using l33t speak mode.
- * When l33t is set as the language, ALL English characters should be transformed:
- * - a → 4
- * - e → 3
- * - i → 1
- * - o → 0
- * - s → 5
- * - t → 7
- * - g → 9
- *
- * If any text contains untransformed characters, it means the string wasn't translated.
+ * Tests that all UI strings are properly translated using the pseudo-locale.
+ * The pseudo locale transforms text with accented characters (e.g., "Save" → "Şȧȧṽḗḗ")
+ * making it obvious when strings aren't being translated.
  *
  * @tags @e2e
  */
 import { test, expect, Page } from '@playwright/test'
 
-// Common English words that should NEVER appear when l33t is active
-// These words all contain characters that should be transformed
+// Regex patterns to detect untranslated text
+// Pseudo-localized text uses accented chars like: ȧ ḗ ǿ ŭ ī ş ƞ ḓ ƈ ŀ ṽ ẋ ƥ ř ŧ ẏ ƀ ħ ķ ḿ ẑ ɠ ƒ ẇ
+// English text won't have these characters
+
+// Common English words that should NEVER appear when pseudo locale is active
+// These words should all be transformed to use accented characters
 const FORBIDDEN_ENGLISH_WORDS = [
-  'loading', // l04d1ng
-  'save', // 54v3
-  'cancel', // c4nc3l
-  'delete', // d3l373
-  'edit', // 3d17
-  'create', // cr3473
-  'search', // 534rch
-  'filter', // f1l73r
-  'the', // 7h3
-  'and', // 4nd
-  'transactions', // 7r4n54c710n5
-  'dashboard', // d45hb04rd
-  'settings', // 5377in95
-  'import', // 1mp0r7
-  'budget', // bud937
+  'loading',
+  'save',
+  'cancel',
+  'delete',
+  'edit',
+  'create',
+  'search',
+  'filter',
+  'transactions',
+  'dashboard',
+  'settings',
+  'import',
+  'budget',
 ]
 
 // Pages to test
@@ -100,15 +94,15 @@ async function findUntranslatedStrings(page: Page): Promise<string[]> {
 // many other components still have hardcoded English strings.
 test.describe.skip('i18n Translation Completeness @e2e', () => {
   test.beforeEach(async ({ page }) => {
-    // Set language to l33t speak via localStorage
+    // Set language to pseudo locale via localStorage
     // We need to set this before the first navigation
     await page.addInitScript(() => {
-      window.localStorage.setItem('locale', 'l33t')
+      window.localStorage.setItem('locale', 'pseudo')
     })
   })
 
   for (const path of TEST_PAGES) {
-    test(`Page ${path} should have all strings translated in l33t mode`, async ({ page }) => {
+    test(`Page ${path} should have all strings translated in pseudo mode`, async ({ page }) => {
       await page.goto(path)
 
       // Wait for page to fully load
@@ -129,19 +123,19 @@ test.describe.skip('i18n Translation Completeness @e2e', () => {
       expect(
         untranslated,
         `Found ${untranslated.length} untranslated English words on ${path}: ${untranslated.join(', ')}. ` +
-        `These words should be in l33t speak when the l33t language is active.`
+        `These words should be pseudo-localized when the pseudo language is active.`
       ).toHaveLength(0)
     })
   }
 
-  test('NavBar should be fully translated in l33t mode', async ({ page }) => {
+  test('NavBar should be fully translated in pseudo mode', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
 
     // Check nav links specifically
     const navText = await page.locator('nav').textContent()
 
-    // In l33t, "Dashboard" becomes "d45hb04rd" - no 'a', 'e', 'o' should remain
+    // In pseudo locale, "Dashboard" becomes "Ḓȧȧşħƀǿǿȧȧřḓ" - no plain English chars
     const hasUntranslatedNav =
       navText?.toLowerCase().includes('dashboard') ||
       navText?.toLowerCase().includes('transactions') ||

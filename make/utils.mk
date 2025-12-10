@@ -4,6 +4,7 @@
 
 .PHONY: clean clean-all status info check-deps check-node
 .PHONY: data-setup data-anonymize data-status data-force data-clean
+.PHONY: i18n-pseudo
 
 # -----------------------------------------------------------------------------
 # Cleaning
@@ -109,3 +110,12 @@ data-force: ## Force re-anonymize all test data files
 
 data-clean: ## Remove data anonymization venv
 	@$(MAKE) -C data clean
+
+# -----------------------------------------------------------------------------
+# Internationalization
+# -----------------------------------------------------------------------------
+
+i18n-pseudo: ## Generate pseudo-locale from en-US.json for i18n testing
+	@echo "$(BLUE)Generating pseudo-locale...$(NC)"
+	@cd $(FRONTEND_DIR) && node scripts/generate-pseudo-locale.js
+	@echo "$(GREEN)✓ Pseudo-locale generated$(NC)"
