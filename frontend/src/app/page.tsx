@@ -21,7 +21,6 @@ import {
 export default function Dashboard() {
   const t = useTranslations('dashboard')
   const tCommon = useTranslations('common')
-  const tHelp = useTranslations('help.dashboard')
   const { currentDashboard, loading: dashboardLoading, updateDashboard } = useDashboard()
   const { widgets, fetchWidgets, toggleVisibility, moveUp, moveDown } = useWidgetManagement()
 

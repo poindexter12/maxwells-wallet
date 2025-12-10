@@ -32,7 +32,6 @@ export function BatchImport({
 }: BatchImportProps) {
   const t = useTranslations('import')
   const tCommon = useTranslations('common')
-  const tFields = useTranslations('fields')
 
   const selectedFiles = batchPreviews.filter(p => p.selected)
   const filesWithoutAccount = selectedFiles.filter(p => !(p.accountSourceOverride || p.account_source))

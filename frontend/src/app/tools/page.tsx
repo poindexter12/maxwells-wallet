@@ -14,7 +14,6 @@ const VALID_TABS: ToolsTab[] = ['transfers', 'rules', 'merchants', 'formats']
 
 export default function ToolsPage() {
   const t = useTranslations('tools')
-  const tHelp = useTranslations('help.tools')
   const [activeTab, setActiveTab] = useState<ToolsTab>('transfers')
 
   const TAB_LABELS: Record<ToolsTab, string> = {

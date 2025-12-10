@@ -21,7 +21,6 @@ import {
 export default function AdminPage() {
   const t = useTranslations('admin')
   const tCommon = useTranslations('common')
-  const tHelp = useTranslations('help.admin')
   const tTags = useTranslations('admin.tags')
   const [activeTab, setActiveTab] = useState<AdminTab>('overview')
   const [sessions, setSessions] = useState<ImportSession[]>([])

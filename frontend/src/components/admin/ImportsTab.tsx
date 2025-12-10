@@ -23,7 +23,6 @@ export function ImportsTab({
 }: ImportsTabProps) {
   const t = useTranslations('admin.imports')
   const tCommon = useTranslations('common')
-  const tFields = useTranslations('fields')
 
   return (
     <div className="card">

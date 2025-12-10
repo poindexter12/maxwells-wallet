@@ -11,7 +11,7 @@ interface TrendsChartProps {
   isMonthlyScale: boolean
 }
 
-export function TrendsChart({ widget, data, isMonthlyScale }: TrendsChartProps) {
+export function TrendsChart({ widget, data, isMonthlyScale: _isMonthlyScale }: TrendsChartProps) {
   const t = useTranslations('dashboard.widgets')
 
   if (!data || !data.data || data.data.length === 0) return null

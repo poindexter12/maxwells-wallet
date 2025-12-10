@@ -20,7 +20,6 @@ interface TagStats {
 
 export default function OrganizePage() {
   const t = useTranslations('organize')
-  const tHelp = useTranslations('organize.help')
   const [activeTab, setActiveTab] = useState<OrganizeTab>('buckets')
   const [buckets, setBuckets] = useState<TagStats[]>([])
   const [occasions, setOccasions] = useState<TagStats[]>([])

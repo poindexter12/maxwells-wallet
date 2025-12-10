@@ -16,8 +16,6 @@ import {
 
 export default function ImportPage() {
   const t = useTranslations('import')
-  const tHelp = useTranslations('help.import')
-  const tCommon = useTranslations('common')
   const [files, setFiles] = useState<File[]>([])
   const [batchMode, setBatchMode] = useState(false)
   const [batchPreviews, setBatchPreviews] = useState<FilePreview[]>([])
