@@ -471,45 +471,6 @@ async def list_dashboard_widgets(
     )
     widgets = list(result.scalars().all())
 
-    # Initialize with defaults if empty
-    if not widgets:
-        for widget_data in DEFAULT_WIDGETS:
-            widget = DashboardWidget(dashboard_id=dashboard_id, **widget_data)
-            session.add(widget)
-        await session.commit()
-
-        # Re-fetch
-        result = await session.execute(
-            select(DashboardWidget)
-            .where(DashboardWidget.dashboard_id == dashboard_id)
-            .order_by(DashboardWidget.position)
-        )
-        widgets = list(result.scalars().all())
-    else:
-        # Check for missing widget types and add them
-        existing_types = {w.widget_type for w in widgets}
-        max_position = max(w.position for w in widgets) if widgets else -1
-        added = False
-
-        for widget_data in DEFAULT_WIDGETS:
-            if widget_data["widget_type"] not in existing_types:
-                max_position += 1
-                widget = DashboardWidget(
-                    dashboard_id=dashboard_id,
-                    **{**widget_data, "position": max_position}
-                )
-                session.add(widget)
-                added = True
-
-        if added:
-            await session.commit()
-            result = await session.execute(
-                select(DashboardWidget)
-                .where(DashboardWidget.dashboard_id == dashboard_id)
-                .order_by(DashboardWidget.position)
-            )
-            widgets = list(result.scalars().all())
-
     return widgets
 
 

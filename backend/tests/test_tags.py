@@ -327,3 +327,84 @@ class TestTransactionTags:
             "tag": "bucket:nonexistent"
         })
         assert response.status_code == 400
+
+    @pytest.mark.asyncio
+    async def test_add_tag_to_nonexistent_transaction(self, client: AsyncClient, seed_categories):
+        """Adding tag to non-existent transaction returns 404"""
+        response = await client.post("/api/v1/transactions/99999/tags", json={
+            "tag": "bucket:groceries"
+        })
+        assert response.status_code == 404
+        assert response.json()["detail"]["error_code"] == "TRANSACTION_NOT_FOUND"
+
+    @pytest.mark.asyncio
+    async def test_add_duplicate_tag(self, client: AsyncClient, seed_categories):
+        """Adding same tag twice returns 'already applied' message"""
+        # Create an occasion tag
+        await client.post("/api/v1/tags", json={
+            "namespace": "occasion",
+            "value": "duplicate-test"
+        })
+
+        txn_response = await client.post("/api/v1/transactions", json={
+            "date": "2025-11-15",
+            "amount": -50.00,
+            "description": "Test",
+            "merchant": "Test",
+            "account_source": "TEST",
+            "reference_id": "test_duplicate_tag"
+        })
+        txn_id = txn_response.json()["id"]
+
+        # Add tag first time
+        await client.post(f"/api/v1/transactions/{txn_id}/tags", json={
+            "tag": "occasion:duplicate-test"
+        })
+
+        # Add same tag again
+        response = await client.post(f"/api/v1/transactions/{txn_id}/tags", json={
+            "tag": "occasion:duplicate-test"
+        })
+        assert response.status_code == 200
+        assert "already applied" in response.json()["message"].lower()
+
+    @pytest.mark.asyncio
+    async def test_remove_tag_from_nonexistent_transaction(self, client: AsyncClient):
+        """Removing tag from non-existent transaction returns 404"""
+        response = await client.delete("/api/v1/transactions/99999/tags/bucket:groceries")
+        assert response.status_code == 404
+        assert response.json()["detail"]["error_code"] == "TRANSACTION_NOT_FOUND"
+
+    @pytest.mark.asyncio
+    async def test_remove_tag_invalid_format(self, client: AsyncClient, seed_categories):
+        """Removing tag with invalid format fails"""
+        txn_response = await client.post("/api/v1/transactions", json={
+            "date": "2025-11-15",
+            "amount": -50.00,
+            "description": "Test",
+            "merchant": "Test",
+            "account_source": "TEST",
+            "reference_id": "test_remove_invalid"
+        })
+        txn_id = txn_response.json()["id"]
+
+        response = await client.delete(f"/api/v1/transactions/{txn_id}/tags/invalid-no-colon")
+        assert response.status_code == 400
+        assert response.json()["detail"]["error_code"] == "TAG_INVALID_FORMAT"
+
+    @pytest.mark.asyncio
+    async def test_remove_nonexistent_tag(self, client: AsyncClient, seed_categories):
+        """Removing non-existent tag from transaction fails"""
+        txn_response = await client.post("/api/v1/transactions", json={
+            "date": "2025-11-15",
+            "amount": -50.00,
+            "description": "Test",
+            "merchant": "Test",
+            "account_source": "TEST",
+            "reference_id": "test_remove_nonexistent"
+        })
+        txn_id = txn_response.json()["id"]
+
+        response = await client.delete(f"/api/v1/transactions/{txn_id}/tags/bucket:nonexistent-bucket")
+        assert response.status_code == 400
+        assert response.json()["detail"]["error_code"] == "TAG_NOT_FOUND"
