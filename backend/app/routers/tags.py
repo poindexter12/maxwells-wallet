@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlmodel import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func
@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from app.database import get_session
 from app.models import Tag, TagCreate, TagUpdate, TransactionTag, Transaction
+from app.errors import ErrorCode, not_found, bad_request
 
 router = APIRouter(prefix="/api/v1/tags", tags=["tags"])
 
@@ -61,7 +62,7 @@ async def get_tag(
     )
     tag = result.scalar_one_or_none()
     if not tag:
-        raise HTTPException(status_code=404, detail="Tag not found")
+        raise not_found(ErrorCode.TAG_NOT_FOUND, tag_id=tag_id)
     return tag
 
 
@@ -79,7 +80,7 @@ async def get_tag_by_name(
     )
     tag = result.scalar_one_or_none()
     if not tag:
-        raise HTTPException(status_code=404, detail="Tag not found")
+        raise not_found(ErrorCode.TAG_NOT_FOUND, namespace=namespace, value=value)
     return tag
 
 
@@ -97,9 +98,10 @@ async def create_tag(
     )
     existing = result.scalar_one_or_none()
     if existing:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Tag '{tag.namespace}:{tag.value}' already exists"
+        raise bad_request(
+            ErrorCode.TAG_ALREADY_EXISTS,
+            namespace=tag.namespace,
+            value=tag.value
         )
 
     db_tag = Tag(**tag.model_dump())
@@ -121,7 +123,7 @@ async def update_tag(
     )
     db_tag = result.scalar_one_or_none()
     if not db_tag:
-        raise HTTPException(status_code=404, detail="Tag not found")
+        raise not_found(ErrorCode.TAG_NOT_FOUND, tag_id=tag_id)
 
     # If changing value, check for uniqueness within namespace
     if tag.value is not None and tag.value != db_tag.value:
@@ -131,9 +133,10 @@ async def update_tag(
             )
         )
         if existing.scalar_one_or_none():
-            raise HTTPException(
-                status_code=400,
-                detail=f"Tag '{db_tag.namespace}:{tag.value}' already exists"
+            raise bad_request(
+                ErrorCode.TAG_ALREADY_EXISTS,
+                namespace=db_tag.namespace,
+                value=tag.value
             )
 
     # Update fields
@@ -158,7 +161,7 @@ async def delete_tag(
     )
     tag = result.scalar_one_or_none()
     if not tag:
-        raise HTTPException(status_code=404, detail="Tag not found")
+        raise not_found(ErrorCode.TAG_NOT_FOUND, tag_id=tag_id)
 
     # Check if tag is in use
     usage_result = await session.execute(
@@ -166,10 +169,7 @@ async def delete_tag(
     )
     usage_count = usage_result.scalar()
     if usage_count > 0:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Cannot delete tag: it is used by {usage_count} transaction(s)"
-        )
+        raise bad_request(ErrorCode.TAG_IN_USE, count=usage_count)
 
     # Warn for bucket tags
     if tag.namespace == "bucket":
@@ -191,7 +191,7 @@ async def get_tag_usage_count(
     )
     tag = result.scalar_one_or_none()
     if not tag:
-        raise HTTPException(status_code=404, detail="Tag not found")
+        raise not_found(ErrorCode.TAG_NOT_FOUND, tag_id=tag_id)
 
     usage_result = await session.execute(
         select(func.count()).select_from(TransactionTag).where(TransactionTag.tag_id == tag_id)

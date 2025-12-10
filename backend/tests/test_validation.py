@@ -114,7 +114,7 @@ class TestTagEndpointValidation:
             "value": "groceries"  # Already exists in seed_tags
         })
         assert response.status_code == 400
-        assert "already exists" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "TAG_ALREADY_EXISTS"
 
     @pytest.mark.asyncio
     async def test_get_nonexistent_tag(self, client: AsyncClient, seed_tags):
