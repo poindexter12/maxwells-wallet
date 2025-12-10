@@ -13,7 +13,13 @@ RUN npm ci
 COPY frontend/ ./
 # Ensure public directory exists (may be empty)
 RUN mkdir -p public
+
+# Generate pseudo-locale for QA testing (optional, controlled by NEXT_PUBLIC_ENABLE_PSEUDO at runtime)
+RUN node scripts/generate-pseudo-locale.js
+
 ENV BACKEND_URL=http://localhost:3001
+# Build with pseudo locale support baked in (can be toggled at runtime)
+ENV NEXT_PUBLIC_ENABLE_PSEUDO=true
 RUN npm run build
 
 # Final stage: Python + Node runtime
