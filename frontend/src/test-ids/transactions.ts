@@ -2,10 +2,6 @@
  * Transactions page test IDs.
  */
 export const TRANSACTIONS_IDS = {
-  TRANSACTIONS_PAGE: 'transactions-page',
-  TRANSACTIONS_LIST: 'transactions-list',
-  TRANSACTIONS_ROW: 'transactions-row',
-
   // Filters
   FILTER_SEARCH: 'filter-search',
   FILTER_BUCKET: 'filter-bucket',

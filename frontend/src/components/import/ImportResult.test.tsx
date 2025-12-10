@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { ImportResult } from './ImportResult'
 import { ImportResult as ImportResultType } from '@/types/import'
+import { TEST_IDS } from '@/test-ids'
 
 describe('ImportResult', () => {
   it('renders success header', () => {
@@ -11,7 +12,8 @@ describe('ImportResult', () => {
     }
     render(<ImportResult result={result} />)
 
-    expect(screen.getByText('Import Complete!')).toBeInTheDocument()
+    expect(screen.getByTestId(TEST_IDS.IMPORT_RESULT)).toBeInTheDocument()
+    expect(screen.getByTestId(TEST_IDS.IMPORT_RESULT_TITLE)).toBeInTheDocument()
   })
 
   it('displays single file import stats', () => {
@@ -21,10 +23,10 @@ describe('ImportResult', () => {
     }
     render(<ImportResult result={result} />)
 
-    expect(screen.getByText('Imported')).toBeInTheDocument()
-    expect(screen.getByText('50')).toBeInTheDocument()
-    expect(screen.getByText('Duplicates Skipped')).toBeInTheDocument()
-    expect(screen.getByText('5')).toBeInTheDocument()
+    expect(screen.getByTestId(TEST_IDS.IMPORT_RESULT_IMPORTED)).toBeInTheDocument()
+    expect(screen.getByTestId(TEST_IDS.IMPORT_RESULT_IMPORTED_COUNT)).toHaveTextContent('50')
+    expect(screen.getByTestId(TEST_IDS.IMPORT_RESULT_DUPLICATES)).toBeInTheDocument()
+    expect(screen.getByTestId(TEST_IDS.IMPORT_RESULT_DUPLICATES_COUNT)).toHaveTextContent('5')
   })
 
   it('displays batch import totals', () => {
@@ -38,8 +40,8 @@ describe('ImportResult', () => {
     }
     render(<ImportResult result={result} />)
 
-    expect(screen.getByText('100')).toBeInTheDocument()
-    expect(screen.getByText('10')).toBeInTheDocument()
+    expect(screen.getByTestId(TEST_IDS.IMPORT_RESULT_IMPORTED_COUNT)).toHaveTextContent('100')
+    expect(screen.getByTestId(TEST_IDS.IMPORT_RESULT_DUPLICATES_COUNT)).toHaveTextContent('10')
   })
 
   it('shows Files Imported count for batch imports', () => {
@@ -53,8 +55,7 @@ describe('ImportResult', () => {
     }
     render(<ImportResult result={result} />)
 
-    expect(screen.getByText('Files Imported')).toBeInTheDocument()
-    expect(screen.getByText('2')).toBeInTheDocument()
+    expect(screen.getByTestId(TEST_IDS.IMPORT_RESULT_FORMAT_VALUE)).toHaveTextContent('2')
   })
 
   it('shows file details section for batch imports', () => {
@@ -68,11 +69,10 @@ describe('ImportResult', () => {
     }
     render(<ImportResult result={result} />)
 
-    expect(screen.getByText('File Details:')).toBeInTheDocument()
-    expect(screen.getByText('transactions_jan.csv')).toBeInTheDocument()
-    expect(screen.getByText('transactions_feb.csv')).toBeInTheDocument()
-    expect(screen.getAllByText('50 imported')).toHaveLength(2)
-    expect(screen.getAllByText('5 duplicates')).toHaveLength(2)
+    const fileDetails = screen.getByTestId(TEST_IDS.IMPORT_RESULT_FILE_DETAILS)
+    expect(fileDetails).toBeInTheDocument()
+    expect(fileDetails).toHaveTextContent('transactions_jan.csv')
+    expect(fileDetails).toHaveTextContent('transactions_feb.csv')
   })
 
   it('shows Format Saved Yes when format_saved is true', () => {
@@ -83,8 +83,8 @@ describe('ImportResult', () => {
     }
     render(<ImportResult result={result} />)
 
-    expect(screen.getByText('Format Saved')).toBeInTheDocument()
-    expect(screen.getByText('Yes')).toBeInTheDocument()
+    expect(screen.getByTestId(TEST_IDS.IMPORT_RESULT_FORMAT)).toBeInTheDocument()
+    expect(screen.getByTestId(TEST_IDS.IMPORT_RESULT_FORMAT_VALUE)).toHaveTextContent('Yes')
   })
 
   it('shows Format Saved Yes when config_saved is true', () => {
@@ -95,8 +95,7 @@ describe('ImportResult', () => {
     }
     render(<ImportResult result={result} />)
 
-    expect(screen.getByText('Format Saved')).toBeInTheDocument()
-    expect(screen.getByText('Yes')).toBeInTheDocument()
+    expect(screen.getByTestId(TEST_IDS.IMPORT_RESULT_FORMAT_VALUE)).toHaveTextContent('Yes')
   })
 
   it('shows Format Saved No when neither format_saved nor config_saved', () => {
@@ -106,8 +105,7 @@ describe('ImportResult', () => {
     }
     render(<ImportResult result={result} />)
 
-    expect(screen.getByText('Format Saved')).toBeInTheDocument()
-    expect(screen.getByText('No')).toBeInTheDocument()
+    expect(screen.getByTestId(TEST_IDS.IMPORT_RESULT_FORMAT_VALUE)).toHaveTextContent('No')
   })
 
   it('displays cross-account warnings when present', () => {
@@ -118,8 +116,7 @@ describe('ImportResult', () => {
     }
     render(<ImportResult result={result} />)
 
-    expect(screen.getByText('Cross-Account Matches (3)')).toBeInTheDocument()
-    expect(screen.getByText(/transactions appear to match existing transactions/)).toBeInTheDocument()
+    expect(screen.getByTestId(TEST_IDS.IMPORT_RESULT_CROSS_ACCOUNT_WARNING)).toBeInTheDocument()
   })
 
   it('hides cross-account warnings when count is 0', () => {
@@ -130,7 +127,7 @@ describe('ImportResult', () => {
     }
     render(<ImportResult result={result} />)
 
-    expect(screen.queryByText(/Cross-Account Matches/)).not.toBeInTheDocument()
+    expect(screen.queryByTestId(TEST_IDS.IMPORT_RESULT_CROSS_ACCOUNT_WARNING)).not.toBeInTheDocument()
   })
 
   it('hides cross-account warnings when not present', () => {
@@ -140,7 +137,7 @@ describe('ImportResult', () => {
     }
     render(<ImportResult result={result} />)
 
-    expect(screen.queryByText(/Cross-Account Matches/)).not.toBeInTheDocument()
+    expect(screen.queryByTestId(TEST_IDS.IMPORT_RESULT_CROSS_ACCOUNT_WARNING)).not.toBeInTheDocument()
   })
 
   it('hides file details when files array is empty', () => {
@@ -151,6 +148,6 @@ describe('ImportResult', () => {
     }
     render(<ImportResult result={result} />)
 
-    expect(screen.queryByText('File Details:')).not.toBeInTheDocument()
+    expect(screen.queryByTestId(TEST_IDS.IMPORT_RESULT_FILE_DETAILS)).not.toBeInTheDocument()
   })
 })

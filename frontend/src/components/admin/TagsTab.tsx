@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { TagWithUsage, TagTabConfig } from '@/types/admin'
+import { TEST_IDS } from '@/test-ids'
 
 interface TagsTabProps {
   currentTagTab: TagTabConfig
@@ -26,11 +27,12 @@ export function TagsTab({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <p className="text-sm text-theme-muted">{currentTagTab.description}</p>
+        <p className="text-sm text-theme-muted" data-testid={TEST_IDS.TAGS_TAB_DESCRIPTION}>{currentTagTab.description}</p>
         {currentTagTab.namespace && (
           <button
             onClick={onAddTag}
             className="btn-primary"
+            data-testid={TEST_IDS.TAGS_TAB_ADD_BUTTON}
           >
             {tCommon('add')} {currentTagTab.label.replace(/s$/, '')}
           </button>
@@ -38,14 +40,14 @@ export function TagsTab({
       </div>
 
       {tagsLoading ? (
-        <div className="text-center py-12 text-theme-muted">{tCommon('loading')}</div>
+        <div className="text-center py-12 text-theme-muted" data-testid={TEST_IDS.TAGS_TAB_LOADING}>{tCommon('loading')}</div>
       ) : tags.length === 0 ? (
-        <div className="card p-12 text-center">
+        <div className="card p-12 text-center" data-testid={TEST_IDS.TAGS_TAB_EMPTY}>
           <p className="text-theme-muted mb-4">{t('noTags', { type: currentTagTab.label.toLowerCase() })}</p>
         </div>
       ) : (
         <div className="card overflow-hidden">
-          <table className="min-w-full divide-y divide-[var(--color-border)]">
+          <table className="min-w-full divide-y divide-[var(--color-border)]" data-testid={TEST_IDS.TAGS_TAB_TABLE}>
             <thead className="table-header">
               <tr>
                 {currentTagTab.showNamespace && (

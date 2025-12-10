@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { TopMerchantsList } from './TopMerchantsList'
+import { TEST_IDS } from '@/test-ids'
 
 describe('TopMerchantsList', () => {
-  it('renders with default title', () => {
+  it('renders with title', () => {
     render(<TopMerchantsList data={null} />)
-    expect(screen.getByText('Top Merchants')).toBeInTheDocument()
+    expect(screen.getByTestId(TEST_IDS.WIDGET_TOP_MERCHANTS_TITLE)).toBeInTheDocument()
   })
 
   it('renders custom title from widget', () => {
@@ -19,17 +20,17 @@ describe('TopMerchantsList', () => {
       config: null
     }
     render(<TopMerchantsList widget={widget} data={null} />)
-    expect(screen.getByText('Custom Title')).toBeInTheDocument()
+    expect(screen.getByTestId(TEST_IDS.WIDGET_TOP_MERCHANTS_TITLE)).toHaveTextContent('Custom Title')
   })
 
   it('shows empty state when no data', () => {
     render(<TopMerchantsList data={null} />)
-    expect(screen.getByText('No merchant data available')).toBeInTheDocument()
+    expect(screen.getByTestId(TEST_IDS.WIDGET_TOP_MERCHANTS_EMPTY)).toBeInTheDocument()
   })
 
   it('shows empty state when merchants array is empty', () => {
     render(<TopMerchantsList data={{ merchants: [] }} />)
-    expect(screen.getByText('No merchant data available')).toBeInTheDocument()
+    expect(screen.getByTestId(TEST_IDS.WIDGET_TOP_MERCHANTS_EMPTY)).toBeInTheDocument()
   })
 
   it('renders merchant list', () => {
@@ -43,12 +44,14 @@ describe('TopMerchantsList', () => {
 
     render(<TopMerchantsList data={data} />)
 
-    expect(screen.getByText('Amazon')).toBeInTheDocument()
-    expect(screen.getByText('$500.00')).toBeInTheDocument()
-    expect(screen.getByText('Whole Foods')).toBeInTheDocument()
-    expect(screen.getByText('$300.00')).toBeInTheDocument()
-    expect(screen.getByText('Starbucks')).toBeInTheDocument()
-    expect(screen.getByText('$150.00')).toBeInTheDocument()
+    const list = screen.getByTestId(TEST_IDS.WIDGET_TOP_MERCHANTS_LIST)
+    expect(list).toBeInTheDocument()
+    expect(list).toHaveTextContent('Amazon')
+    expect(list).toHaveTextContent('$500.00')
+    expect(list).toHaveTextContent('Whole Foods')
+    expect(list).toHaveTextContent('$300.00')
+    expect(list).toHaveTextContent('Starbucks')
+    expect(list).toHaveTextContent('$150.00')
   })
 
   it('limits to 10 merchants', () => {
@@ -61,9 +64,10 @@ describe('TopMerchantsList', () => {
 
     render(<TopMerchantsList data={data} />)
 
-    expect(screen.getByText('Merchant 1')).toBeInTheDocument()
-    expect(screen.getByText('Merchant 10')).toBeInTheDocument()
-    expect(screen.queryByText('Merchant 11')).not.toBeInTheDocument()
+    const list = screen.getByTestId(TEST_IDS.WIDGET_TOP_MERCHANTS_LIST)
+    expect(list).toHaveTextContent('Merchant 1')
+    expect(list).toHaveTextContent('Merchant 10')
+    expect(list).not.toHaveTextContent('Merchant 11')
   })
 
   it('handles negative amounts', () => {
@@ -75,7 +79,8 @@ describe('TopMerchantsList', () => {
 
     render(<TopMerchantsList data={data} />)
 
-    expect(screen.getByText('Refund Store')).toBeInTheDocument()
-    expect(screen.getByText('-$50.00')).toBeInTheDocument()
+    const list = screen.getByTestId(TEST_IDS.WIDGET_TOP_MERCHANTS_LIST)
+    expect(list).toHaveTextContent('Refund Store')
+    expect(list).toHaveTextContent('-$50.00')
   })
 })
