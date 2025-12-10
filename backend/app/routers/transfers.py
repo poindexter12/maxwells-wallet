@@ -1,5 +1,5 @@
 """Transfer detection and management router"""
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlmodel import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
@@ -9,6 +9,7 @@ import re
 
 from app.database import get_session
 from app.models import Transaction
+from app.errors import ErrorCode, not_found, bad_request
 
 
 router = APIRouter(prefix="/api/v1/transfers", tags=["transfers"])
@@ -123,7 +124,7 @@ async def mark_as_transfer(
     Transfers are excluded from spending calculations.
     """
     if not request.transaction_ids:
-        raise HTTPException(status_code=400, detail="No transaction IDs provided")
+        raise bad_request(ErrorCode.NO_TRANSACTION_IDS)
 
     # Fetch all transactions
     result = await session.execute(
@@ -134,9 +135,9 @@ async def mark_as_transfer(
     if len(transactions) != len(request.transaction_ids):
         found_ids = {t.id for t in transactions}
         missing_ids = set(request.transaction_ids) - found_ids
-        raise HTTPException(
-            status_code=404,
-            detail=f"Transactions not found: {list(missing_ids)}"
+        raise not_found(
+            ErrorCode.TRANSACTIONS_NOT_FOUND,
+            missing_ids=list(missing_ids)
         )
 
     # Update all transactions
@@ -175,11 +176,11 @@ async def link_transaction(
     transactions = {t.id: t for t in result.scalars().all()}
 
     if transaction_id not in transactions:
-        raise HTTPException(status_code=404, detail=f"Transaction {transaction_id} not found")
+        raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
     if request.linked_transaction_id not in transactions:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Linked transaction {request.linked_transaction_id} not found"
+        raise not_found(
+            ErrorCode.TRANSACTION_NOT_FOUND,
+            transaction_id=request.linked_transaction_id
         )
 
     txn1 = transactions[transaction_id]
@@ -220,10 +221,10 @@ async def unlink_transaction(
     txn = result.scalar_one_or_none()
 
     if not txn:
-        raise HTTPException(status_code=404, detail="Transaction not found")
+        raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
 
     if not txn.linked_transaction_id:
-        raise HTTPException(status_code=400, detail="Transaction is not linked")
+        raise bad_request(ErrorCode.TRANSACTION_NOT_LINKED, transaction_id=transaction_id)
 
     # Get the linked transaction and unlink it too
     linked_id = txn.linked_transaction_id

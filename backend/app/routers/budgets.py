@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlmodel import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
@@ -7,6 +7,7 @@ from calendar import monthrange
 
 from app.database import get_session
 from app.models import Budget, BudgetCreate, BudgetUpdate, BudgetPeriod, Transaction, Tag, TransactionTag
+from app.errors import ErrorCode, not_found, bad_request
 
 router = APIRouter(prefix="/api/v1/budgets", tags=["budgets"])
 
@@ -40,7 +41,7 @@ async def get_budget(
     )
     budget = result.scalar_one_or_none()
     if not budget:
-        raise HTTPException(status_code=404, detail="Budget not found")
+        raise not_found(ErrorCode.BUDGET_NOT_FOUND, budget_id=budget_id)
     return budget
 
 
@@ -54,17 +55,14 @@ async def create_budget(
     try:
         namespace, value = parse_tag_string(budget.tag)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise bad_request(ErrorCode.TAG_INVALID_FORMAT, str(e), tag=budget.tag)
 
     # Validate that the tag exists
     tag_result = await session.execute(
         select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
     )
     if not tag_result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=400,
-            detail=f"Tag '{budget.tag}' does not exist. Create it first."
-        )
+        raise bad_request(ErrorCode.TAG_NOT_FOUND, tag=budget.tag)
 
     # Check if budget already exists for this tag and period
     result = await session.execute(
@@ -75,10 +73,7 @@ async def create_budget(
     )
     existing = result.scalar_one_or_none()
     if existing:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Budget already exists for {budget.tag} ({budget.period})"
-        )
+        raise bad_request(ErrorCode.BUDGET_ALREADY_EXISTS, tag=budget.tag, period=budget.period.value)
 
     db_budget = Budget(**budget.model_dump())
     session.add(db_budget)
@@ -99,24 +94,21 @@ async def update_budget(
     )
     db_budget = result.scalar_one_or_none()
     if not db_budget:
-        raise HTTPException(status_code=404, detail="Budget not found")
+        raise not_found(ErrorCode.BUDGET_NOT_FOUND, budget_id=budget_id)
 
     # Validate tag format if being updated
     if budget.tag is not None:
         try:
             namespace, value = parse_tag_string(budget.tag)
         except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+            raise bad_request(ErrorCode.TAG_INVALID_FORMAT, str(e), tag=budget.tag)
 
         # Validate that the tag exists
         tag_result = await session.execute(
             select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
         )
         if not tag_result.scalar_one_or_none():
-            raise HTTPException(
-                status_code=400,
-                detail=f"Tag '{budget.tag}' does not exist. Create it first."
-            )
+            raise bad_request(ErrorCode.TAG_NOT_FOUND, tag=budget.tag)
 
     # Update fields
     for key, value in budget.model_dump(exclude_unset=True).items():
@@ -140,7 +132,7 @@ async def delete_budget(
     )
     budget = result.scalar_one_or_none()
     if not budget:
-        raise HTTPException(status_code=404, detail="Budget not found")
+        raise not_found(ErrorCode.BUDGET_NOT_FOUND, budget_id=budget_id)
 
     await session.delete(budget)
     await session.commit()

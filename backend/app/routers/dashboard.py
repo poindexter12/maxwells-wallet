@@ -5,7 +5,7 @@ Manages user's dashboard layout and widget settings.
 These endpoints work with the default dashboard for backwards compatibility.
 For multi-dashboard support, use /api/v1/dashboards/* endpoints.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
@@ -16,6 +16,7 @@ from app.models import (
     Dashboard, DashboardWidget, DashboardWidgetCreate, DashboardWidgetUpdate,
     DashboardLayoutUpdate
 )
+from app.errors import ErrorCode, not_found, bad_request
 
 
 async def get_default_dashboard_id(session: AsyncSession) -> int:
@@ -122,7 +123,7 @@ async def get_widget(widget_id: int, session: AsyncSession = Depends(get_session
     )
     widget = result.scalar_one_or_none()
     if not widget:
-        raise HTTPException(status_code=404, detail="Widget not found")
+        raise not_found(ErrorCode.WIDGET_NOT_FOUND, widget_id=widget_id)
     return widget
 
 
@@ -155,7 +156,7 @@ async def update_widget(
     )
     db_widget = result.scalar_one_or_none()
     if not db_widget:
-        raise HTTPException(status_code=404, detail="Widget not found")
+        raise not_found(ErrorCode.WIDGET_NOT_FOUND, widget_id=widget_id)
 
     for key, value in widget.model_dump(exclude_unset=True).items():
         setattr(db_widget, key, value)
@@ -174,7 +175,7 @@ async def delete_widget(widget_id: int, session: AsyncSession = Depends(get_sess
     )
     widget = result.scalar_one_or_none()
     if not widget:
-        raise HTTPException(status_code=404, detail="Widget not found")
+        raise not_found(ErrorCode.WIDGET_NOT_FOUND, widget_id=widget_id)
 
     await session.delete(widget)
     await session.commit()
@@ -196,9 +197,9 @@ async def update_layout(
         new_position = widget_update.get("position")
 
         if widget_id is None or new_position is None:
-            raise HTTPException(
-                status_code=400,
-                detail="Each widget must have 'id' and 'position' fields"
+            raise bad_request(
+                ErrorCode.VALIDATION_ERROR,
+                "Each widget must have 'id' and 'position' fields"
             )
 
         result = await session.execute(
@@ -206,7 +207,7 @@ async def update_layout(
         )
         widget = result.scalar_one_or_none()
         if not widget:
-            raise HTTPException(status_code=404, detail=f"Widget {widget_id} not found")
+            raise not_found(ErrorCode.WIDGET_NOT_FOUND, widget_id=widget_id)
 
         widget.position = new_position
         widget.updated_at = datetime.utcnow()
@@ -264,7 +265,7 @@ async def toggle_widget_visibility(
     )
     widget = result.scalar_one_or_none()
     if not widget:
-        raise HTTPException(status_code=404, detail="Widget not found")
+        raise not_found(ErrorCode.WIDGET_NOT_FOUND, widget_id=widget_id)
 
     widget.is_visible = not widget.is_visible
     widget.updated_at = datetime.utcnow()
@@ -289,7 +290,7 @@ async def duplicate_widget(
     )
     original = result.scalar_one_or_none()
     if not original:
-        raise HTTPException(status_code=404, detail="Widget not found")
+        raise not_found(ErrorCode.WIDGET_NOT_FOUND, widget_id=widget_id)
 
     # Find max position for the same dashboard
     dashboard_id = original.dashboard_id or await get_default_dashboard_id(session)

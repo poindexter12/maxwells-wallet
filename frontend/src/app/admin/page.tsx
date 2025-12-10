@@ -125,20 +125,36 @@ export default function AdminPage() {
 
     setActionInProgress(true)
     try {
-      const res = await fetch('/api/v1/admin/transactions/purge-all?confirm=PURGE_ALL', {
+      const res = await fetch('/api/v1/admin/purge-all?confirm=PURGE_ALL', {
         method: 'DELETE'
       })
       if (res.ok) {
         const result = await res.json()
-        alert(`Purged ${result.deleted_transactions} transactions and ${result.deleted_sessions} import sessions`)
-        await fetchData()
+
+        // Clear browser storage if requested by backend
+        if (result.clear_browser_storage) {
+          localStorage.clear()
+          sessionStorage.clear()
+        }
+
+        const counts = result.counts || {}
+        alert(`Application reset complete!\n\nPurged:\n` +
+          `- ${counts.transactions || 0} transactions\n` +
+          `- ${counts.import_sessions || 0} import sessions\n` +
+          `- ${counts.budgets || 0} budgets\n` +
+          `- ${counts.tags_deleted || 0} tags\n` +
+          `- ${counts.dashboards_deleted || 0} dashboards\n` +
+          `- ${counts.saved_filters || 0} saved filters`)
+
+        // Reload the page to reset all state
+        window.location.reload()
       } else {
         const error = await res.json()
-        alert(`Error: ${error.detail}`)
+        alert(`Error: ${error.detail?.message || error.detail}`)
       }
     } catch (error) {
-      console.error('Error purging transactions:', error)
-      alert('Failed to purge transactions')
+      console.error('Error purging data:', error)
+      alert('Failed to purge data')
     } finally {
       setActionInProgress(false)
       setConfirmPurgeAll(false)

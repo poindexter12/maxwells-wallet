@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlmodel import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
@@ -9,6 +9,7 @@ from app.models import (
     TagRule, TagRuleCreate, TagRuleUpdate,
     Transaction, Tag, TransactionTag
 )
+from app.errors import ErrorCode, not_found, bad_request
 
 router = APIRouter(prefix="/api/v1/tag-rules", tags=["tag-rules"])
 
@@ -93,7 +94,7 @@ async def get_rule(
     )
     rule = result.scalar_one_or_none()
     if not rule:
-        raise HTTPException(status_code=404, detail="Rule not found")
+        raise not_found(ErrorCode.RULE_NOT_FOUND, rule_id=rule_id)
     return rule
 
 
@@ -107,17 +108,14 @@ async def create_rule(
     try:
         namespace, value = parse_tag_string(rule.tag)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise bad_request(ErrorCode.TAG_INVALID_FORMAT, str(e), tag=rule.tag)
 
     # Validate that the tag exists
     tag_result = await session.execute(
         select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
     )
     if not tag_result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=400,
-            detail=f"Tag '{rule.tag}' does not exist. Create it first."
-        )
+        raise bad_request(ErrorCode.TAG_NOT_FOUND, tag=rule.tag)
 
     # Validate that at least one match condition is specified
     if not any([
@@ -127,9 +125,9 @@ async def create_rule(
         rule.amount_max is not None,
         rule.account_source
     ]):
-        raise HTTPException(
-            status_code=400,
-            detail="At least one match condition must be specified"
+        raise bad_request(
+            ErrorCode.VALIDATION_ERROR,
+            "At least one match condition must be specified"
         )
 
     db_rule = TagRule(**rule.model_dump())
@@ -151,24 +149,21 @@ async def update_rule(
     )
     db_rule = result.scalar_one_or_none()
     if not db_rule:
-        raise HTTPException(status_code=404, detail="Rule not found")
+        raise not_found(ErrorCode.RULE_NOT_FOUND, rule_id=rule_id)
 
     # Validate tag format if being updated
     if rule.tag is not None:
         try:
             namespace, value = parse_tag_string(rule.tag)
         except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+            raise bad_request(ErrorCode.TAG_INVALID_FORMAT, str(e), tag=rule.tag)
 
         # Validate that the tag exists
         tag_result = await session.execute(
             select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
         )
         if not tag_result.scalar_one_or_none():
-            raise HTTPException(
-                status_code=400,
-                detail=f"Tag '{rule.tag}' does not exist. Create it first."
-            )
+            raise bad_request(ErrorCode.TAG_NOT_FOUND, tag=rule.tag)
 
     # Update fields
     for key, value in rule.model_dump(exclude_unset=True).items():
@@ -192,7 +187,7 @@ async def delete_rule(
     )
     rule = result.scalar_one_or_none()
     if not rule:
-        raise HTTPException(status_code=404, detail="Rule not found")
+        raise not_found(ErrorCode.RULE_NOT_FOUND, rule_id=rule_id)
 
     await session.delete(rule)
     await session.commit()
@@ -214,7 +209,7 @@ async def test_rule(
     )
     rule = rule_result.scalar_one_or_none()
     if not rule:
-        raise HTTPException(status_code=404, detail="Rule not found")
+        raise not_found(ErrorCode.RULE_NOT_FOUND, rule_id=rule_id)
 
     # Get all transactions
     txn_result = await session.execute(select(Transaction))
@@ -398,10 +393,10 @@ async def apply_single_rule(
     )
     rule = rule_result.scalar_one_or_none()
     if not rule:
-        raise HTTPException(status_code=404, detail="Rule not found")
+        raise not_found(ErrorCode.RULE_NOT_FOUND, rule_id=rule_id)
 
     if not rule.enabled:
-        raise HTTPException(status_code=400, detail="Rule is disabled")
+        raise bad_request(ErrorCode.RULE_DISABLED, rule_id=rule_id)
 
     # Get all transactions
     txn_result = await session.execute(select(Transaction))

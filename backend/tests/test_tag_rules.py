@@ -115,7 +115,7 @@ class TestTagRules:
 
         response = await client.post("/api/v1/tag-rules", json=rule_data)
         assert response.status_code == 400
-        assert "at least one match condition" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "VALIDATION_ERROR"
 
     @pytest.mark.asyncio
     async def test_invalid_tag_format(self, client: AsyncClient, seed_categories):
@@ -128,7 +128,7 @@ class TestTagRules:
 
         response = await client.post("/api/v1/tag-rules", json=rule_data)
         assert response.status_code == 400
-        assert "invalid tag format" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "TAG_INVALID_FORMAT"
 
     @pytest.mark.asyncio
     async def test_nonexistent_tag(self, client: AsyncClient, seed_categories):
@@ -141,7 +141,7 @@ class TestTagRules:
 
         response = await client.post("/api/v1/tag-rules", json=rule_data)
         assert response.status_code == 400
-        assert "does not exist" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "TAG_NOT_FOUND"
 
     @pytest.mark.asyncio
     async def test_merchant_pattern_matching(self, client: AsyncClient, seed_categories):

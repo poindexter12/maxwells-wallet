@@ -14,7 +14,14 @@ test.describe('Import Flow @e2e', () => {
   test('shows supported formats', async ({ page }) => {
     await page.goto('/import');
 
-    // Should mention supported formats
+    // Open help section first (format info is in PageHelp which is collapsed by default)
+    const helpButton = page.getByTestId('help-toggle').or(page.getByRole('button', { name: /help/i }));
+    if (await helpButton.count() > 0) {
+      await helpButton.first().click();
+      await page.waitForTimeout(200);
+    }
+
+    // Should mention supported formats (in PageHelp description or elsewhere)
     const hasFormatInfo = await page.getByText(/csv|qfx|ofx|qif/i).count() > 0;
     expect(hasFormatInfo).toBeTruthy();
   });

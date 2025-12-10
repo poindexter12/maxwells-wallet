@@ -265,7 +265,7 @@ class TestDashboardDelete:
         last_id = dashboards[0]["id"]
         response = await client.delete(f"/api/v1/dashboards/{last_id}")
         assert response.status_code == 400
-        assert "last dashboard" in response.json()["detail"].lower()
+        assert response.json()["detail"]["error_code"] == "CANNOT_DELETE_LAST_DASHBOARD"
 
     @pytest.mark.asyncio
     async def test_delete_default_promotes_another(self, client: AsyncClient):
