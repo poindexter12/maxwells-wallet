@@ -1,7 +1,7 @@
 /**
  * Internationalization (i18n) configuration for Maxwell's Wallet
  *
- * Supports 8 languages + l33t for QA testing:
+ * Supports 8 languages + pseudo for QA testing:
  * - en-US: English (United States) - default
  * - en-GB: English (United Kingdom)
  * - es: Spanish
@@ -10,10 +10,10 @@
  * - pt: Portuguese
  * - de: German
  * - nl: Dutch
- * - l33t: Leet speak (QA testing)
+ * - pseudo: Pseudo-locale (QA testing) - auto-generated from en-US
  */
 
-export const locales = ['en-US', 'en-GB', 'es', 'fr', 'it', 'pt', 'de', 'nl', 'l33t'] as const;
+export const locales = ['en-US', 'en-GB', 'es', 'fr', 'it', 'pt', 'de', 'nl', 'pseudo'] as const;
 export type Locale = (typeof locales)[number];
 export const defaultLocale: Locale = 'en-US';
 
@@ -27,7 +27,7 @@ export const languageNames: Record<Locale, string> = {
   'pt': 'Portugues',
   'de': 'Deutsch',
   'nl': 'Nederlands',
-  'l33t': 'l33t 5p34k',
+  'pseudo': '[Ƥşḗḗŭŭḓǿǿ]',
 };
 
 // Helper to check if a locale is valid

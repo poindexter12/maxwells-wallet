@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import enUS from '../messages/en-US.json'
-import l33t from '../messages/l33t.json'
+import pseudo from '../messages/pseudo.json'
 
 /**
  * Recursively extract all keys from a nested object
@@ -34,7 +34,7 @@ function getAllKeys(obj: Record<string, unknown>, prefix = ''): string[] {
 
 /**
  * Check that a translation file has no English strings
- * (useful for l33t speak where we want to ensure everything was translated)
+ * (useful for pseudo locale where we want to ensure everything was translated)
  */
 function findUnchangedStrings(
   source: Record<string, unknown>,
@@ -77,37 +77,37 @@ describe('i18n translations', () => {
     })
   })
 
-  describe('l33t.json', () => {
-    const l33tKeys = new Set(getAllKeys(l33t))
+  describe('pseudo.json', () => {
+    const pseudoKeys = new Set(getAllKeys(pseudo))
 
     it('should have all keys from en-US.json', () => {
-      const missingKeys = [...sourceKeys].filter(key => !l33tKeys.has(key))
+      const missingKeys = [...sourceKeys].filter(key => !pseudoKeys.has(key))
 
       if (missingKeys.length > 0) {
         throw new Error(
-          `Missing ${missingKeys.length} translation keys in l33t.json:\n` +
+          `Missing ${missingKeys.length} translation keys in pseudo.json:\n` +
           missingKeys.map(k => `  - ${k}`).join('\n')
         )
       }
     })
 
     it('should not have extra keys not in en-US.json', () => {
-      const extraKeys = [...l33tKeys].filter(key => !sourceKeys.has(key))
+      const extraKeys = [...pseudoKeys].filter(key => !sourceKeys.has(key))
 
       if (extraKeys.length > 0) {
         throw new Error(
-          `Found ${extraKeys.length} extra keys in l33t.json not in en-US.json:\n` +
+          `Found ${extraKeys.length} extra keys in pseudo.json not in en-US.json:\n` +
           extraKeys.map(k => `  + ${k}`).join('\n')
         )
       }
     })
 
-    it('should have all strings translated (no unchanged English strings)', () => {
-      const unchangedStrings = findUnchangedStrings(enUS, l33t)
+    it('should have all strings transformed (no unchanged English strings)', () => {
+      const unchangedStrings = findUnchangedStrings(enUS, pseudo)
 
       if (unchangedStrings.length > 0) {
         throw new Error(
-          `Found ${unchangedStrings.length} untranslated strings in l33t.json ` +
+          `Found ${unchangedStrings.length} untransformed strings in pseudo.json ` +
           `(identical to en-US.json):\n` +
           unchangedStrings.map(k => `  = ${k}`).join('\n')
         )
