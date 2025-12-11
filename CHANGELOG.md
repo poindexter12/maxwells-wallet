@@ -5,6 +5,22 @@ All notable changes to Maxwell's Wallet will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0-beta3] - 2025-12-11
+
+### Changed
+- **Locale-Aware Formatting** - Currency and date formatting now respects user's locale
+  - New `useFormat` hook provides locale-aware formatters
+  - Compact currency format for charts (e.g., "$1.2K")
+  - Short weekday/month names from locale
+- **Widget Titles Removed** - Widget display names now come from i18n translations
+  - `title` field removed from widget model
+  - Simplifies widget management and ensures consistent translations
+  - Database migration drops `title` column
+
+### Fixed
+- **Pseudo-locale Generator** - Handles placeholder-only strings correctly
+- **E2E Tests** - Import page test more robust for i18n
+
 ## [0.9.0-beta] - 2025-12-10
 
 ### Added
