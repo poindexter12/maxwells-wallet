@@ -20,17 +20,44 @@ const SOURCE_FILE = path.join(MESSAGES_DIR, 'en-US.json');
 const OUTPUT_FILE = path.join(MESSAGES_DIR, 'pseudo.json');
 
 /**
+ * Pseudo-localize a string while preserving ICU message format placeholders.
+ * Placeholders like {count}, {name}, {value} must remain unchanged.
+ */
+function pseudoLocalizeString(str) {
+  // Match ICU placeholders: {name}, {count, number}, {date, date, short}, etc.
+  const placeholderRegex = /\{[^}]+\}/g;
+  const placeholders = [];
+  let index = 0;
+
+  // Replace placeholders with markers (using only numbers/underscores to avoid pseudo-localization)
+  const withMarkers = str.replace(placeholderRegex, (match) => {
+    placeholders.push(match);
+    return `___${index++}___`;
+  });
+
+  // Pseudo-localize the text (without placeholders)
+  const localized = localize(withMarkers);
+
+  // Restore original placeholders
+  let result = localized;
+  placeholders.forEach((placeholder, i) => {
+    result = result.replace(`___${i}___`, placeholder);
+  });
+
+  return result;
+}
+
+/**
  * Recursively transform all string values in an object
  */
 function pseudoLocalizeObject(obj) {
   if (typeof obj === 'string') {
-    // Skip ICU message format placeholders like {count} or {name}
-    // and skip strings that are just placeholders
+    // Skip strings that are just a single placeholder
     if (obj.match(/^\{[^}]+\}$/)) {
       return obj;
     }
     // Pseudo-localize the string, preserving ICU placeholders
-    return localize(obj);
+    return pseudoLocalizeString(obj);
   }
 
   if (Array.isArray(obj)) {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { formatCurrency } from '@/lib/format'
+import { useFormat } from '@/hooks/useFormat'
 import { PageHelp } from '@/components/PageHelp'
 
 interface Tag {
@@ -48,6 +48,7 @@ export default function BudgetsPage() {
   const tCommon = useTranslations('common')
   const tFields = useTranslations('fields')
   const tAdmin = useTranslations('admin.tabs')
+  const { formatCurrency } = useFormat()
 
   const [budgets, setBudgets] = useState<Budget[]>([])
   const [bucketTags, setBucketTags] = useState<Tag[]>([])
