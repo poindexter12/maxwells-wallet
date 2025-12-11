@@ -4,7 +4,9 @@
 
 .PHONY: backend frontend dev build-frontend
 
-backend: ## Run backend server
+backend: ## Run backend server (runs migrations first)
+	@echo "$(BLUE)Running database migrations...$(NC)"
+	@cd $(BACKEND_DIR) && uv run alembic upgrade head
 	@echo "$(BLUE)Starting backend server...$(NC)"
 	@cd $(BACKEND_DIR) && \
 		. .venv/bin/activate && \
