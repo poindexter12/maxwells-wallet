@@ -157,13 +157,14 @@ export default function BudgetsPage() {
   }
 
   function formatTagDisplay(tag: string): string {
-    // Convert "bucket:groceries" to "Groceries (Bucket)"
+    // Convert "bucket:groceries" to "Groceries (Bucket)" using translations
     const parts = tag.split(':')
     if (parts.length === 2) {
       const [namespace, value] = parts
       const formattedValue = value.charAt(0).toUpperCase() + value.slice(1)
-      const namespaceLabel = namespace.charAt(0).toUpperCase() + namespace.slice(1)
-      return `${formattedValue} (${namespaceLabel})`
+      const namespaceKey = namespace as 'bucket' | 'occasion' | 'account'
+      const namespaceLabel = t(`namespaces.${namespaceKey}`)
+      return t('tagDisplay', { value: formattedValue, namespace: namespaceLabel })
     }
     return tag
   }
@@ -230,7 +231,7 @@ export default function BudgetsPage() {
                   <div>
                     <p className="font-semibold text-gray-900">{formatTagDisplay(alert.tag)}</p>
                     <p className="text-sm text-gray-600">
-                      {formatCurrency(alert.actual_amount)} of {formatCurrency(alert.budget_amount)} ({alert.percentage_used.toFixed(1)}%)
+                      {t('ofBudget', { spent: formatCurrency(alert.actual_amount), budget: formatCurrency(alert.budget_amount), percent: alert.percentage_used.toFixed(1) })}
                     </p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${

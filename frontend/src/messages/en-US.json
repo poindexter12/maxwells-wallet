@@ -102,6 +102,9 @@
       "ytd": "YTD",
       "last90Days": "Last 90 Days",
       "large": "Large ($100+)",
+      "largeDynamic": "Large ({threshold}+)",
+      "largeTitle": "Large transactions this month",
+      "largeTitleWithThreshold": "Large transactions this month (over {threshold} - 2σ above your average)",
       "topSpending": "Top Spending",
       "clearAll": "Clear All",
       "date": "Date:",
@@ -145,7 +148,14 @@
       "warning": "Warning",
       "exceeded": "Exceeded"
     },
-    "confirmDelete": "Are you sure you want to delete this budget?"
+    "confirmDelete": "Are you sure you want to delete this budget?",
+    "ofBudget": "{spent} of {budget} ({percent}%)",
+    "tagDisplay": "{value} ({namespace})",
+    "namespaces": {
+      "bucket": "Bucket",
+      "occasion": "Occasion",
+      "account": "Account"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
