@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
+import { useFormat } from '@/hooks/useFormat'
 import { PageHelp } from '@/components/PageHelp'
 import { DashboardConfig } from '@/components/DashboardConfig'
 import DashboardTabs from '@/components/DashboardTabs'
@@ -12,6 +13,7 @@ import { LazyWidgetRenderer, Widget } from '@/components/widgets'
 export default function Dashboard() {
   const t = useTranslations('dashboard')
   const tCommon = useTranslations('common')
+  const { formatDateRange } = useFormat()
   const { currentDashboard, loading: dashboardLoading, updateDashboard } = useDashboard()
   const { widgets, fetchWidgets, toggleVisibility, moveUp, moveDown } = useWidgetManagement()
 
@@ -73,7 +75,7 @@ export default function Dashboard() {
         <div>
           <h1 className="text-3xl font-bold text-theme">{t('title')}</h1>
           <p className="text-sm text-theme-muted mt-1">
-            {startDate} to {endDate}
+            {formatDateRange(startDate, endDate)}
           </p>
         </div>
         <div className="flex items-center gap-4">

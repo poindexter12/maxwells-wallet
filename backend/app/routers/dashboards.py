@@ -129,16 +129,17 @@ def dashboard_to_response(dashboard: Dashboard) -> DashboardResponse:
 router = APIRouter(prefix="/api/v1/dashboards", tags=["dashboards"])
 
 # Default widget configuration - used to initialize new dashboards
+# title is None to use frontend i18n translations
 DEFAULT_WIDGETS = [
-    {"widget_type": "summary", "title": "Summary", "position": 0, "width": "full", "is_visible": True},
-    {"widget_type": "velocity", "title": "Spending Velocity", "position": 1, "width": "half", "is_visible": True},
-    {"widget_type": "anomalies", "title": "Anomalies", "position": 2, "width": "half", "is_visible": True},
-    {"widget_type": "bucket_pie", "title": "Spending by Bucket", "position": 3, "width": "half", "is_visible": True},
-    {"widget_type": "top_merchants", "title": "Top Merchants", "position": 4, "width": "half", "is_visible": True},
-    {"widget_type": "trends", "title": "Trends", "position": 5, "width": "full", "is_visible": True},
-    {"widget_type": "sankey", "title": "Money Flow", "position": 6, "width": "full", "is_visible": False},
-    {"widget_type": "treemap", "title": "Spending Breakdown", "position": 7, "width": "full", "is_visible": False},
-    {"widget_type": "heatmap", "title": "Spending Calendar", "position": 8, "width": "full", "is_visible": False},
+    {"widget_type": "summary", "title": None, "position": 0, "width": "full", "is_visible": True},
+    {"widget_type": "velocity", "title": None, "position": 1, "width": "half", "is_visible": True},
+    {"widget_type": "anomalies", "title": None, "position": 2, "width": "half", "is_visible": True},
+    {"widget_type": "bucket_pie", "title": None, "position": 3, "width": "half", "is_visible": True},
+    {"widget_type": "top_merchants", "title": None, "position": 4, "width": "half", "is_visible": True},
+    {"widget_type": "trends", "title": None, "position": 5, "width": "full", "is_visible": True},
+    {"widget_type": "sankey", "title": None, "position": 6, "width": "full", "is_visible": False},
+    {"widget_type": "treemap", "title": None, "position": 7, "width": "full", "is_visible": False},
+    {"widget_type": "heatmap", "title": None, "position": 8, "width": "full", "is_visible": False},
 ]
 
 

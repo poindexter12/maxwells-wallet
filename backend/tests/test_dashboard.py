@@ -196,10 +196,10 @@ class TestDashboardWidgets:
 
         # Should have default widgets
         assert len(widgets) >= 6
-        # Titles should be defaults
+        # Title should be None (frontend uses i18n translations)
         summary_widget = next((w for w in widgets if w["widget_type"] == "summary"), None)
         assert summary_widget is not None
-        assert summary_widget["title"] == "Summary"
+        assert summary_widget["title"] is None
 
     @pytest.mark.asyncio
     async def test_widget_config_json(self, client: AsyncClient):
