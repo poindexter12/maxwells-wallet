@@ -9,18 +9,18 @@ describe('TopMerchantsList', () => {
     expect(screen.getByTestId(TEST_IDS.WIDGET_TOP_MERCHANTS_TITLE)).toBeInTheDocument()
   })
 
-  it('renders custom title from widget', () => {
+  it('renders translated title', () => {
     const widget = {
       id: 1,
       widget_type: 'top_merchants',
-      title: 'Custom Title',
       position: 0,
       width: 'half',
       is_visible: true,
       config: null
     }
     render(<TopMerchantsList widget={widget} data={null} />)
-    expect(screen.getByTestId(TEST_IDS.WIDGET_TOP_MERCHANTS_TITLE)).toHaveTextContent('Custom Title')
+    // Title comes from i18n translations based on widget_type
+    expect(screen.getByTestId(TEST_IDS.WIDGET_TOP_MERCHANTS_TITLE)).toHaveTextContent('Top Merchants')
   })
 
   it('shows empty state when no data', () => {

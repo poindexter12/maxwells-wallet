@@ -28,9 +28,9 @@ function truncateText(text: string, maxWidth: number, fontSize: number): string 
   return maxChars > 3 ? text.slice(0, maxChars - 1) + '…' : ''
 }
 
-export function SpendingTreemap({ widget, data }: SpendingTreemapProps) {
+export function SpendingTreemap({ widget: _widget, data }: SpendingTreemapProps) {
   const t = useTranslations('dashboard.widgets')
-  const title = widget?.title || t('treemap')
+  const title = t('treemap')
 
   if (!data || !data.data || data.data.children.length === 0) {
     return (

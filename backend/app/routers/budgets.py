@@ -260,6 +260,7 @@ async def get_budget_status(
             "budget_id": budget_item.id,
             "budget_amount": budget_amount,
             "spent_amount": spent_amount,
+            "actual_amount": spent_amount,  # Alias for frontend compatibility
             "remaining": remaining,
             "percentage_used": round(percentage_used, 1),
             "status": status,
@@ -298,6 +299,7 @@ async def get_budget_alerts(
             "tag_value": b["tag_value"],
             "budget_amount": b["budget_amount"],
             "spent_amount": b["spent_amount"],
+            "actual_amount": b["actual_amount"],  # Alias for frontend compatibility
             "percentage_used": b["percentage_used"],
             "status": b["status"],
             "message": f"Budget {b['status']}: {b['spent_amount']:.2f} / {b['budget_amount']:.2f} ({b['percentage_used']:.1f}%)"

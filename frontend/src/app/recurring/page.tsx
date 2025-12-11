@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { format } from 'date-fns'
-import { formatCurrency } from '@/lib/format'
+import { useFormat } from '@/hooks/useFormat'
 import { PageHelp } from '@/components/PageHelp'
 
 interface RecurringPattern {
@@ -39,6 +38,7 @@ interface MissingTransaction {
 }
 
 export default function RecurringPage() {
+  const { formatCurrency, formatDateMedium } = useFormat()
   const [patterns, setPatterns] = useState<RecurringPattern[]>([])
   const [upcoming, setUpcoming] = useState<UpcomingTransaction[]>([])
   const [missing, setMissing] = useState<MissingTransaction[]>([])
@@ -275,13 +275,13 @@ export default function RecurringPage() {
                         {pattern.last_seen_date && (
                           <div>
                             <p className="text-gray-600">Last Seen</p>
-                            <p className="font-medium">{format(new Date(pattern.last_seen_date), 'MMM dd, yyyy')}</p>
+                            <p className="font-medium">{formatDateMedium(pattern.last_seen_date)}</p>
                           </div>
                         )}
                         {pattern.next_expected_date && (
                           <div>
                             <p className="text-gray-600">Next Expected</p>
-                            <p className="font-medium">{format(new Date(pattern.next_expected_date), 'MMM dd, yyyy')}</p>
+                            <p className="font-medium">{formatDateMedium(pattern.next_expected_date)}</p>
                           </div>
                         )}
                       </div>
@@ -336,7 +336,7 @@ export default function RecurringPage() {
                         )}
                       </div>
                       <p className="text-sm text-gray-600">
-                        Expected {format(new Date(txn.expected_date), 'MMM dd, yyyy')} ({txn.days_until} days)
+                        Expected {formatDateMedium(txn.expected_date)} ({txn.days_until} days)
                       </p>
                     </div>
                     <div className="text-right">
@@ -381,7 +381,7 @@ export default function RecurringPage() {
                         </span>
                       </div>
                       <p className="text-sm text-gray-600">
-                        Expected {format(new Date(txn.expected_date), 'MMM dd, yyyy')}
+                        Expected {formatDateMedium(txn.expected_date)}
                       </p>
                     </div>
                     <div className="text-right">

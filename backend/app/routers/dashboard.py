@@ -50,16 +50,17 @@ async def get_default_dashboard_id(session: AsyncSession) -> int:
 router = APIRouter(prefix="/api/v1/dashboard", tags=["dashboard"])
 
 # Default widget configuration - used to initialize dashboard
+# Widget names are translated on frontend based on widget_type
 DEFAULT_WIDGETS = [
-    {"widget_type": "summary", "title": "Summary", "position": 0, "width": "full", "is_visible": True},
-    {"widget_type": "velocity", "title": "Spending Velocity", "position": 1, "width": "half", "is_visible": True},
-    {"widget_type": "anomalies", "title": "Anomalies", "position": 2, "width": "half", "is_visible": True},
-    {"widget_type": "bucket_pie", "title": "Spending by Bucket", "position": 3, "width": "half", "is_visible": True},
-    {"widget_type": "top_merchants", "title": "Top Merchants", "position": 4, "width": "half", "is_visible": True},
-    {"widget_type": "trends", "title": "Trends", "position": 5, "width": "full", "is_visible": True},
-    {"widget_type": "sankey", "title": "Money Flow", "position": 6, "width": "full", "is_visible": False},
-    {"widget_type": "treemap", "title": "Spending Breakdown", "position": 7, "width": "full", "is_visible": False},
-    {"widget_type": "heatmap", "title": "Spending Calendar", "position": 8, "width": "full", "is_visible": False},
+    {"widget_type": "summary", "position": 0, "width": "full", "is_visible": True},
+    {"widget_type": "velocity", "position": 1, "width": "half", "is_visible": True},
+    {"widget_type": "anomalies", "position": 2, "width": "half", "is_visible": True},
+    {"widget_type": "bucket_pie", "position": 3, "width": "half", "is_visible": True},
+    {"widget_type": "top_merchants", "position": 4, "width": "half", "is_visible": True},
+    {"widget_type": "trends", "position": 5, "width": "full", "is_visible": True},
+    {"widget_type": "sankey", "position": 6, "width": "full", "is_visible": False},
+    {"widget_type": "treemap", "position": 7, "width": "full", "is_visible": False},
+    {"widget_type": "heatmap", "position": 8, "width": "full", "is_visible": False},
 ]
 
 
@@ -270,7 +271,6 @@ async def duplicate_widget(
     new_widget = DashboardWidget(
         dashboard_id=dashboard_id,
         widget_type=original.widget_type,
-        title=f"{original.title or original.widget_type} (copy)",
         position=max_position + 1,
         width=original.width,
         is_visible=True,

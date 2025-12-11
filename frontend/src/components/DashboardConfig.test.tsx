@@ -7,7 +7,6 @@ const mockWidgets = [
   {
     id: 1,
     widget_type: 'summary',
-    title: 'Monthly Summary',
     position: 0,
     width: 'full',
     is_visible: true,
@@ -16,7 +15,6 @@ const mockWidgets = [
   {
     id: 2,
     widget_type: 'bucket_pie',
-    title: 'Spending by Category',
     position: 1,
     width: 'half',
     is_visible: true,
@@ -25,7 +23,6 @@ const mockWidgets = [
   {
     id: 3,
     widget_type: 'trends',
-    title: null, // Tests fallback to widget_type
     position: 2,
     width: 'half',
     is_visible: false,
@@ -111,9 +108,10 @@ describe('DashboardConfig', () => {
 
       await user.click(screen.getByRole('button', { name: /customize/i }))
 
-      expect(screen.getByText('Monthly Summary')).toBeInTheDocument()
-      expect(screen.getByText('Spending by Category')).toBeInTheDocument()
-      expect(screen.getByText('Trends')).toBeInTheDocument() // Falls back to translated widget_type when title is null
+      // Widget names come from i18n translations based on widget_type
+      expect(screen.getByText('Summary')).toBeInTheDocument()
+      expect(screen.getByText('Spending by Bucket')).toBeInTheDocument()
+      expect(screen.getByText('Trends')).toBeInTheDocument()
     })
 
     it('shows widget type icons', async () => {

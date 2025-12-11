@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { formatCurrency } from '@/lib/format'
+import { useFormat } from '@/hooks/useFormat'
 import { SummaryData, SpendingVelocityData } from './types'
 
 interface SpendingVelocityProps {
@@ -18,6 +18,7 @@ export function SpendingVelocity({
   selectedYear
 }: SpendingVelocityProps) {
   const t = useTranslations('dashboard.widgets')
+  const { formatCurrency } = useFormat()
 
   const now = new Date()
   // Guard against invalid year values

@@ -3,7 +3,6 @@
 export interface Widget {
   id: number
   widget_type: string
-  title: string | null
   position: number
   width: string
   is_visible: boolean
@@ -28,74 +27,76 @@ export interface WidgetConfig {
 
 export interface WidgetInfo {
   icon: string
-  name: string
-  description: string
+  nameKey: string  // Translation key for widget name (e.g., 'summary', 'velocity')
+  descriptionKey: string  // Translation key for description (e.g., 'summary', 'velocity')
   supportsFilter: boolean
   canDuplicate: boolean
 }
 
-// Widget metadata for descriptions and help
+// Widget metadata with translation keys
+// Names use keys from dashboard.widgets.* (e.g., dashboard.widgets.summary)
+// Descriptions use keys from dashboard.widgets.descriptions.* (e.g., dashboard.widgets.descriptions.summary)
 export const WIDGET_INFO: Record<string, WidgetInfo> = {
   summary: {
     icon: '📊',
-    name: 'Summary',
-    description: 'Shows total income, expenses, and net for the period. Includes month-over-month comparison.',
+    nameKey: 'summary',
+    descriptionKey: 'summary',
     supportsFilter: false,
     canDuplicate: false
   },
   velocity: {
     icon: '🔥',
-    name: 'Spending Velocity',
-    description: 'Daily burn rate showing if you\'re on track for your typical monthly spending.',
+    nameKey: 'velocity',
+    descriptionKey: 'velocity',
     supportsFilter: false,
     canDuplicate: false
   },
   anomalies: {
     icon: '⚠️',
-    name: 'Anomalies',
-    description: 'Highlights unusual transactions that deviate significantly from your normal spending patterns.',
+    nameKey: 'anomalies',
+    descriptionKey: 'anomalies',
     supportsFilter: false,
     canDuplicate: false
   },
   bucket_pie: {
     icon: '🥧',
-    name: 'Spending by Bucket',
-    description: 'Pie chart showing how spending is distributed across your budget buckets.',
+    nameKey: 'bucketPie',
+    descriptionKey: 'bucketPie',
     supportsFilter: false,
     canDuplicate: false
   },
   top_merchants: {
     icon: '🏪',
-    name: 'Top Merchants',
-    description: 'List of merchants where you spend the most. Can be filtered by bucket to see top merchants within a category.',
+    nameKey: 'topMerchants',
+    descriptionKey: 'topMerchants',
     supportsFilter: true,
     canDuplicate: true
   },
   trends: {
     icon: '📈',
-    name: 'Trends',
-    description: 'Line chart showing income, expenses, and net over time. Shows 12 weeks in month view, 12 months in year view.',
+    nameKey: 'trends',
+    descriptionKey: 'trends',
     supportsFilter: true,
     canDuplicate: false
   },
   sankey: {
     icon: '🌊',
-    name: 'Money Flow',
-    description: 'Flow diagram showing how money moves from income sources through accounts to spending categories. Great for understanding overall cash flow.',
+    nameKey: 'sankey',
+    descriptionKey: 'sankey',
     supportsFilter: true,
     canDuplicate: true
   },
   treemap: {
     icon: '🗺️',
-    name: 'Spending Breakdown',
-    description: 'Hierarchical view of spending by category and merchant. Larger boxes = more spending. Click to explore.',
+    nameKey: 'treemap',
+    descriptionKey: 'treemap',
     supportsFilter: true,
     canDuplicate: true
   },
   heatmap: {
     icon: '🗓️',
-    name: 'Spending Calendar',
-    description: 'Calendar heatmap showing daily spending intensity. Darker = more spent. Click months in year view to drill down.',
+    nameKey: 'heatmap',
+    descriptionKey: 'heatmap',
     supportsFilter: true,
     canDuplicate: true
   }

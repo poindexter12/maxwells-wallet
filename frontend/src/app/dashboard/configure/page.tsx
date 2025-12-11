@@ -21,7 +21,6 @@ export default function DashboardConfigurePage() {
   const [availableMerchants, setAvailableMerchants] = useState<FilterOption[]>([])
   const [loading, setLoading] = useState(true)
   const [editingWidget, setEditingWidget] = useState<Widget | null>(null)
-  const [editTitle, setEditTitle] = useState('')
   const [editBuckets, setEditBuckets] = useState<string[]>([])
   const [editAccounts, setEditAccounts] = useState<string[]>([])
   const [editMerchants, setEditMerchants] = useState<string[]>([])
@@ -156,7 +155,6 @@ export default function DashboardConfigurePage() {
 
   function openEditModal(widget: Widget) {
     setEditingWidget(widget)
-    setEditTitle(widget.title || '')
     const config: WidgetConfig = widget.config ? JSON.parse(widget.config) : {}
     setEditBuckets(config.buckets || [])
     setEditAccounts(config.accounts || [])
@@ -176,7 +174,6 @@ export default function DashboardConfigurePage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: editTitle || null,
           config: Object.keys(config).length > 0 ? JSON.stringify(config) : null
         })
       })
@@ -285,8 +282,6 @@ export default function DashboardConfigurePage() {
       {editingWidget && (
         <WidgetEditModal
           widget={editingWidget}
-          editTitle={editTitle}
-          setEditTitle={setEditTitle}
           editBuckets={editBuckets}
           setEditBuckets={setEditBuckets}
           editAccounts={editAccounts}

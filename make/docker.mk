@@ -10,9 +10,9 @@ docker: docker-build docker-up ## Build and start Docker container
 
 docker-with-pseudo: docker-build-pseudo docker-up ## Build and start Docker with pseudo locale for i18n QA
 
-docker-build-pseudo: ## Build Docker image with pseudo locale enabled
-	@echo "$(BLUE)Building Docker image with pseudo locale...$(NC)"
-	ENABLE_PSEUDO=true docker compose build
+docker-build-pseudo: ## Build Docker image with pseudo locale enabled (no cache)
+	@echo "$(BLUE)Building Docker image with pseudo locale (no cache)...$(NC)"
+	ENABLE_PSEUDO=true docker compose build --no-cache
 	@echo "$(GREEN)✓ Docker image built with pseudo locale$(NC)"
 
 docker-build: ## Build Docker image

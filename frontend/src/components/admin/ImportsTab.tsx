@@ -1,8 +1,8 @@
 'use client'
 
-import { format } from 'date-fns'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { useFormat } from '@/hooks/useFormat'
 import { CHAOS_EXCLUDED_IDS } from '@/test-ids'
 import { ImportSession, FORMAT_NAMES } from '@/types/admin'
 
@@ -23,6 +23,7 @@ export function ImportsTab({
 }: ImportsTabProps) {
   const t = useTranslations('admin.imports')
   const tCommon = useTranslations('common')
+  const { formatDateTime, formatDateRange } = useFormat()
 
   return (
     <div className="card">
@@ -66,7 +67,7 @@ export function ImportsTab({
               sessions.map((session) => (
                 <tr key={session.id} className={session.status === 'rolled_back' ? 'bg-negative' : ''}>
                   <td className="px-4 py-3 text-sm text-theme">
-                    {format(new Date(session.created_at), 'MMM d, yyyy HH:mm')}
+                    {formatDateTime(session.created_at)}
                   </td>
                   <td className="px-4 py-3 text-sm font-mono text-xs text-theme">{session.filename}</td>
                   <td className="px-4 py-3 text-sm">
@@ -83,7 +84,7 @@ export function ImportsTab({
                   </td>
                   <td className="px-4 py-3 text-sm text-theme-muted">
                     {session.date_range_start && session.date_range_end
-                      ? `${format(new Date(session.date_range_start), 'MMM d')} - ${format(new Date(session.date_range_end), 'MMM d, yyyy')}`
+                      ? formatDateRange(session.date_range_start, session.date_range_end)
                       : '-'}
                   </td>
                   <td className="px-4 py-3 text-sm">

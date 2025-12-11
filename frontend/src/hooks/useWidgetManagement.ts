@@ -10,7 +10,7 @@ interface UseWidgetManagementReturn {
   moveDown: (widgetId: number) => Promise<void>
   reset: () => Promise<void>
   duplicate: (widgetId: number) => Promise<void>
-  updateWidget: (widgetId: number, title: string, config: { buckets?: string[] }) => Promise<void>
+  updateWidget: (widgetId: number, config: { buckets?: string[] }) => Promise<void>
   deleteWidget: (widgetId: number) => Promise<void>
 }
 
@@ -108,7 +108,6 @@ export function useWidgetManagement(): UseWidgetManagementReturn {
 
   const updateWidget = useCallback(async (
     widgetId: number,
-    title: string,
     config: { buckets?: string[] }
   ) => {
     try {
@@ -116,7 +115,6 @@ export function useWidgetManagement(): UseWidgetManagementReturn {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: title || null,
           config: Object.keys(config).length > 0 ? JSON.stringify(config) : null
         })
       })

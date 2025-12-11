@@ -24,17 +24,21 @@ export function TagsTab({
   const t = useTranslations('admin.tags')
   const tCommon = useTranslations('common')
 
+  // Resolve translation keys to actual labels
+  const label = t(currentTagTab.labelKey as 'allTagsLabel')
+  const description = t(currentTagTab.descriptionKey as 'allTagsDescription')
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <p className="text-sm text-theme-muted" data-testid={TEST_IDS.TAGS_TAB_DESCRIPTION}>{currentTagTab.description}</p>
+        <p className="text-sm text-theme-muted" data-testid={TEST_IDS.TAGS_TAB_DESCRIPTION}>{description}</p>
         {currentTagTab.namespace && (
           <button
             onClick={onAddTag}
             className="btn-primary"
             data-testid={TEST_IDS.TAGS_TAB_ADD_BUTTON}
           >
-            {tCommon('add')} {currentTagTab.label.replace(/s$/, '')}
+            {tCommon('add')} {label.replace(/s$/, '')}
           </button>
         )}
       </div>
@@ -43,7 +47,7 @@ export function TagsTab({
         <div className="text-center py-12 text-theme-muted" data-testid={TEST_IDS.TAGS_TAB_LOADING}>{tCommon('loading')}</div>
       ) : tags.length === 0 ? (
         <div className="card p-12 text-center" data-testid={TEST_IDS.TAGS_TAB_EMPTY}>
-          <p className="text-theme-muted mb-4">{t('noTags', { type: currentTagTab.label.toLowerCase() })}</p>
+          <p className="text-theme-muted mb-4">{t('noTags', { type: label.toLowerCase() })}</p>
         </div>
       ) : (
         <div className="card overflow-hidden">
