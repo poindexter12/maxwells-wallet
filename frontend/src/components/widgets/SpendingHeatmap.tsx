@@ -1,7 +1,6 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { format } from 'date-fns'
 import { useFormat } from '@/hooks/useFormat'
 import { Widget, HeatmapData, HeatmapDay, HeatmapMonth, HEATMAP_VARS } from './types'
 
@@ -21,7 +20,7 @@ export function SpendingHeatmap({
   selectedMonth
 }: SpendingHeatmapProps) {
   const t = useTranslations('dashboard.widgets')
-  const { formatCurrency } = useFormat()
+  const { formatCurrency, formatMonthDay, getShortWeekdays } = useFormat()
   const title = widget?.title || t('heatmap')
 
   if (!data || !data.days) {
@@ -95,7 +94,7 @@ export function SpendingHeatmap({
   }
 
   // Month view: show daily calendar
-  const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const weekdays = getShortWeekdays()
 
   // Organize days into weeks (7 columns)
   const days = data.days as HeatmapDay[]
@@ -150,7 +149,7 @@ export function SpendingHeatmap({
                     key={dayIndex}
                     className="w-10 h-10 rounded flex flex-col items-center justify-center text-xs"
                     style={{ backgroundColor: colorVar }}
-                    title={day && !isNaN(selectedYear) && !isNaN(selectedMonth) ? `${format(new Date(selectedYear, selectedMonth - 1, day.day), 'MMM d')}: ${formatCurrency(day.amount)} (${day.count} ${t('transactions').toLowerCase()})` : ''}
+                    title={day && !isNaN(selectedYear) && !isNaN(selectedMonth) ? `${formatMonthDay(new Date(selectedYear, selectedMonth - 1, day.day))}: ${formatCurrency(day.amount)} (${day.count} ${t('transactions').toLowerCase()})` : ''}
                   >
                     {day && (
                       <>

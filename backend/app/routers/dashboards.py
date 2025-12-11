@@ -350,9 +350,23 @@ async def clone_dashboard(
     all_dashboards = list(max_result.scalars().all())
     max_position = max(d.position for d in all_dashboards) if all_dashboards else -1
 
-    # Clone dashboard with new date_range_type
+    # Clone dashboard - use numeric suffix (language-neutral)
+    # Find existing names with same base to avoid duplicates
+    base_name = original.name
+    existing_names_result = await session.execute(
+        select(Dashboard.name).where(Dashboard.name.like(f"{base_name}%"))
+    )
+    existing_names = {r[0] for r in existing_names_result.all()}
+
+    # Try "Name 2", "Name 3", etc.
+    new_name = f"{base_name} 2"
+    counter = 2
+    while new_name in existing_names:
+        counter += 1
+        new_name = f"{base_name} {counter}"
+
     new_dashboard = Dashboard(
-        name=f"{original.name} (copy)",
+        name=new_name,
         description=original.description,
         date_range_type=original.date_range_type,
         is_default=False,

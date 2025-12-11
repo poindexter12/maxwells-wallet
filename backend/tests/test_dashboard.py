@@ -234,8 +234,8 @@ class TestDashboardWidgets:
         assert response.status_code == 201
         data = response.json()
 
-        # Should have "(copy)" in title
-        assert "(copy)" in data["title"]
+        # Duplicate should have no title (frontend uses widget_type for display)
+        assert data["title"] is None
         assert data["id"] != widget_id
         assert data["is_visible"] is True
 

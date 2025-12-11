@@ -164,3 +164,41 @@ export function formatDateRange(start: Date | string, end: Date | string, locale
     return `${startFormatted} - ${endFormatted}`
   }
 }
+
+/**
+ * Format a date as month and day only (e.g., "Dec 31")
+ * @param date - The date to format
+ * @param locale - The locale to use for formatting (default: 'en-US')
+ * @returns Formatted month-day string
+ */
+export function formatMonthDay(date: Date | string, locale?: string): string {
+  const intlLocale = getIntlLocale(locale)
+  const d = typeof date === 'string' ? new Date(date) : date
+  const formatted = new Intl.DateTimeFormat(intlLocale, {
+    month: 'short',
+    day: 'numeric',
+  }).format(d)
+
+  return applyPseudoStyling(formatted, locale)
+}
+
+/**
+ * Get short weekday names for the locale (e.g., ["Mon", "Tue", ...])
+ * Returns weekdays starting from Monday (index 0 = Monday)
+ * @param locale - The locale to use for formatting (default: 'en-US')
+ * @returns Array of 7 short weekday names starting from Monday
+ */
+export function getShortWeekdays(locale?: string): string[] {
+  const intlLocale = getIntlLocale(locale)
+  const formatter = new Intl.DateTimeFormat(intlLocale, { weekday: 'short' })
+
+  // Generate weekdays starting from Monday (Jan 6, 2025 is a Monday)
+  const weekdays: string[] = []
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(2025, 0, 6 + i) // Jan 6-12, 2025 = Mon-Sun
+    const formatted = formatter.format(date)
+    weekdays.push(locale === 'pseudo' ? `[${formatted}]` : formatted)
+  }
+
+  return weekdays
+}

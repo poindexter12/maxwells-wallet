@@ -47,7 +47,8 @@ export function WidgetRow({
   const hasAccountFilter = config.accounts && config.accounts.length > 0
   const hasMerchantFilter = config.merchants && config.merchants.length > 0
   const hasFilter = hasBucketFilter || hasAccountFilter || hasMerchantFilter
-  const isDuplicate = widget.title?.includes('(copy)') || hasFilter
+  // Widget is "customized" if it has any filters applied
+  const isCustomized = hasFilter
 
   return (
     <div
@@ -107,7 +108,7 @@ export function WidgetRow({
               </svg>
             </span>
           )}
-          {isDuplicate && (
+          {isCustomized && (
             <span className="text-xs px-2 py-0.5 bg-theme-subtle rounded text-theme-muted">
               {t('customLabel')}
             </span>
@@ -162,7 +163,7 @@ export function WidgetRow({
             </svg>
           </button>
         )}
-        {isDuplicate && (
+        {isCustomized && (
           <button
             onClick={() => onDelete(widget.id)}
             className="p-2 rounded text-theme-muted hover:text-red-500 hover:bg-[var(--color-bg-hover)]"

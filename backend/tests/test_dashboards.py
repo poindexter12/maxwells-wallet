@@ -313,7 +313,7 @@ class TestDashboardClone:
         assert response.status_code == 201
         clone = response.json()
 
-        assert clone["name"] == "Original (copy)"
+        assert clone["name"] == "Original 2"  # Numeric suffix is language-neutral
         assert clone["description"] == "Test description"
         assert clone["date_range_type"] == "ytd"
         assert clone["is_default"] is False  # Clone should not be default

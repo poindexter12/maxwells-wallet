@@ -9,6 +9,8 @@ import {
   formatDateMedium as baseDateMedium,
   formatDateTime as baseDateTime,
   formatDateRange as baseDateRange,
+  formatMonthDay as baseMonthDay,
+  getShortWeekdays as baseWeekdays,
 } from '@/lib/format'
 
 /**
@@ -76,6 +78,20 @@ export function useFormat() {
      */
     formatDateRange: (start: Date | string, end: Date | string) =>
       baseDateRange(start, end, locale),
+
+    /**
+     * Format a date as month and day only (e.g., "Dec 31")
+     * @param date - The date to format
+     * @returns Formatted month-day string
+     */
+    formatMonthDay: (date: Date | string) =>
+      baseMonthDay(date, locale),
+
+    /**
+     * Get short weekday names for the current locale (e.g., ["Mon", "Tue", ...])
+     * @returns Array of 7 short weekday names starting from Monday
+     */
+    getShortWeekdays: () => baseWeekdays(locale),
 
     /**
      * The current locale

@@ -266,11 +266,11 @@ async def duplicate_widget(
     all_widgets = list(max_result.scalars().all())
     max_position = max(w.position for w in all_widgets) if all_widgets else -1
 
-    # Create duplicate
+    # Create duplicate - don't set title so frontend uses translated widget type
     new_widget = DashboardWidget(
         dashboard_id=dashboard_id,
         widget_type=original.widget_type,
-        title=f"{original.title or original.widget_type} (copy)",
+        title=None,  # Let frontend use translated widget type name
         position=max_position + 1,
         width=original.width,
         is_visible=True,
