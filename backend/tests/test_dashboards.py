@@ -455,7 +455,6 @@ class TestDashboardWidgets:
         # Create widget
         widget_data = {
             "widget_type": "custom_chart",
-            "title": "My Chart",
             "position": 99,
             "is_visible": True
         }
@@ -465,7 +464,6 @@ class TestDashboardWidgets:
         widget = response.json()
 
         assert widget["widget_type"] == "custom_chart"
-        assert widget["title"] == "My Chart"
         assert widget["dashboard_id"] == dashboard_id
 
     @pytest.mark.asyncio

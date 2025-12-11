@@ -157,7 +157,7 @@ describe('useWidgetManagement', () => {
     const { result } = renderHook(() => useWidgetManagement())
 
     await act(async () => {
-      await result.current.updateWidget(1, 'New Title', { buckets: ['groceries'] })
+      await result.current.updateWidget(1, { buckets: ['groceries'] })
     })
 
     expect(fetch).toHaveBeenCalledWith('/api/v1/dashboard/widgets/1', expect.objectContaining({

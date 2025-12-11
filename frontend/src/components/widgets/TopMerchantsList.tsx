@@ -16,7 +16,7 @@ export function TopMerchantsList({ widget, data }: TopMerchantsListProps) {
 
   return (
     <div className="card p-6" data-testid={TEST_IDS.WIDGET_TOP_MERCHANTS}>
-      <h2 className="text-lg font-semibold text-theme mb-4" data-testid={TEST_IDS.WIDGET_TOP_MERCHANTS_TITLE}>{widget?.title || t('topMerchants')}</h2>
+      <h2 className="text-lg font-semibold text-theme mb-4" data-testid={TEST_IDS.WIDGET_TOP_MERCHANTS_TITLE}>{t('topMerchants')}</h2>
       {data && data.merchants.length > 0 ? (
         <div className="space-y-3" data-testid={TEST_IDS.WIDGET_TOP_MERCHANTS_LIST}>
           {data.merchants.slice(0, 10).map((merchant, index) => (

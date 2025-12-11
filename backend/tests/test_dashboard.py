@@ -58,7 +58,6 @@ class TestDashboardWidgets:
         """Create a new dashboard widget"""
         widget_data = {
             "widget_type": "custom_chart",
-            "title": "My Custom Chart",
             "position": 10,
             "width": "full",
             "is_visible": True
@@ -69,7 +68,6 @@ class TestDashboardWidgets:
         data = response.json()
 
         assert data["widget_type"] == "custom_chart"
-        assert data["title"] == "My Custom Chart"
         assert data["position"] == 10
         assert data["width"] == "full"
 
@@ -81,7 +79,6 @@ class TestDashboardWidgets:
         widget_id = list_response.json()[0]["id"]
 
         update_data = {
-            "title": "Updated Title",
             "width": "third"
         }
 
@@ -89,13 +86,12 @@ class TestDashboardWidgets:
         assert response.status_code == 200
         data = response.json()
 
-        assert data["title"] == "Updated Title"
         assert data["width"] == "third"
 
     @pytest.mark.asyncio
     async def test_update_nonexistent_widget(self, client: AsyncClient):
         """Update non-existent widget returns 404"""
-        response = await client.patch("/api/v1/dashboard/widgets/99999", json={"title": "test"})
+        response = await client.patch("/api/v1/dashboard/widgets/99999", json={"is_visible": False})
         assert response.status_code == 404
 
     @pytest.mark.asyncio
@@ -187,7 +183,7 @@ class TestDashboardWidgets:
         # First make some changes
         list_response = await client.get("/api/v1/dashboard/widgets")
         widget_id = list_response.json()[0]["id"]
-        await client.patch(f"/api/v1/dashboard/widgets/{widget_id}", json={"title": "Modified"})
+        await client.patch(f"/api/v1/dashboard/widgets/{widget_id}", json={"is_visible": False})
 
         # Reset
         response = await client.post("/api/v1/dashboard/reset")
@@ -196,10 +192,9 @@ class TestDashboardWidgets:
 
         # Should have default widgets
         assert len(widgets) >= 6
-        # Title should be None (frontend uses i18n translations)
+        # Verify summary widget exists (title field no longer exists - translated on frontend)
         summary_widget = next((w for w in widgets if w["widget_type"] == "summary"), None)
         assert summary_widget is not None
-        assert summary_widget["title"] is None
 
     @pytest.mark.asyncio
     async def test_widget_config_json(self, client: AsyncClient):
@@ -227,15 +222,13 @@ class TestDashboardWidgets:
         # Get a widget to duplicate
         list_response = await client.get("/api/v1/dashboard/widgets")
         widget_id = list_response.json()[0]["id"]
-        original_title = list_response.json()[0]["title"]
 
         # Duplicate it
         response = await client.post(f"/api/v1/dashboard/widgets/{widget_id}/duplicate")
         assert response.status_code == 201
         data = response.json()
 
-        # Duplicate should have no title (frontend uses widget_type for display)
-        assert data["title"] is None
+        # Widget names come from i18n translations based on widget_type
         assert data["id"] != widget_id
         assert data["is_visible"] is True
 

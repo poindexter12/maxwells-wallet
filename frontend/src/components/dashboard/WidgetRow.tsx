@@ -100,7 +100,7 @@ export function WidgetRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <h3 className="font-medium text-theme">
-            {widget.title || widgetName}
+            {widgetName}
           </h3>
           {info.supportsFilter && (
             <span className="text-blue-500" title={tDash('supportsBucketFiltering')}>

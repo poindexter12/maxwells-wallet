@@ -16,7 +16,7 @@ export function BucketPieChart({ widget, bucketData }: BucketPieChartProps) {
 
   return (
     <div className="card p-6">
-      <h2 className="text-lg font-semibold text-theme mb-4">{widget?.title || t('bucketPie')}</h2>
+      <h2 className="text-lg font-semibold text-theme mb-4">{t('bucketPie')}</h2>
       {bucketData.length > 0 ? (
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>

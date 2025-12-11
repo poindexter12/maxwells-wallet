@@ -18,7 +18,7 @@ export function TrendsChart({ widget, data, isMonthlyScale: _isMonthlyScale }: T
   if (!data || !data.data || data.data.length === 0) return null
 
   const isWeekly = data.group_by === 'week'
-  const title = widget?.title || t('trends')
+  const title = t('trends')
 
   const formatPeriodLabel = (period: string) => {
     if (isWeekly) {

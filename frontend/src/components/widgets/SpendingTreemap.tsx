@@ -30,7 +30,7 @@ function truncateText(text: string, maxWidth: number, fontSize: number): string 
 
 export function SpendingTreemap({ widget, data }: SpendingTreemapProps) {
   const t = useTranslations('dashboard.widgets')
-  const title = widget?.title || t('treemap')
+  const title = t('treemap')
 
   if (!data || !data.data || data.data.children.length === 0) {
     return (

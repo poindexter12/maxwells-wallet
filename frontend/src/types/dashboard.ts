@@ -3,7 +3,6 @@
 export interface Widget {
   id: number
   widget_type: string
-  title: string | null
   position: number
   width: string
   is_visible: boolean

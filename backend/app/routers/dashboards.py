@@ -129,17 +129,17 @@ def dashboard_to_response(dashboard: Dashboard) -> DashboardResponse:
 router = APIRouter(prefix="/api/v1/dashboards", tags=["dashboards"])
 
 # Default widget configuration - used to initialize new dashboards
-# title is None to use frontend i18n translations
+# Widget names are translated on frontend based on widget_type
 DEFAULT_WIDGETS = [
-    {"widget_type": "summary", "title": None, "position": 0, "width": "full", "is_visible": True},
-    {"widget_type": "velocity", "title": None, "position": 1, "width": "half", "is_visible": True},
-    {"widget_type": "anomalies", "title": None, "position": 2, "width": "half", "is_visible": True},
-    {"widget_type": "bucket_pie", "title": None, "position": 3, "width": "half", "is_visible": True},
-    {"widget_type": "top_merchants", "title": None, "position": 4, "width": "half", "is_visible": True},
-    {"widget_type": "trends", "title": None, "position": 5, "width": "full", "is_visible": True},
-    {"widget_type": "sankey", "title": None, "position": 6, "width": "full", "is_visible": False},
-    {"widget_type": "treemap", "title": None, "position": 7, "width": "full", "is_visible": False},
-    {"widget_type": "heatmap", "title": None, "position": 8, "width": "full", "is_visible": False},
+    {"widget_type": "summary", "position": 0, "width": "full", "is_visible": True},
+    {"widget_type": "velocity", "position": 1, "width": "half", "is_visible": True},
+    {"widget_type": "anomalies", "position": 2, "width": "half", "is_visible": True},
+    {"widget_type": "bucket_pie", "position": 3, "width": "half", "is_visible": True},
+    {"widget_type": "top_merchants", "position": 4, "width": "half", "is_visible": True},
+    {"widget_type": "trends", "position": 5, "width": "full", "is_visible": True},
+    {"widget_type": "sankey", "position": 6, "width": "full", "is_visible": False},
+    {"widget_type": "treemap", "position": 7, "width": "full", "is_visible": False},
+    {"widget_type": "heatmap", "position": 8, "width": "full", "is_visible": False},
 ]
 
 
@@ -237,15 +237,14 @@ async def create_dashboard(
             await session.execute(
                 text("""
                     INSERT INTO dashboard_widgets
-                    (created_at, updated_at, dashboard_id, widget_type, title, position, width, is_visible, config)
-                    VALUES (:created_at, :updated_at, :dashboard_id, :widget_type, :title, :position, :width, :is_visible, :config)
+                    (created_at, updated_at, dashboard_id, widget_type, position, width, is_visible, config)
+                    VALUES (:created_at, :updated_at, :dashboard_id, :widget_type, :position, :width, :is_visible, :config)
                 """),
                 {
                     "created_at": now,
                     "updated_at": now,
                     "dashboard_id": db_dashboard.id,
                     "widget_type": widget_data["widget_type"],
-                    "title": widget_data["title"],
                     "position": widget_data["position"],
                     "width": widget_data["width"],
                     "is_visible": widget_data["is_visible"],
@@ -385,7 +384,6 @@ async def clone_dashboard(
         new_widget = DashboardWidget(
             dashboard_id=new_dashboard.id,
             widget_type=original_widget.widget_type,
-            title=original_widget.title,
             position=original_widget.position,
             width=original_widget.width,
             is_visible=original_widget.is_visible,

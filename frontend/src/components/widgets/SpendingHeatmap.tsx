@@ -21,7 +21,7 @@ export function SpendingHeatmap({
 }: SpendingHeatmapProps) {
   const t = useTranslations('dashboard.widgets')
   const { formatCurrency, formatMonthDay, getShortWeekdays } = useFormat()
-  const title = widget?.title || t('heatmap')
+  const title = t('heatmap')
 
   if (!data || !data.days) {
     return (

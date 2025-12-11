@@ -350,13 +350,13 @@ async def seed_dashboards(session: AsyncSession):
     session.add(default_dashboard)
     await session.flush()
 
-    # Widgets for default dashboard (title=None uses frontend i18n)
+    # Widgets for default dashboard (names translated on frontend based on widget_type)
     default_widgets = [
-        DashboardWidget(dashboard_id=default_dashboard.id, widget_type="summary", title=None, position=0, width="full", is_visible=True),
-        DashboardWidget(dashboard_id=default_dashboard.id, widget_type="velocity", title=None, position=1, width="half", is_visible=True),
-        DashboardWidget(dashboard_id=default_dashboard.id, widget_type="bucket_pie", title=None, position=2, width="half", is_visible=True),
-        DashboardWidget(dashboard_id=default_dashboard.id, widget_type="top_merchants", title=None, position=3, width="half", is_visible=True),
-        DashboardWidget(dashboard_id=default_dashboard.id, widget_type="trends", title=None, position=4, width="full", is_visible=True),
+        DashboardWidget(dashboard_id=default_dashboard.id, widget_type="summary", position=0, width="full", is_visible=True),
+        DashboardWidget(dashboard_id=default_dashboard.id, widget_type="velocity", position=1, width="half", is_visible=True),
+        DashboardWidget(dashboard_id=default_dashboard.id, widget_type="bucket_pie", position=2, width="half", is_visible=True),
+        DashboardWidget(dashboard_id=default_dashboard.id, widget_type="top_merchants", position=3, width="half", is_visible=True),
+        DashboardWidget(dashboard_id=default_dashboard.id, widget_type="trends", position=4, width="full", is_visible=True),
     ]
     for widget in default_widgets:
         session.add(widget)
@@ -372,12 +372,12 @@ async def seed_dashboards(session: AsyncSession):
     session.add(ytd_dashboard)
     await session.flush()
 
-    # Widgets for YTD dashboard (title=None uses frontend i18n)
+    # Widgets for YTD dashboard (names translated on frontend based on widget_type)
     ytd_widgets = [
-        DashboardWidget(dashboard_id=ytd_dashboard.id, widget_type="summary", title=None, position=0, width="full", is_visible=True),
-        DashboardWidget(dashboard_id=ytd_dashboard.id, widget_type="trends", title=None, position=1, width="full", is_visible=True),
-        DashboardWidget(dashboard_id=ytd_dashboard.id, widget_type="bucket_pie", title=None, position=2, width="half", is_visible=True),
-        DashboardWidget(dashboard_id=ytd_dashboard.id, widget_type="top_merchants", title=None, position=3, width="half", is_visible=True),
+        DashboardWidget(dashboard_id=ytd_dashboard.id, widget_type="summary", position=0, width="full", is_visible=True),
+        DashboardWidget(dashboard_id=ytd_dashboard.id, widget_type="trends", position=1, width="full", is_visible=True),
+        DashboardWidget(dashboard_id=ytd_dashboard.id, widget_type="bucket_pie", position=2, width="half", is_visible=True),
+        DashboardWidget(dashboard_id=ytd_dashboard.id, widget_type="top_merchants", position=3, width="half", is_visible=True),
     ]
     for widget in ytd_widgets:
         session.add(widget)

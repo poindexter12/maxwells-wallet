@@ -5,8 +5,6 @@ import { Widget, Bucket, FilterOption, WIDGET_INFO } from '@/types/dashboard'
 
 interface WidgetEditModalProps {
   widget: Widget
-  editTitle: string
-  setEditTitle: (title: string) => void
   editBuckets: string[]
   setEditBuckets: (buckets: string[]) => void
   editAccounts: string[]
@@ -23,8 +21,6 @@ interface WidgetEditModalProps {
 
 export function WidgetEditModal({
   widget,
-  editTitle,
-  setEditTitle,
   editBuckets,
   setEditBuckets,
   editAccounts,
@@ -54,23 +50,6 @@ export function WidgetEditModal({
         </h3>
 
         <div className="space-y-4">
-          {/* Title */}
-          <div>
-            <label className="block text-sm font-medium text-theme mb-1">
-              Custom Title
-            </label>
-            <input
-              type="text"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              placeholder={widgetName}
-              className="w-full px-3 py-2 border border-theme rounded-md bg-theme text-theme"
-            />
-            <p className="text-xs text-theme-muted mt-1">
-              Leave empty to use the default title
-            </p>
-          </div>
-
           {/* Filter Sections - only show for filterable widgets */}
           {info?.supportsFilter && (
             <div className="space-y-4">
