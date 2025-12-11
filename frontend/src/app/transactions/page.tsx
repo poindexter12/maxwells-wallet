@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { PageHelp } from '@/components/PageHelp'
 import { VirtualTransactionList } from '@/components/transactions'
 import { TEST_IDS } from '@/test-ids'
+import { useFormat } from '@/hooks/useFormat'
 
 interface Tag {
   id: number
@@ -60,6 +61,7 @@ function TransactionsContent() {
   const t = useTranslations('transactions')
   const tCommon = useTranslations('common')
   const tFields = useTranslations('fields')
+  const { formatCurrency } = useFormat()
 
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [totalCount, setTotalCount] = useState<number>(0)
@@ -746,9 +748,9 @@ function TransactionsContent() {
                 setShowAdvancedFilters(true)
               }}
               className="px-3 py-1.5 text-xs rounded-full border border-orange-300 text-orange-700 bg-orange-50 hover:bg-orange-100 transition-colors dark:border-orange-700 dark:text-orange-300 dark:bg-orange-900/30 dark:hover:bg-orange-900/50"
-              title={largeThreshold ? `Large transactions this month (over $${largeThreshold} - 2σ above your average)` : 'Large transactions this month'}
+              title={largeThreshold ? t('filters.largeTitleWithThreshold', { threshold: formatCurrency(largeThreshold) }) : t('filters.largeTitle')}
             >
-              ⚠️ Large{largeThreshold ? ` ($${largeThreshold}+)` : ''}
+              ⚠️ {largeThreshold ? t('filters.largeDynamic', { threshold: formatCurrency(largeThreshold) }) : t('filters.large')}
             </button>
             <button
               data-testid={TEST_IDS.QUICK_FILTER_TOP_SPENDING}

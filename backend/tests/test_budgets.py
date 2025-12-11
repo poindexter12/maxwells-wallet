@@ -153,6 +153,8 @@ class TestBudgets:
         assert groceries_budget is not None
         assert "budget_amount" in groceries_budget
         assert "spent_amount" in groceries_budget
+        assert "actual_amount" in groceries_budget  # Frontend expects this field
+        assert groceries_budget["actual_amount"] == groceries_budget["spent_amount"]  # Should match
         assert "remaining" in groceries_budget
         assert "percentage_used" in groceries_budget
         assert "status" in groceries_budget

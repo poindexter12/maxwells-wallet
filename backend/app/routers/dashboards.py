@@ -129,16 +129,17 @@ def dashboard_to_response(dashboard: Dashboard) -> DashboardResponse:
 router = APIRouter(prefix="/api/v1/dashboards", tags=["dashboards"])
 
 # Default widget configuration - used to initialize new dashboards
+# Widget names are translated on frontend based on widget_type
 DEFAULT_WIDGETS = [
-    {"widget_type": "summary", "title": "Summary", "position": 0, "width": "full", "is_visible": True},
-    {"widget_type": "velocity", "title": "Spending Velocity", "position": 1, "width": "half", "is_visible": True},
-    {"widget_type": "anomalies", "title": "Anomalies", "position": 2, "width": "half", "is_visible": True},
-    {"widget_type": "bucket_pie", "title": "Spending by Bucket", "position": 3, "width": "half", "is_visible": True},
-    {"widget_type": "top_merchants", "title": "Top Merchants", "position": 4, "width": "half", "is_visible": True},
-    {"widget_type": "trends", "title": "Trends", "position": 5, "width": "full", "is_visible": True},
-    {"widget_type": "sankey", "title": "Money Flow", "position": 6, "width": "full", "is_visible": False},
-    {"widget_type": "treemap", "title": "Spending Breakdown", "position": 7, "width": "full", "is_visible": False},
-    {"widget_type": "heatmap", "title": "Spending Calendar", "position": 8, "width": "full", "is_visible": False},
+    {"widget_type": "summary", "position": 0, "width": "full", "is_visible": True},
+    {"widget_type": "velocity", "position": 1, "width": "half", "is_visible": True},
+    {"widget_type": "anomalies", "position": 2, "width": "half", "is_visible": True},
+    {"widget_type": "bucket_pie", "position": 3, "width": "half", "is_visible": True},
+    {"widget_type": "top_merchants", "position": 4, "width": "half", "is_visible": True},
+    {"widget_type": "trends", "position": 5, "width": "full", "is_visible": True},
+    {"widget_type": "sankey", "position": 6, "width": "full", "is_visible": False},
+    {"widget_type": "treemap", "position": 7, "width": "full", "is_visible": False},
+    {"widget_type": "heatmap", "position": 8, "width": "full", "is_visible": False},
 ]
 
 
@@ -236,15 +237,14 @@ async def create_dashboard(
             await session.execute(
                 text("""
                     INSERT INTO dashboard_widgets
-                    (created_at, updated_at, dashboard_id, widget_type, title, position, width, is_visible, config)
-                    VALUES (:created_at, :updated_at, :dashboard_id, :widget_type, :title, :position, :width, :is_visible, :config)
+                    (created_at, updated_at, dashboard_id, widget_type, position, width, is_visible, config)
+                    VALUES (:created_at, :updated_at, :dashboard_id, :widget_type, :position, :width, :is_visible, :config)
                 """),
                 {
                     "created_at": now,
                     "updated_at": now,
                     "dashboard_id": db_dashboard.id,
                     "widget_type": widget_data["widget_type"],
-                    "title": widget_data["title"],
                     "position": widget_data["position"],
                     "width": widget_data["width"],
                     "is_visible": widget_data["is_visible"],
@@ -350,9 +350,23 @@ async def clone_dashboard(
     all_dashboards = list(max_result.scalars().all())
     max_position = max(d.position for d in all_dashboards) if all_dashboards else -1
 
-    # Clone dashboard with new date_range_type
+    # Clone dashboard - use numeric suffix (language-neutral)
+    # Find existing names with same base to avoid duplicates
+    base_name = original.name
+    existing_names_result = await session.execute(
+        select(Dashboard.name).where(Dashboard.name.like(f"{base_name}%"))
+    )
+    existing_names = {r[0] for r in existing_names_result.all()}
+
+    # Try "Name 2", "Name 3", etc.
+    new_name = f"{base_name} 2"
+    counter = 2
+    while new_name in existing_names:
+        counter += 1
+        new_name = f"{base_name} {counter}"
+
     new_dashboard = Dashboard(
-        name=f"{original.name} (copy)",
+        name=new_name,
         description=original.description,
         date_range_type=original.date_range_type,
         is_default=False,
@@ -370,7 +384,6 @@ async def clone_dashboard(
         new_widget = DashboardWidget(
             dashboard_id=new_dashboard.id,
             widget_type=original_widget.widget_type,
-            title=original_widget.title,
             position=original_widget.position,
             width=original_widget.width,
             is_visible=original_widget.is_visible,

@@ -734,7 +734,7 @@ wheels = [
 
 [[package]]
 name = "maxwells-wallet-backend"
-version = "0.9.0b0"
+version = "0.9.0b2"
 source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },

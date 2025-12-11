@@ -1,9 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { format } from 'date-fns'
-import { formatCurrency } from '@/lib/format'
 import { useTranslations } from 'next-intl'
+import { useFormat } from '@/hooks/useFormat'
 
 interface TransferSuggestion {
   id: number
@@ -25,6 +24,7 @@ export default function TransfersPanel() {
   const t = useTranslations('tools.transfers')
   const tCommon = useTranslations('common')
   const tFields = useTranslations('fields')
+  const { formatCurrency, formatDateMedium } = useFormat()
   const [suggestions, setSuggestions] = useState<TransferSuggestion[]>([])
   const [stats, setStats] = useState<TransferStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -181,7 +181,7 @@ export default function TransfersPanel() {
                   onClick={(e) => e.stopPropagation()}
                   className="rounded"
                 />
-                <span className="w-24 text-sm text-theme-muted">{format(new Date(suggestion.date), 'MMM d, yyyy')}</span>
+                <span className="w-24 text-sm text-theme-muted">{formatDateMedium(suggestion.date)}</span>
                 <span className={`w-28 text-right font-mono text-sm ${suggestion.amount < 0 ? 'text-negative' : 'text-positive'}`}>
                   {formatCurrency(suggestion.amount)}
                 </span>

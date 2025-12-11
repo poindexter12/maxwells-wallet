@@ -533,7 +533,6 @@ class DashboardWidget(BaseModel, table=True):
     dashboard: Optional["Dashboard"] = Relationship(back_populates="widgets")
 
     widget_type: str = Field(index=True)  # "summary", "velocity", "anomalies", "bucket_pie", "top_merchants", "trends"
-    title: Optional[str] = None  # Custom title override
     position: int = Field(default=0)  # Order on dashboard
     width: str = Field(default="half")  # "full", "half", "third"
     is_visible: bool = Field(default=True)
@@ -543,7 +542,6 @@ class DashboardWidget(BaseModel, table=True):
 class DashboardWidgetCreate(SQLModel):
     dashboard_id: Optional[int] = None  # If not provided, uses default dashboard
     widget_type: str
-    title: Optional[str] = None
     position: int = 0
     width: str = "half"
     is_visible: bool = True
@@ -551,7 +549,6 @@ class DashboardWidgetCreate(SQLModel):
 
 
 class DashboardWidgetUpdate(SQLModel):
-    title: Optional[str] = None
     position: Optional[int] = None
     width: Optional[str] = None
     is_visible: Optional[bool] = None

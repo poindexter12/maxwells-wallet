@@ -4,9 +4,9 @@ test.describe('Import Flow @e2e', () => {
   test('shows file upload area', async ({ page }) => {
     await page.goto('/import');
 
-    // Should have file input or drop zone
+    // Should have file input or drop zone text (supports i18n)
     const hasFileInput = await page.locator('input[type="file"]').count() > 0;
-    const hasDropZone = await page.getByText(/drag.*drop|upload|select.*file/i).count() > 0;
+    const hasDropZone = await page.getByText(/drag.*drop|upload|select.*file|csv|qfx|ofx|qif/i).count() > 0;
 
     expect(hasFileInput || hasDropZone).toBeTruthy();
   });

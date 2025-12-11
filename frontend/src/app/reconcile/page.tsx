@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { format } from 'date-fns'
-import { formatCurrency } from '@/lib/format'
+import { useFormat } from '@/hooks/useFormat'
 import { PageHelp } from '@/components/PageHelp'
 
 interface Tag {
@@ -31,6 +30,7 @@ interface Transaction {
 }
 
 export default function ReconcilePage() {
+  const { formatCurrency, formatDateShort } = useFormat()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [bucketTags, setBucketTags] = useState<Tag[]>([])
   const [accountTags, setAccountTags] = useState<Tag[]>([])
@@ -295,7 +295,7 @@ export default function ReconcilePage() {
                   className="rounded"
                 />
                 <span className="text-sm text-gray-500 whitespace-nowrap w-24">
-                  {format(new Date(txn.date), 'MM/dd/yyyy')}
+                  {formatDateShort(txn.date)}
                 </span>
                 <span className="font-medium text-gray-900 truncate flex-1">
                   {txn.merchant || 'Unknown'}

@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { formatCurrency } from '@/lib/format'
+import { useFormat } from '@/hooks/useFormat'
 import { Widget, TrendsData } from './types'
 
 interface TrendsChartProps {
@@ -11,13 +11,14 @@ interface TrendsChartProps {
   isMonthlyScale: boolean
 }
 
-export function TrendsChart({ widget, data, isMonthlyScale: _isMonthlyScale }: TrendsChartProps) {
+export function TrendsChart({ widget: _widget, data, isMonthlyScale: _isMonthlyScale }: TrendsChartProps) {
   const t = useTranslations('dashboard.widgets')
+  const { formatCurrency, formatCompactCurrency } = useFormat()
 
   if (!data || !data.data || data.data.length === 0) return null
 
   const isWeekly = data.group_by === 'week'
-  const title = widget?.title || t('trends')
+  const title = t('trends')
 
   const formatPeriodLabel = (period: string) => {
     if (isWeekly) {
@@ -36,7 +37,7 @@ export function TrendsChart({ widget, data, isMonthlyScale: _isMonthlyScale }: T
         <LineChart data={data.data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="period" tickFormatter={formatPeriodLabel} />
-          <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+          <YAxis tickFormatter={(value) => formatCompactCurrency(value)} />
           <Tooltip
             formatter={(value: number) => formatCurrency(value)}
             labelFormatter={(label) => isWeekly ? `Week ${label.split('-')[1]?.replace('W', '') || label}` : formatPeriodLabel(label)}

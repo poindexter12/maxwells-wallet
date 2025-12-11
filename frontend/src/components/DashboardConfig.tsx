@@ -7,7 +7,6 @@ import Link from 'next/link'
 interface Widget {
   id: number
   widget_type: string
-  title: string | null
   position: number
   width: string
   is_visible: boolean
@@ -137,7 +136,7 @@ export function DashboardConfig({
                     </span>
                     <div className="flex-1 min-w-0">
                       <span className="text-sm text-theme truncate block">
-                        {widget.title || (WIDGET_TYPE_TO_KEY[widget.widget_type] ? tWidgets(WIDGET_TYPE_TO_KEY[widget.widget_type]) : widget.widget_type)}
+                        {WIDGET_TYPE_TO_KEY[widget.widget_type] ? tWidgets(WIDGET_TYPE_TO_KEY[widget.widget_type]) : widget.widget_type}
                       </span>
                       {hasFilter && (
                         <span className="text-xs text-blue-500">{t('filter')}</span>

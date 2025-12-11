@@ -59,6 +59,7 @@ function getStatusBgColor(status: string): string {
 }
 
 export function HealthTab() {
+  const t = useTranslations('admin.health')
   const tCommon = useTranslations('common')
 
   const [stats, setStats] = useState<HealthStats | null>(null)
@@ -99,7 +100,9 @@ export function HealthTab() {
       <div className="card p-6 text-center">
         <p className="text-negative mb-4">{error}</p>
         <p className="text-sm text-theme-muted">
-          Observability may be disabled. Set <code className="bg-theme-elevated px-1 rounded">OTEL_ENABLED=true</code> to enable.
+          {t.rich('observabilityDisabled', {
+            code: (chunks) => <code className="bg-theme-elevated px-1 rounded">{chunks}</code>
+          })}
         </p>
       </div>
     )
@@ -118,12 +121,12 @@ export function HealthTab() {
             <div className="flex items-center gap-3">
               <div className={`w-3 h-3 rounded-full ${getStatusBgColor(stats.status)} animate-pulse`}></div>
               <span className={`text-lg font-semibold capitalize ${getStatusColor(stats.status)}`}>
-                System {stats.status}
+                {t('systemStatus', { status: stats.status })}
               </span>
             </div>
             {lastUpdated && (
               <span className="text-xs text-theme-muted">
-                Updated {lastUpdated.toLocaleTimeString()}
+                {t('updated', { time: lastUpdated.toLocaleTimeString() })}
               </span>
             )}
           </div>
@@ -134,19 +137,19 @@ export function HealthTab() {
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="card p-4">
-            <p className="text-sm text-theme-muted">Uptime</p>
+            <p className="text-sm text-theme-muted">{t('uptime')}</p>
             <p className="text-2xl font-bold text-theme">{formatUptime(stats.uptime_seconds)}</p>
           </div>
           <div className="card p-4">
-            <p className="text-sm text-theme-muted">Total Requests</p>
+            <p className="text-sm text-theme-muted">{t('totalRequests')}</p>
             <p className="text-2xl font-bold text-theme">{stats.total_requests.toLocaleString()}</p>
           </div>
           <div className="card p-4">
-            <p className="text-sm text-theme-muted">Active Requests</p>
+            <p className="text-sm text-theme-muted">{t('activeRequests')}</p>
             <p className="text-2xl font-bold text-theme">{stats.active_requests}</p>
           </div>
           <div className="card p-4">
-            <p className="text-sm text-theme-muted">Slow Queries</p>
+            <p className="text-sm text-theme-muted">{t('slowQueries')}</p>
             <p className={`text-2xl font-bold ${stats.slow_query_count > 0 ? 'text-negative' : 'text-positive'}`}>
               {stats.slow_query_count}
             </p>
@@ -157,11 +160,11 @@ export function HealthTab() {
       {/* Latency Percentiles */}
       {stats && (
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-theme mb-4">Request Latency</h2>
+          <h2 className="text-lg font-semibold text-theme mb-4">{t('requestLatency')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <div className="flex justify-between mb-1">
-                <span className="text-sm text-theme-muted">P50 (median)</span>
+                <span className="text-sm text-theme-muted">{t('p50Median')}</span>
                 <span className="text-sm font-medium text-theme">{formatLatency(stats.request_latency.p50)}</span>
               </div>
               <div className="w-full bg-theme-elevated rounded-full h-2">
@@ -173,7 +176,7 @@ export function HealthTab() {
             </div>
             <div>
               <div className="flex justify-between mb-1">
-                <span className="text-sm text-theme-muted">P95</span>
+                <span className="text-sm text-theme-muted">{t('p95')}</span>
                 <span className="text-sm font-medium text-theme">{formatLatency(stats.request_latency.p95)}</span>
               </div>
               <div className="w-full bg-theme-elevated rounded-full h-2">
@@ -185,7 +188,7 @@ export function HealthTab() {
             </div>
             <div>
               <div className="flex justify-between mb-1">
-                <span className="text-sm text-theme-muted">P99</span>
+                <span className="text-sm text-theme-muted">{t('p99')}</span>
                 <span className="text-sm font-medium text-theme">{formatLatency(stats.request_latency.p99)}</span>
               </div>
               <div className="w-full bg-theme-elevated rounded-full h-2">
@@ -204,11 +207,11 @@ export function HealthTab() {
       {/* Error Rate */}
       {stats && (
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-theme mb-4">Error Rate</h2>
+          <h2 className="text-lg font-semibold text-theme mb-4">{t('errorRate')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-theme-muted">Last Hour</span>
+                <span className="text-sm text-theme-muted">{t('lastHour')}</span>
                 <span className={`text-xl font-bold ${
                   stats.error_rate.last_hour > 5 ? 'text-negative' :
                   stats.error_rate.last_hour > 1 ? 'text-[var(--color-warning)]' :
@@ -230,7 +233,7 @@ export function HealthTab() {
             </div>
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-theme-muted">Last 24 Hours</span>
+                <span className="text-sm text-theme-muted">{t('last24Hours')}</span>
                 <span className={`text-xl font-bold ${
                   stats.error_rate.last_24h > 5 ? 'text-negative' :
                   stats.error_rate.last_24h > 1 ? 'text-[var(--color-warning)]' :
@@ -256,17 +259,17 @@ export function HealthTab() {
 
       {/* Info Section */}
       <div className="card p-6 bg-theme-elevated">
-        <h2 className="text-lg font-semibold text-theme mb-4">Observability Info</h2>
+        <h2 className="text-lg font-semibold text-theme mb-4">{t('observabilityInfo')}</h2>
         <div className="text-sm text-theme-muted space-y-2">
           <p>
-            <strong>Metrics Endpoint:</strong>{' '}
-            <code className="bg-theme px-1 rounded">/metrics</code> (Prometheus format)
+            <strong>{t('metricsEndpoint')}:</strong>{' '}
+            <code className="bg-theme px-1 rounded">/metrics</code> {t('metricsFormat')}
           </p>
           <p>
-            <strong>Slow Query Threshold:</strong> Queries taking &gt;100ms are logged to the application logs.
+            <strong>{t('slowQueryThreshold')}:</strong> {t('slowQueryDescription')}
           </p>
           <p>
-            <strong>Auto-refresh:</strong> This dashboard updates every 10 seconds.
+            <strong>{t('autoRefresh')}:</strong> {t('autoRefreshDescription')}
           </p>
         </div>
       </div>

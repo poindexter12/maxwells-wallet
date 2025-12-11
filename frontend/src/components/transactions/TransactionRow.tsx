@@ -1,9 +1,8 @@
 'use client'
 
 import { memo, forwardRef } from 'react'
-import { format } from 'date-fns'
 import { useTranslations } from 'next-intl'
-import { formatCurrency } from '@/lib/format'
+import { useFormat } from '@/hooks/useFormat'
 import { SplitTransaction } from '@/components/SplitTransaction'
 import { TransactionRowProps, getBucketBorderColor } from './types'
 
@@ -47,6 +46,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
   const t = useTranslations('transactions')
   const tCommon = useTranslations('common')
   const tFields = useTranslations('fields')
+  const { formatCurrency, formatDateShort } = useFormat()
   const nonBucketAccountTags = txn.tags?.filter(t => t.namespace !== 'bucket' && t.namespace !== 'account') || []
 
   // Convert snake_case status to camelCase for translation lookup
@@ -80,7 +80,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
               className="w-4 h-4 rounded mt-0.5 flex-shrink-0"
             />
             <span className="text-xs text-theme-muted pt-0.5 w-20 flex-shrink-0">
-              {format(new Date(txn.date), 'MM/dd/yyyy')}
+              {formatDateShort(txn.date)}
             </span>
             <p className="font-medium text-theme truncate min-w-0">
               {txn.merchant || t('merchant')}
@@ -247,7 +247,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
                   {txn.merchant || t('merchant')}
                 </p>
                 <p className="text-xs text-theme-muted">
-                  {format(new Date(txn.date), 'MM/dd/yyyy')}
+                  {formatDateShort(txn.date)}
                 </p>
               </div>
               <div className="flex items-center gap-1">

@@ -1,8 +1,7 @@
 'use client'
 
-import { format } from 'date-fns'
 import { useTranslations } from 'next-intl'
-import { formatCurrency } from '@/lib/format'
+import { useFormat } from '@/hooks/useFormat'
 import { TEST_IDS } from '@/test-ids'
 import { AccountTag, SavedCustomFormat, FORMAT_NAMES, SingleFilePreviewResponse, PreviewTransaction } from '@/types/import'
 
@@ -46,6 +45,7 @@ export function SingleFileImport({
   const t = useTranslations('import')
   const tCommon = useTranslations('common')
   const tFields = useTranslations('fields')
+  const { formatCurrency, formatDateShort } = useFormat()
 
   return (
     <>
@@ -223,7 +223,7 @@ export function SingleFileImport({
               <tbody className="bg-white divide-y divide-gray-200">
                 {preview.transactions.slice(0, 10).map((txn: PreviewTransaction, idx: number) => (
                   <tr key={idx}>
-                    <td className="px-4 py-2 text-sm">{format(new Date(txn.date), 'MM/dd/yyyy')}</td>
+                    <td className="px-4 py-2 text-sm">{formatDateShort(txn.date)}</td>
                     <td className="px-4 py-2 text-sm">{txn.merchant}</td>
                     <td className="px-4 py-2 text-sm">
                       <span className="px-2 py-1 bg-gray-100 rounded text-xs">{txn.bucket || t('noBucket')}</span>

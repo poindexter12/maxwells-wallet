@@ -1,10 +1,9 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { format } from 'date-fns'
-import { formatCurrency } from '@/lib/format'
-import { CustomFormatMapper, CustomConfig } from '@/components/CustomFormatMapper'
 import { useTranslations } from 'next-intl'
+import { useFormat } from '@/hooks/useFormat'
+import { CustomFormatMapper, CustomConfig } from '@/components/CustomFormatMapper'
 
 type ConfigWithDescription = CustomConfig & { description?: string }
 
@@ -31,6 +30,7 @@ export default function FormatsPanel() {
   const t = useTranslations('tools.formats')
   const tCommon = useTranslations('common')
   const tFields = useTranslations('fields')
+  const { formatCurrency, formatDateMedium } = useFormat()
   const [formats, setFormats] = useState<SavedFormatConfig[]>([])
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState<ViewMode>('list')
@@ -122,12 +122,12 @@ export default function FormatsPanel() {
     try {
       const config = JSON.parse(configJson)
       const parts = []
-      if (config.account_source) parts.push(`Account: ${config.account_source}`)
-      if (config.date_column) parts.push(`Date: ${config.date_column}`)
-      if (config.amount_column) parts.push(`Amount: ${config.amount_column}`)
+      if (config.account_source) parts.push(t('configAccount', { value: config.account_source }))
+      if (config.date_column) parts.push(t('configDate', { value: config.date_column }))
+      if (config.amount_column) parts.push(t('configAmount', { value: config.amount_column }))
       return parts.join(' • ')
     } catch {
-      return 'Invalid configuration'
+      return t('invalidConfig')
     }
   }
 
@@ -406,7 +406,7 @@ export default function FormatsPanel() {
                       <h3 className="font-semibold text-theme">{fmt.name}</h3>
                       {fmt.use_count > 0 && (
                         <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded dark:bg-green-900/30 dark:text-green-300">
-                          Used {fmt.use_count}x
+                          {t('usedCount', { count: fmt.use_count })}
                         </span>
                       )}
                     </div>
@@ -415,7 +415,7 @@ export default function FormatsPanel() {
                     )}
                     <p className="text-xs text-theme-muted">{parseConfigSummary(fmt.config_json)}</p>
                     <p className="text-xs text-theme-muted mt-1">
-                      {t('created')} {format(new Date(fmt.created_at), 'MMM d, yyyy')}
+                      {t('created')} {formatDateMedium(fmt.created_at)}
                     </p>
                   </div>
                   <div className="flex gap-2 ml-4">
@@ -424,7 +424,7 @@ export default function FormatsPanel() {
                       className="px-3 py-1.5 text-sm text-theme-muted hover:text-theme border border-theme rounded-md hover:bg-theme-elevated"
                       data-testid={`test-format-${fmt.id}`}
                     >
-                      Test
+                      {t('test')}
                     </button>
                     <button
                       onClick={() => handleEdit(fmt)}
