@@ -39,7 +39,6 @@ export function WidgetEditModal({
   onSave
 }: WidgetEditModalProps) {
   const t = useTranslations('dashboard.widgets')
-  const tCommon = useTranslations('common')
   const info = WIDGET_INFO[widget.widget_type]
   const widgetName = info ? t(info.nameKey as 'summary') : widget.widget_type
 
