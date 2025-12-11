@@ -249,6 +249,28 @@
       "totalExpenses": "Total Expenses",
       "net": "Net",
       "vsLastMonth": "vs last month"
+    },
+    "manage": {
+      "title": "Manage Dashboards",
+      "subtitle": "Create, edit, and organize your dashboards",
+      "backToDashboard": "Back to Dashboard",
+      "createDashboard": "Create Dashboard",
+      "createNew": "Create New Dashboard",
+      "loading": "Loading...",
+      "name": "Name",
+      "namePlaceholder": "Dashboard name",
+      "dateRange": "Date Range",
+      "descriptionOptional": "Description (optional)",
+      "descriptionPlaceholder": "Optional description",
+      "save": "Save",
+      "create": "Create",
+      "default": "Default",
+      "edit": "Edit",
+      "setAsDefault": "Set as default",
+      "delete": "Delete",
+      "confirm": "Confirm",
+      "cantDeleteLast": "Can't delete the last dashboard",
+      "noDashboards": "No dashboards found. Create one to get started."
     }
   },
   "import": {

@@ -2,18 +2,24 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { useDashboard, Dashboard, DateRangeType } from '@/contexts/DashboardContext'
 
-const DATE_RANGE_OPTIONS: { value: DateRangeType; label: string }[] = [
-  { value: 'mtd', label: 'Month to Date' },
-  { value: 'qtd', label: 'Quarter to Date' },
-  { value: 'ytd', label: 'Year to Date' },
-  { value: 'last_30_days', label: 'Last 30 Days' },
-  { value: 'last_90_days', label: 'Last 90 Days' },
-  { value: 'last_year', label: 'Last Year' },
+const DATE_RANGE_KEYS: { value: DateRangeType; key: string }[] = [
+  { value: 'mtd', key: 'mtd' },
+  { value: 'qtd', key: 'qtd' },
+  { value: 'ytd', key: 'ytd' },
+  { value: 'last_30_days', key: 'last30Days' },
+  { value: 'last_90_days', key: 'last90Days' },
+  { value: 'last_year', key: 'lastYear' },
 ]
 
 export default function ManageDashboards() {
+  const t = useTranslations('dashboard.manage')
+  const tDashboard = useTranslations('dashboard')
+  const tDateRange = useTranslations('dashboard.dateRange')
+  const tCommon = useTranslations('common')
+
   const {
     dashboards,
     loading,
@@ -130,9 +136,9 @@ export default function ManageDashboards() {
     return (
       <div className="space-y-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-theme">Manage Dashboards</h1>
+          <h1 className="text-3xl font-bold text-theme">{t('title')}</h1>
         </div>
-        <div className="text-center py-12 text-theme-muted">Loading...</div>
+        <div className="text-center py-12 text-theme-muted">{t('loading')}</div>
       </div>
     )
   }
@@ -141,9 +147,9 @@ export default function ManageDashboards() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-theme">Manage Dashboards</h1>
+          <h1 className="text-3xl font-bold text-theme">{t('title')}</h1>
           <p className="text-sm text-theme-muted mt-1">
-            Create, edit, and organize your dashboards
+            {t('subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -151,13 +157,13 @@ export default function ManageDashboards() {
             href="/"
             className="px-4 py-2 text-sm text-theme-muted hover:text-theme transition-colors"
           >
-            Back to Dashboard
+            {t('backToDashboard')}
           </Link>
           <button
             onClick={() => setIsCreating(true)}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
-            Create Dashboard
+            {t('createDashboard')}
           </button>
         </div>
       </div>
@@ -171,40 +177,40 @@ export default function ManageDashboards() {
       {/* Create new dashboard form */}
       {isCreating && (
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-theme mb-4">Create New Dashboard</h2>
+          <h2 className="text-lg font-semibold text-theme mb-4">{t('createNew')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-theme mb-1">Name</label>
+              <label className="block text-sm font-medium text-theme mb-1">{t('name')}</label>
               <input
                 type="text"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                placeholder="Dashboard name"
+                placeholder={t('namePlaceholder')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 autoFocus
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-theme mb-1">Date Range</label>
+              <label className="block text-sm font-medium text-theme mb-1">{t('dateRange')}</label>
               <select
                 value={newDateRangeType}
                 onChange={(e) => setNewDateRangeType(e.target.value as DateRangeType)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {DATE_RANGE_OPTIONS.map((opt) => (
+                {DATE_RANGE_KEYS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {tDateRange(opt.key as 'mtd')}
                   </option>
                 ))}
               </select>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-theme mb-1">Description (optional)</label>
+              <label className="block text-sm font-medium text-theme mb-1">{t('descriptionOptional')}</label>
               <input
                 type="text"
                 value={newDescription}
                 onChange={(e) => setNewDescription(e.target.value)}
-                placeholder="Optional description"
+                placeholder={t('descriptionPlaceholder')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -219,14 +225,14 @@ export default function ManageDashboards() {
               }}
               className="px-4 py-2 text-theme-muted hover:text-theme transition-colors"
             >
-              Cancel
+              {tCommon('cancel')}
             </button>
             <button
               onClick={handleCreateDashboard}
               disabled={!newName.trim()}
               className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Create
+              {t('create')}
             </button>
           </div>
         </div>
@@ -243,7 +249,7 @@ export default function ManageDashboards() {
                   onClick={() => handleMoveUp(index)}
                   disabled={index === 0}
                   className="p-1 text-theme-muted hover:text-theme disabled:opacity-30 disabled:cursor-not-allowed"
-                  title="Move up"
+                  title={tDashboard('moveUp')}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -253,7 +259,7 @@ export default function ManageDashboards() {
                   onClick={() => handleMoveDown(index)}
                   disabled={index >= dashboards.length - 1}
                   className="p-1 text-theme-muted hover:text-theme disabled:opacity-30 disabled:cursor-not-allowed"
-                  title="Move down"
+                  title={tDashboard('moveDown')}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -276,7 +282,7 @@ export default function ManageDashboards() {
                       type="text"
                       value={editDescription}
                       onChange={(e) => setEditDescription(e.target.value)}
-                      placeholder="Description (optional)"
+                      placeholder={t('descriptionOptional')}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <div className="flex gap-2">
@@ -284,13 +290,13 @@ export default function ManageDashboards() {
                         onClick={() => handleSaveEdit(dashboard)}
                         className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
                       >
-                        Save
+                        {t('save')}
                       </button>
                       <button
                         onClick={handleCancelEdit}
                         className="px-3 py-1 text-theme-muted hover:text-theme text-sm"
                       >
-                        Cancel
+                        {tCommon('cancel')}
                       </button>
                     </div>
                   </div>
@@ -300,7 +306,7 @@ export default function ManageDashboards() {
                       <h3 className="font-medium text-theme">{dashboard.name}</h3>
                       {dashboard.is_default && (
                         <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
-                          Default
+                          {t('default')}
                         </span>
                       )}
                     </div>
@@ -323,9 +329,9 @@ export default function ManageDashboards() {
                     onChange={(e) => handleDateRangeChange(dashboard.id, e.target.value as DateRangeType)}
                     className="px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    {DATE_RANGE_OPTIONS.map((opt) => (
+                    {DATE_RANGE_KEYS.map((opt) => (
                       <option key={opt.value} value={opt.value}>
-                        {opt.label}
+                        {tDateRange(opt.key as 'mtd')}
                       </option>
                     ))}
                   </select>
@@ -334,7 +340,7 @@ export default function ManageDashboards() {
                   <button
                     onClick={() => handleStartEdit(dashboard)}
                     className="p-2 text-theme-muted hover:text-theme transition-colors"
-                    title="Edit"
+                    title={t('edit')}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -346,7 +352,7 @@ export default function ManageDashboards() {
                     <button
                       onClick={() => handleSetDefault(dashboard.id)}
                       className="p-2 text-theme-muted hover:text-blue-500 transition-colors"
-                      title="Set as default"
+                      title={t('setAsDefault')}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
@@ -361,13 +367,13 @@ export default function ManageDashboards() {
                         onClick={() => handleDelete(dashboard.id)}
                         className="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
                       >
-                        Confirm
+                        {t('confirm')}
                       </button>
                       <button
                         onClick={() => setDeleteConfirm(null)}
                         className="px-2 py-1 text-theme-muted hover:text-theme text-xs"
                       >
-                        Cancel
+                        {tCommon('cancel')}
                       </button>
                     </div>
                   ) : (
@@ -375,7 +381,7 @@ export default function ManageDashboards() {
                       onClick={() => setDeleteConfirm(dashboard.id)}
                       disabled={dashboards.length <= 1}
                       className="p-2 text-theme-muted hover:text-red-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                      title={dashboards.length <= 1 ? "Can't delete the last dashboard" : 'Delete'}
+                      title={dashboards.length <= 1 ? t('cantDeleteLast') : t('delete')}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -391,7 +397,7 @@ export default function ManageDashboards() {
 
       {dashboards.length === 0 && !isCreating && (
         <div className="text-center py-12 text-theme-muted">
-          <p>No dashboards found. Create one to get started.</p>
+          <p>{t('noDashboards')}</p>
         </div>
       )}
     </div>
