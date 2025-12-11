@@ -34,6 +34,17 @@ function getAllKeys(obj: Record<string, unknown>, prefix = ''): string[] {
 }
 
 /**
+ * Check if a string has transformable text outside of ICU placeholders.
+ * Strings like "{value} ({namespace})" have no letters to transform.
+ */
+function hasTransformableText(str: string): boolean {
+  // Remove all ICU placeholders
+  const withoutPlaceholders = str.replace(/\{[^}]+\}/g, '')
+  // Check if there are any letters remaining
+  return /[a-zA-Z]/.test(withoutPlaceholders)
+}
+
+/**
  * Check that a translation file has no English strings
  * (useful for pseudo locale where we want to ensure everything was translated)
  */
@@ -51,7 +62,10 @@ function findUnchangedStrings(
     if (Array.isArray(sourceValue) && Array.isArray(targetValue)) {
       sourceValue.forEach((item, index) => {
         if (typeof item === 'string' && item === targetValue[index]) {
-          unchanged.push(`${fullKey}.${index}`)
+          // Skip strings with no transformable text (only placeholders)
+          if (hasTransformableText(item)) {
+            unchanged.push(`${fullKey}.${index}`)
+          }
         }
       })
     } else if (typeof sourceValue === 'object' && sourceValue !== null &&
@@ -62,7 +76,10 @@ function findUnchangedStrings(
         fullKey
       ))
     } else if (typeof sourceValue === 'string' && sourceValue === targetValue) {
-      unchanged.push(fullKey)
+      // Skip strings with no transformable text (only placeholders)
+      if (hasTransformableText(sourceValue)) {
+        unchanged.push(fullKey)
+      }
     }
   }
 
