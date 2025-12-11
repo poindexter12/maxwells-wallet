@@ -260,6 +260,7 @@
       "name": "Name",
       "namePlaceholder": "Dashboard name",
       "dateRange": "Date Range",
+      "dateRangeDisplay": "{label}: {start} to {end}",
       "descriptionOptional": "Description (optional)",
       "descriptionPlaceholder": "Optional description",
       "save": "Save",

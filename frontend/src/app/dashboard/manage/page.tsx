@@ -4,6 +4,16 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useDashboard, Dashboard, DateRangeType } from '@/contexts/DashboardContext'
+import { useFormat } from '@/hooks/useFormat'
+
+const DATE_RANGE_KEY_MAP: Record<DateRangeType, string> = {
+  mtd: 'mtd',
+  qtd: 'qtd',
+  ytd: 'ytd',
+  last_30_days: 'last30Days',
+  last_90_days: 'last90Days',
+  last_year: 'lastYear',
+}
 
 const DATE_RANGE_KEYS: { value: DateRangeType; key: string }[] = [
   { value: 'mtd', key: 'mtd' },
@@ -19,6 +29,7 @@ export default function ManageDashboards() {
   const tDashboard = useTranslations('dashboard')
   const tDateRange = useTranslations('dashboard.dateRange')
   const tCommon = useTranslations('common')
+  const { formatDateShort } = useFormat()
 
   const {
     dashboards,
@@ -314,7 +325,11 @@ export default function ManageDashboards() {
                       <p className="text-sm text-theme-muted mt-1">{dashboard.description}</p>
                     )}
                     <p className="text-sm text-theme-muted mt-1">
-                      {dashboard.date_range.label}: {dashboard.date_range.start_date} to {dashboard.date_range.end_date}
+                      {t('dateRangeDisplay', {
+                        label: tDateRange(DATE_RANGE_KEY_MAP[dashboard.date_range_type] as 'mtd'),
+                        start: formatDateShort(dashboard.date_range.start_date),
+                        end: formatDateShort(dashboard.date_range.end_date)
+                      })}
                     </p>
                   </div>
                 )}
