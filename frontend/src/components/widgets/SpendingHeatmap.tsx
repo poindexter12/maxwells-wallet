@@ -13,7 +13,7 @@ interface SpendingHeatmapProps {
 }
 
 export function SpendingHeatmap({
-  widget,
+  widget: _widget,
   data,
   isMonthlyScale,
   selectedYear,

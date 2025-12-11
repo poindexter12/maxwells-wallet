@@ -10,7 +10,7 @@ interface BucketPieChartProps {
   bucketData: Array<{ name: string; value: number; count: number }>
 }
 
-export function BucketPieChart({ widget, bucketData }: BucketPieChartProps) {
+export function BucketPieChart({ widget: _widget, bucketData }: BucketPieChartProps) {
   const t = useTranslations('dashboard.widgets')
   const { formatCurrency } = useFormat()
 

@@ -11,7 +11,7 @@ interface TrendsChartProps {
   isMonthlyScale: boolean
 }
 
-export function TrendsChart({ widget, data, isMonthlyScale: _isMonthlyScale }: TrendsChartProps) {
+export function TrendsChart({ widget: _widget, data, isMonthlyScale: _isMonthlyScale }: TrendsChartProps) {
   const t = useTranslations('dashboard.widgets')
   const { formatCurrency, formatCompactCurrency } = useFormat()
 

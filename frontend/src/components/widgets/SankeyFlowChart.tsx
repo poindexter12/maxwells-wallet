@@ -52,7 +52,7 @@ function SankeyNode({ x, y, width, height, index, payload }: SankeyNodeProps) {
   )
 }
 
-export function SankeyFlowChart({ widget, data }: SankeyFlowChartProps) {
+export function SankeyFlowChart({ widget: _widget, data }: SankeyFlowChartProps) {
   const t = useTranslations('dashboard.widgets')
   const title = t('sankey')
 

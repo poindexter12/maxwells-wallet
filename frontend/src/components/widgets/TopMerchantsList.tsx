@@ -10,7 +10,7 @@ interface TopMerchantsListProps {
   data: TopMerchantsData | null
 }
 
-export function TopMerchantsList({ widget, data }: TopMerchantsListProps) {
+export function TopMerchantsList({ widget: _widget, data }: TopMerchantsListProps) {
   const t = useTranslations('dashboard.widgets')
   const { formatCurrency } = useFormat()
 
