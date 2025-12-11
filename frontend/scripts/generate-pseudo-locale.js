@@ -56,6 +56,12 @@ function pseudoLocalizeObject(obj) {
     if (obj.match(/^\{[^}]+\}$/)) {
       return obj;
     }
+    // Check if string is only placeholders and punctuation/whitespace (no letters)
+    const withoutPlaceholders = obj.replace(/\{[^}]+\}/g, '');
+    if (!/[a-zA-Z]/.test(withoutPlaceholders)) {
+      // Add a marker to make it distinct from original for testing
+      return `[ƤŞ] ${obj}`;
+    }
     // Pseudo-localize the string, preserving ICU placeholders
     return pseudoLocalizeString(obj);
   }
