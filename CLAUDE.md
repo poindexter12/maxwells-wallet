@@ -8,21 +8,18 @@ This file provides guidance to AI coding agents when working with code in this r
 - **Frontend**: Next.js 16 + TypeScript (App Router)
 - **Backend**: FastAPI + Python (async)
 - **Database**: SQLite (dev) with SQLModel ORM (Postgres-ready for prod)
-- **Package Management**: npm (frontend), uv (backend)
+- **Package Management**: pnpm (frontend), uv (backend)
 - **i18n**: next-intl with 8 locales (en-US, en-GB, es, fr, it, pt, de, nl) + pseudo locale for dev/QA
 
 ## Repository Structure
 
 ```
-.waypoint/
-  agents/           # Canonical agent definitions
-  skills/           # Canonical skill cards (Next.js, FastAPI, Postgres, TS, Python, DB/T-SQL, testing)
-.claude/README.md   # Symlink to .waypoint/README.md (shared AI config instructions)
-.claude/            # Symlinks to .waypoint for Claude Code
-.codex/             # Symlinks to .waypoint for Codex
-.cursor/            # Symlinks to .waypoint for Cursor
-frontend/         # Next.js app
-backend/          # FastAPI app
+.claude/
+  agents/           # Agent definitions (techlead, frontend-lead, backend-lead, db-lead, testlead)
+  skills/           # Skill cards (Next.js, FastAPI, Postgres, TS, Python, DB/T-SQL, testing)
+  settings.json     # Claude Code settings
+frontend/           # Next.js app
+backend/            # FastAPI app
 ```
 
 ## Available Agent
