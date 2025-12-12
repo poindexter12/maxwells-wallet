@@ -28,7 +28,8 @@
     "manage": "Manage",
     "customize": "Customize",
     "collapse": "Collapse",
-    "expand": "Expand"
+    "expand": "Expand",
+    "dismiss": "Dismiss"
   },
   "fields": {
     "amount": "Amount",
@@ -42,7 +43,9 @@
     "category": "Category",
     "value": "Value",
     "period": "Period",
-    "notes": "Notes"
+    "notes": "Notes",
+    "merchant": "Merchant",
+    "bucket": "Bucket"
   },
   "nav": {
     "brand": "Maxwell's Wallet",
@@ -80,6 +83,11 @@
     "transfersOnly": "Transfers Only",
     "transfer": "Transfer",
     "transferExcluded": "Internal transfer - excluded from spending",
+    "importCsv": "Import CSV",
+    "minAmount": "Min $",
+    "maxAmount": "Max $",
+    "startDate": "Start date",
+    "endDate": "End date",
     "status": {
       "unreconciled": "Unreconciled",
       "matched": "Matched",
@@ -94,6 +102,9 @@
       "ytd": "YTD",
       "last90Days": "Last 90 Days",
       "large": "Large ($100+)",
+      "largeDynamic": "Large ({threshold}+)",
+      "largeTitle": "Large transactions this month",
+      "largeTitleWithThreshold": "Large transactions this month (over {threshold} - 2σ above your average)",
       "topSpending": "Top Spending",
       "clearAll": "Clear All",
       "date": "Date:",
@@ -137,13 +148,33 @@
       "warning": "Warning",
       "exceeded": "Exceeded"
     },
-    "confirmDelete": "Are you sure you want to delete this budget?"
+    "confirmDelete": "Are you sure you want to delete this budget?",
+    "ofBudget": "{spent} of {budget} ({percent}%)",
+    "tagDisplay": "{value} ({namespace})",
+    "namespaces": {
+      "bucket": "Bucket",
+      "occasion": "Occasion",
+      "account": "Account"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
     "noDashboard": "No dashboard available",
     "createDashboard": "Create new dashboard",
     "noWidgets": "No widgets visible",
+    "quickWidgetToggle": "Quick Widget Toggle",
+    "quickWidgetToggleDescription": "Show/hide widgets. For more options, use the full configuration page.",
+    "hideWidget": "Hide widget",
+    "showWidget": "Show widget",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "configureWidget": "Configure widget",
+    "duplicateWidget": "Duplicate widget",
+    "deleteWidget": "Delete widget",
+    "supportsBucketFiltering": "Supports bucket filtering",
+    "fullConfiguration": "Full Configuration",
+    "fullConfigurationDescription": "Duplicate widgets, configure filters, and more",
+    "configureDashboard": "Configure dashboard",
     "dateRange": {
       "mtd": "Month to Date",
       "qtd": "Quarter to Date",
@@ -164,13 +195,87 @@
       "heatmap": "Spending Calendar",
       "budgetStatus": "Budget Status",
       "creditCards": "Credit Cards",
-      "recurring": "Upcoming Recurring"
+      "recurring": "Upcoming Recurring",
+      "noFlowData": "No flow data available for this period",
+      "sankeyDescription": "Income → Accounts → Spending Categories",
+      "noSpendingData": "No spending data available",
+      "noSpendingDataPeriod": "No spending data available for this period",
+      "noBucketData": "No bucket data available",
+      "noMerchantData": "No merchant data available",
+      "noAnomalies": "No unusual activity detected",
+      "treemapDescription": "Spending by category and merchant",
+      "heatmapLess": "Less",
+      "heatmapMore": "More",
+      "descriptions": {
+        "summary": "Shows total income, expenses, and net for the period. Includes month-over-month comparison.",
+        "velocity": "Daily burn rate showing if you're on track for your typical monthly spending.",
+        "anomalies": "Highlights unusual transactions that deviate significantly from your normal spending patterns.",
+        "bucketPie": "Pie chart showing how spending is distributed across your budget buckets.",
+        "topMerchants": "List of merchants where you spend the most. Can be filtered by bucket to see top merchants within a category.",
+        "trends": "Line chart showing income, expenses, and net over time. Shows 12 weeks in month view, 12 months in year view.",
+        "sankey": "Flow diagram showing how money moves from income sources through accounts to spending categories. Great for understanding overall cash flow.",
+        "treemap": "Hierarchical view of spending by category and merchant. Larger boxes = more spending. Click to explore.",
+        "heatmap": "Calendar heatmap showing daily spending intensity. Darker = more spent. Click months in year view to drill down."
+      },
+      "total": "Total",
+      "maxMonth": "Max Month",
+      "maxDay": "Max Day",
+      "activeMonths": "Active Months",
+      "activeDays": "Active Days",
+      "dailyAverage": "Daily Average",
+      "daysElapsed": "Days Elapsed",
+      "daysRemaining": "Days Remaining",
+      "totalSpending": "Total Spending",
+      "transactions": "Transactions",
+      "dailySpendingRate": "Daily Spending Rate",
+      "projectedMonthTotal": "Projected Month Total",
+      "large": "Large",
+      "new": "New",
+      "overAvg": "Over Avg",
+      "viewNewMerchants": "View transactions from new merchants",
+      "viewOverAvgBuckets": "View buckets with unusually high spending",
+      "income": "Income",
+      "expenses": "Expenses",
+      "netLabel": "Net",
+      "perDay": "/day",
+      "overBudget": "Over Budget",
+      "underBudget": "Under Budget",
+      "onTrack": "On Track",
+      "projectedRemaining": "Projected remaining",
+      "previousMonth": "Previous month",
+      "customLabel": "Custom",
+      "filterBuckets": "Buckets: {buckets}",
+      "filterAccounts": "Accounts: {accounts}",
+      "filterMerchants": "Merchants: {merchants}"
     },
     "summary": {
       "totalIncome": "Total Income",
       "totalExpenses": "Total Expenses",
       "net": "Net",
       "vsLastMonth": "vs last month"
+    },
+    "manage": {
+      "title": "Manage Dashboards",
+      "subtitle": "Create, edit, and organize your dashboards",
+      "backToDashboard": "Back to Dashboard",
+      "createDashboard": "Create Dashboard",
+      "createNew": "Create New Dashboard",
+      "loading": "Loading...",
+      "name": "Name",
+      "namePlaceholder": "Dashboard name",
+      "dateRange": "Date Range",
+      "dateRangeDisplay": "{label}: {start} to {end}",
+      "descriptionOptional": "Description (optional)",
+      "descriptionPlaceholder": "Optional description",
+      "save": "Save",
+      "create": "Create",
+      "default": "Default",
+      "edit": "Edit",
+      "setAsDefault": "Set as default",
+      "delete": "Delete",
+      "confirm": "Confirm",
+      "cantDeleteLast": "Can't delete the last dashboard",
+      "noDashboards": "No dashboards found. Create one to get started."
     }
   },
   "import": {
@@ -179,23 +284,66 @@
     "selectFile": "Select File",
     "selectFiles": "Select Files",
     "preview": "Preview",
+    "previewImport": "Preview Import",
+    "previewBatchImport": "Preview Batch Import",
     "confirm": "Confirm Import",
     "confirmImport": "Import Transactions",
     "success": "Import Successful",
+    "importComplete": "Import Complete!",
     "transactionsImported": "{count} transactions imported",
     "duplicatesSkipped": "{count} duplicates skipped",
     "format": "Format",
     "formatOptional": "Format (Optional)",
+    "autoDetect": "Auto-detect",
     "account": "Account",
+    "accountSource": "Account Source",
     "accountRequired": "Required for accurate duplicate detection",
     "singleFile": "Single File Import",
     "batchImport": "Batch Import (Multiple Files)",
     "noFilesSelected": "Please select at least one file to import",
     "processing": "Processing...",
-    "analyzing": "Analyzing file..."
+    "analyzing": "Analyzing file...",
+    "importing": "Importing...",
+    "filesSelected": "{count} file(s) selected",
+    "filesSelectedOfTotal": "{selected} of {total} files selected",
+    "importFile": "Import File",
+    "importFiles": "Import Files (Multiple)",
+    "selectAccountToPreview": "Select an Account to Preview",
+    "batchImportPreview": "Batch Import Preview",
+    "totalTransactions": "Total Transactions",
+    "totalDuplicates": "Total Duplicates",
+    "netAmount": "Net Amount",
+    "dateRange": "Date Range",
+    "transactions": "Transactions",
+    "totalAmount": "Total Amount",
+    "parsingErrors": "Parsing Errors:",
+    "showingFirstOfTotal": "Showing first {shown} of {total} transactions",
+    "dbDuplicates": "DB Duplicates",
+    "batchDuplicates": "Batch Duplicates",
+    "selectAccount": "-- Select Account --",
+    "accountPlaceholder": "e.g., BOFA-Checking, AMEX-53004",
+    "orTypeNew": "or type new",
+    "existing": "Existing",
+    "new": "New",
+    "usingFormat": "Using saved format: {name}",
+    "standardFormats": "Standard File Formats",
+    "savedCustomFormats": "Saved Custom Formats",
+    "imported": "Imported",
+    "duplicatesSkippedShort": "Duplicates Skipped",
+    "filesImported": "Files Imported",
+    "formatSaved": "Format Saved",
+    "fileDetails": "File Details:",
+    "importedCount": "{count} imported",
+    "duplicatesCount": "{count} duplicates",
+    "crossAccountMatches": "Cross-Account Matches ({count})",
+    "crossAccountWarning": "These transactions appear to match existing transactions in other accounts. This could indicate transfers between accounts.",
+    "importSelectedFiles": "Import {count} Selected File(s)",
+    "filesMissingAccount": "{count} File(s) Missing Account",
+    "noBucket": "No Bucket"
   },
   "admin": {
     "title": "Admin",
+    "subtitle": "Database management, imports, and tag configuration",
     "tabs": {
       "overview": "Overview",
       "imports": "Imports",
@@ -203,18 +351,118 @@
       "buckets": "Buckets",
       "accounts": "Accounts",
       "occasions": "Occasions",
-      "expenses": "Expenses"
+      "expenses": "Expenses",
+      "allTags": "All Tags"
     },
-    "stats": {
-      "totalTransactions": "Total Transactions",
-      "totalImports": "Total Imports",
-      "lastImport": "Last Import"
+    "overview": {
+      "stats": {
+        "totalTransactions": "Total Transactions",
+        "importSessions": "Import Sessions",
+        "completedImports": "Completed Imports",
+        "rolledBack": "Rolled Back"
+      },
+      "transactionsByAccount": "Transactions by Account",
+      "tableHeaders": {
+        "account": "Account",
+        "count": "Count",
+        "total": "Total"
+      },
+      "dangerZone": "Danger Zone",
+      "dangerZoneWarning": "These actions are destructive and cannot be undone. Use with extreme caution.",
+      "purgeAll": "Purge All Transactions",
+      "purgeAllConfirm": "Click again to confirm PURGE ALL",
+      "processing": "Processing..."
     },
-    "confirmDelete": "Delete \"{name}\"? This cannot be undone.",
-    "purge": {
-      "title": "Purge All Data",
-      "warning": "This will permanently delete all transactions. This action cannot be undone.",
-      "confirm": "Type PURGE_ALL to confirm"
+    "imports": {
+      "title": "Import Sessions",
+      "subtitle": "History of all CSV imports. You can roll back individual imports by deleting their sessions.",
+      "importNew": "Import New",
+      "noSessions": "No import sessions found",
+      "tableHeaders": {
+        "date": "Date",
+        "file": "File",
+        "format": "Format",
+        "account": "Account",
+        "imported": "Imported",
+        "duplicates": "Duplicates",
+        "dateRange": "Date Range",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "rollBack": "Roll Back",
+      "confirmDelete": "Confirm Delete",
+      "statusLabels": {
+        "completed": "completed",
+        "rolled_back": "rolled_back"
+      }
+    },
+    "health": {
+      "systemStatus": "System {status}",
+      "updated": "Updated {time}",
+      "uptime": "Uptime",
+      "totalRequests": "Total Requests",
+      "activeRequests": "Active Requests",
+      "slowQueries": "Slow Queries",
+      "requestLatency": "Request Latency",
+      "p50Median": "P50 (median)",
+      "p95": "P95",
+      "p99": "P99",
+      "errorRate": "Error Rate",
+      "lastHour": "Last Hour",
+      "last24Hours": "Last 24 Hours",
+      "observabilityInfo": "Observability Info",
+      "metricsEndpoint": "Metrics Endpoint",
+      "metricsFormat": "(Prometheus format)",
+      "slowQueryThreshold": "Slow Query Threshold",
+      "slowQueryDescription": "Queries taking >100ms are logged to the application logs.",
+      "autoRefresh": "Auto-refresh",
+      "autoRefreshDescription": "This dashboard updates every 10 seconds.",
+      "observabilityDisabled": "Observability may be disabled. Set <code>OTEL_ENABLED=true</code> to enable."
+    },
+    "tags": {
+      "noTags": "No {type} configured yet.",
+      "tableHeaders": {
+        "namespace": "Namespace",
+        "value": "Value (ID)",
+        "description": "Description / Display Name",
+        "usage": "Usage",
+        "actions": "Actions"
+      },
+      "notSet": "Not set",
+      "usageCount": "{count} transaction",
+      "usageCountPlural": "{count} transactions",
+      "cannotDelete": "Cannot delete: tag is in use",
+      "deleteTag": "Delete tag",
+      "deleteConfirm": "Delete \"{namespace}:{value}\"? This cannot be undone.",
+      "allTagsDescription": "View all tags across all namespaces",
+      "bucketsDescription": "Spending categories like groceries, dining, entertainment",
+      "accountsDescription": "Bank accounts and credit cards with display names",
+      "occasionsDescription": "Special events like vacation, holidays, birthdays",
+      "expenseTypesDescription": "Recurring, one-time, refund classifications",
+      "allTagsLabel": "All Tags",
+      "bucketsLabel": "Buckets",
+      "accountsLabel": "Accounts",
+      "occasionsLabel": "Occasions",
+      "expenseTypesLabel": "Expense Types"
+    },
+    "tagModal": {
+      "addLabel": "Add {type}",
+      "edit": "Edit Tag",
+      "value": "Value",
+      "valuePlaceholder": "e.g., {example}",
+      "normalized": "Will be normalized to: {value}",
+      "description": "Description",
+      "displayName": "Display Name",
+      "descriptionOptional": "Description (optional)",
+      "displayNameOptional": "Display Name (optional)",
+      "descriptionPlaceholder": "Brief description",
+      "displayNamePlaceholder": "e.g., {example}",
+      "namespace": "Namespace",
+      "valueId": "Value (ID)",
+      "valueIdHint": "Unique identifier within the namespace",
+      "creating": "Creating...",
+      "saving": "Saving...",
+      "create": "Create"
     }
   },
   "tools": {
@@ -222,12 +470,164 @@
     "subtitle": "Manage categorization rules, merchant aliases, and transfers",
     "categoryRules": "Category Rules",
     "merchantAliases": "Merchant Aliases",
-    "transfers": "Transfers",
-    "savedFilters": "Saved Filters"
+    "transfers": {
+      "description": "Identify internal transfers to exclude from spending calculations",
+      "markedAsTransfer": "Marked as Transfer",
+      "transferTotal": "Transfer Total",
+      "linkedPairs": "Linked Pairs",
+      "suggestedTransfers": "Suggested Transfers",
+      "looksLikeTransfers": "{count} transactions look like transfers",
+      "processing": "Processing...",
+      "markAsTransfers": "Mark as Transfers ({count})",
+      "noSuggestions": "No transfer suggestions found. All detected transfers have been processed.",
+      "date": "Date",
+      "matchReason": "Match Reason"
+    },
+    "savedFilters": "Saved Filters",
+    "tabs": {
+      "transfers": "Transfers",
+      "rules": "Rules",
+      "merchants": "Merchants",
+      "formats": "CSV Formats"
+    },
+    "rules": {
+      "description": "Automatically assign buckets to transactions based on patterns",
+      "applyAllRules": "Apply All Rules",
+      "newRule": "New Rule",
+      "noRules": "No rules created yet",
+      "editRule": "Edit Rule",
+      "createRule": "Create Rule",
+      "ruleName": "Rule Name",
+      "targetBucket": "Target Bucket",
+      "priority": "Priority",
+      "matchingConditions": "Matching Conditions",
+      "merchantPattern": "Merchant Pattern",
+      "descriptionPattern": "Description Pattern",
+      "amountMin": "Amount Min",
+      "amountMax": "Amount Max",
+      "accountSource": "Account Source",
+      "matchAll": "All conditions must match (AND logic)",
+      "enableImmediately": "Enable rule immediately",
+      "disabled": "Disabled",
+      "enabled": "Enabled",
+      "test": "Test",
+      "matched": "Matched",
+      "transactions": "transactions",
+      "testResult": "Test: {count} transactions would match",
+      "confirmApplyAll": "Apply all active rules to untagged transactions?",
+      "rulesApplied": "Applied rules to {count} transactions",
+      "confirmDelete": "Delete this rule?",
+      "select": "Select...",
+      "all": "ALL",
+      "any": "ANY"
+    },
+    "merchants": {
+      "description": "Normalize messy bank merchant names into clean, consistent names",
+      "previewChanges": "Preview Changes",
+      "checking": "Checking...",
+      "newAlias": "New Alias",
+      "previewResult": "Preview: {count} transactions would be updated",
+      "dismiss": "Dismiss",
+      "applyChanges": "Apply Changes",
+      "applying": "Applying...",
+      "noChanges": "No transactions would be updated. All merchants already match aliases.",
+      "patternToMatch": "Pattern to Match",
+      "displayAs": "Display As",
+      "matchType": "Match Type",
+      "contains": "Contains",
+      "exactMatch": "Exact Match",
+      "regex": "Regex",
+      "higherCheckedFirst": "Higher = checked first",
+      "aliases": "Aliases",
+      "noAliases": "No aliases yet",
+      "used": "Used",
+      "allMerchants": "All Merchants",
+      "filterMerchants": "Filter merchants...",
+      "txns": "txns",
+      "confirmDelete": "Delete this alias?",
+      "confirmApply": "Apply aliases to {count} transactions?",
+      "none": "(none)"
+    },
+    "formats": {
+      "description": "Create reusable import configurations for different bank CSV formats",
+      "newFormat": "New Format",
+      "backToFormats": "Back to Formats",
+      "editFormatConfig": "Edit Format Configuration",
+      "createNewFormat": "Create New Format",
+      "uploadSampleCsv": "Upload a sample CSV file to edit the format configuration. This helps verify your column mappings are correct.",
+      "selectCsvFile": "Select CSV File",
+      "testResults": "Test Results",
+      "transactionsParsed": "{count} transactions parsed",
+      "from": "from",
+      "showingOf": "Showing {shown} of {total} transactions",
+      "noFormats": "No custom CSV formats created yet.",
+      "noFormatsDescription": "Create a format configuration to reuse when importing CSV files from your banks.",
+      "created": "Created",
+      "confirmDelete": "Delete this format configuration?",
+      "deleting": "Deleting...",
+      "editFormat": "Edit Format",
+      "test": "Test",
+      "usedCount": "Used {count}x",
+      "configAccount": "Account: {value}",
+      "configDate": "Date: {value}",
+      "configAmount": "Amount: {value}",
+      "invalidConfig": "Invalid configuration"
+    }
   },
   "organize": {
     "title": "Organize",
-    "subtitle": "Manage and organize your tags and categories"
+    "subtitle": "Manage and organize your tags and categories",
+    "manageInAdmin": "Manage in Admin",
+    "tabs": {
+      "buckets": "Buckets",
+      "occasions": "Occasions",
+      "accounts": "Accounts"
+    },
+    "buckets": {
+      "description": "Spending categories like groceries, dining, entertainment",
+      "totalBuckets": "Total Buckets",
+      "taggedTransactions": "Tagged Transactions",
+      "totalCategorized": "Total Categorized",
+      "noBuckets": "No buckets yet. Create buckets in Admin.",
+      "percentOfSpending": "{percent}% of spending",
+      "transactions": "{count} txn",
+      "transactionsPlural": "{count} txns"
+    },
+    "occasions": {
+      "description": "Special events like vacations, holidays, weddings, or projects",
+      "totalOccasions": "Total Occasions",
+      "taggedTransactions": "Tagged Transactions",
+      "totalOccasionSpending": "Total Occasion Spending",
+      "noOccasions": "No occasions yet. Create occasions in Admin.",
+      "percentOfOccasionSpending": "{percent}% of occasion spending",
+      "transactions": "{count} txn",
+      "transactionsPlural": "{count} txns"
+    },
+    "accounts": {
+      "description": "Bank accounts and credit cards. Auto-created when you import transactions.",
+      "totalAccounts": "Total Accounts",
+      "totalTransactions": "Total Transactions",
+      "netFlow": "Net Flow",
+      "noAccounts": "No accounts yet. Import transactions to create accounts automatically.",
+      "importTransactions": "Import transactions",
+      "percentOfTransactions": "{percent}% of transactions",
+      "transactions": "{count} txn",
+      "transactionsPlural": "{count} txns"
+    },
+    "help": {
+      "title": "Organize Your Transactions",
+      "description": "Manage the three types of tags used to categorize your transactions: Buckets for spending categories, Occasions for special events, and Accounts for bank accounts.",
+      "steps": [
+        "Buckets are spending categories like groceries, dining, entertainment",
+        "Occasions track special events like vacations, holidays, or projects",
+        "Accounts are created automatically when you import transactions",
+        "Click any item to see its transactions"
+      ],
+      "tips": [
+        "Create and edit tags in Admin > Tags",
+        "Set budgets for any bucket, occasion, or account"
+      ]
+    }
   },
   "recurring": {
     "title": "Recurring Transactions",
@@ -283,7 +683,17 @@
     "CANNOT_DELETE_LAST_DASHBOARD": "Cannot delete the last dashboard.",
     "FILTER_NOT_FOUND": "Filter not found.",
     "ACCOUNT_NOT_FOUND": "Account not found.",
-    "RULE_NOT_FOUND": "Rule not found."
+    "RULE_NOT_FOUND": "Rule not found.",
+    "TRANSACTIONS_NOT_FOUND": "One or more transactions not found.",
+    "TAG_INVALID_FORMAT": "Invalid tag format. Use namespace:value.",
+    "IMPORT_SESSION_NOT_FOUND": "Import session not found or expired.",
+    "ALIAS_ALREADY_EXISTS": "A merchant alias with this name already exists.",
+    "RECURRING_NOT_FOUND": "Recurring transaction not found.",
+    "CONFIRMATION_REQUIRED": "Confirmation required for this action.",
+    "VALIDATION_ERROR": "Validation error.",
+    "NO_TRANSACTION_IDS": "No transaction IDs provided.",
+    "TRANSACTION_NOT_LINKED": "Transaction is not linked to another transaction.",
+    "unknownCode": "An unexpected error occurred."
   },
   "help": {
     "dismiss": "Got it",
@@ -342,7 +752,8 @@
         "Select the file from your bank's export",
         "Choose the account (required for duplicate detection)",
         "Preview the transactions before importing",
-        "Confirm to add transactions to your records"
+        "Confirm to add transactions to your records",
+        "Review the preview, then click 'Confirm Import' to save"
       ],
       "tips": [
         "Use batch import for multiple files at once",
@@ -376,6 +787,76 @@
       "tips": [
         "Rules are applied in priority order",
         "Test rules before applying to see which transactions match"
+      ]
+    },
+    "organize": {
+      "title": "Organize Help",
+      "description": "View and manage your spending categories, special occasions, and accounts.",
+      "steps": [
+        "Browse buckets to see spending by category",
+        "View occasions for special events like vacations or projects",
+        "See all accounts with their transaction counts",
+        "Click any item to view its transactions"
+      ],
+      "tips": [
+        "Create new tags in Admin > Tags",
+        "Set budgets for any bucket, occasion, or account"
+      ]
+    },
+    "recurring": {
+      "title": "Recurring Help",
+      "description": "Track subscriptions, bills, and recurring payments.",
+      "steps": [
+        "Click 'Detect Patterns' to scan for recurring transactions",
+        "Review detected patterns and their confidence scores",
+        "Check 'Upcoming' tab for expected transactions",
+        "Monitor 'Missing' tab for overdue recurring payments"
+      ],
+      "tips": [
+        "Higher confidence scores mean more consistent patterns",
+        "Missing transactions may indicate cancelled subscriptions"
+      ]
+    },
+    "reconcile": {
+      "title": "Reconcile Help",
+      "description": "Review and verify imported transactions.",
+      "steps": [
+        "Review each unreconciled transaction",
+        "Select transactions using the checkboxes",
+        "Click 'Mark as Reconciled' for verified transactions",
+        "Click 'Ignore' for duplicates or internal transfers"
+      ],
+      "tips": [
+        "Reconciled transactions appear normally in reports",
+        "You can change the status later on the Transactions page"
+      ]
+    },
+    "tags": {
+      "title": "Tags Help",
+      "description": "Advanced tag management with full namespace control.",
+      "steps": [
+        "Select a namespace on the left to view its tags",
+        "Click 'Add Value' to create a new tag",
+        "Edit or delete tags using the action buttons",
+        "Create custom namespaces for specialized categorization"
+      ],
+      "tips": [
+        "Tags in use cannot be deleted",
+        "Use the Admin page for simpler tag management"
+      ]
+    },
+    "dashboardConfigure": {
+      "title": "Dashboard Configuration",
+      "description": "Customize which widgets appear on your dashboard.",
+      "steps": [
+        "Toggle visibility to show or hide widgets",
+        "Use arrows to reorder widgets",
+        "Duplicate widgets for filtered views",
+        "Configure bucket filters for specific categories"
+      ],
+      "tips": [
+        "Create multiple dashboards for different views",
+        "Filtered widgets show only matching transactions"
       ]
     }
   }
