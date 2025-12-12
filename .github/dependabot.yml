@@ -46,6 +46,13 @@ updates:
       all-deps:
         patterns:
           - "*"
+    ignore:
+      # Only use Node LTS versions (even numbers: 18, 20, 22, 24...)
+      - dependency-name: "node"
+        versions: [">=23, <24", ">=25"]
+      # Only use stable Python versions (3.11, 3.12 are current stable)
+      - dependency-name: "python"
+        versions: [">=3.13"]
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
