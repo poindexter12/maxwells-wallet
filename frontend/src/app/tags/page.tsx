@@ -124,7 +124,8 @@ export default function TagsPage() {
 
   useEffect(() => {
     fetchAllTags()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Fetch once on mount
 
   useEffect(() => {
     if (selectedNamespace) {

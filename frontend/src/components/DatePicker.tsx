@@ -173,6 +173,7 @@ export function DatePicker({
         <input
           ref={inputRef}
           type="text"
+          role="combobox"
           value={inputValue}
           onChange={handleInputChange}
           onBlur={handleInputBlur}
@@ -185,6 +186,7 @@ export function DatePicker({
           aria-label={title || placeholder}
           aria-expanded={isOpen}
           aria-haspopup="dialog"
+          aria-autocomplete="none"
         />
         {inputValue && (
           <button

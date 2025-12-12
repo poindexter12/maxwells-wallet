@@ -47,7 +47,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshDashboards()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Intentional: fetch once on mount
 
   async function refreshDashboards() {
     try {

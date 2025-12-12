@@ -36,7 +36,8 @@ export default function Dashboard() {
     if (currentDashboard) {
       fetchWidgets()
     }
-  }, [currentDashboard?.id, fetchWidgets])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentDashboard?.id, fetchWidgets]) // Only refetch on dashboard ID change
 
   const handleDateRangeChange = useCallback(async (dateRangeType: DateRangeType) => {
     if (!currentDashboard) return

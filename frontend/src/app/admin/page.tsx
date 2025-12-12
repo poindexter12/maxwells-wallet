@@ -93,7 +93,8 @@ export default function AdminPage() {
     if (currentTagTab) {
       fetchTags(currentTagTab.namespace)
     }
-  }, [activeTab])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]) // currentTagTab is derived from activeTab
 
   const handleDeleteSession = async (sessionId: number) => {
     if (confirmDelete !== sessionId) {
