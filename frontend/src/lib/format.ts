@@ -10,6 +10,31 @@ function getIntlLocale(locale?: string): string {
 }
 
 /**
+ * Default currency for each supported locale.
+ * Maps locale codes to ISO 4217 currency codes.
+ */
+const LOCALE_CURRENCIES: Record<string, string> = {
+  'en-US': 'USD',
+  'en-GB': 'GBP',
+  'de-DE': 'EUR',
+  'fr-FR': 'EUR',
+  'it-IT': 'EUR',
+  'es-ES': 'EUR',
+  'pt-PT': 'EUR',
+  'nl-NL': 'EUR',
+  'pseudo': 'USD', // Use USD for pseudo-locale testing
+}
+
+/**
+ * Get the default currency for a locale.
+ * Falls back to USD if locale is not in the mapping.
+ */
+function getCurrency(locale?: string): string {
+  if (!locale) return 'USD'
+  return LOCALE_CURRENCIES[locale] ?? 'USD'
+}
+
+/**
  * Apply pseudo-locale styling to formatted values for i18n testing.
  * Wraps the value in brackets and adds a marker.
  */
@@ -31,7 +56,7 @@ export function formatCurrency(amount: number, showSign: boolean = false, locale
   const intlLocale = getIntlLocale(locale)
   const formatted = new Intl.NumberFormat(intlLocale, {
     style: 'currency',
-    currency: 'USD',
+    currency: getCurrency(locale),
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(Math.abs(amount))
@@ -72,7 +97,7 @@ export function formatCompactCurrency(amount: number, locale?: string): string {
   const intlLocale = getIntlLocale(locale)
   const formatted = new Intl.NumberFormat(intlLocale, {
     style: 'currency',
-    currency: 'USD',
+    currency: getCurrency(locale),
     notation: 'compact',
     maximumFractionDigits: 1,
   }).format(amount)

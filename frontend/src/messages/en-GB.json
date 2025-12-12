@@ -859,5 +859,10 @@
         "Filtered widgets show only matching transactions"
       ]
     }
+  },
+  "datePicker": {
+    "clear": "Clear date",
+    "openCalendar": "Open calendar",
+    "selectDate": "Select date"
   }
 }

@@ -1,0 +1,140 @@
+{
+  "$schema": "./schema.json",
+  "$comment": "Strings intentionally same across all languages: brand names, technical terms, and cross-language loanwords",
+  "nav": {
+    "brand": "Maxwell's Wallet",
+    "admin": "Admin",
+    "budgets": "Budgets",
+    "dashboard": "Dashboard",
+    "transactions": "Transactions",
+    "tools": "Tools"
+  },
+  "common": {
+    "no": "No",
+    "filter": "Filter",
+    "reset": "Reset"
+  },
+  "fields": {
+    "date": "Date",
+    "status": "Status",
+    "actions": "Actions",
+    "details": "Details",
+    "description": "Description",
+    "name": "Name",
+    "type": "Type",
+    "notes": "Notes"
+  },
+  "budgets": {
+    "budget": "Budget",
+    "namespaces": {
+      "occasion": "Occasion"
+    }
+  },
+  "transactions": {
+    "title": "Transactions",
+    "description": "Description",
+    "occasion": "Occasion",
+    "filters": {
+      "title": "Filters",
+      "ytd": "YTD"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "widgets": {
+      "total": "Total",
+      "trends": "Trends",
+      "anomalies": "Anomalies",
+      "transactions": "Transactions",
+      "netLabel": "Net"
+    },
+    "summary": {
+      "net": "Net"
+    },
+    "manage": {
+      "name": "Name"
+    }
+  },
+  "settings": {
+    "browserDefault": "Auto (Browser)"
+  },
+  "import": {
+    "format": "Format",
+    "formatOptional": "Format (Optional)",
+    "transactions": "Transactions"
+  },
+  "organize": {
+    "tabs": {
+      "occasions": "Occasions"
+    }
+  },
+  "admin": {
+    "title": "Admin",
+    "tabs": {
+      "imports": "Imports",
+      "occasions": "Occasions"
+    },
+    "health": {
+      "systemStatus": "System {status}",
+      "uptime": "Uptime",
+      "observabilityInfo": "Observability Info",
+      "metricsEndpoint": "Metrics Endpoint",
+      "p95": "P95",
+      "p99": "P99"
+    },
+    "overview": {
+      "tableHeaders": {
+        "total": "Total"
+      }
+    },
+    "imports": {
+      "tableHeaders": {
+        "date": "Date",
+        "file": "File",
+        "format": "Format",
+        "status": "Status",
+        "actions": "Actions"
+      }
+    },
+    "tags": {
+      "usageCount": "{count} transaction",
+      "usageCountPlural": "{count} transactions",
+      "occasionsLabel": "Occasions",
+      "tableHeaders": {
+        "namespace": "Namespace",
+        "actions": "Actions"
+      }
+    },
+    "tagModal": {
+      "namespace": "Namespace",
+      "description": "Description"
+    }
+  },
+  "tools": {
+    "title": "Tools",
+    "transfers": {
+      "date": "Date"
+    },
+    "rules": {
+      "transactions": "transactions"
+    },
+    "merchants": {
+      "regex": "Regex",
+      "matchType": "Match Type",
+      "aliases": "Aliases",
+      "txns": "txns"
+    },
+    "formats": {
+      "test": "Test"
+    }
+  },
+  "tags": {
+    "title": "Tags",
+    "color": "Color",
+    "namespace": "Namespace",
+    "occasion": "Occasion"
+  },
+  "help": {
+    "tipsTitle": "Tips"
+  }
+}
