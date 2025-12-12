@@ -4,15 +4,33 @@ import { ReactNode, useEffect, useState } from 'react'
 import { NextIntlClientProvider } from 'next-intl'
 import { DashboardProvider } from '@/contexts/DashboardContext'
 import { defaultLocale, Locale, isValidLocale } from '@/i18n'
+import universal from '@/messages/universal.json'
 
-// Dynamic message loader
+// Deep merge objects (universal strings override locale strings)
+function deepMerge(base: Record<string, unknown>, override: Record<string, unknown>): Record<string, unknown> {
+  const result = { ...base }
+  for (const key of Object.keys(override)) {
+    const overrideVal = override[key]
+    if (typeof overrideVal === 'object' && overrideVal !== null && !Array.isArray(overrideVal) &&
+        typeof result[key] === 'object' && result[key] !== null && !Array.isArray(result[key])) {
+      result[key] = deepMerge(result[key] as Record<string, unknown>, overrideVal as Record<string, unknown>)
+    } else {
+      result[key] = overrideVal
+    }
+  }
+  return result
+}
+
+// Dynamic message loader - merges locale messages with universal strings
 async function loadMessages(locale: string): Promise<Record<string, unknown>> {
   try {
-    return (await import(`@/messages/${locale}.json`)).default
+    const localeMessages = (await import(`@/messages/${locale}.json`)).default
+    return deepMerge(localeMessages, universal)
   } catch {
     // Fallback to default locale if message file not found
     console.warn(`Messages for locale "${locale}" not found, falling back to ${defaultLocale}`)
-    return (await import(`@/messages/${defaultLocale}.json`)).default
+    const fallbackMessages = (await import(`@/messages/${defaultLocale}.json`)).default
+    return deepMerge(fallbackMessages, universal)
   }
 }
 

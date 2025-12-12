@@ -7,6 +7,7 @@ import { describe, it, expect } from 'vitest'
 import { existsSync } from 'fs'
 import { join } from 'path'
 import enUS from '../messages/en-US.json'
+import universal from '../messages/universal.json'
 
 /**
  * Recursively extract all keys from a nested object
@@ -86,11 +87,13 @@ function findUnchangedStrings(
   return unchanged
 }
 
+// Universal strings from universal.json - intentionally same across all languages
+const UNIVERSAL_STRINGS = new Set(getAllKeys(universal as Record<string, unknown>))
+
 // Production locales to test (excluding en-GB which shares most strings with en-US)
 const PRODUCTION_LOCALES = ['de-DE', 'es-ES', 'fr-FR', 'it-IT', 'nl-NL', 'pt-PT'] as const
 
 // Minimum percentage of strings that must be different from English
-// Set to 100% since all strings should be translated for non-English locales
 const MIN_TRANSLATION_PERCENT = 100
 
 describe('i18n translations', () => {
@@ -122,6 +125,7 @@ describe('i18n translations', () => {
 
     it(`should have ${MIN_TRANSLATION_PERCENT}% of strings translated (not identical to English)`, () => {
       const unchangedStrings = findUnchangedStrings(enUS, localeData)
+        .filter(key => !UNIVERSAL_STRINGS.has(key))
 
       const totalStrings = sourceKeys.size
       const translatedPercent = ((totalStrings - unchangedStrings.length) / totalStrings) * 100

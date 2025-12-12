@@ -1,0 +1,29 @@
+{
+  "$schema": "./schema.json",
+  "$comment": "Strings that are intentionally the same across all languages (brand names, technical terms)",
+  "nav": {
+    "brand": "Maxwell's Wallet"
+  },
+  "dashboard": {
+    "widgets": {
+      "total": "Total"
+    }
+  },
+  "admin": {
+    "title": "Admin",
+    "health": {
+      "p95": "P95",
+      "p99": "P99"
+    },
+    "overview": {
+      "tableHeaders": {
+        "total": "Total"
+      }
+    }
+  },
+  "tools": {
+    "merchants": {
+      "regex": "Regex"
+    }
+  }
+}
