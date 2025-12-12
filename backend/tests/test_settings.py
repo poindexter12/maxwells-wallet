@@ -16,7 +16,7 @@ class TestSettingsEndpoints:
         data = response.json()
         assert data["language"] == "browser"
         assert data["effective_locale"] in [
-            "en-US", "en-GB", "es", "fr", "it", "pt", "de", "nl", "pseudo"
+            "en-US", "en-GB", "es-ES", "fr-FR", "it-IT", "pt-PT", "de-DE", "nl-NL", "pseudo"
         ]
         assert "supported_locales" in data
 
@@ -28,7 +28,7 @@ class TestSettingsEndpoints:
 
         data = response.json()
         assert set(data["supported_locales"]) == {
-            "en-US", "en-GB", "es", "fr", "it", "pt", "de", "nl", "pseudo"
+            "en-US", "en-GB", "es-ES", "fr-FR", "it-IT", "pt-PT", "de-DE", "nl-NL", "pseudo"
         }
 
     @pytest.mark.asyncio
@@ -37,22 +37,22 @@ class TestSettingsEndpoints:
         # Set to French
         response = await client.patch(
             "/api/v1/settings",
-            json={"language": "fr"}
+            json={"language": "fr-FR"}
         )
         assert response.status_code == 200
-        assert response.json()["language"] == "fr"
+        assert response.json()["language"] == "fr-FR"
 
         # Verify it persisted
         response = await client.get("/api/v1/settings")
         assert response.status_code == 200
-        assert response.json()["language"] == "fr"
-        assert response.json()["effective_locale"] == "fr"
+        assert response.json()["language"] == "fr-FR"
+        assert response.json()["effective_locale"] == "fr-FR"
 
     @pytest.mark.asyncio
     async def test_update_language_to_browser(self, client: AsyncClient):
         """PATCH /settings can set language back to browser detection."""
         # First set to a specific language
-        await client.patch("/api/v1/settings", json={"language": "de"})
+        await client.patch("/api/v1/settings", json={"language": "de-DE"})
 
         # Then reset to browser
         response = await client.patch(
@@ -88,7 +88,7 @@ class TestSettingsEndpoints:
             headers={"Accept-Language": "de-DE,de;q=0.9,en;q=0.8"}
         )
         assert response.status_code == 200
-        assert response.json()["effective_locale"] == "de"
+        assert response.json()["effective_locale"] == "de-DE"
 
     @pytest.mark.asyncio
     async def test_accept_language_fallback(self, client: AsyncClient):
@@ -114,22 +114,22 @@ class TestAcceptLanguageParsing:
         assert parse_accept_language("en-US") == "en-US"
 
     def test_parse_language_only(self):
-        """Parse language-only like 'de' matches 'de'."""
+        """Parse language-only like 'de' matches 'de-DE'."""
         from app.routers.settings import parse_accept_language
-        assert parse_accept_language("de") == "de"
+        assert parse_accept_language("de") == "de-DE"
 
     def test_parse_with_quality(self):
         """Parse header with quality values."""
         from app.routers.settings import parse_accept_language
         result = parse_accept_language("fr-FR,fr;q=0.9,en;q=0.8")
-        assert result == "fr"
+        assert result == "fr-FR"
 
     def test_parse_prioritizes_quality(self):
         """Parse prioritizes higher quality values."""
         from app.routers.settings import parse_accept_language
         # Spanish has higher quality than German
         result = parse_accept_language("de;q=0.5,es;q=0.9")
-        assert result == "es"
+        assert result == "es-ES"
 
     def test_parse_empty_fallback(self):
         """Empty header falls back to en-US."""

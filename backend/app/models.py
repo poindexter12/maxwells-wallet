@@ -565,16 +565,16 @@ class DashboardLayoutUpdate(SQLModel):
 # ============================================================================
 
 class LanguagePreference(str, Enum):
-    """User's language preference for i18n"""
+    """User's language preference for i18n (BCP 47 locale codes)"""
     browser = "browser"  # Use Accept-Language header from browser
     en_us = "en-US"
     en_gb = "en-GB"
-    es = "es"
-    fr = "fr"
-    it = "it"
-    pt = "pt"
-    de = "de"
-    nl = "nl"
+    es_es = "es-ES"
+    fr_fr = "fr-FR"
+    it_it = "it-IT"
+    pt_pt = "pt-PT"
+    de_de = "de-DE"
+    nl_nl = "nl-NL"
     pseudo = "pseudo"  # QA testing locale (pseudo-localized text)
 
 

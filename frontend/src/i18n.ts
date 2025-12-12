@@ -31,17 +31,17 @@ export const locales = enablePseudo
 export type Locale = (typeof productionLocales)[number] | (typeof devLocales)[number];
 export const defaultLocale: Locale = 'en-US';
 
-// Language display names (in their native language)
+// Language display names (in their native language) with flag emojis
 export const languageNames: Record<Locale, string> = {
-  'en-US': 'English (US)',
-  'en-GB': 'English (UK)',
-  'es-ES': 'Español',
-  'fr-FR': 'Français',
-  'it-IT': 'Italiano',
-  'de-DE': 'Deutsch',
-  'nl-NL': 'Nederlands',
-  'pt-PT': 'Português',
-  'pseudo': '[Ƥşḗḗŭŭḓǿǿ]',
+  'en-US': '🇺🇸 English (US)',
+  'en-GB': '🇬🇧 English (UK)',
+  'es-ES': '🇪🇸 Español',
+  'fr-FR': '🇫🇷 Français',
+  'it-IT': '🇮🇹 Italiano',
+  'de-DE': '🇩🇪 Deutsch',
+  'nl-NL': '🇳🇱 Nederlands',
+  'pt-PT': '🇵🇹 Português',
+  'pseudo': '🔤 [Ƥşḗḗŭŭḓǿǿ]',
 };
 
 // Helper to check if a locale is valid
