@@ -3,10 +3,16 @@
 # =============================================================================
 
 .PHONY: translate-upload translate-download translate-status translate-pseudo translate-test
+.PHONY: translate-harvest translate-harvest-new translate-harvest-preview translate-describe
 
 # Crowdin CLI via npx (config is at project root)
 CROWDIN := cd $(FRONTEND_DIR) && npx crowdin
 CROWDIN_CONFIG := -c ../crowdin.yaml
+
+# Crowdin Context Harvester - uses AI to extract context from code
+# Requires: CROWDIN_PERSONAL_TOKEN and one of OPENAI_KEY or ANTHROPIC_API_KEY
+CROWDIN_PROJECT_ID := 854226
+HARVESTER := cd $(FRONTEND_DIR) && npx crowdin-context-harvester
 
 translate-upload: ## Upload source strings to Crowdin
 	@echo "$(BLUE)Uploading source strings to Crowdin...$(NC)"
@@ -30,3 +36,47 @@ translate-test: ## Run translation validation tests
 	@echo "$(BLUE)Running translation tests...$(NC)"
 	@cd $(FRONTEND_DIR) && npm run test:run -- src/test/i18n.test.ts
 	@echo "$(GREEN)✓ Translation tests passed$(NC)"
+
+# -----------------------------------------------------------------------------
+# Context Harvester - AI-powered context extraction
+# Uses Anthropic by default (set ANTHROPIC_API_KEY), or OpenAI (set OPENAI_KEY)
+# -----------------------------------------------------------------------------
+
+translate-harvest: ## Extract context for ALL strings using AI (costs $$)
+	@echo "$(BLUE)Harvesting context for all strings...$(NC)"
+	@echo "$(YELLOW)⚠ This uses AI API calls - may incur costs$(NC)"
+	$(HARVESTER) harvest \
+		--project=$(CROWDIN_PROJECT_ID) \
+		--ai=anthropic \
+		--model=claude-sonnet-4-20250514 \
+		--output=crowdin \
+		--concurrency=5
+	@echo "$(GREEN)✓ Context harvested and uploaded to Crowdin$(NC)"
+
+translate-harvest-new: ## Extract context for strings added in last 7 days
+	@echo "$(BLUE)Harvesting context for new strings (last 7 days)...$(NC)"
+	$(HARVESTER) harvest \
+		--project=$(CROWDIN_PROJECT_ID) \
+		--ai=anthropic \
+		--model=claude-sonnet-4-20250514 \
+		--output=crowdin \
+		--since="7 days ago" \
+		--concurrency=5
+	@echo "$(GREEN)✓ Context harvested for new strings$(NC)"
+
+translate-harvest-preview: ## Preview context extraction (CSV output, no upload)
+	@echo "$(BLUE)Previewing context harvest (dry run)...$(NC)"
+	$(HARVESTER) harvest \
+		--project=$(CROWDIN_PROJECT_ID) \
+		--ai=anthropic \
+		--model=claude-sonnet-4-20250514 \
+		--output=csv \
+		--concurrency=5
+	@echo "$(GREEN)✓ Context preview saved to CSV$(NC)"
+
+translate-describe: ## Generate AI project description for Crowdin
+	@echo "$(BLUE)Generating project description...$(NC)"
+	$(HARVESTER) describe \
+		--project=$(CROWDIN_PROJECT_ID) \
+		--output=crowdin
+	@echo "$(GREEN)✓ Project description updated$(NC)"
