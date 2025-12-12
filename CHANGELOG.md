@@ -5,89 +5,59 @@ All notable changes to Maxwell's Wallet will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.9.0-beta5] - 2025-12-12
+## [0.9.0] - 2025-12-12
+
+### Internationalization (i18n) - Major Release
+
+This release brings full internationalization support to Maxwell's Wallet with 9 supported locales.
 
 ### Added
-- **Custom DatePicker** - i18n-aware date picker component
-  - Uses react-day-picker with date-fns locales
-  - Locale-specific date formats (MM/dd/yyyy for US, dd/MM/yyyy for EU, etc.)
-  - Accessible with keyboard navigation and ARIA labels
-  - Replaces native HTML date inputs throughout the app
 
-### Changed
-- **Security Update** - Next.js 16.0.10 (security patch)
-- **Dependency Updates**
-  - react 19.2.3, react-dom 19.2.3
-  - next-intl 4.6.0
-  - tailwindcss 4.1.18, @tailwindcss/postcss 4.1.18
-  - @types/node 25.0.1
-  - eslint-config-next 16.0.10
-
-### Fixed
-- **Format Tests** - Fixed flaky Intl.NumberFormat tests across Node versions
-- **Documentation** - Corrected locale count and package manager references
-
-## [0.9.0-beta4] - 2025-12-11
-
-### Added
-- **Complete Translations** - All 7 locales fully translated
-  - German (de-DE), Dutch (nl-NL), Spanish (es-ES), French (fr-FR)
-  - Italian (it-IT), Portuguese (pt-PT), British English (en-GB)
+#### Multi-Language Support
+- **9 Locales** - Full translation support
+  - en-US (English US), en-GB (British English)
+  - de-DE (German), nl-NL (Dutch), es-ES (Spanish)
+  - fr-FR (French), it-IT (Italian), pt-PT (Portuguese)
+  - pseudo (QA testing locale with transformed text)
+- **Language Switcher** - Auto-detect or manual selection in settings
 - **Crowdin Integration** - Professional translation management
   - `make translate-upload` and `make translate-download` commands
-  - Crowdin CLI configured for automated sync
-- **Dependabot** - Automated dependency updates with grouped PRs
-- **MIT License** - Project now open source under MIT license
+  - Context Harvester for AI-powered context extraction
 
-### Changed
-- **Auto Database Migrations** - Migrations run automatically on `make backend` startup
-- **BCP 47 Locale Codes** - Standardized locale naming (e.g., `en-GB` not `en-gb`)
-- **AI Config Consolidation** - Unified under `.claude/` directory
+#### Locale-Aware Formatting
+- **Custom DatePicker** - i18n-aware date picker component
+  - Uses react-day-picker with date-fns locales
+  - Locale-specific formats (MM/dd/yyyy for US, dd/MM/yyyy for EU)
+  - Accessible with keyboard navigation and ARIA labels
+- **Currency Formatting** - Locale-appropriate currency display
+  - USD ($), GBP (£), EUR (€) based on locale
+  - Compact format for charts (e.g., "$1.2K", "€1,2K")
+- **Large Transaction Threshold** - Locale-aware defaults
+  - $100 USD, £75 GBP, €85 EUR
+  - Dynamic threshold based on user's spending patterns
 
-### Fixed
-- **Docker Build** - Added @swc/helpers to resolve peer dependency issues
-
-## [0.9.0-beta3] - 2025-12-11
-
-### Changed
-- **Locale-Aware Formatting** - Currency and date formatting now respects user's locale
-  - New `useFormat` hook provides locale-aware formatters
-  - Compact currency format for charts (e.g., "$1.2K")
-  - Short weekday/month names from locale
-- **Widget Titles Removed** - Widget display names now come from i18n translations
-  - `title` field removed from widget model
-  - Simplifies widget management and ensures consistent translations
-  - Database migration drops `title` column
-
-### Fixed
-- **Pseudo-locale Generator** - Handles placeholder-only strings correctly
-- **E2E Tests** - Import page test more robust for i18n
-
-## [0.9.0-beta] - 2025-12-10
-
-### Added
-
-#### Internationalization (i18n)
-- **Multi-language Support** - Complete i18n infrastructure with next-intl
-  - Language switcher in settings (Auto/English/l33t speak)
-  - All UI strings externalized to message files
-  - l33t speak translation for testing/fun
-- **Structured Error Codes** - API errors now include machine-readable codes
+#### Developer Experience
+- **Structured Error Codes** - Machine-readable codes for i18n
   - `error_code` field for frontend translation lookup
-  - `context` field for dynamic interpolation (e.g., `{count}` placeholders)
-  - All 40+ error types documented with unique codes
-- **Translation Coverage Test** - Automated test ensures all locales have complete translations
-- **Widget Translations** - All dashboard widgets (charts, velocity, anomalies, etc.) fully i18n-enabled
+  - `context` field for dynamic interpolation
+  - All 40+ error types with unique codes
+- **Translation Coverage Test** - Automated test ensures completeness
+- **Pseudo-locale** - Auto-generated for i18n QA testing
 
 ### Changed
 - **Node.js Version** - Pinned to LTS v22 via `.nvmrc`
-  - `make check-node` target auto-installs via nvm if needed
-  - Fixes deprecation warnings from Node 25
+- **Auto Database Migrations** - Run on `make backend` startup
+- **Widget Titles** - Now from i18n translations (title field removed)
+- **MIT License** - Project now open source under MIT license
+
+### Security
+- **Next.js 16.0.10** - Security patch applied
+- **Dependency Updates** - React 19.2.3, next-intl 4.6.0, Tailwind 4.1.18
 
 ### Fixed
-- **Dashboard Widget Performance** - Removed lazy widget creation from GET endpoints
-  - Widgets now initialized at dashboard creation time only
-  - Eliminates INSERT queries during read operations
+- **Dashboard Widget Performance** - No INSERT queries during reads
+- **Docker Build** - Peer dependency issues resolved
+- **Locale Placeholders** - Bank examples now locale-appropriate
 
 ## [0.8.0] - 2025-12-09
 
