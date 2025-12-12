@@ -6,6 +6,10 @@ on:
     - cron: '30 3 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  issues: write
+
 # Note: All-browser E2E tests run nightly and on-demand only
 # CI runs E2E on chromium for PRs; use workflow_dispatch for full browser coverage
 

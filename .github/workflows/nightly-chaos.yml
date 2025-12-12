@@ -11,6 +11,10 @@ on:
         required: false
         default: 'chromium,firefox,webkit'
 
+permissions:
+  contents: read
+  issues: write
+
 # Note: Chaos tests run weekly and on-demand only
 # Use workflow_dispatch to trigger manually for a specific PR
 

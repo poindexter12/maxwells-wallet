@@ -16,6 +16,10 @@ on:
           - medium
           - long
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   endurance:
     name: Endurance (${{ matrix.test }})

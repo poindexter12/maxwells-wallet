@@ -15,6 +15,10 @@ updates:
       all-deps:
         patterns:
           - "*"
+    ignore:
+      # v3 has broken exports field - keep on v2 until fixed
+      - dependency-name: "pseudo-localization"
+        versions: [">=3"]
 
   # Backend (pip/uv)
   - package-ecosystem: "pip"
