@@ -206,12 +206,12 @@
       "heatmapLess": "Minder",
       "heatmapMore": "Meer",
       "descriptions": {
-        "summary": "Toont totale inkomsten, uitgaven en netto voor de periode. Inclusief maand-op-maand vergelijking.",
+        "summary": "Overzicht van totale inkomsten, uitgaven en netto per periode, inclusief maandelijkse vergelijking.",
         "velocity": "Dagelijkse uitgavensnelheid die toont of u op schema ligt voor uw typische maandelijkse uitgaven.",
         "anomalies": "Benadrukt ongewone transacties die significant afwijken van uw normale uitgavenpatronen.",
         "bucketPie": "Cirkeldiagram dat toont hoe uitgaven verdeeld zijn over uw budget potten.",
         "topMerchants": "Lijst van handelaren waar u het meest uitgeeft. Kan gefilterd worden per pot om top handelaren binnen een categorie te zien.",
-        "trends": "Lijndiagram dat inkomsten, uitgaven en netto over tijd toont. Toont 12 weken in maandweergave, 12 maanden in jaarweergave.",
+        "trends": "Lijngrafiek van inkomsten, uitgaven en netto over tijd, met 12 weken in maandweergave en 12 maanden in jaarweergave.",
         "sankey": "Stroomdiagram dat toont hoe geld stroomt van inkomensbronnen via rekeningen naar uitgavencategorieën. Geweldig voor het begrijpen van algehele cashflow.",
         "treemap": "Hiërarchische weergave van uitgaven per categorie en handelaar. Grotere vakken = meer uitgaven. Klik om te verkennen.",
         "heatmap": "Kalender heatmap die dagelijkse uitgaven intensiteit toont. Donkerder = meer uitgegeven. Klik maanden in jaarweergave om in te zoomen."
@@ -350,7 +350,7 @@
       "buckets": "Potten",
       "accounts": "Rekeningen",
       "occasions": "Gebeurtenissen",
-      "expenses": "",
+      "expenses": "Uitgavencategorieën",
       "allTags": "Alle Tags"
     },
     "overview": {
@@ -442,7 +442,7 @@
       "bucketsLabel": "Potten",
       "accountsLabel": "Rekeningen",
       "occasionsLabel": "Gebeurtenissen",
-      "expenseTypesLabel": "Uitgaventypes"
+      "expenseTypesLabel": "Uitgavencategorieën"
     },
     "tagModal": {
       "addLabel": "{type} Toevoegen",
