@@ -107,7 +107,7 @@ jobs:
           CI: true
 
       - name: Upload endurance test report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: failure()
         with:
           name: endurance-report-${{ matrix.test }}
