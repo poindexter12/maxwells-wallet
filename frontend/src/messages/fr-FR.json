@@ -321,7 +321,7 @@
     "dbDuplicates": "Doublons BD",
     "batchDuplicates": "Doublons lot",
     "selectAccount": "-- Sélectionner un compte --",
-    "accountPlaceholder": "ex. BNP-Courant, SG-12345",
+    "accountPlaceholder": "e.g., Chase-Checking, AMEX-12345",
     "orTypeNew": "ou saisir un nouveau",
     "existing": "Existant",
     "new": "Nouveau",
