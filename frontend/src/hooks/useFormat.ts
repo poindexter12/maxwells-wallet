@@ -11,6 +11,7 @@ import {
   formatDateRange as baseDateRange,
   formatMonthDay as baseMonthDay,
   getShortWeekdays as baseWeekdays,
+  getDefaultLargeThreshold as baseLargeThreshold,
 } from '@/lib/format'
 
 /**
@@ -92,6 +93,12 @@ export function useFormat() {
      * @returns Array of 7 short weekday names starting from Monday
      */
     getShortWeekdays: () => baseWeekdays(locale),
+
+    /**
+     * Get the default "large transaction" threshold for the current locale.
+     * @returns Threshold amount (e.g., 100 for USD, 85 for EUR, 75 for GBP)
+     */
+    getDefaultLargeThreshold: () => baseLargeThreshold(locale),
 
     /**
      * The current locale

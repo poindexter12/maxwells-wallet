@@ -101,7 +101,6 @@
       "thisYear": "Cette année",
       "ytd": "Depuis le début de l'année",
       "last90Days": "90 derniers jours",
-      "large": "Important (100€+)",
       "largeDynamic": "Important ({threshold}+)",
       "largeTitle": "Transactions importantes ce mois",
       "largeTitleWithThreshold": "Transactions importantes ce mois (supérieures à {threshold} - 2σ au-dessus de votre moyenne)",

@@ -62,7 +62,7 @@ function TransactionsContent() {
   const t = useTranslations('transactions')
   const tCommon = useTranslations('common')
   const tFields = useTranslations('fields')
-  const { formatCurrency } = useFormat()
+  const { formatCurrency, getDefaultLargeThreshold } = useFormat()
 
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [totalCount, setTotalCount] = useState<number>(0)
@@ -737,8 +737,8 @@ function TransactionsContent() {
                 const now = new Date()
                 const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
                 const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-                // Use dynamic threshold or fall back to $100
-                const threshold = largeThreshold || 100
+                // Use dynamic threshold or fall back to locale-specific default
+                const threshold = largeThreshold || getDefaultLargeThreshold()
                 setFilters({
                   ...filters,
                   startDate: firstDay.toISOString().split('T')[0],
@@ -751,7 +751,7 @@ function TransactionsContent() {
               className="px-3 py-1.5 text-xs rounded-full border border-orange-300 text-orange-700 bg-orange-50 hover:bg-orange-100 transition-colors dark:border-orange-700 dark:text-orange-300 dark:bg-orange-900/30 dark:hover:bg-orange-900/50"
               title={largeThreshold ? t('filters.largeTitleWithThreshold', { threshold: formatCurrency(largeThreshold) }) : t('filters.largeTitle')}
             >
-              ⚠️ {largeThreshold ? t('filters.largeDynamic', { threshold: formatCurrency(largeThreshold) }) : t('filters.large')}
+              ⚠️ {t('filters.largeDynamic', { threshold: formatCurrency(largeThreshold || getDefaultLargeThreshold()) })}
             </button>
             <button
               data-testid={TEST_IDS.QUICK_FILTER_TOP_SPENDING}
@@ -776,17 +776,18 @@ function TransactionsContent() {
             <button
               data-testid={TEST_IDS.QUICK_FILTER_LARGE}
               onClick={() => {
+                const threshold = getDefaultLargeThreshold()
                 setFilters({
                   ...filters,
                   amountMin: '',
-                  amountMax: '-100'
+                  amountMax: `-${threshold}`
                 })
                 setShowAdvancedFilters(true)
               }}
               className="px-3 py-1.5 text-xs rounded-full border border-red-300 text-red-700 bg-red-50 hover:bg-red-100 transition-colors dark:border-red-700 dark:text-red-300 dark:bg-red-900/30 dark:hover:bg-red-900/50"
-              title="Transactions over $100"
+              title={t('filters.largeTitle')}
             >
-              💰 {t('filters.large')}
+              💰 {t('filters.largeDynamic', { threshold: formatCurrency(getDefaultLargeThreshold()) })}
             </button>
             <button
               data-testid={TEST_IDS.QUICK_FILTER_UNRECONCILED}

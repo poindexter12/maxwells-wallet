@@ -101,7 +101,6 @@
       "thisYear": "Dit Jaar",
       "ytd": "YTD",
       "last90Days": "Laatste 90 Dagen",
-      "large": "Groot ($100+)",
       "largeDynamic": "Groot ({threshold}+)",
       "largeTitle": "Grote transacties deze maand",
       "largeTitleWithThreshold": "Grote transacties deze maand (boven {threshold} - 2σ boven uw gemiddelde)",
