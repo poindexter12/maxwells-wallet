@@ -9,10 +9,10 @@
 make test-frontend
 
 # Run with watch mode
-cd frontend && pnpm test
+cd frontend && npm test
 
 # Run specific test file
-cd frontend && pnpm test src/components/widgets/WidgetRenderer.test.tsx
+cd frontend && npm test src/components/widgets/WidgetRenderer.test.tsx
 ```
 
 Frontend tests use Vitest with React Testing Library. All tests should use `data-testid` attributes from `frontend/src/test-ids.ts` for element selection (never rely on text content due to i18n).
@@ -68,7 +68,7 @@ Translation completeness is verified automatically:
 
 ```bash
 # Run i18n unit tests (checks all locales have matching keys)
-cd frontend && pnpm test src/test/i18n.test.ts
+cd frontend && npm test src/test/i18n.test.ts
 ```
 
 The i18n test ensures:
