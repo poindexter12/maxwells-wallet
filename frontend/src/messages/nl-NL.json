@@ -48,7 +48,7 @@
     "bucket": "Pot"
   },
   "nav": {
-    "brand": "Maxwell's Wallet",
+    "brand": "Maxwells Wallet",
     "dashboard": "Dashboard",
     "transactions": "Transacties",
     "budgets": "Budgetten",
@@ -74,7 +74,7 @@
     "bucket": "Pot",
     "occasion": "Gebeurtenis",
     "searchPlaceholder": "Zoek handelaar of beschrijving...",
-    "allBuckets": "Alle Buckets",
+    "allBuckets": "Alle Potten",
     "allOccasions": "Alle Gebeurtenissen",
     "allAccounts": "Alle Rekeningen",
     "allStatus": "Alle Status",
@@ -116,7 +116,7 @@
       "selected": "{count} van {total} geselecteerd",
       "assign": "Toewijzen:",
       "chooseType": "Kies type...",
-      "selectBucket": "Selecteer bucket...",
+      "selectBucket": "Selecteer pot...",
       "selectOccasion": "Selecteer gebeurtenis...",
       "selectAccount": "Selecteer rekening...",
       "apply": "Toepassen op {count}",
@@ -127,13 +127,13 @@
   },
   "budgets": {
     "title": "Budgetoverzicht",
-    "subtitle": "Monitor uitgaven tegen budgetlimieten voor buckets, gebeurtenissen en rekeningen",
+    "subtitle": "Monitor uitgaven tegen budgetlimieten voor potten, gebeurtenissen en rekeningen",
     "newBudget": "Nieuw Budget",
     "editBudget": "Budget Bewerken",
     "createBudget": "Budget Aanmaken",
     "allBudgets": "Alle Budgetten",
     "noBudgets": "Nog geen budgetten aangemaakt",
-    "alerts": "Budgetwaarschuwingen",
+    "alerts": "Budgetmeldingen",
     "spent": "Uitgegeven",
     "budget": "Budget",
     "remaining": "Resterend",
@@ -161,7 +161,7 @@
     "noDashboard": "Geen dashboard beschikbaar",
     "createDashboard": "Nieuw dashboard aanmaken",
     "noWidgets": "Geen widgets zichtbaar",
-    "quickWidgetToggle": "Snelle Widget Toggle",
+    "quickWidgetToggle": "Snelle widget-schakelaar",
     "quickWidgetToggleDescription": "Widgets tonen/verbergen. Voor meer opties, gebruik de volledige configuratiepagina.",
     "hideWidget": "Widget verbergen",
     "showWidget": "Widget tonen",
@@ -170,7 +170,7 @@
     "configureWidget": "Widget configureren",
     "duplicateWidget": "Widget dupliceren",
     "deleteWidget": "Widget verwijderen",
-    "supportsBucketFiltering": "Ondersteunt bucket filtering",
+    "supportsBucketFiltering": "Ondersteunt pot filtering",
     "fullConfiguration": "Volledige Configuratie",
     "fullConfigurationDescription": "Widgets dupliceren, filters configureren en meer",
     "configureDashboard": "Dashboard configureren",
@@ -186,7 +186,7 @@
       "summary": "Samenvatting",
       "velocity": "Uitgaven Snelheid",
       "anomalies": "Anomalieën",
-      "bucketPie": "Uitgaven per Bucket",
+      "bucketPie": "Uitgaven per Pot",
       "topMerchants": "Top Handelaren",
       "trends": "Trends",
       "sankey": "Geldstroom",
@@ -199,19 +199,19 @@
       "sankeyDescription": "Inkomsten → Rekeningen → Uitgaven Categorieën",
       "noSpendingData": "Geen uitgavengegevens beschikbaar",
       "noSpendingDataPeriod": "Geen uitgavengegevens beschikbaar voor deze periode",
-      "noBucketData": "Geen bucket gegevens beschikbaar",
+      "noBucketData": "Geen pot gegevens beschikbaar",
       "noMerchantData": "Geen handelaar gegevens beschikbaar",
       "noAnomalies": "Geen ongewone activiteit gedetecteerd",
       "treemapDescription": "Uitgaven per categorie en handelaar",
       "heatmapLess": "Minder",
       "heatmapMore": "Meer",
       "descriptions": {
-        "summary": "Toont totale inkomsten, uitgaven en netto voor de periode. Inclusief maand-op-maand vergelijking.",
+        "summary": "Overzicht van totale inkomsten, uitgaven en netto per periode, inclusief maandelijkse vergelijking.",
         "velocity": "Dagelijkse uitgavensnelheid die toont of u op schema ligt voor uw typische maandelijkse uitgaven.",
         "anomalies": "Benadrukt ongewone transacties die significant afwijken van uw normale uitgavenpatronen.",
-        "bucketPie": "Cirkeldiagram dat toont hoe uitgaven verdeeld zijn over uw budget buckets.",
-        "topMerchants": "Lijst van handelaren waar u het meest uitgeeft. Kan gefilterd worden per bucket om top handelaren binnen een categorie te zien.",
-        "trends": "Lijndiagram dat inkomsten, uitgaven en netto over tijd toont. Toont 12 weken in maandweergave, 12 maanden in jaarweergave.",
+        "bucketPie": "Cirkeldiagram dat toont hoe uitgaven verdeeld zijn over uw budget potten.",
+        "topMerchants": "Lijst van handelaren waar u het meest uitgeeft. Kan gefilterd worden per pot om top handelaren binnen een categorie te zien.",
+        "trends": "Lijngrafiek van inkomsten, uitgaven en netto over tijd, met 12 weken in maandweergave en 12 maanden in jaarweergave.",
         "sankey": "Stroomdiagram dat toont hoe geld stroomt van inkomensbronnen via rekeningen naar uitgavencategorieën. Geweldig voor het begrijpen van algehele cashflow.",
         "treemap": "Hiërarchische weergave van uitgaven per categorie en handelaar. Grotere vakken = meer uitgaven. Klik om te verkennen.",
         "heatmap": "Kalender heatmap die dagelijkse uitgaven intensiteit toont. Donkerder = meer uitgegeven. Klik maanden in jaarweergave om in te zoomen."
@@ -232,7 +232,7 @@
       "new": "Nieuw",
       "overAvg": "Boven Gem.",
       "viewNewMerchants": "Transacties van nieuwe handelaren bekijken",
-      "viewOverAvgBuckets": "Buckets met ongewoon hoge uitgaven bekijken",
+      "viewOverAvgBuckets": "Potten met ongewoon hoge uitgaven bekijken",
       "income": "Inkomsten",
       "expenses": "Uitgaven",
       "netLabel": "Netto",
@@ -338,7 +338,7 @@
     "crossAccountWarning": "Deze transacties lijken overeen te komen met bestaande transacties in andere rekeningen. Dit zou kunnen wijzen op overboekingen tussen rekeningen.",
     "importSelectedFiles": "Importeer {count} Geselecteerde Bestand(en)",
     "filesMissingAccount": "{count} Bestand(en) Zonder Rekening",
-    "noBucket": "Geen Bucket"
+    "noBucket": "Geen Pot"
   },
   "admin": {
     "title": "Admin",
@@ -350,7 +350,7 @@
       "buckets": "Potten",
       "accounts": "Rekeningen",
       "occasions": "Gebeurtenissen",
-      "expenses": "Expenses",
+      "expenses": "Uitgavencategorieën",
       "allTags": "Alle Tags"
     },
     "overview": {
@@ -442,7 +442,7 @@
       "bucketsLabel": "Potten",
       "accountsLabel": "Rekeningen",
       "occasionsLabel": "Gebeurtenissen",
-      "expenseTypesLabel": "Uitgaventypes"
+      "expenseTypesLabel": "Uitgavencategorieën"
     },
     "tagModal": {
       "addLabel": "{type} Toevoegen",
@@ -575,7 +575,7 @@
   },
   "organize": {
     "title": "Organiseren",
-    "subtitle": "Manage and organize your tags and categories",
+    "subtitle": "",
     "manageInAdmin": "Beheren in Admin",
     "tabs": {
       "buckets": "Potten",
@@ -748,15 +748,15 @@
       "title": "Import help",
       "description": "Importeer transacties uit uw bank's CSV, QIF, QFX of OFX bestanden.",
       "steps": [
-        "Select the file from your bank's export",
-        "Choose the account (required for duplicate detection)",
-        "Preview the transactions before importing",
-        "Confirm to add transactions to your records",
+        "",
+        "",
+        "",
+        "",
         "Bekijk het voorbeeld en klik vervolgens op 'Import bevestigen' om op te slaan"
       ],
       "tips": [
-        "Use batch import for multiple files at once",
-        "The format is usually auto-detected",
+        "",
+        "",
         ""
       ]
     },

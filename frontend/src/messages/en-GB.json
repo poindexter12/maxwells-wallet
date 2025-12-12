@@ -301,7 +301,7 @@
     "batchImport": "Batch Import (Multiple Files)",
     "noFilesSelected": "Please select at least one file to import",
     "processing": "Processing...",
-    "analyzing": "Analyzing file...",
+    "analyzing": "Analysing file...",
     "importing": "Importing...",
     "filesSelected": "{count} file(s) selected",
     "filesSelectedOfTotal": "{selected} of {total} files selected",
@@ -436,7 +436,7 @@
       "allTagsDescription": "View all tags across all namespaces",
       "bucketsDescription": "Spending categories like groceries, dining, entertainment",
       "accountsDescription": "Bank accounts and credit cards with display names",
-      "occasionsDescription": "Special events like vacation, holidays, birthdays",
+      "occasionsDescription": "Special events like holiday, birthdays",
       "expenseTypesDescription": "Recurring, one-time, refund classifications",
       "allTagsLabel": "All Tags",
       "bucketsLabel": "Buckets",
@@ -658,7 +658,7 @@
     "delete": "Delete Tag",
     "namespace": "Namespace",
     "sortOrder": "Sort Order",
-    "color": "Color"
+    "color": "Colour"
   },
   "errors": {
     "generic": "An error occurred. Please try again.",
