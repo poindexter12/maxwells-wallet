@@ -26,7 +26,7 @@
     "remove": "Remove",
     "view": "View",
     "manage": "Manage",
-    "customize": "Customise",
+    "customize": "Customize",
     "collapse": "Collapse",
     "expand": "Expand",
     "dismiss": "Dismiss"
@@ -52,7 +52,7 @@
     "dashboard": "Dashboard",
     "transactions": "Transactions",
     "budgets": "Budgets",
-    "organize": "Organise",
+    "organize": "Organize",
     "tools": "Tools",
     "admin": "Admin",
     "import": "Import CSV"
@@ -84,8 +84,8 @@
     "transfer": "Transfer",
     "transferExcluded": "Internal transfer - excluded from spending",
     "importCsv": "Import CSV",
-    "minAmount": "Min £",
-    "maxAmount": "Max £",
+    "minAmount": "Min $",
+    "maxAmount": "Max $",
     "startDate": "Start date",
     "endDate": "End date",
     "status": {
@@ -101,7 +101,7 @@
       "thisYear": "This Year",
       "ytd": "YTD",
       "last90Days": "Last 90 Days",
-      "large": "Large (£100+)",
+      "large": "Large ($100+)",
       "largeDynamic": "Large ({threshold}+)",
       "largeTitle": "Large transactions this month",
       "largeTitleWithThreshold": "Large transactions this month (over {threshold} - 2σ above your average)",
@@ -256,7 +256,7 @@
     },
     "manage": {
       "title": "Manage Dashboards",
-      "subtitle": "Create, edit, and organise your dashboards",
+      "subtitle": "Create, edit, and organize your dashboards",
       "backToDashboard": "Back to Dashboard",
       "createDashboard": "Create Dashboard",
       "createNew": "Create New Dashboard",
@@ -302,7 +302,7 @@
     "batchImport": "Batch Import (Multiple Files)",
     "noFilesSelected": "Please select at least one file to import",
     "processing": "Processing...",
-    "analyzing": "Analysing file...",
+    "analyzing": "Analyzing file...",
     "importing": "Importing...",
     "filesSelected": "{count} file(s) selected",
     "filesSelectedOfTotal": "{selected} of {total} files selected",
@@ -321,7 +321,7 @@
     "dbDuplicates": "DB Duplicates",
     "batchDuplicates": "Batch Duplicates",
     "selectAccount": "-- Select Account --",
-    "accountPlaceholder": "e.g., Barclays-Current, HSBC-53004",
+    "accountPlaceholder": "e.g., BOFA-Checking, AMEX-53004",
     "orTypeNew": "or type new",
     "existing": "Existing",
     "new": "New",
@@ -437,7 +437,7 @@
       "allTagsDescription": "View all tags across all namespaces",
       "bucketsDescription": "Spending categories like groceries, dining, entertainment",
       "accountsDescription": "Bank accounts and credit cards with display names",
-      "occasionsDescription": "Special events like holidays, birthdays",
+      "occasionsDescription": "Special events like vacation, holidays, birthdays",
       "expenseTypesDescription": "Recurring, one-time, refund classifications",
       "allTagsLabel": "All Tags",
       "bucketsLabel": "Buckets",
@@ -450,7 +450,7 @@
       "edit": "Edit Tag",
       "value": "Value",
       "valuePlaceholder": "e.g., {example}",
-      "normalized": "Will be normalised to: {value}",
+      "normalized": "Will be normalized to: {value}",
       "description": "Description",
       "displayName": "Display Name",
       "descriptionOptional": "Description (optional)",
@@ -467,7 +467,7 @@
   },
   "tools": {
     "title": "Tools",
-    "subtitle": "Manage categorisation rules, merchant aliases, and transfers",
+    "subtitle": "Manage categorization rules, merchant aliases, and transfers",
     "categoryRules": "Category Rules",
     "merchantAliases": "Merchant Aliases",
     "transfers": {
@@ -522,7 +522,7 @@
       "any": "ANY"
     },
     "merchants": {
-      "description": "Normalise messy bank merchant names into clean, consistent names",
+      "description": "Normalize messy bank merchant names into clean, consistent names",
       "previewChanges": "Preview Changes",
       "checking": "Checking...",
       "newAlias": "New Alias",
@@ -575,8 +575,8 @@
     }
   },
   "organize": {
-    "title": "Organise",
-    "subtitle": "Buckets, occasions, and accounts for categorising transactions",
+    "title": "Organize",
+    "subtitle": "Buckets, occasions, and accounts for categorizing transactions",
     "manageInAdmin": "Manage in Admin",
     "tabs": {
       "buckets": "Buckets",
@@ -587,14 +587,14 @@
       "description": "Spending categories like groceries, dining, entertainment",
       "totalBuckets": "Total Buckets",
       "taggedTransactions": "Tagged Transactions",
-      "totalCategorized": "Total Categorised",
+      "totalCategorized": "Total Categorized",
       "noBuckets": "No buckets yet. Create buckets in Admin.",
       "percentOfSpending": "{percent}% of spending",
       "transactions": "{count} txn",
       "transactionsPlural": "{count} txns"
     },
     "occasions": {
-      "description": "Special events like holidays, weddings, or projects",
+      "description": "Special events like vacations, holidays, weddings, or projects",
       "totalOccasions": "Total Occasions",
       "taggedTransactions": "Tagged Transactions",
       "totalOccasionSpending": "Total Occasion Spending",
@@ -615,11 +615,11 @@
       "transactionsPlural": "{count} txns"
     },
     "help": {
-      "title": "Organise Your Transactions",
-      "description": "Manage the three types of tags used to categorise your transactions: Buckets for spending categories, Occasions for special events, and Accounts for bank accounts.",
+      "title": "Organize Your Transactions",
+      "description": "Manage the three types of tags used to categorize your transactions: Buckets for spending categories, Occasions for special events, and Accounts for bank accounts.",
       "steps": [
         "Buckets are spending categories like groceries, dining, entertainment",
-        "Occasions track special events like holidays or projects",
+        "Occasions track special events like vacations, holidays, or projects",
         "Accounts are created automatically when you import transactions",
         "Click any item to see its transactions"
       ],
@@ -636,7 +636,7 @@
     "detected": "Detected Patterns",
     "frequency": {
       "weekly": "Weekly",
-      "biweekly": "Fortnightly",
+      "biweekly": "Bi-weekly",
       "monthly": "Monthly",
       "quarterly": "Quarterly",
       "yearly": "Yearly"
@@ -644,7 +644,7 @@
   },
   "reconcile": {
     "title": "Reconcile",
-    "subtitle": "Review and categorise imported transactions",
+    "subtitle": "Review and categorize imported transactions",
     "markReconciled": "Mark Reconciled",
     "markIgnored": "Mark Ignored"
   },
@@ -659,14 +659,14 @@
     "delete": "Delete Tag",
     "namespace": "Namespace",
     "sortOrder": "Sort Order",
-    "color": "Colour"
+    "color": "Color"
   },
   "errors": {
     "generic": "An error occurred. Please try again.",
     "notFound": "The requested resource was not found.",
     "validation": "Invalid input provided.",
     "network": "Network error. Please check your connection.",
-    "unauthorized": "You are not authorised to perform this action.",
+    "unauthorized": "You are not authorized to perform this action.",
     "TRANSACTION_NOT_FOUND": "Transaction not found.",
     "TAG_NOT_FOUND": "Tag not found.",
     "TAG_ALREADY_EXISTS": "A tag with this name already exists.",
@@ -704,15 +704,15 @@
     "tipsTitle": "Tips",
     "transactions": {
       "title": "Transactions Help",
-      "description": "View, filter, and categorise all your imported transactions.",
+      "description": "View, filter, and categorize all your imported transactions.",
       "steps": [
         "Use filters to narrow down transactions by date, category, or amount",
         "Click on a transaction to view details and edit",
-        "Use bulk actions to categorise multiple transactions at once",
+        "Use bulk actions to categorize multiple transactions at once",
         "Toggle transfer visibility to focus on spending or see all movements"
       ],
       "tips": [
-        "Hold Shift whilst clicking a filter to exclude instead of include",
+        "Hold Shift while clicking a filter to exclude instead of include",
         "Use the search bar to find transactions by merchant or description",
         "Click column headers to sort transactions"
       ]
@@ -733,7 +733,7 @@
     },
     "dashboard": {
       "title": "Dashboard Help",
-      "description": "Get a quick overview of your financial health with customisable widgets.",
+      "description": "Get a quick overview of your financial health with customizable widgets.",
       "steps": [
         "Use date range selector to view different time periods",
         "Click 'Manage' to show/hide widgets",
@@ -751,7 +751,7 @@
       "steps": [
         "Download an export file from your bank's website",
         "Select the file using the file picker below",
-        "Specify an account name to organise your data",
+        "Specify an account name to organize your data",
         "Click 'Preview Import' to see what will be imported",
         "Review the preview, then click 'Confirm Import' to save"
       ],
@@ -766,7 +766,7 @@
       "description": "Manage tags, view import history, and monitor system health.",
       "steps": [
         "Use tabs to navigate between different admin sections",
-        "Create and organise tags for categorisation",
+        "Create and organize tags for categorization",
         "View import history and statistics",
         "Monitor system health metrics"
       ],
@@ -777,10 +777,10 @@
     },
     "tools": {
       "title": "Tools Help",
-      "description": "Set up automation rules for categorising transactions.",
+      "description": "Set up automation rules for categorizing transactions.",
       "steps": [
         "Create category rules to auto-assign tags based on merchant or description",
-        "Set up merchant aliases to normalise messy bank names",
+        "Set up merchant aliases to normalize messy bank names",
         "Detect and link internal transfers",
         "Save filters for quick access to common views"
       ],
@@ -790,11 +790,11 @@
       ]
     },
     "organize": {
-      "title": "Organise Help",
+      "title": "Organize Help",
       "description": "View and manage your spending categories, special occasions, and accounts.",
       "steps": [
         "Browse buckets to see spending by category",
-        "View occasions for special events like holidays or projects",
+        "View occasions for special events like vacations or projects",
         "See all accounts with their transaction counts",
         "Click any item to view its transactions"
       ],
@@ -838,7 +838,7 @@
         "Select a namespace on the left to view its tags",
         "Click 'Add Value' to create a new tag",
         "Edit or delete tags using the action buttons",
-        "Create custom namespaces for specialised categorisation"
+        "Create custom namespaces for specialized categorization"
       ],
       "tips": [
         "Tags in use cannot be deleted",
@@ -847,7 +847,7 @@
     },
     "dashboardConfigure": {
       "title": "Dashboard Configuration",
-      "description": "Customise which widgets appear on your dashboard.",
+      "description": "Customize which widgets appear on your dashboard.",
       "steps": [
         "Toggle visibility to show or hide widgets",
         "Use arrows to reorder widgets",
