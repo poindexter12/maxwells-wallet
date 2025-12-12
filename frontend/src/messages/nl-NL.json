@@ -321,7 +321,7 @@
     "dbDuplicates": "DB Duplicaten",
     "batchDuplicates": "Batch Duplicaten",
     "selectAccount": "-- Selecteer Rekening --",
-    "accountPlaceholder": "bijv. BOFA-Checking, AMEX-53004",
+    "accountPlaceholder": "bijv. ING-Betaalrekening, Rabobank-12345",
     "orTypeNew": "of typ nieuwe",
     "existing": "Bestaande",
     "new": "Nieuw",
