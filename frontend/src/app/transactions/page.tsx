@@ -160,7 +160,8 @@ function TransactionsContent() {
     })
     setSearchInput(search) // Sync search input with URL param
     setFiltersInitialized(true)
-  }, [searchParamsString])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParamsString]) // Parse URL params when they change
 
   // Fetch tags and anomaly threshold on mount
   useEffect(() => {
@@ -169,7 +170,8 @@ function TransactionsContent() {
     fetchAccountTags()
     fetchOccasionTags()
     fetchLargeThreshold()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Fetch reference data once on mount
 
   // Fetch the dynamic large transaction threshold from anomaly detection
   async function fetchLargeThreshold() {
@@ -194,7 +196,8 @@ function TransactionsContent() {
     if (filtersInitialized) {
       fetchTransactions()
     }
-  }, [filtersInitialized, filters])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtersInitialized, filters]) // Refetch when filters change
 
   async function fetchOccasionTags() {
     try {
@@ -346,7 +349,8 @@ function TransactionsContent() {
     } finally {
       setLoadingMore(false)
     }
-  }, [loadingMore, hasMore, nextCursor, filters])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingMore, hasMore, nextCursor, filters]) // buildFilterParams uses filters
 
   // Set up intersection observer for infinite scroll
   useEffect(() => {

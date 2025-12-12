@@ -53,7 +53,8 @@ export function SplitTransaction({
   // Fetch current splits
   useEffect(() => {
     fetchSplits()
-  }, [transactionId])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transactionId]) // Refetch when transaction changes
 
   async function fetchSplits() {
     setLoading(true)
