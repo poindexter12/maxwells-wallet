@@ -101,7 +101,6 @@
       "thisYear": "Este ano",
       "ytd": "Desde início do ano",
       "last90Days": "Últimos 90 dias",
-      "large": "Elevado (100€+)",
       "largeDynamic": "Elevado ({threshold}+)",
       "largeTitle": "Transações elevadas este mês",
       "largeTitleWithThreshold": "Transações elevadas este mês (acima de {threshold} - 2σ acima da sua média)",

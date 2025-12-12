@@ -26,12 +26,38 @@ const LOCALE_CURRENCIES: Record<string, string> = {
 }
 
 /**
+ * Default "large transaction" threshold for each locale.
+ * These are rough equivalents based on purchasing power, not exchange rates.
+ * Users can override via their transaction history (2σ above average).
+ */
+const LOCALE_LARGE_THRESHOLDS: Record<string, number> = {
+  'en-US': 100,  // $100 USD
+  'en-GB': 75,   // £75 GBP
+  'de-DE': 85,   // €85 EUR
+  'fr-FR': 85,   // €85 EUR
+  'it-IT': 85,   // €85 EUR
+  'es-ES': 85,   // €85 EUR
+  'pt-PT': 85,   // €85 EUR
+  'nl-NL': 85,   // €85 EUR
+  'pseudo': 100, // Use same as en-US for testing
+}
+
+/**
  * Get the default currency for a locale.
  * Falls back to USD if locale is not in the mapping.
  */
 function getCurrency(locale?: string): string {
   if (!locale) return 'USD'
   return LOCALE_CURRENCIES[locale] ?? 'USD'
+}
+
+/**
+ * Get the default "large transaction" threshold for a locale.
+ * Falls back to 100 if locale is not in the mapping.
+ */
+export function getDefaultLargeThreshold(locale?: string): number {
+  if (!locale) return 100
+  return LOCALE_LARGE_THRESHOLDS[locale] ?? 100
 }
 
 /**
