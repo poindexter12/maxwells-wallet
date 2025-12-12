@@ -83,13 +83,35 @@ release: ## Create a release (usage: make release VERSION=x.y.z)
 		echo "Current version: \033[0;32m$(CURRENT_VERSION)\033[0m"; \
 		echo "Last tag: $(LAST_TAG)"; \
 	else \
-		echo "\033[0;34mPre-flight checks...\033[0m"; \
+		echo "\033[0;34mPre-flight validation for v$(VERSION)...\033[0m"; \
+		echo ""; \
+		ERRORS=0; \
+		if [ "$(CURRENT_VERSION)" != "$(FRONTEND_VERSION)" ]; then \
+			echo "\033[0;31m✗ Version mismatch: backend=$(CURRENT_VERSION) frontend=$(FRONTEND_VERSION)\033[0m"; \
+			ERRORS=1; \
+		else \
+			echo "\033[0;32m✓ Backend/frontend versions match ($(CURRENT_VERSION))\033[0m"; \
+		fi; \
+		if [ -n "$(LAST_TAG)" ]; then \
+			if git diff --quiet $(LAST_TAG) HEAD -- CHANGELOG.md 2>/dev/null; then \
+				echo "\033[0;31m✗ CHANGELOG.md has no changes since $(LAST_TAG)\033[0m"; \
+				ERRORS=1; \
+			else \
+				echo "\033[0;32m✓ CHANGELOG.md updated since $(LAST_TAG)\033[0m"; \
+			fi; \
+		fi; \
 		if ! grep -q "\[$(VERSION)\]" CHANGELOG.md; then \
-			echo "\033[0;31mError: CHANGELOG.md missing section for [$(VERSION)]\033[0m"; \
-			echo "Please add a changelog entry before releasing."; \
+			echo "\033[0;31m✗ CHANGELOG.md missing section for [$(VERSION)]\033[0m"; \
+			ERRORS=1; \
+		else \
+			echo "\033[0;32m✓ CHANGELOG.md has [$(VERSION)] section\033[0m"; \
+		fi; \
+		if [ $$ERRORS -ne 0 ]; then \
+			echo ""; \
+			echo "\033[0;31mRelease blocked. Fix the above issues first.\033[0m"; \
+			echo "Run '\033[0;33mmake release-check\033[0m' for full details."; \
 			exit 1; \
 		fi; \
-		echo "\033[0;32m✓ CHANGELOG.md has [$(VERSION)] section\033[0m"; \
 		echo ""; \
 		echo "\033[0;34mCreating release v$(VERSION)...\033[0m"; \
 		sed -i '' 's/^version = ".*"/version = "$(VERSION)"/' $(BACKEND_DIR)/pyproject.toml; \
