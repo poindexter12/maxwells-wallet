@@ -86,12 +86,68 @@ function findUnchangedStrings(
   return unchanged
 }
 
+// Strings that are legitimately the same across languages (brand names, technical terms, etc.)
+const ALLOWED_SAME_STRINGS = new Set([
+  'nav.brand',           // "Maxwell's Wallet" - brand name
+  'nav.dashboard',       // "Dashboard" - loanword used in many languages
+  'fields.status',       // "Status" - often same in many languages
+  'common.filter',       // "Filter" - same in Dutch, similar in others
+  'common.reset',        // "Reset" - technical term
+  'fields.type',         // "Type" - same in many languages
+  'fields.details',      // "Details" - same in many languages
+])
+
+// Production locales to test (excluding en-GB which shares most strings with en-US)
+const PRODUCTION_LOCALES = ['de-DE', 'es-ES', 'fr-FR', 'it-IT', 'nl-NL', 'pt-PT'] as const
+
+// Minimum percentage of strings that must be different from English
+// Set high to catch mass overwrites, but allow some legitimate same strings
+const MIN_TRANSLATION_PERCENT = 90
+
 describe('i18n translations', () => {
   const sourceKeys = new Set(getAllKeys(enUS))
 
   describe('en-US.json (source of truth)', () => {
     it('should have translation keys', () => {
       expect(sourceKeys.size).toBeGreaterThan(0)
+    })
+  })
+
+  // Test each production locale for actual translations
+  describe.each(PRODUCTION_LOCALES)('%s translations', (locale) => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const localeData = require(`../messages/${locale}.json`) as Record<string, unknown>
+
+    it('should have all keys from en-US.json', () => {
+      const localeKeys = new Set(getAllKeys(localeData))
+      const missingKeys = [...sourceKeys].filter(key => !localeKeys.has(key))
+
+      if (missingKeys.length > 0) {
+        throw new Error(
+          `Missing ${missingKeys.length} translation keys in ${locale}.json:\n` +
+          missingKeys.slice(0, 20).map(k => `  - ${k}`).join('\n') +
+          (missingKeys.length > 20 ? `\n  ... and ${missingKeys.length - 20} more` : '')
+        )
+      }
+    })
+
+    it(`should have at least ${MIN_TRANSLATION_PERCENT}% of strings translated (not identical to English)`, () => {
+      const unchangedStrings = findUnchangedStrings(enUS, localeData)
+        .filter(key => !ALLOWED_SAME_STRINGS.has(key))
+
+      const totalStrings = sourceKeys.size
+      const translatedPercent = ((totalStrings - unchangedStrings.length) / totalStrings) * 100
+
+      if (translatedPercent < MIN_TRANSLATION_PERCENT) {
+        throw new Error(
+          `${locale}.json has only ${translatedPercent.toFixed(1)}% translated ` +
+          `(${unchangedStrings.length} strings identical to English).\n` +
+          `Expected at least ${MIN_TRANSLATION_PERCENT}%.\n` +
+          `First 20 untranslated:\n` +
+          unchangedStrings.slice(0, 20).map(k => `  = ${k}`).join('\n') +
+          (unchangedStrings.length > 20 ? `\n  ... and ${unchangedStrings.length - 20} more` : '')
+        )
+      }
     })
   })
 
