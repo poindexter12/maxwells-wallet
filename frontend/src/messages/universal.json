@@ -1,6 +1,14 @@
 {
   "$schema": "./schema.json",
-  "$comment": "Strings that are intentionally the same across all languages (brand names, technical terms, loanwords)",
+  "$comment": "Strings intentionally same across all languages: brand names, technical terms, and cross-language loanwords",
+  "nav": {
+    "brand": "Maxwell's Wallet",
+    "admin": "Admin",
+    "budgets": "Budgets",
+    "dashboard": "Dashboard",
+    "transactions": "Transactions",
+    "tools": "Tools"
+  },
   "common": {
     "no": "No",
     "filter": "Filter",
@@ -15,20 +23,6 @@
     "name": "Name",
     "type": "Type",
     "notes": "Notes"
-  },
-  "nav": {
-    "brand": "Maxwell's Wallet",
-    "admin": "Admin",
-    "dashboard": "Dashboard",
-    "transactions": "Transactions",
-    "budgets": "Budgets",
-    "tools": "Tools"
-  },
-  "tags": {
-    "title": "Tags",
-    "color": "Color",
-    "namespace": "Namespace",
-    "occasion": "Occasion"
   },
   "budgets": {
     "budget": "Budget",
@@ -134,8 +128,13 @@
       "test": "Test"
     }
   },
+  "tags": {
+    "title": "Tags",
+    "color": "Color",
+    "namespace": "Namespace",
+    "occasion": "Occasion"
+  },
   "help": {
-    "showHelp": "Help",
     "tipsTitle": "Tips"
   }
 }
