@@ -32,7 +32,7 @@ ENV NEXT_PUBLIC_ENABLE_PSEUDO=$ENABLE_PSEUDO
 RUN echo "==> Building Next.js with NEXT_PUBLIC_ENABLE_PSEUDO=$ENABLE_PSEUDO" && npm run build
 
 # Final stage: Python + Node runtime
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 # Install Node.js and system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
