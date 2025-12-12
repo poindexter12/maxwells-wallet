@@ -86,23 +86,12 @@ function findUnchangedStrings(
   return unchanged
 }
 
-// Strings that are legitimately the same across languages (brand names, technical terms, etc.)
-const ALLOWED_SAME_STRINGS = new Set([
-  'nav.brand',           // "Maxwell's Wallet" - brand name
-  'nav.dashboard',       // "Dashboard" - loanword used in many languages
-  'fields.status',       // "Status" - often same in many languages
-  'common.filter',       // "Filter" - same in Dutch, similar in others
-  'common.reset',        // "Reset" - technical term
-  'fields.type',         // "Type" - same in many languages
-  'fields.details',      // "Details" - same in many languages
-])
-
 // Production locales to test (excluding en-GB which shares most strings with en-US)
 const PRODUCTION_LOCALES = ['de-DE', 'es-ES', 'fr-FR', 'it-IT', 'nl-NL', 'pt-PT'] as const
 
 // Minimum percentage of strings that must be different from English
-// Set high to catch mass overwrites, but allow some legitimate same strings
-const MIN_TRANSLATION_PERCENT = 90
+// Set to 100% since all strings should be translated for non-English locales
+const MIN_TRANSLATION_PERCENT = 100
 
 describe('i18n translations', () => {
   const sourceKeys = new Set(getAllKeys(enUS))
@@ -131,9 +120,8 @@ describe('i18n translations', () => {
       }
     })
 
-    it(`should have at least ${MIN_TRANSLATION_PERCENT}% of strings translated (not identical to English)`, () => {
+    it(`should have ${MIN_TRANSLATION_PERCENT}% of strings translated (not identical to English)`, () => {
       const unchangedStrings = findUnchangedStrings(enUS, localeData)
-        .filter(key => !ALLOWED_SAME_STRINGS.has(key))
 
       const totalStrings = sourceKeys.size
       const translatedPercent = ((totalStrings - unchangedStrings.length) / totalStrings) * 100
