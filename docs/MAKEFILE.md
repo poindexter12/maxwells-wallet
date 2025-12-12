@@ -150,15 +150,36 @@ make docker-clean   # Remove containers and volumes
 
 ## Release
 
-Automated release workflow that updates versions, generates changelog, commits, tags, and pushes to trigger GitHub Actions.
+Automated release workflow that updates versions, commits, tags, and pushes to trigger GitHub Actions.
+
+### Pre-flight Checks
 
 ```bash
-make release                  # Show usage
-make release VERSION=1.2.3    # Release specific version
-make release-patch            # Bump patch version (0.4.4 -> 0.4.5)
-make release-minor            # Bump minor version (0.4.4 -> 0.5.0)
-make release-major            # Bump major version (0.4.4 -> 1.0.0)
+make release-check      # Validate versions match and docs updated (dry-run)
+make release-validate   # Same checks but fails on errors
 ```
+
+Pre-flight checks verify:
+- Backend and frontend versions match
+- CHANGELOG.md has been updated since last tag
+- CHANGELOG.md contains section for current version
+- README.md and docs-site/index.md have changes
+
+### Creating Releases
+
+```bash
+make release                  # Show usage and current version
+make release VERSION=1.2.3    # Release specific version
+make release-patch            # Bump patch version (0.9.0 -> 0.9.1)
+make release-minor            # Bump minor version (0.9.0 -> 0.10.0)
+make release-major            # Bump major version (0.9.0 -> 1.0.0)
+```
+
+The release command will:
+1. Verify CHANGELOG.md has the version section
+2. Update version in `backend/pyproject.toml` and `frontend/package.json`
+3. Commit and tag
+4. Push to GitHub
 
 GitHub Actions will then:
 1. Create a GitHub Release with changelog
