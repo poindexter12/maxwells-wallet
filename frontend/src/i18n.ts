@@ -4,19 +4,19 @@
  * Supports 8 languages:
  * - en-US: English (United States) - default
  * - en-GB: English (United Kingdom)
- * - es: Spanish
- * - fr: French
- * - it: Italian
- * - pt: Portuguese
- * - de: German
- * - nl: Dutch
+ * - es-ES: Spanish (Spain)
+ * - fr-FR: French (France)
+ * - it-IT: Italian (Italy)
+ * - pt-PT: Portuguese (Portugal)
+ * - de-DE: German (Germany)
+ * - nl-NL: Dutch (Netherlands)
  *
  * In development, a 'pseudo' locale is available for QA testing.
  * Generate it with: make i18n-pseudo
  */
 
 // Production locales (always available)
-const productionLocales = ['en-US', 'en-GB', 'es', 'fr', 'it', 'pt', 'de', 'nl'] as const;
+const productionLocales = ['en-US', 'en-GB', 'es-ES', 'fr-FR', 'it-IT', 'pt-PT', 'de-DE', 'nl-NL'] as const;
 
 // Dev-only locale for QA testing (not shipped to production)
 const devLocales = ['pseudo'] as const;
@@ -35,12 +35,12 @@ export const defaultLocale: Locale = 'en-US';
 export const languageNames: Record<Locale, string> = {
   'en-US': 'English (US)',
   'en-GB': 'English (UK)',
-  'es': 'Espanol',
-  'fr': 'Francais',
-  'it': 'Italiano',
-  'pt': 'Portugues',
-  'de': 'Deutsch',
-  'nl': 'Nederlands',
+  'es-ES': 'Español',
+  'fr-FR': 'Français',
+  'it-IT': 'Italiano',
+  'de-DE': 'Deutsch',
+  'nl-NL': 'Nederlands',
+  'pt-PT': 'Português',
   'pseudo': '[Ƥşḗḗŭŭḓǿǿ]',
 };
 

@@ -485,7 +485,7 @@ export const handlers = [
     return HttpResponse.json({
       language: 'browser',
       effective_locale: effectiveLocale,
-      supported_locales: ['en-US', 'en-GB', 'es', 'fr', 'it', 'pt', 'de', 'nl', 'pseudo'],
+      supported_locales: ['en-US', 'en-GB', 'es-ES', 'fr-FR', 'it-IT', 'pt-PT', 'de-DE', 'nl-NL', 'pseudo'],
     })
   }),
 
