@@ -101,7 +101,6 @@
       "thisYear": "crwdns1566:0crwdne1566:0",
       "ytd": "crwdns1568:0crwdne1568:0",
       "last90Days": "crwdns1570:0crwdne1570:0",
-      "large": "crwdns1572:0crwdne1572:0",
       "largeDynamic": "crwdns1574:0{threshold}crwdne1574:0",
       "largeTitle": "crwdns1576:0crwdne1576:0",
       "largeTitleWithThreshold": "crwdns1578:0{threshold}crwdne1578:0",
