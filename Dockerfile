@@ -20,7 +20,7 @@ RUN mkdir -p public
 # Generate pseudo-locale for QA testing (only if enabled)
 RUN if [ "$ENABLE_PSEUDO" = "true" ]; then \
       echo "==> ENABLE_PSEUDO=true: Generating pseudo-locale for QA testing..."; \
-      node scripts/generate-pseudo-locale.js; \
+      node scripts/generate-pseudo-locale.mjs; \
       echo "==> Pseudo-locale generated successfully"; \
     else \
       echo "==> ENABLE_PSEUDO=false: Skipping pseudo-locale (set ENABLE_PSEUDO=true in .env to enable)"; \

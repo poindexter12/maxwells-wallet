@@ -28,7 +28,7 @@ jobs:
         run: npm ci
 
       - name: Generate pseudo-locale for i18n tests
-        run: node scripts/generate-pseudo-locale.js
+        run: node scripts/generate-pseudo-locale.mjs
 
       - name: Run linter
         run: npm run lint
