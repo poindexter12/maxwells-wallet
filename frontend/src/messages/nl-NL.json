@@ -347,7 +347,7 @@
       "tips": [
         "Use batch import for multiple files at once",
         "The format is usually auto-detected",
-        "Duplicates are automatically skipped"
+        ""
       ]
     },
     "admin": {
