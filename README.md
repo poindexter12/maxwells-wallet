@@ -16,7 +16,7 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 
 ### Internationalization (i18n)
 - **Multi-language Support** - Complete i18n infrastructure with next-intl
-- **10 Locales** - English (US/UK), Spanish, French, Italian, Portuguese, German, Dutch, l33t speak
+- **9 Locales** - English (US/UK), Spanish, French, Italian, Portuguese, German, Dutch, pseudo (l33t speak for QA)
 - **Full Translations** - All locales professionally translated (beta4)
 - **Crowdin Integration** - Translation management with CLI commands
 - **Structured Error Codes** - API errors include machine-readable codes for frontend translation
