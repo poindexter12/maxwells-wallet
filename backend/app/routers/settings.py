@@ -9,8 +9,8 @@ from app.models import AppSettings, AppSettingsUpdate, LanguagePreference
 
 router = APIRouter(prefix="/api/v1/settings", tags=["settings"])
 
-# Supported locales for i18n
-SUPPORTED_LOCALES = ["en-US", "en-GB", "es", "fr", "it", "pt", "de", "nl", "pseudo"]
+# Supported locales for i18n (BCP 47 codes)
+SUPPORTED_LOCALES = ["en-US", "en-GB", "es-ES", "fr-FR", "it-IT", "pt-PT", "de-DE", "nl-NL", "pseudo"]
 DEFAULT_LOCALE = "en-US"
 
 
