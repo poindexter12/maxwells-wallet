@@ -101,7 +101,6 @@
       "thisYear": "This Year",
       "ytd": "YTD",
       "last90Days": "Last 90 Days",
-      "large": "Large ($100+)",
       "largeDynamic": "Large ({threshold}+)",
       "largeTitle": "Large transactions this month",
       "largeTitleWithThreshold": "Large transactions this month (over {threshold} - 2σ above your average)",
