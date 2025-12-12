@@ -8,8 +8,8 @@ This file provides guidance to AI coding agents when working with code in this r
 - **Frontend**: Next.js 16 + TypeScript (App Router)
 - **Backend**: FastAPI + Python (async)
 - **Database**: SQLite (dev) with SQLModel ORM (Postgres-ready for prod)
-- **Package Management**: pnpm (frontend), uv (backend)
-- **i18n**: next-intl with 8 locales (en-US, en-GB, es, fr, it, pt, de, nl) + pseudo locale for dev/QA
+- **Package Management**: npm (frontend), uv (backend)
+- **i18n**: next-intl with 9 locales (en-US, en-GB, es-ES, fr-FR, it-IT, pt-PT, de-DE, nl-NL, pseudo)
 
 ## Repository Structure
 
@@ -74,8 +74,8 @@ uv run alembic upgrade head
 
 Frontend (from `frontend/` directory):
 ```bash
-pnpm dev
-pnpm build
+npm run dev
+npm run build
 ```
 
 ## Architecture Notes

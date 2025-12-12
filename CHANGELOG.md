@@ -5,6 +5,28 @@ All notable changes to Maxwell's Wallet will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0-beta5] - 2025-12-12
+
+### Added
+- **Custom DatePicker** - i18n-aware date picker component
+  - Uses react-day-picker with date-fns locales
+  - Locale-specific date formats (MM/dd/yyyy for US, dd/MM/yyyy for EU, etc.)
+  - Accessible with keyboard navigation and ARIA labels
+  - Replaces native HTML date inputs throughout the app
+
+### Changed
+- **Security Update** - Next.js 16.0.10 (security patch)
+- **Dependency Updates**
+  - react 19.2.3, react-dom 19.2.3
+  - next-intl 4.6.0
+  - tailwindcss 4.1.18, @tailwindcss/postcss 4.1.18
+  - @types/node 25.0.1
+  - eslint-config-next 16.0.10
+
+### Fixed
+- **Format Tests** - Fixed flaky Intl.NumberFormat tests across Node versions
+- **Documentation** - Corrected locale count and package manager references
+
 ## [0.9.0-beta4] - 2025-12-11
 
 ### Added
