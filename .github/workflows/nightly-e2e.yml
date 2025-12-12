@@ -19,7 +19,7 @@ jobs:
         browser: [chromium, firefox, webkit]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -85,7 +85,7 @@ jobs:
     if: failure() && github.event_name != 'pull_request'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Create issue for E2E failures
         env:

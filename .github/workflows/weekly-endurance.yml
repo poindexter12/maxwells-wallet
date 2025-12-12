@@ -33,7 +33,7 @@ jobs:
           - page-cycling
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -121,7 +121,7 @@ jobs:
     if: failure()
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Create issue for endurance test failures
         env:
