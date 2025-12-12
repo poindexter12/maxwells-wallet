@@ -321,7 +321,7 @@
     "dbDuplicates": "Duplicados BD",
     "batchDuplicates": "Duplicados lote",
     "selectAccount": "-- Selecionar conta --",
-    "accountPlaceholder": "ex. CGD-Ordem, Millennium-12345",
+    "accountPlaceholder": "e.g., Chase-Checking, AMEX-12345",
     "orTypeNew": "ou escreva novo",
     "existing": "Existente",
     "new": "Novo",
