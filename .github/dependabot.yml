@@ -11,7 +11,10 @@ updates:
       - "frontend"
     commit-message:
       prefix: "chore(deps)"
-    open-pull-requests-limit: 10
+    groups:
+      all-deps:
+        patterns:
+          - "*"
 
   # Backend (pip/uv)
   - package-ecosystem: "pip"
@@ -24,7 +27,10 @@ updates:
       - "backend"
     commit-message:
       prefix: "chore(deps)"
-    open-pull-requests-limit: 10
+    groups:
+      all-deps:
+        patterns:
+          - "*"
 
   # Docker base images
   - package-ecosystem: "docker"
@@ -36,6 +42,10 @@ updates:
       - "docker"
     commit-message:
       prefix: "chore(deps)"
+    groups:
+      all-deps:
+        patterns:
+          - "*"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
@@ -48,3 +58,7 @@ updates:
       - "ci"
     commit-message:
       prefix: "chore(deps)"
+    groups:
+      all-deps:
+        patterns:
+          - "*"
