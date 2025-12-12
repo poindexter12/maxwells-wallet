@@ -39,44 +39,50 @@ translate-test: ## Run translation validation tests
 
 # -----------------------------------------------------------------------------
 # Context Harvester - AI-powered context extraction
-# Uses Anthropic by default (set ANTHROPIC_API_KEY), or OpenAI (set OPENAI_KEY)
+# Requires: CROWDIN_PERSONAL_TOKEN and ANTHROPIC_API_KEY env vars
+# NOTE: High token usage (~28k per string). Requires API tier with generous rate limits.
+# Consider using --since to process incrementally or OpenAI with higher limits.
 # -----------------------------------------------------------------------------
 
 translate-harvest: ## Extract context for ALL strings using AI (costs $$)
 	@echo "$(BLUE)Harvesting context for all strings...$(NC)"
 	@echo "$(YELLOW)⚠ This uses AI API calls - may incur costs$(NC)"
 	$(HARVESTER) harvest \
+		--token=$(CROWDIN_PERSONAL_TOKEN) \
 		--project=$(CROWDIN_PROJECT_ID) \
 		--ai=anthropic \
 		--model=claude-sonnet-4-20250514 \
 		--output=crowdin \
-		--concurrency=5
+		--concurrency=2
 	@echo "$(GREEN)✓ Context harvested and uploaded to Crowdin$(NC)"
 
 translate-harvest-new: ## Extract context for strings added in last 7 days
 	@echo "$(BLUE)Harvesting context for new strings (last 7 days)...$(NC)"
 	$(HARVESTER) harvest \
+		--token=$(CROWDIN_PERSONAL_TOKEN) \
 		--project=$(CROWDIN_PROJECT_ID) \
 		--ai=anthropic \
 		--model=claude-sonnet-4-20250514 \
 		--output=crowdin \
 		--since="7 days ago" \
-		--concurrency=5
+		--concurrency=2
 	@echo "$(GREEN)✓ Context harvested for new strings$(NC)"
 
 translate-harvest-preview: ## Preview context extraction (CSV output, no upload)
 	@echo "$(BLUE)Previewing context harvest (dry run)...$(NC)"
 	$(HARVESTER) harvest \
+		--token=$(CROWDIN_PERSONAL_TOKEN) \
 		--project=$(CROWDIN_PROJECT_ID) \
 		--ai=anthropic \
 		--model=claude-sonnet-4-20250514 \
 		--output=csv \
-		--concurrency=5
+		--concurrency=2
 	@echo "$(GREEN)✓ Context preview saved to CSV$(NC)"
 
 translate-describe: ## Generate AI project description for Crowdin
 	@echo "$(BLUE)Generating project description...$(NC)"
 	$(HARVESTER) describe \
+		--token=$(CROWDIN_PERSONAL_TOKEN) \
 		--project=$(CROWDIN_PROJECT_ID) \
 		--output=crowdin
 	@echo "$(GREEN)✓ Project description updated$(NC)"
