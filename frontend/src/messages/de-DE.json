@@ -321,7 +321,7 @@
     "dbDuplicates": "DB-Duplikate",
     "batchDuplicates": "Stapel-Duplikate",
     "selectAccount": "-- Konto auswählen --",
-    "accountPlaceholder": "z.B. Sparkasse-Girokonto, DKB-12345",
+    "accountPlaceholder": "e.g., Chase-Checking, AMEX-12345",
     "orTypeNew": "oder neu eingeben",
     "existing": "Vorhanden",
     "new": "Neu",
