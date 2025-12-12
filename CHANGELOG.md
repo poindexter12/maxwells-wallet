@@ -5,6 +5,26 @@ All notable changes to Maxwell's Wallet will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0-beta4] - 2025-12-11
+
+### Added
+- **Complete Translations** - All 7 locales fully translated
+  - German (de-DE), Dutch (nl-NL), Spanish (es-ES), French (fr-FR)
+  - Italian (it-IT), Portuguese (pt-PT), British English (en-GB)
+- **Crowdin Integration** - Professional translation management
+  - `make translate-upload` and `make translate-download` commands
+  - Crowdin CLI configured for automated sync
+- **Dependabot** - Automated dependency updates with grouped PRs
+- **MIT License** - Project now open source under MIT license
+
+### Changed
+- **Auto Database Migrations** - Migrations run automatically on `make backend` startup
+- **BCP 47 Locale Codes** - Standardized locale naming (e.g., `en-GB` not `en-gb`)
+- **AI Config Consolidation** - Unified under `.claude/` directory
+
+### Fixed
+- **Docker Build** - Added @swc/helpers to resolve peer dependency issues
+
 ## [0.9.0-beta3] - 2025-12-11
 
 ### Changed

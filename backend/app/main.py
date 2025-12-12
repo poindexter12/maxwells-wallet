@@ -55,7 +55,7 @@ This API currently has no authentication. It's designed for single-user local de
 2. Categorize using tags at `/api/v1/transactions/{id}/tags`
 3. View insights at `/api/v1/reports/*`
     """,
-    version="0.8.0",
+    version="0.9.0-beta4",
     lifespan=lifespan,
     openapi_tags=tags_metadata,
     docs_url="/docs",
@@ -98,7 +98,7 @@ async def root():
     """API root - returns version and links to documentation."""
     return {
         "name": "Maxwell's Wallet API",
-        "version": "0.8.0",
+        "version": "0.9.0-beta4",
         "docs": "/docs",
         "redoc": "/redoc",
         "openapi": "/openapi.json"

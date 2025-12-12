@@ -17,6 +17,8 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 ### Internationalization (i18n)
 - **Multi-language Support** - Complete i18n infrastructure with next-intl
 - **10 Locales** - English (US/UK), Spanish, French, Italian, Portuguese, German, Dutch, l33t speak
+- **Full Translations** - All locales professionally translated (beta4)
+- **Crowdin Integration** - Translation management with CLI commands
 - **Structured Error Codes** - API errors include machine-readable codes for frontend translation
 - **Widget Translations** - All dashboard widgets fully translated
 
@@ -24,6 +26,8 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 - **Node.js 22 LTS** - Pinned via `.nvmrc` with auto-install support
 - **TypeScript Improvements** - Stricter types, removed `any` usage in widget components
 - **Translation Testing** - Automated tests ensure translation completeness
+- **Dependabot** - Automated dependency updates (beta4)
+- **Auto Migrations** - Database migrations run on startup (beta4)
 
 See [CHANGELOG.md](CHANGELOG.md) for full release history.
 
