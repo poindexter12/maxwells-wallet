@@ -10,6 +10,7 @@
 #   make/test.mk     - Testing (unit, e2e, lint)
 #   make/docker.mk   - Docker operations (build, up, down)
 #   make/release.mk  - Release automation (release, release-patch)
+#   make/i18n.mk     - Internationalization (upload, download, pseudo)
 #   make/utils.mk    - Utilities (clean, status, info)
 #
 # Run 'make help' to see all available commands.
@@ -83,4 +84,5 @@ include make/db.mk
 include make/test.mk
 include make/docker.mk
 include make/release.mk
+include make/i18n.mk
 include make/utils.mk
