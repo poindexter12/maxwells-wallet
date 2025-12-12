@@ -859,5 +859,10 @@
         "Widgets filtrados mostram apenas transações correspondentes"
       ]
     }
+  },
+  "datePicker": {
+    "clear": "Limpar data",
+    "openCalendar": "Abrir calendário",
+    "selectDate": "Selecionar data"
   }
 }

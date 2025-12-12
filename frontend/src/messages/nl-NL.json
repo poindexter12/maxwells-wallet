@@ -859,5 +859,10 @@
         "Gefilterde widgets tonen alleen overeenkomende transacties"
       ]
     }
+  },
+  "datePicker": {
+    "clear": "Datum wissen",
+    "openCalendar": "Kalender openen",
+    "selectDate": "Datum selecteren"
   }
 }

@@ -859,5 +859,10 @@
         "Gefilterte Widgets zeigen nur übereinstimmende Transaktionen"
       ]
     }
+  },
+  "datePicker": {
+    "clear": "Datum löschen",
+    "openCalendar": "Kalender öffnen",
+    "selectDate": "Datum auswählen"
   }
 }

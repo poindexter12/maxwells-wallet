@@ -859,5 +859,10 @@
         "I widget filtrati mostrano solo le transazioni corrispondenti"
       ]
     }
+  },
+  "datePicker": {
+    "clear": "Cancella data",
+    "openCalendar": "Apri calendario",
+    "selectDate": "Seleziona data"
   }
 }

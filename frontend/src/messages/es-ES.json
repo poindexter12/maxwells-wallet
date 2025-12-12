@@ -859,5 +859,10 @@
         "Los widgets filtrados muestran solo transacciones coincidentes"
       ]
     }
+  },
+  "datePicker": {
+    "clear": "Borrar fecha",
+    "openCalendar": "Abrir calendario",
+    "selectDate": "Seleccionar fecha"
   }
 }
