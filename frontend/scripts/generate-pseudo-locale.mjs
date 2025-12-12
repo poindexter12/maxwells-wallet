@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * Generates a pseudo-localized version of en-US.json for i18n testing.
  *
@@ -8,12 +7,16 @@
  * 2. UI can't handle longer strings (padding simulates ~30% expansion)
  * 3. Character encoding issues exist (accents test unicode)
  *
- * Usage: node scripts/generate-pseudo-locale.js
+ * Usage: node scripts/generate-pseudo-locale.mjs
  */
 
-const fs = require('fs');
-const path = require('path');
-const { localize } = require('pseudo-localization');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { pseudoLocalizeString as localize } from 'pseudo-localization';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const MESSAGES_DIR = path.join(__dirname, '../src/messages');
 const SOURCE_FILE = path.join(MESSAGES_DIR, 'en-US.json');

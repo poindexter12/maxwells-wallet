@@ -15,7 +15,7 @@ backend: ## Run backend server (runs migrations first)
 frontend: ## Run frontend development server
 	@if [ "$$ENABLE_PSEUDO" = "true" ]; then \
 		echo "$(BLUE)ENABLE_PSEUDO=true: Regenerating pseudo-locale...$(NC)"; \
-		cd $(FRONTEND_DIR) && node scripts/generate-pseudo-locale.js; \
+		cd $(FRONTEND_DIR) && node scripts/generate-pseudo-locale.mjs; \
 	fi
 	@echo "$(BLUE)Starting frontend server...$(NC)"
 	@cd $(FRONTEND_DIR) && npm run dev
