@@ -321,7 +321,7 @@
     "dbDuplicates": "Duplicados en BD",
     "batchDuplicates": "Duplicados en Lote",
     "selectAccount": "-- Seleccionar Cuenta --",
-    "accountPlaceholder": "e.g., Chase-Checking, AMEX-12345",
+    "accountPlaceholder": "ej., Chase-Corriente, AMEX-12345",
     "orTypeNew": "o escribe nuevo",
     "existing": "Existente",
     "new": "Nuevo",
