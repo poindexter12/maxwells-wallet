@@ -11,7 +11,7 @@ Maxwell's Wallet is a full-stack application with a Python backend and TypeScrip
 | Database | SQLite (dev) / PostgreSQL (prod) |
 | ORM | SQLModel (Pydantic + SQLAlchemy) |
 | Charts | Recharts |
-| Package Management | pnpm (frontend), uv (backend) |
+| Package Management | npm (frontend), uv (backend) |
 
 ## Project Structure
 

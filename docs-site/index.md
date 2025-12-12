@@ -5,17 +5,16 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 [![CI](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yml/badge.svg)](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/poindexter12/maxwells-wallet?label=release)](https://github.com/poindexter12/maxwells-wallet/releases)
 
-## What's New in v0.8
+## What's New in v0.9
 
-### Observability
-- **OpenTelemetry Tracing** - Automatic request tracing with SQLAlchemy query instrumentation
-- **Prometheus Metrics** - `/metrics` endpoint with latency histograms and error rates
-- **Health Dashboard** - Real-time system health in Admin UI
-- **Alerting** - Webhook notifications for threshold breaches
+### Internationalization
+- **9 Locales** - Full translation support: en-US, en-GB, es-ES, fr-FR, it-IT, pt-PT, de-DE, nl-NL, plus pseudo-locale for QA
+- **Custom DatePicker** - i18n-aware date picker with locale-specific formats (MM/dd/yyyy for US, dd/MM/yyyy for EU)
+- **Structured Error Codes** - Machine-readable error codes for future i18n of error messages
 
-### Performance
-- **Virtual Scrolling** - Smooth handling of 50k+ transactions
-- **Cursor Pagination** - O(1) performance regardless of scroll depth
+### v0.8 Highlights
+- **Observability** - OpenTelemetry tracing, Prometheus metrics, health dashboard, alerting
+- **Virtual Scrolling** - Smooth handling of 50k+ transactions with cursor pagination
 
 ### v0.7 Highlights
 - **CSV Auto-Detection** - Automatically detect bank CSV formats on import
