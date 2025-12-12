@@ -42,4 +42,4 @@ class ObservabilitySettings(BaseSettings):
 
     # Service identification
     service_name: str = "maxwells-wallet"
-    service_version: str = "0.8.0"
+    service_version: str = "0.9.0-beta4"

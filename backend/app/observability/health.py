@@ -26,7 +26,7 @@ class HealthStatus(BaseModel):
 
     status: Literal["healthy", "degraded", "unhealthy"]
     database: DatabaseHealth
-    version: str = "0.8.0"
+    version: str = "0.9.0-beta4"
 
 
 async def check_database() -> DatabaseHealth:
