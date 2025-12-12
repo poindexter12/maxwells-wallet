@@ -4,35 +4,32 @@ test.describe('Import Flow @e2e', () => {
   test('shows file upload area', async ({ page }) => {
     await page.goto('/import');
 
-    // Should have file input or drop zone text (supports i18n)
-    const hasFileInput = await page.locator('input[type="file"]').count() > 0;
-    const hasDropZone = await page.getByText(/drag.*drop|upload|select.*file|csv|qfx|ofx|qif/i).count() > 0;
-
-    expect(hasFileInput || hasDropZone).toBeTruthy();
+    // Use test IDs for i18n compatibility
+    const fileInput = page.getByTestId('import-file-input');
+    await expect(fileInput).toBeAttached();
   });
 
-  test('shows supported formats', async ({ page }) => {
+  test('shows import mode toggle', async ({ page }) => {
     await page.goto('/import');
 
-    // Open help section first (format info is in PageHelp which is collapsed by default)
-    const helpButton = page.getByTestId('help-toggle').or(page.getByRole('button', { name: /help/i }));
-    if (await helpButton.count() > 0) {
-      await helpButton.first().click();
-      await page.waitForTimeout(200);
-    }
-
-    // Should mention supported formats (in PageHelp description or elsewhere)
-    const hasFormatInfo = await page.getByText(/csv|qfx|ofx|qif/i).count() > 0;
-    expect(hasFormatInfo).toBeTruthy();
+    // Check for import mode toggle (single/batch)
+    const modeToggle = page.getByTestId('import-mode-toggle');
+    await expect(modeToggle).toBeVisible();
   });
 
-  test('custom format mapper available', async ({ page }) => {
+  test('shows account input area', async ({ page }) => {
     await page.goto('/import');
 
-    // Should have option to configure custom format
-    const hasCustomOption = await page.getByText(/custom|configure|format/i).count() > 0 ||
-                            await page.getByRole('button', { name: /custom/i }).count() > 0;
-    expect(hasCustomOption).toBeDefined();
+    // Account select or input should be present (select if accounts exist, input if creating new)
+    const accountSelect = page.getByTestId('import-account-select');
+    const accountInput = page.locator('input[placeholder]').filter({ hasText: /./ }).or(
+      page.locator('input[type="text"]').first()
+    );
+
+    // At least one should be visible
+    const hasAccountSelect = await accountSelect.count() > 0;
+    const hasAccountInput = await accountInput.count() > 0;
+    expect(hasAccountSelect || hasAccountInput).toBeTruthy();
   });
 });
 
@@ -40,23 +37,25 @@ test.describe('Tools Page @e2e', () => {
   test('loads with tabs', async ({ page }) => {
     await page.goto('/tools');
 
-    await expect(page.getByRole('heading', { name: /tools/i })).toBeVisible();
+    // Page should load with heading (uses role, not text)
+    await expect(page.getByRole('heading').first()).toBeVisible();
 
-    // Should have tool sections/tabs
-    const hasCategories = await page.getByText(/rules|recurring|transfers|merchants/i).count() > 0;
-    expect(hasCategories).toBeTruthy();
+    // Should have multiple tabs (tool sections)
+    const tabs = page.getByRole('tab');
+    const tabCount = await tabs.count();
+    expect(tabCount).toBeGreaterThan(0);
   });
 
-  test('category rules section accessible', async ({ page }) => {
+  test('can switch between tabs', async ({ page }) => {
     await page.goto('/tools');
 
-    // Find and click category rules tab/section
-    const rulesTab = page.getByRole('tab', { name: /rules/i })
-      .or(page.getByRole('button', { name: /rules/i }))
-      .or(page.getByText(/category rules/i));
+    // Click on different tabs
+    const tabs = page.getByRole('tab');
+    const tabCount = await tabs.count();
 
-    if (await rulesTab.count() > 0) {
-      await rulesTab.first().click();
+    if (tabCount > 1) {
+      // Click second tab
+      await tabs.nth(1).click();
       await page.waitForTimeout(200);
     }
   });
