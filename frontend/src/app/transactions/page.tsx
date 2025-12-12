@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { PageHelp } from '@/components/PageHelp'
+import { DatePicker } from '@/components/DatePicker'
 import { VirtualTransactionList } from '@/components/transactions'
 import { TEST_IDS } from '@/test-ids'
 import { useFormat } from '@/hooks/useFormat'
@@ -1012,22 +1013,20 @@ function TransactionsContent() {
                   onChange={(e) => setFilters({ ...filters, amountMax: e.target.value })}
                 />
               </div>
-              <input
+              <DatePicker
                 data-testid={TEST_IDS.FILTER_DATE_START}
                 data-chaos-target="txn-filter-date-start"
-                type="date"
                 className="input"
                 value={filters.startDate}
-                onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+                onChange={(value) => setFilters({ ...filters, startDate: value })}
                 title={t('startDate', { defaultValue: 'Start date' })}
               />
-              <input
+              <DatePicker
                 data-testid={TEST_IDS.FILTER_DATE_END}
                 data-chaos-target="txn-filter-date-end"
-                type="date"
                 className="input"
                 value={filters.endDate}
-                onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+                onChange={(value) => setFilters({ ...filters, endDate: value })}
                 title={t('endDate', { defaultValue: 'End date' })}
               />
               <button
