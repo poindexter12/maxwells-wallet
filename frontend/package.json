@@ -42,7 +42,7 @@
     "jsdom": "^27.2.0",
     "msw": "^2.12.4",
     "postcss": "^8.5.6",
-    "pseudo-localization": "^2.4.0",
+    "pseudo-localization": "^3.1.1",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
     "vitest": "^4.0.14"
