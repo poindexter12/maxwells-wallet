@@ -5,6 +5,18 @@ All notable changes to Maxwell's Wallet will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2025-12-12
+
+### Fixed
+- **E2E Tests** - Updated import tests to use `data-testid` selectors for i18n compatibility
+- **React Hook Warnings** - Resolved exhaustive-deps lint warnings across 7 components
+- **DatePicker Accessibility** - Added `role="combobox"` to support `aria-expanded` attribute
+
+### Added
+- **CI Optimization** - Skip backend/E2E jobs for translation-only PRs
+- **Release Validation** - Pre-flight checks for version matching and changelog updates
+- **Translations** - Initial Dutch (nl-NL), English UK (en-GB), and Afar (aa-ER) translations from Crowdin
+
 ## [0.9.0] - 2025-12-12
 
 ### Internationalization (i18n) - Major Release
