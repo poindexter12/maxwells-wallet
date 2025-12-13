@@ -1,4 +1,4 @@
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 import re
 
 # Default bucket tag patterns - maps bucket value to keyword patterns
@@ -161,7 +161,7 @@ def normalize_text(text: str) -> str:
 
 
 def infer_bucket_tag(
-    merchant: str, description: str, amount: float, user_history: Dict[str, str] = None
+    merchant: str, description: str, amount: float, user_history: Optional[Dict[str, str]] = None
 ) -> List[Tuple[str, float]]:
     """
     Infer bucket tag for a transaction

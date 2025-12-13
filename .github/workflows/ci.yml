@@ -95,8 +95,7 @@ jobs:
         run: uv run vulture app
 
       - name: Run type checker (mypy)
-        run: uv run mypy app --ignore-missing-imports
-        continue-on-error: true  # TODO: Fix mypy errors and remove this
+        run: uv run mypy app
 
       - name: Run tests with coverage
         run: uv run pytest tests/ -v --cov=app --cov-report=xml --cov-report=term-missing --ignore=tests/e2e --ignore=tests/performance

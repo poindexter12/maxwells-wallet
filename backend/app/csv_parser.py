@@ -178,6 +178,7 @@ def parse_csv(
         Tuple of (transactions list, detected format type)
     """
     # Determine which parser to use
+    format_type: ImportFormatType
     if format_hint is not None and format_hint != ImportFormatType.unknown:
         parser = ParserRegistry.get_parser(format_hint.value)
         format_type = format_hint

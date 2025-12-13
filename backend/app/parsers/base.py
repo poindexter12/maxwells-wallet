@@ -121,7 +121,7 @@ class CSVFormatParser(ABC):
     format_name: str = ""  # e.g., "American Express"
 
     # Configuration - set by subclass
-    column_mapping: ColumnMapping = None
+    column_mapping: Optional[ColumnMapping] = None
     amount_config: AmountConfig = field(default_factory=AmountConfig)
     date_config: DateConfig = field(default_factory=DateConfig)
     skip_header_rows: int = 0  # Rows to skip before CSV header
@@ -199,14 +199,14 @@ class CSVFormatParser(ABC):
         """
         return self.format_key.upper()
 
-    def get_reference_id(self, row: Dict, date_val: date, amount: float) -> str:
+    def get_reference_id(self, row: Dict[str, str], date_val: date, amount: float) -> str:
         """
         Generate reference ID for the transaction.
         Override for format-specific reference extraction.
 
         Default: Uses reference column if available, else generates from date/amount.
         """
-        if self.column_mapping.reference_column:
+        if self.column_mapping and self.column_mapping.reference_column:
             ref = row.get(self.column_mapping.reference_column, "").strip()
             if ref:
                 return ref

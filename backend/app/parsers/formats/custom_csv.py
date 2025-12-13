@@ -317,8 +317,8 @@ class CustomCsvParser(CSVFormatParser):
 
         if uses_indexes:
             # Parse without header - create synthetic column names
-            reader = csv.reader(io.StringIO(content))
-            rows = list(reader)
+            csv_reader = csv.reader(io.StringIO(content))
+            rows = list(csv_reader)
 
             # Create dict rows with index-based keys
             for row_values in rows:
@@ -335,9 +335,9 @@ class CustomCsvParser(CSVFormatParser):
                     transactions.append(transaction)
         else:
             # Use DictReader for named columns
-            reader = csv.DictReader(io.StringIO(content))
+            dict_reader = csv.DictReader(io.StringIO(content))
 
-            for row in reader:
+            for row in dict_reader:
                 if self.should_skip_row(row):
                     continue
 
