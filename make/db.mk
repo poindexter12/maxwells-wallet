@@ -2,7 +2,7 @@
 # Database Targets
 # =============================================================================
 
-.PHONY: db-init db-seed db-reset db-migrate db-upgrade
+.PHONY: db-init db-seed db-reset db-migrate db-upgrade demo-setup
 
 db-init: ## Initialize database (create tables)
 	@echo "$(BLUE)Initializing database...$(NC)"
@@ -39,3 +39,12 @@ db-upgrade: ## Apply database migrations
 		. .venv/bin/activate && \
 		uv run alembic upgrade head
 	@echo "$(GREEN)✓ Migrations applied$(NC)"
+
+demo-setup: ## Set up demo mode (seed data + create demo backup)
+	@echo "$(BLUE)Setting up demo mode...$(NC)"
+	@cd $(BACKEND_DIR) && \
+		. .venv/bin/activate && \
+		uv run python -m scripts.setup_demo
+	@echo ""
+	@echo "$(GREEN)✓ Demo setup complete$(NC)"
+	@echo "$(YELLOW)Start with: DEMO_MODE=true make dev$(NC)"
