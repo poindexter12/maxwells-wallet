@@ -24,13 +24,14 @@ class BackupMetadata(BaseModel):
     """Metadata for a database backup."""
 
     id: str  # Timestamp-based: "20241215_143022"
-    filename: str  # "wallet_20241215_143022.db.gz"
+    filename: str  # "wallet_hourly_20241215_143022.db.gz"
     description: str
     created_at: datetime
     size_bytes: int
     is_demo_backup: bool = False
     source: Literal["manual", "scheduled", "pre_import", "demo_seed"] = "manual"
     db_version: str | None = None
+    tier: Literal["hourly", "daily", "weekly", "monthly"] = "hourly"
 
 
 class BackupManifest(BaseModel):
@@ -117,9 +118,9 @@ class BackupService:
         """
         self._ensure_backup_dir()
 
-        # Generate backup ID and filename
+        # Generate backup ID and filename (new backups start as "hourly")
         backup_id = self._generate_backup_id()
-        filename = f"wallet_{backup_id}.db.gz"
+        filename = f"wallet_hourly_{backup_id}.db.gz"
         backup_path = self.backup_dir / filename
 
         # Copy and compress the database
@@ -127,7 +128,7 @@ class BackupService:
             with gzip.open(backup_path, "wb") as f_out:
                 shutil.copyfileobj(f_in, f_out)
 
-        # Create metadata
+        # Create metadata (new backups start as "hourly" tier)
         metadata = BackupMetadata(
             id=backup_id,
             filename=filename,
@@ -137,6 +138,7 @@ class BackupService:
             is_demo_backup=is_demo_backup,
             source=source,
             db_version=self._get_app_version(),
+            tier="hourly",
         )
 
         # Update manifest
@@ -228,12 +230,13 @@ class BackupService:
         Remove old backups according to GFS (Grandfather-Father-Son) tiered retention.
 
         Retention tiers:
-        - Keep all backups from the last 24 hours
-        - Keep one backup per day for the last 7 days
-        - Keep one backup per week for the last 4 weeks
-        - Keep one backup per month for the last 12 months
+        - Keep all backups from the last 24 hours (hourly)
+        - Keep one backup per day for the last 7 days (daily)
+        - Keep one backup per week for the last 4 weeks (weekly)
+        - Keep one backup per month for the last 12 months (monthly)
 
         Demo backups are never deleted.
+        Files are renamed to reflect their tier (e.g., wallet_daily_...).
 
         Args:
             retention_count: Ignored (kept for API compatibility). GFS policy is always used.
@@ -253,15 +256,17 @@ class BackupService:
         # Sort by creation date (newest first)
         regular_backups.sort(key=lambda b: b.created_at, reverse=True)
 
-        backups_to_keep: set[str] = set()
+        # Track which backups to keep and their tier
+        # Higher tier = more important (monthly > weekly > daily > hourly)
+        backup_tiers: dict[str, Literal["hourly", "daily", "weekly", "monthly"]] = {}
 
-        # Tier 1: Keep all backups from last 24 hours
+        # Tier 1: Keep all backups from last 24 hours (hourly)
         cutoff_24h = now - timedelta(hours=24)
         for backup in regular_backups:
             if backup.created_at >= cutoff_24h:
-                backups_to_keep.add(backup.id)
+                backup_tiers[backup.id] = "hourly"
 
-        # Tier 2: Keep one backup per day for last 7 days
+        # Tier 2: Keep one backup per day for last 7 days (daily)
         for days_ago in range(1, 8):
             day_start = (now - timedelta(days=days_ago)).replace(hour=0, minute=0, second=0, microsecond=0)
             day_end = day_start + timedelta(days=1)
@@ -269,10 +274,12 @@ class BackupService:
             # Find the newest backup from that day
             for backup in regular_backups:
                 if day_start <= backup.created_at < day_end:
-                    backups_to_keep.add(backup.id)
+                    # Upgrade tier if this is a higher tier
+                    if backup.id not in backup_tiers or backup_tiers[backup.id] == "hourly":
+                        backup_tiers[backup.id] = "daily"
                     break  # Keep only the newest from that day
 
-        # Tier 3: Keep one backup per week for last 4 weeks
+        # Tier 3: Keep one backup per week for last 4 weeks (weekly)
         for weeks_ago in range(1, 5):
             # Start of the week (Monday)
             week_start = (now - timedelta(weeks=weeks_ago))
@@ -283,10 +290,12 @@ class BackupService:
             # Find the newest backup from that week
             for backup in regular_backups:
                 if week_start <= backup.created_at < week_end:
-                    backups_to_keep.add(backup.id)
+                    # Upgrade tier if this is a higher tier
+                    if backup.id not in backup_tiers or backup_tiers[backup.id] in ("hourly", "daily"):
+                        backup_tiers[backup.id] = "weekly"
                     break
 
-        # Tier 4: Keep one backup per month for last 12 months
+        # Tier 4: Keep one backup per month for last 12 months (monthly)
         for months_ago in range(1, 13):
             # Calculate month boundaries
             year = now.year
@@ -304,15 +313,29 @@ class BackupService:
             # Find the newest backup from that month
             for backup in regular_backups:
                 if month_start <= backup.created_at < month_end:
-                    backups_to_keep.add(backup.id)
+                    # Monthly is highest tier
+                    backup_tiers[backup.id] = "monthly"
                     break
 
-        # Delete backups not in the keep set
+        # Process backups: delete those not kept, rename those with tier changes
         deleted_count = 0
         remaining_backups: list[BackupMetadata] = []
 
         for backup in regular_backups:
-            if backup.id in backups_to_keep:
+            if backup.id in backup_tiers:
+                new_tier = backup_tiers[backup.id]
+
+                # Rename file if tier changed
+                if backup.tier != new_tier:
+                    old_path = self.backup_dir / backup.filename
+                    new_filename = f"wallet_{new_tier}_{backup.id}.db.gz"
+                    new_path = self.backup_dir / new_filename
+
+                    if old_path.exists():
+                        old_path.rename(new_path)
+                        backup.filename = new_filename
+                    backup.tier = new_tier
+
                 remaining_backups.append(backup)
             else:
                 # Delete the file

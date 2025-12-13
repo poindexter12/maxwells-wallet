@@ -55,6 +55,7 @@ export interface BackupMetadata {
   is_demo_backup: boolean
   source: 'manual' | 'scheduled' | 'pre_import' | 'demo_seed'
   db_version: string | null
+  tier: 'hourly' | 'daily' | 'weekly' | 'monthly'
 }
 
 export interface SchedulerSettings {
