@@ -18,6 +18,10 @@ export const CHAOS_EXCLUDED_IDS = {
   // Destructive data operations
   PURGE_ALL_DATA: 'purge-all-data', // Deletes ALL transactions
   ROLLBACK_IMPORT: 'rollback-import', // Deletes an entire import session
+
+  // Backup operations (destructive)
+  BACKUP_RESTORE: 'backup-restore', // Overwrites current database
+  BACKUP_DELETE: 'backup-delete', // Deletes a backup file
 } as const;
 
 /**

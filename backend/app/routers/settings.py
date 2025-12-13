@@ -1,11 +1,23 @@
 """Settings router for application-wide configuration including i18n preferences."""
 
-from fastapi import APIRouter, Depends, Request
+from typing import Optional
+from fastapi import APIRouter, Depends, Request, Body
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel
 
 from app.database import get_session
 from app.models import AppSettings, AppSettingsUpdate, LanguagePreference
+from app.config import settings as app_config
+from app.services.scheduler import scheduler_service, SchedulerSettings
+
+
+class BackupScheduleUpdate(BaseModel):
+    """Request body for updating backup schedule settings."""
+    auto_backup_enabled: Optional[bool] = None
+    auto_backup_interval_hours: Optional[int] = None
+    demo_reset_interval_hours: Optional[int] = None
+    backup_retention_count: Optional[int] = None
 
 router = APIRouter(prefix="/api/v1/settings", tags=["settings"])
 
@@ -88,11 +100,18 @@ async def get_settings(
     else:
         effective_locale = settings.language.value
 
-    return {
+    response = {
         "language": settings.language.value,
         "effective_locale": effective_locale,
-        "supported_locales": SUPPORTED_LOCALES
+        "supported_locales": SUPPORTED_LOCALES,
+        "demo_mode": app_config.demo_mode,
     }
+
+    # Add demo mode message if enabled
+    if app_config.demo_mode:
+        response["demo_message"] = "This is a demo site. Data resets periodically. Some features are disabled."
+
+    return response
 
 
 @router.patch("")
@@ -124,3 +143,27 @@ async def update_settings(
         "language": settings.language.value,
         "updated_at": settings.updated_at.isoformat()
     }
+
+
+@router.get("/backup", response_model=SchedulerSettings)
+async def get_backup_schedule():
+    """Get backup schedule settings.
+
+    Returns configuration for automatic backups and demo resets.
+    """
+    return scheduler_service.get_settings()
+
+
+@router.put("/backup", response_model=SchedulerSettings)
+async def update_backup_schedule(updates: BackupScheduleUpdate = Body(...)):
+    """Update backup schedule settings.
+
+    Allows enabling/disabling automatic backups and configuring intervals.
+    Demo reset interval only applies when DEMO_MODE is enabled.
+    """
+    return scheduler_service.update_settings(
+        auto_backup_enabled=updates.auto_backup_enabled,
+        auto_backup_interval_hours=updates.auto_backup_interval_hours,
+        demo_reset_interval_hours=updates.demo_reset_interval_hours,
+        backup_retention_count=updates.backup_retention_count,
+    )

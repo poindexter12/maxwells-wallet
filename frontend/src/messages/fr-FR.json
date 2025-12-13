@@ -351,7 +351,8 @@
       "accounts": "Comptes",
       "occasions": "Occasions",
       "expenses": "Types de dépenses",
-      "allTags": "Tous les tags"
+      "allTags": "Tous les tags",
+      "backups": "Sauvegardes"
     },
     "overview": {
       "stats": {
@@ -863,5 +864,38 @@
     "clear": "Effacer la date",
     "openCalendar": "Ouvrir le calendrier",
     "selectDate": "Sélectionner une date"
+  },
+  "demo": {
+    "banner": "Mode Démo - Les données sont réinitialisées périodiquement. Certaines fonctionnalités sont désactivées.",
+    "featureDisabled": "Cette fonctionnalité est désactivée en mode démo."
+  },
+  "backup": {
+    "title": "Sauvegardes",
+    "description": "Créer et restaurer des sauvegardes de base de données.",
+    "createBackup": "Créer une sauvegarde",
+    "restoreBackup": "Restaurer",
+    "deleteBackup": "Supprimer",
+    "noBackups": "Aucune sauvegarde disponible",
+    "backupCreated": "Sauvegarde créée avec succès",
+    "backupRestored": "Base de données restaurée depuis la sauvegarde",
+    "backupDeleted": "Sauvegarde supprimée",
+    "confirmRestore": "Êtes-vous sûr de vouloir restaurer cette sauvegarde ? Les données actuelles seront remplacées.",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer cette sauvegarde ?",
+    "schedule": {
+      "title": "Sauvegardes automatiques",
+      "enabled": "Activer les sauvegardes automatiques",
+      "interval": "Intervalle de sauvegarde",
+      "nextBackup": "Prochaine sauvegarde",
+      "retention": "Conserver",
+      "retentionHelp": "Les sauvegardes les plus anciennes sont supprimées automatiquement",
+      "demoResetInterval": "Intervalle de réinitialisation démo"
+    },
+    "fields": {
+      "description": "Libellé",
+      "created": "Créé",
+      "size": "Taille",
+      "source": "Origine",
+      "demoBackup": "Sauvegarde Démo"
+    }
   }
 }
