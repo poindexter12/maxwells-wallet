@@ -251,7 +251,7 @@ export function BackupsTab() {
                 onChange={(e) => handleUpdateSchedule({ demo_reset_interval_hours: parseInt(e.target.value) })}
                 className="px-3 py-1 border border-theme rounded bg-theme text-theme text-sm"
               >
-                {INTERVAL_OPTIONS.map((opt) => (
+                {intervalOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
