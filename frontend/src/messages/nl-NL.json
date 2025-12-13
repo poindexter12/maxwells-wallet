@@ -887,7 +887,12 @@
       "interval": "Back-up interval",
       "nextBackup": "Volgende back-up",
       "retentionHelp": "Bewaart back-ups per uur voor 24u, dagelijks voor 7 dagen, wekelijks voor 4 weken, maandelijks voor 1 jaar",
-      "demoResetInterval": "Demo reset-interval"
+      "demoResetInterval": "Demo reset-interval",
+      "intervals": {
+        "hour": "1 uur",
+        "day": "1 dag",
+        "week": "1 week"
+      }
     },
     "fields": {
       "description": "Beschrijving",

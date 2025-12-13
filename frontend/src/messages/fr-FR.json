@@ -887,7 +887,12 @@
       "interval": "Intervalle de sauvegarde",
       "nextBackup": "Prochaine sauvegarde",
       "retentionHelp": "Conserve les sauvegardes horaires 24h, quotidiennes 7 jours, hebdomadaires 4 semaines, mensuelles 1 an",
-      "demoResetInterval": "Intervalle de réinitialisation démo"
+      "demoResetInterval": "Intervalle de réinitialisation démo",
+      "intervals": {
+        "hour": "1 heure",
+        "day": "1 jour",
+        "week": "1 semaine"
+      }
     },
     "fields": {
       "description": "Libellé",

@@ -18,16 +18,16 @@ function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleString()
 }
 
-const INTERVAL_OPTIONS = [
-  { value: 1, label: '1 hour' },
-  { value: 24, label: '1 day' },
-  { value: 168, label: '1 week' },
-]
-
 export function BackupsTab() {
   const t = useTranslations('backup')
   const tCommon = useTranslations('common')
   const { isDemoMode } = useDemoMode()
+
+  const intervalOptions = [
+    { value: 1, label: t('schedule.intervals.hour') },
+    { value: 24, label: t('schedule.intervals.day') },
+    { value: 168, label: t('schedule.intervals.week') },
+  ]
 
   const [backups, setBackups] = useState<BackupMetadata[]>([])
   const [schedule, setSchedule] = useState<SchedulerSettings | null>(null)
@@ -224,7 +224,7 @@ export function BackupsTab() {
                   onChange={(e) => handleUpdateSchedule({ auto_backup_interval_hours: parseInt(e.target.value) })}
                   className="px-3 py-1 border border-theme rounded bg-theme text-theme text-sm"
                 >
-                  {INTERVAL_OPTIONS.map((opt) => (
+                  {intervalOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
