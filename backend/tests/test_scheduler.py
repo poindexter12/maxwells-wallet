@@ -404,3 +404,86 @@ class TestSchedulerSettingsModel:
         assert settings.auto_backup_interval_hours == 12
         assert settings.demo_reset_interval_hours == 4
         assert settings.next_auto_backup == next_backup
+
+
+class TestSchedulerServiceDateShift:
+    """Tests for demo date shifting functionality."""
+
+    @pytest.mark.asyncio
+    async def test_shift_demo_dates_calls_update(self):
+        """Date shift calculates offset and updates transactions."""
+        from datetime import date, timedelta
+
+        service = SchedulerService()
+
+        # Mock the database session
+        mock_session = AsyncMock()
+
+        # First query returns max date (30 days ago)
+        old_date = date.today() - timedelta(days=30)
+        mock_max_result = MagicMock()
+        mock_max_result.scalar.return_value = old_date.isoformat()
+
+        # Track all execute calls
+        execute_calls = []
+
+        async def mock_execute(query, params=None):
+            execute_calls.append((str(query), params))
+            return mock_max_result
+
+        mock_session.execute = mock_execute
+        mock_session.commit = AsyncMock()
+
+        mock_cm = MagicMock()
+        mock_cm.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_cm.__aexit__ = AsyncMock(return_value=None)
+
+        with patch("app.database.async_session", return_value=mock_cm):
+            await service._shift_demo_dates()
+
+        # Should have called execute 3 times: MAX query, update transactions, update import_sessions
+        assert len(execute_calls) == 3
+
+        # Verify the offset is 30 days
+        _, update_params = execute_calls[1]
+        assert update_params["offset"] == 30
+
+    @pytest.mark.asyncio
+    async def test_shift_demo_dates_no_transactions(self):
+        """Date shift handles empty database gracefully."""
+        service = SchedulerService()
+
+        mock_session = AsyncMock()
+        mock_result = MagicMock()
+        mock_result.scalar.return_value = None
+        mock_session.execute.return_value = mock_result
+
+        mock_cm = MagicMock()
+        mock_cm.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_cm.__aexit__ = AsyncMock(return_value=None)
+
+        with patch("app.database.async_session", return_value=mock_cm):
+            # Should not raise
+            await service._shift_demo_dates()
+
+    @pytest.mark.asyncio
+    async def test_shift_demo_dates_already_current(self):
+        """Date shift skips when transactions are already current."""
+        from datetime import date
+
+        service = SchedulerService()
+
+        mock_session = AsyncMock()
+        mock_result = MagicMock()
+        mock_result.scalar.return_value = date.today().isoformat()
+        mock_session.execute.return_value = mock_result
+
+        mock_cm = MagicMock()
+        mock_cm.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_cm.__aexit__ = AsyncMock(return_value=None)
+
+        with patch("app.database.async_session", return_value=mock_cm):
+            await service._shift_demo_dates()
+
+            # Should only call execute once (for the MAX query), not for updates
+            assert mock_session.execute.call_count == 1

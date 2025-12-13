@@ -5,12 +5,13 @@ Uses APScheduler with AsyncIOScheduler to run background tasks.
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from pydantic import BaseModel
+from sqlalchemy import func, text
 
 from app.config import settings
 from app.services.backup import backup_service
@@ -159,8 +160,75 @@ class SchedulerService:
 
             backup_service.restore_backup(demo_backup.id)
             logger.info(f"Demo reset completed - restored from backup {demo_backup.id}")
+
+            # Shift transaction dates so data always looks fresh
+            await self._shift_demo_dates()
         except Exception as e:
             logger.error(f"Demo reset failed: {e}")
+
+    async def _shift_demo_dates(self) -> None:
+        """
+        Shift all transaction dates forward so the most recent is today.
+
+        This keeps demo data looking fresh - the transactions are always
+        relative to "now" rather than the original seed date.
+        """
+        from app.database import async_session
+        from app.models import Transaction, ImportSession, Budget
+
+        try:
+            async with async_session() as session:
+                # Find the max transaction date
+                result = await session.execute(
+                    text("SELECT MAX(date) FROM transactions")
+                )
+                max_date_row = result.scalar()
+
+                if max_date_row is None:
+                    logger.warning("No transactions found - skipping date shift")
+                    return
+
+                # Parse the date (SQLite stores as string)
+                if isinstance(max_date_row, str):
+                    max_date = date.fromisoformat(max_date_row)
+                else:
+                    max_date = max_date_row
+
+                # Calculate days to shift
+                today = date.today()
+                days_offset = (today - max_date).days
+
+                if days_offset == 0:
+                    logger.info("Transactions already current - no date shift needed")
+                    return
+
+                logger.info(f"Shifting transaction dates by {days_offset} days")
+
+                # Update all transaction dates
+                await session.execute(
+                    text("""
+                        UPDATE transactions
+                        SET date = date(date, :offset || ' days')
+                    """),
+                    {"offset": days_offset}
+                )
+
+                # Update import session date ranges
+                await session.execute(
+                    text("""
+                        UPDATE import_sessions
+                        SET date_range_start = date(date_range_start, :offset || ' days'),
+                            date_range_end = date(date_range_end, :offset || ' days')
+                        WHERE date_range_start IS NOT NULL
+                    """),
+                    {"offset": days_offset}
+                )
+
+                await session.commit()
+                logger.info(f"Date shift complete - {days_offset} days forward")
+
+        except Exception as e:
+            logger.error(f"Failed to shift demo dates: {e}")
 
     def trigger_auto_backup(self) -> None:
         """Manually trigger an automatic backup (runs immediately)."""
