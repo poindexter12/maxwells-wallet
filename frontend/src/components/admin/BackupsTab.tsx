@@ -24,13 +24,6 @@ const INTERVAL_OPTIONS = [
   { value: 168, label: '1 week' },
 ]
 
-const RETENTION_OPTIONS = [
-  { value: 3, label: '3 backups' },
-  { value: 5, label: '5 backups' },
-  { value: 10, label: '10 backups' },
-  { value: 20, label: '20 backups' },
-]
-
 export function BackupsTab() {
   const t = useTranslations('backup')
   const tCommon = useTranslations('common')
@@ -222,46 +215,33 @@ export function BackupsTab() {
           </div>
 
           {schedule?.auto_backup_enabled && (
-            <div className="flex items-center gap-4">
-              <label className="text-sm text-theme-muted">{t('schedule.interval')}:</label>
-              <select
-                data-testid={TEST_IDS.BACKUP_SCHEDULE_INTERVAL}
-                value={schedule?.auto_backup_interval_hours || 24}
-                onChange={(e) => handleUpdateSchedule({ auto_backup_interval_hours: parseInt(e.target.value) })}
-                className="px-3 py-1 border border-theme rounded bg-theme text-theme text-sm"
-              >
-                {INTERVAL_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              {schedule?.next_auto_backup && (
-                <span className="text-sm text-theme-muted">
-                  {t('schedule.nextBackup')}: {formatDate(schedule.next_auto_backup)}
-                </span>
-              )}
-            </div>
-          )}
+            <>
+              <div className="flex items-center gap-4">
+                <label className="text-sm text-theme-muted">{t('schedule.interval')}:</label>
+                <select
+                  data-testid={TEST_IDS.BACKUP_SCHEDULE_INTERVAL}
+                  value={schedule?.auto_backup_interval_hours || 24}
+                  onChange={(e) => handleUpdateSchedule({ auto_backup_interval_hours: parseInt(e.target.value) })}
+                  className="px-3 py-1 border border-theme rounded bg-theme text-theme text-sm"
+                >
+                  {INTERVAL_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                {schedule?.next_auto_backup && (
+                  <span className="text-sm text-theme-muted">
+                    {t('schedule.nextBackup')}: {formatDate(schedule.next_auto_backup)}
+                  </span>
+                )}
+              </div>
 
-          <div className="flex items-center gap-4">
-            <label className="text-sm text-theme-muted">{t('schedule.retention')}:</label>
-            <select
-              data-testid={TEST_IDS.BACKUP_RETENTION_SELECT}
-              value={schedule?.backup_retention_count || 10}
-              onChange={(e) => handleUpdateSchedule({ backup_retention_count: parseInt(e.target.value) })}
-              className="px-3 py-1 border border-theme rounded bg-theme text-theme text-sm"
-            >
-              {RETENTION_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <span className="text-sm text-theme-muted">
-              {t('schedule.retentionHelp')}
-            </span>
-          </div>
+              <div className="text-sm text-theme-muted pl-6">
+                {t('schedule.retentionHelp')}
+              </div>
+            </>
+          )}
 
           {isDemoMode && (
             <div className="flex items-center gap-4 pt-2 border-t border-theme">

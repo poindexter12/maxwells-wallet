@@ -97,22 +97,19 @@ class TestBackupAPICreate:
             source="manual",
         )
         with patch("app.routers.admin.backup_service") as mock_backup_svc:
-            with patch("app.routers.admin.scheduler_service") as mock_scheduler_svc:
-                mock_backup_svc.create_backup.return_value = mock_backup
-                mock_scheduler_svc.get_settings.return_value.backup_retention_count = 10
+            mock_backup_svc.create_backup.return_value = mock_backup
 
-                response = await client.post(
-                    "/api/v1/admin/backup",
-                    json={"description": "Pre-deployment backup"},
-                )
+            response = await client.post(
+                "/api/v1/admin/backup",
+                json={"description": "Pre-deployment backup"},
+            )
 
-                assert response.status_code == 200
-                mock_backup_svc.create_backup.assert_called_once_with(
-                    description="Pre-deployment backup",
-                    source="manual",
-                    is_demo_backup=False,
-                    retention_count=10,
-                )
+            assert response.status_code == 200
+            mock_backup_svc.create_backup.assert_called_once_with(
+                description="Pre-deployment backup",
+                source="manual",
+                is_demo_backup=False,
+            )
 
     @pytest.mark.asyncio
     async def test_create_backup_as_demo(self, client: AsyncClient):

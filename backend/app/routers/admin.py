@@ -14,7 +14,6 @@ from app.models import (
 )
 from app.errors import ErrorCode, not_found, bad_request
 from app.services.backup import backup_service, BackupMetadata
-from app.services.scheduler import scheduler_service
 
 
 class CreateBackupRequest(BaseModel):
@@ -345,15 +344,12 @@ async def create_backup(request: CreateBackupRequest = Body(default=CreateBackup
     Create a new database backup.
 
     The backup will be stored as a gzip-compressed copy of the SQLite database.
+    GFS retention policy automatically manages backup cleanup.
     """
-    # Get configured retention from scheduler settings
-    retention = scheduler_service.get_settings().backup_retention_count
-
     return backup_service.create_backup(
         description=request.description,
         source=request.source,
         is_demo_backup=request.is_demo_backup,
-        retention_count=retention,
     )
 
 

@@ -37,8 +37,6 @@ def backup_service(temp_backup_dir, temp_db_file):
     """Create a backup service with test configuration."""
     with patch('app.services.backup.settings') as mock_settings:
         mock_settings.backup_dir = temp_backup_dir
-        mock_settings.backup_retention = 3
-        mock_settings.backup_retention_days = 0
 
         service = BackupService()
         service._db_path = Path(temp_db_file)
@@ -161,24 +159,22 @@ class TestBackupService:
         with pytest.raises(ValueError, match="Cannot delete demo backup"):
             backup_service.delete_backup(metadata.id)
 
-    def test_retention_policy_count(self, backup_service):
-        """Test that retention policy removes old backups."""
-        # Create 5 backups (retention is 3)
+    def test_gfs_retention_keeps_recent_backups(self, backup_service):
+        """Test that GFS retention keeps all backups from last 24 hours."""
+        # Create several backups (all within 24h, so all should be kept)
         for i in range(5):
             backup_service.create_backup(description=f"Backup {i}", source="manual")
 
         backups = backup_service.list_backups()
 
-        # Should only have 3 backups (retention limit)
-        assert len(backups) == 3
-        # Newest ones should be kept
+        # All recent backups should be kept (GFS tier 1: all from last 24h)
+        assert len(backups) == 5
         descriptions = [b.description for b in backups]
-        assert "Backup 4" in descriptions
-        assert "Backup 3" in descriptions
-        assert "Backup 2" in descriptions
+        for i in range(5):
+            assert f"Backup {i}" in descriptions
 
     def test_demo_backup_not_deleted_by_retention(self, backup_service):
-        """Test that demo backup is preserved even when over retention limit."""
+        """Test that demo backup is preserved by GFS retention."""
         # Create demo backup first
         demo = backup_service.create_backup(
             description="Demo",
@@ -186,14 +182,14 @@ class TestBackupService:
             is_demo_backup=True
         )
 
-        # Create more backups than retention allows
+        # Create more backups (all within 24h, so all kept by GFS)
         for i in range(5):
             backup_service.create_backup(description=f"Backup {i}", source="manual")
 
         backups = backup_service.list_backups()
 
-        # Should have 3 regular + 1 demo = 4 total
-        assert len(backups) == 4
+        # All recent backups + demo should be kept (GFS keeps all from last 24h)
+        assert len(backups) == 6
 
         # Demo should still be there
         demo_backup = backup_service.get_demo_backup()
@@ -227,8 +223,6 @@ class TestBackupService:
         # Create a new service instance (simulating restart)
         with patch('app.services.backup.settings') as mock_settings:
             mock_settings.backup_dir = temp_backup_dir
-            mock_settings.backup_retention = 10
-            mock_settings.backup_retention_days = 0
 
             new_service = BackupService()
 
@@ -295,8 +289,6 @@ class TestBackupServiceEdgeCases:
 
             with patch('app.services.backup.settings') as mock_settings:
                 mock_settings.backup_dir = nonexistent_dir
-                mock_settings.backup_retention = 10
-                mock_settings.backup_retention_days = 0
 
                 service = BackupService()
                 service._db_path = Path(temp_db_file)
@@ -330,12 +322,12 @@ class TestBackupServiceEdgeCases:
         assert deleted == 0
 
     def test_cleanup_preserves_recent_backups(self, backup_service):
-        """Test cleanup preserves backups within retention limit."""
-        # Create exactly retention limit number of backups
-        for i in range(3):  # retention is 3
+        """Test GFS cleanup preserves all recent backups (within 24h)."""
+        # Create several backups (all within 24h)
+        for i in range(3):
             backup_service.create_backup(description=f"Backup {i}", source="manual")
 
-        # Cleanup should delete nothing
+        # Cleanup should delete nothing (all within 24h tier)
         deleted = backup_service.cleanup_old_backups()
         assert deleted == 0
         assert len(backup_service.list_backups()) == 3
@@ -443,15 +435,13 @@ class TestBackupServiceEdgeCases:
         assert backups[2].id == b1.id
 
 
-class TestBackupServiceRetentionDays:
-    """Tests for time-based retention policy."""
+class TestBackupServiceGFSRetention:
+    """Tests for GFS tiered retention policy."""
 
-    def test_retention_days_deletes_old_backups(self, temp_backup_dir, temp_db_file):
-        """Test that old backups are deleted based on retention days."""
+    def test_gfs_deletes_old_backups_outside_all_tiers(self, temp_backup_dir, temp_db_file):
+        """Test that old backups outside all GFS tiers are deleted."""
         with patch('app.services.backup.settings') as mock_settings:
             mock_settings.backup_dir = temp_backup_dir
-            mock_settings.backup_retention = 0  # Disable count-based retention
-            mock_settings.backup_retention_days = 7
 
             service = BackupService()
             service._db_path = Path(temp_db_file)
@@ -459,34 +449,32 @@ class TestBackupServiceRetentionDays:
             # Create a backup
             metadata = service.create_backup(description="Old backup", source="manual")
 
-            # Manually modify the manifest to make backup appear old
+            # Manually modify the manifest to make backup appear very old (>12 months)
             manifest = service._load_manifest()
-            manifest.backups[0].created_at = datetime.now(timezone.utc) - timedelta(days=10)
+            manifest.backups[0].created_at = datetime.now(timezone.utc) - timedelta(days=400)
             service._save_manifest(manifest)
 
             # Create new backup (triggers cleanup)
             service.create_backup(description="New backup", source="manual")
 
-            # Old backup should be deleted
+            # Old backup should be deleted (outside all GFS tiers)
             backups = service.list_backups()
             assert len(backups) == 1
             assert backups[0].description == "New backup"
 
-    def test_retention_days_preserves_recent(self, temp_backup_dir, temp_db_file):
-        """Test that recent backups are preserved regardless of count."""
+    def test_gfs_preserves_recent_backups(self, temp_backup_dir, temp_db_file):
+        """Test that recent backups (within 24h) are preserved."""
         with patch('app.services.backup.settings') as mock_settings:
             mock_settings.backup_dir = temp_backup_dir
-            mock_settings.backup_retention = 0  # Disable count-based retention
-            mock_settings.backup_retention_days = 30
 
             service = BackupService()
             service._db_path = Path(temp_db_file)
 
-            # Create many backups (all recent)
+            # Create many backups (all recent, within 24h)
             for i in range(10):
                 service.create_backup(description=f"Backup {i}", source="manual")
 
-            # All should be preserved (all are recent)
+            # All should be preserved (all within 24h tier)
             backups = service.list_backups()
             assert len(backups) == 10
 
@@ -498,8 +486,6 @@ class TestBackupServiceInvalidDatabase:
         """Test error when database URL is not SQLite."""
         with patch('app.services.backup.settings') as mock_settings:
             mock_settings.backup_dir = temp_backup_dir
-            mock_settings.backup_retention = 10
-            mock_settings.backup_retention_days = 0
 
             with patch('app.services.backup.DATABASE_URL', 'postgresql://localhost/db'):
                 service = BackupService()
@@ -511,8 +497,6 @@ class TestBackupServiceInvalidDatabase:
         """Test error when database file doesn't exist."""
         with patch('app.services.backup.settings') as mock_settings:
             mock_settings.backup_dir = temp_backup_dir
-            mock_settings.backup_retention = 10
-            mock_settings.backup_retention_days = 0
 
             service = BackupService()
             service._db_path = Path("/nonexistent/path/to/db.sqlite")

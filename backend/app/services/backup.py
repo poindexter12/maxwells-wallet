@@ -225,60 +225,106 @@ class BackupService:
 
     def cleanup_old_backups(self, retention_count: int | None = None) -> int:
         """
-        Remove old backups according to retention policy.
+        Remove old backups according to GFS (Grandfather-Father-Son) tiered retention.
+
+        Retention tiers:
+        - Keep all backups from the last 24 hours
+        - Keep one backup per day for the last 7 days
+        - Keep one backup per week for the last 4 weeks
+        - Keep one backup per month for the last 12 months
+
+        Demo backups are never deleted.
 
         Args:
-            retention_count: Number of backups to keep. If None, uses settings.backup_retention.
+            retention_count: Ignored (kept for API compatibility). GFS policy is always used.
 
         Returns:
             Number of backups deleted
         """
-        manifest = self._load_manifest()
-        deleted_count = 0
+        from datetime import timedelta
 
-        # Use provided retention or fall back to env var setting
-        effective_retention = retention_count if retention_count is not None else settings.backup_retention
+        manifest = self._load_manifest()
+        now = datetime.now(timezone.utc)
 
         # Separate demo backup from regular backups
         demo_backup = next((b for b in manifest.backups if b.is_demo_backup), None)
         regular_backups = [b for b in manifest.backups if not b.is_demo_backup]
 
-        # Sort by creation date (oldest first)
-        regular_backups.sort(key=lambda b: b.created_at)
+        # Sort by creation date (newest first)
+        regular_backups.sort(key=lambda b: b.created_at, reverse=True)
 
-        backups_to_delete: list[BackupMetadata] = []
+        backups_to_keep: set[str] = set()
 
-        # Apply count-based retention
-        if effective_retention > 0:
-            while len(regular_backups) > effective_retention:
-                backups_to_delete.append(regular_backups.pop(0))
+        # Tier 1: Keep all backups from last 24 hours
+        cutoff_24h = now - timedelta(hours=24)
+        for backup in regular_backups:
+            if backup.created_at >= cutoff_24h:
+                backups_to_keep.add(backup.id)
 
-        # Apply time-based retention
-        if settings.backup_retention_days > 0:
-            cutoff = datetime.now(timezone.utc).replace(
-                hour=0, minute=0, second=0, microsecond=0
-            )
-            from datetime import timedelta
+        # Tier 2: Keep one backup per day for last 7 days
+        for days_ago in range(1, 8):
+            day_start = (now - timedelta(days=days_ago)).replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end = day_start + timedelta(days=1)
 
-            cutoff = cutoff - timedelta(days=settings.backup_retention_days)
+            # Find the newest backup from that day
+            for backup in regular_backups:
+                if day_start <= backup.created_at < day_end:
+                    backups_to_keep.add(backup.id)
+                    break  # Keep only the newest from that day
 
-            for backup in list(regular_backups):
-                if backup.created_at < cutoff:
-                    backups_to_delete.append(backup)
-                    regular_backups.remove(backup)
+        # Tier 3: Keep one backup per week for last 4 weeks
+        for weeks_ago in range(1, 5):
+            # Start of the week (Monday)
+            week_start = (now - timedelta(weeks=weeks_ago))
+            week_start = week_start - timedelta(days=week_start.weekday())
+            week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+            week_end = week_start + timedelta(weeks=1)
 
-        # Delete the backups
-        for backup in backups_to_delete:
-            backup_path = self.backup_dir / backup.filename
-            if backup_path.exists():
-                backup_path.unlink()
-            deleted_count += 1
+            # Find the newest backup from that week
+            for backup in regular_backups:
+                if week_start <= backup.created_at < week_end:
+                    backups_to_keep.add(backup.id)
+                    break
+
+        # Tier 4: Keep one backup per month for last 12 months
+        for months_ago in range(1, 13):
+            # Calculate month boundaries
+            year = now.year
+            month = now.month - months_ago
+            while month <= 0:
+                month += 12
+                year -= 1
+
+            month_start = datetime(year, month, 1, tzinfo=timezone.utc)
+            if month == 12:
+                month_end = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
+            else:
+                month_end = datetime(year, month + 1, 1, tzinfo=timezone.utc)
+
+            # Find the newest backup from that month
+            for backup in regular_backups:
+                if month_start <= backup.created_at < month_end:
+                    backups_to_keep.add(backup.id)
+                    break
+
+        # Delete backups not in the keep set
+        deleted_count = 0
+        remaining_backups: list[BackupMetadata] = []
+
+        for backup in regular_backups:
+            if backup.id in backups_to_keep:
+                remaining_backups.append(backup)
+            else:
+                # Delete the file
+                backup_path = self.backup_dir / backup.filename
+                if backup_path.exists():
+                    backup_path.unlink()
+                deleted_count += 1
 
         # Rebuild manifest with remaining backups
-        remaining = regular_backups
         if demo_backup:
-            remaining.append(demo_backup)
-        manifest.backups = remaining
+            remaining_backups.append(demo_backup)
+        manifest.backups = remaining_backups
         self._save_manifest(manifest)
 
         return deleted_count

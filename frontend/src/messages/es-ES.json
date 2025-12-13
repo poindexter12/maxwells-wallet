@@ -886,8 +886,7 @@
       "enabled": "Habilitar copias automáticas",
       "interval": "Intervalo de copias",
       "nextBackup": "Próxima copia",
-      "retention": "Conservar",
-      "retentionHelp": "Las copias más antiguas se eliminan automáticamente",
+      "retentionHelp": "Mantiene copias cada hora por 24h, diarias por 7 días, semanales por 4 semanas, mensuales por 1 año",
       "demoResetInterval": "Intervalo de reinicio demo"
     },
     "fields": {

@@ -31,7 +31,6 @@ export const ADMIN_IDS = {
   BACKUP_CREATE_BUTTON: 'backup-create-button',
   BACKUP_SCHEDULE_TOGGLE: 'backup-schedule-toggle',
   BACKUP_SCHEDULE_INTERVAL: 'backup-schedule-interval',
-  BACKUP_RETENTION_SELECT: 'backup-retention-select',
   BACKUP_LOADING: 'backup-loading',
   BACKUP_EMPTY: 'backup-empty',
 } as const;

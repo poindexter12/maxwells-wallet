@@ -17,7 +17,6 @@ class BackupScheduleUpdate(BaseModel):
     auto_backup_enabled: Optional[bool] = None
     auto_backup_interval_hours: Optional[int] = None
     demo_reset_interval_hours: Optional[int] = None
-    backup_retention_count: Optional[int] = None
 
 router = APIRouter(prefix="/api/v1/settings", tags=["settings"])
 
@@ -165,5 +164,4 @@ async def update_backup_schedule(updates: BackupScheduleUpdate = Body(...)):
         auto_backup_enabled=updates.auto_backup_enabled,
         auto_backup_interval_hours=updates.auto_backup_interval_hours,
         demo_reset_interval_hours=updates.demo_reset_interval_hours,
-        backup_retention_count=updates.backup_retention_count,
     )

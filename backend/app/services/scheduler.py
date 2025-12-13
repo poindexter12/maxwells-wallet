@@ -24,7 +24,6 @@ class SchedulerSettings(BaseModel):
     auto_backup_enabled: bool = False
     auto_backup_interval_hours: int = 24
     demo_reset_interval_hours: int = 1  # Only used when DEMO_MODE=true
-    backup_retention_count: int = 10  # Number of backups to keep
     next_auto_backup: Optional[datetime] = None
     next_demo_reset: Optional[datetime] = None
 
@@ -75,7 +74,6 @@ class SchedulerService:
         auto_backup_enabled: Optional[bool] = None,
         auto_backup_interval_hours: Optional[int] = None,
         demo_reset_interval_hours: Optional[int] = None,
-        backup_retention_count: Optional[int] = None,
     ) -> SchedulerSettings:
         """Update scheduler settings and reschedule jobs as needed."""
         if auto_backup_enabled is not None:
@@ -96,9 +94,6 @@ class SchedulerService:
             self._settings.demo_reset_interval_hours = demo_reset_interval_hours
             if settings.demo_mode:
                 self.schedule_demo_reset(demo_reset_interval_hours)
-
-        if backup_retention_count is not None:
-            self._settings.backup_retention_count = backup_retention_count
 
         return self.get_settings()
 
@@ -143,7 +138,6 @@ class SchedulerService:
             backup = backup_service.create_backup(
                 description="Scheduled automatic backup",
                 source="scheduled",
-                retention_count=self._settings.backup_retention_count,
             )
             logger.info(f"Scheduled backup created: {backup.id}")
         except Exception as e:

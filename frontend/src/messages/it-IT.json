@@ -886,8 +886,7 @@
       "enabled": "Abilita backup automatici",
       "interval": "Intervallo backup",
       "nextBackup": "Prossimo backup",
-      "retention": "Mantieni",
-      "retentionHelp": "I backup più vecchi vengono eliminati automaticamente",
+      "retentionHelp": "Mantiene backup orari per 24h, giornalieri per 7 giorni, settimanali per 4 settimane, mensili per 1 anno",
       "demoResetInterval": "Intervallo ripristino demo"
     },
     "fields": {

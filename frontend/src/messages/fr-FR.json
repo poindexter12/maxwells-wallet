@@ -886,8 +886,7 @@
       "enabled": "Activer les sauvegardes automatiques",
       "interval": "Intervalle de sauvegarde",
       "nextBackup": "Prochaine sauvegarde",
-      "retention": "Conserver",
-      "retentionHelp": "Les sauvegardes les plus anciennes sont supprimées automatiquement",
+      "retentionHelp": "Conserve les sauvegardes horaires 24h, quotidiennes 7 jours, hebdomadaires 4 semaines, mensuelles 1 an",
       "demoResetInterval": "Intervalle de réinitialisation démo"
     },
     "fields": {

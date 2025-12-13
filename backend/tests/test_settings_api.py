@@ -109,7 +109,6 @@ class TestBackupScheduleSettingsPut:
                 auto_backup_enabled=True,
                 auto_backup_interval_hours=None,
                 demo_reset_interval_hours=None,
-                backup_retention_count=None,
             )
 
     @pytest.mark.asyncio
@@ -130,7 +129,6 @@ class TestBackupScheduleSettingsPut:
                 auto_backup_enabled=False,
                 auto_backup_interval_hours=None,
                 demo_reset_interval_hours=None,
-                backup_retention_count=None,
             )
 
     @pytest.mark.asyncio
@@ -151,7 +149,6 @@ class TestBackupScheduleSettingsPut:
                 auto_backup_enabled=None,
                 auto_backup_interval_hours=6,
                 demo_reset_interval_hours=None,
-                backup_retention_count=None,
             )
 
     @pytest.mark.asyncio
@@ -172,7 +169,6 @@ class TestBackupScheduleSettingsPut:
                 auto_backup_enabled=None,
                 auto_backup_interval_hours=None,
                 demo_reset_interval_hours=4,
-                backup_retention_count=None,
             )
 
     @pytest.mark.asyncio
@@ -201,7 +197,6 @@ class TestBackupScheduleSettingsPut:
                 auto_backup_enabled=True,
                 auto_backup_interval_hours=12,
                 demo_reset_interval_hours=2,
-                backup_retention_count=None,
             )
 
     @pytest.mark.asyncio
@@ -260,7 +255,6 @@ class TestBackupScheduleSettingsValidation:
                 auto_backup_enabled=None,
                 auto_backup_interval_hours=None,
                 demo_reset_interval_hours=None,
-                backup_retention_count=None,
             )
 
 
