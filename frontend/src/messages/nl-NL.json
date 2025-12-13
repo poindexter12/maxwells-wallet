@@ -347,6 +347,7 @@
       "overview": "Overzicht",
       "imports": "Imports",
       "health": "Gezondheid",
+      "backups": "Back-ups",
       "buckets": "Potten",
       "accounts": "Rekeningen",
       "occasions": "Gebeurtenissen",
@@ -896,7 +897,7 @@
     },
     "fields": {
       "description": "Beschrijving",
-      "created": "Gemaakt",
+      "created": "Aangemaakt",
       "size": "Grootte",
       "source": "Bron",
       "demoBackup": "Demo Back-up"
