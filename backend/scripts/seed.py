@@ -337,6 +337,9 @@ async def seed_budgets(session: AsyncSession):
 
 async def seed_dashboards(session: AsyncSession):
     """Create dashboards with widgets."""
+    from datetime import datetime
+    from sqlalchemy import insert
+
     print("Seeding dashboards...")
 
     # Default dashboard - Month to Date
@@ -348,18 +351,20 @@ async def seed_dashboards(session: AsyncSession):
         position=0,
     )
     session.add(default_dashboard)
-    await session.flush()
+    await session.commit()
+    await session.refresh(default_dashboard)
 
-    # Widgets for default dashboard (names translated on frontend based on widget_type)
-    default_widgets = [
-        DashboardWidget(dashboard_id=default_dashboard.id, widget_type="summary", position=0, width="full", is_visible=True),
-        DashboardWidget(dashboard_id=default_dashboard.id, widget_type="velocity", position=1, width="half", is_visible=True),
-        DashboardWidget(dashboard_id=default_dashboard.id, widget_type="bucket_pie", position=2, width="half", is_visible=True),
-        DashboardWidget(dashboard_id=default_dashboard.id, widget_type="top_merchants", position=3, width="half", is_visible=True),
-        DashboardWidget(dashboard_id=default_dashboard.id, widget_type="trends", position=4, width="full", is_visible=True),
+    # Widgets for default dashboard - use raw insert to avoid ORM identity issues
+    now = datetime.utcnow()
+    default_widget_data = [
+        {"dashboard_id": default_dashboard.id, "widget_type": "summary", "position": 0, "width": "full", "is_visible": True, "created_at": now, "updated_at": now},
+        {"dashboard_id": default_dashboard.id, "widget_type": "velocity", "position": 1, "width": "half", "is_visible": True, "created_at": now, "updated_at": now},
+        {"dashboard_id": default_dashboard.id, "widget_type": "bucket_pie", "position": 2, "width": "half", "is_visible": True, "created_at": now, "updated_at": now},
+        {"dashboard_id": default_dashboard.id, "widget_type": "top_merchants", "position": 3, "width": "half", "is_visible": True, "created_at": now, "updated_at": now},
+        {"dashboard_id": default_dashboard.id, "widget_type": "trends", "position": 4, "width": "full", "is_visible": True, "created_at": now, "updated_at": now},
     ]
-    for widget in default_widgets:
-        session.add(widget)
+    await session.execute(insert(DashboardWidget), default_widget_data)
+    await session.commit()
 
     # Year to Date dashboard
     ytd_dashboard = Dashboard(
@@ -370,19 +375,19 @@ async def seed_dashboards(session: AsyncSession):
         position=1,
     )
     session.add(ytd_dashboard)
-    await session.flush()
-
-    # Widgets for YTD dashboard (names translated on frontend based on widget_type)
-    ytd_widgets = [
-        DashboardWidget(dashboard_id=ytd_dashboard.id, widget_type="summary", position=0, width="full", is_visible=True),
-        DashboardWidget(dashboard_id=ytd_dashboard.id, widget_type="trends", position=1, width="full", is_visible=True),
-        DashboardWidget(dashboard_id=ytd_dashboard.id, widget_type="bucket_pie", position=2, width="half", is_visible=True),
-        DashboardWidget(dashboard_id=ytd_dashboard.id, widget_type="top_merchants", position=3, width="half", is_visible=True),
-    ]
-    for widget in ytd_widgets:
-        session.add(widget)
-
     await session.commit()
+    await session.refresh(ytd_dashboard)
+
+    # Widgets for YTD dashboard
+    ytd_widget_data = [
+        {"dashboard_id": ytd_dashboard.id, "widget_type": "summary", "position": 0, "width": "full", "is_visible": True, "created_at": now, "updated_at": now},
+        {"dashboard_id": ytd_dashboard.id, "widget_type": "trends", "position": 1, "width": "full", "is_visible": True, "created_at": now, "updated_at": now},
+        {"dashboard_id": ytd_dashboard.id, "widget_type": "bucket_pie", "position": 2, "width": "half", "is_visible": True, "created_at": now, "updated_at": now},
+        {"dashboard_id": ytd_dashboard.id, "widget_type": "top_merchants", "position": 3, "width": "half", "is_visible": True, "created_at": now, "updated_at": now},
+    ]
+    await session.execute(insert(DashboardWidget), ytd_widget_data)
+    await session.commit()
+
     print("Created 2 dashboards with widgets.")
 
 
