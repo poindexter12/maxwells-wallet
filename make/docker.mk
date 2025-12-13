@@ -11,7 +11,7 @@ docker: docker-build docker-up ## Build and start Docker container
 
 docker-with-pseudo: docker-build-pseudo docker-up ## Build and start Docker with pseudo locale for i18n QA
 
-docker-with-demo: docker-build docker-demo-seed docker-demo-up ## Build and start Docker in demo mode
+docker-with-demo: docker-build docker-demo-up ## Build and start Docker in demo mode
 
 docker-build-pseudo: ## Build Docker image with pseudo locale enabled (no cache)
 	@echo "$(BLUE)Building Docker image with pseudo locale (no cache)...$(NC)"

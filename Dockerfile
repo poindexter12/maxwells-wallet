@@ -139,9 +139,16 @@ asyncio.run(create_tables())
 
 case "${1:-run}" in
   run)
-    # Initialize if fresh database
+    # Initialize database
     if [ ! -f /data/wallet.db ]; then
-        init_database
+        # Demo mode: auto-seed with demo data
+        if [ "${DEMO_MODE:-false}" = "true" ]; then
+            echo "Demo mode detected - setting up demo data..."
+            init_database
+            python -m scripts.setup_demo
+        else
+            init_database
+        fi
     else
         echo "Running migrations..."
         alembic upgrade head
@@ -165,6 +172,7 @@ case "${1:-run}" in
     echo "Seeding database with sample data..."
     python -m scripts.seed --clear
     echo "Seeding complete."
+    exit 0
     ;;
   demo-setup)
     if [ ! -f /data/wallet.db ]; then
@@ -173,6 +181,7 @@ case "${1:-run}" in
     echo "Setting up demo mode..."
     python -m scripts.setup_demo
     echo "Demo setup complete."
+    exit 0
     ;;
   shell)
     exec /bin/bash
