@@ -955,3 +955,143 @@ class TestQFXParserEdgeCases:
 
         assert len(transactions) == 1
         assert transactions[0].amount == -1500.00
+
+    def test_qfx_short_account_id(self):
+        """Handle short account IDs (4 digits or less)."""
+        content = """<OFX>
+<BANKACCTFROM>
+<ACCTID>1234</ACCTID>
+</BANKACCTFROM>
+<BANKTRANLIST>
+<STMTTRN>
+<DTPOSTED>20241215</DTPOSTED>
+<TRNAMT>-50.00</TRNAMT>
+<FITID>SHORT_ACCT</FITID>
+<NAME>TEST</NAME>
+</STMTTRN>
+</BANKTRANLIST>
+</OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+
+        assert len(transactions) == 1
+        assert transactions[0].account_source == "QFX-1234"
+
+    def test_qfx_no_account_info(self):
+        """Handle QFX without any account info."""
+        content = """<OFX>
+<BANKTRANLIST>
+<STMTTRN>
+<DTPOSTED>20241215</DTPOSTED>
+<TRNAMT>-50.00</TRNAMT>
+<FITID>NO_ACCT</FITID>
+<NAME>TEST</NAME>
+</STMTTRN>
+</BANKTRANLIST>
+</OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+
+        assert len(transactions) == 1
+        assert transactions[0].account_source == "QFX-Unknown"
+
+
+class TestQFXSICCodeMapping:
+    """Tests for SIC code to category mapping coverage."""
+
+    def _parse_with_sic(self, sic_code: str) -> ParsedTransaction:
+        """Helper to parse a transaction with given SIC code."""
+        content = f"""<OFX><BANKTRANLIST>
+<STMTTRN>
+<DTPOSTED>20241215</DTPOSTED>
+<TRNAMT>-100.00</TRNAMT>
+<FITID>SIC_{sic_code}</FITID>
+<NAME>TEST MERCHANT</NAME>
+<SIC>{sic_code}</SIC>
+</STMTTRN>
+</BANKTRANLIST></OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+        assert len(transactions) == 1
+        return transactions[0]
+
+    def test_sic_agriculture(self):
+        """SIC codes 01xx-09xx map to agriculture."""
+        txn = self._parse_with_sic("0100")
+        assert txn.suggested_category == "agriculture"
+
+    def test_sic_mining(self):
+        """SIC codes 10xx-14xx map to mining."""
+        txn = self._parse_with_sic("1000")
+        assert txn.suggested_category == "mining"
+
+    def test_sic_construction(self):
+        """SIC codes 15xx-17xx map to construction."""
+        txn = self._parse_with_sic("1500")
+        assert txn.suggested_category == "construction"
+
+    def test_sic_manufacturing(self):
+        """SIC codes 20xx-39xx map to manufacturing."""
+        txn = self._parse_with_sic("2000")
+        assert txn.suggested_category == "manufacturing"
+
+    def test_sic_transportation(self):
+        """SIC codes 40xx-49xx map to transportation."""
+        txn = self._parse_with_sic("4000")
+        assert txn.suggested_category == "transportation"
+
+    def test_sic_wholesale(self):
+        """SIC codes 50xx-51xx map to wholesale."""
+        txn = self._parse_with_sic("5000")
+        assert txn.suggested_category == "wholesale"
+
+    def test_sic_finance(self):
+        """SIC codes 60xx-67xx map to finance."""
+        txn = self._parse_with_sic("6000")
+        assert txn.suggested_category == "finance"
+
+    def test_sic_travel(self):
+        """SIC codes 70xx-71xx map to travel."""
+        txn = self._parse_with_sic("7000")
+        assert txn.suggested_category == "travel"
+
+    def test_sic_personal_services(self):
+        """SIC codes 72xx map to personal-services."""
+        txn = self._parse_with_sic("7200")
+        assert txn.suggested_category == "personal-services"
+
+    def test_sic_entertainment(self):
+        """SIC codes 78xx-79xx map to entertainment."""
+        txn = self._parse_with_sic("7800")
+        assert txn.suggested_category == "entertainment"
+
+    def test_sic_professional_services(self):
+        """SIC codes 83xx-86xx map to professional-services."""
+        txn = self._parse_with_sic("8300")
+        assert txn.suggested_category == "professional-services"
+
+    def test_sic_unmapped_code(self):
+        """SIC codes outside defined ranges return None."""
+        txn = self._parse_with_sic("9999")
+        # Not in any defined range, so should be None
+        assert txn.suggested_category is None
+
+    def test_sic_invalid_code(self):
+        """Invalid SIC codes (non-numeric) return None."""
+        content = """<OFX><BANKTRANLIST>
+<STMTTRN>
+<DTPOSTED>20241215</DTPOSTED>
+<TRNAMT>-100.00</TRNAMT>
+<FITID>BAD_SIC</FITID>
+<NAME>TEST</NAME>
+<SIC>INVALID</SIC>
+</STMTTRN>
+</BANKTRANLIST></OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+        assert len(transactions) == 1
+        assert transactions[0].suggested_category is None
