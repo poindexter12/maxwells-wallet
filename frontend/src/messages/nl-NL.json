@@ -886,8 +886,7 @@
       "enabled": "Automatische back-ups inschakelen",
       "interval": "Back-up interval",
       "nextBackup": "Volgende back-up",
-      "retention": "Bewaren",
-      "retentionHelp": "Oudste back-ups worden automatisch verwijderd",
+      "retentionHelp": "Bewaart back-ups per uur voor 24u, dagelijks voor 7 dagen, wekelijks voor 4 weken, maandelijks voor 1 jaar",
       "demoResetInterval": "Demo reset-interval"
     },
     "fields": {

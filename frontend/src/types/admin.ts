@@ -61,7 +61,6 @@ export interface SchedulerSettings {
   auto_backup_enabled: boolean
   auto_backup_interval_hours: number
   demo_reset_interval_hours: number
-  backup_retention_count: number
   next_auto_backup: string | null
   next_demo_reset: string | null
 }

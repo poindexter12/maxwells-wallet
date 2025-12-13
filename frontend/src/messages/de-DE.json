@@ -886,8 +886,7 @@
       "enabled": "Automatische Sicherungen aktivieren",
       "interval": "Sicherungsintervall",
       "nextBackup": "Nächste Sicherung",
-      "retention": "Behalten",
-      "retentionHelp": "Älteste Sicherungen werden automatisch gelöscht",
+      "retentionHelp": "Behält stündliche Sicherungen für 24h, tägliche für 7 Tage, wöchentliche für 4 Wochen, monatliche für 1 Jahr",
       "demoResetInterval": "Demo-Zurücksetzungsintervall"
     },
     "fields": {

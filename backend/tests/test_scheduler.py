@@ -196,16 +196,6 @@ class TestSchedulerServiceUpdateSettings:
 
                     mock_schedule.assert_not_called()
 
-    def test_update_backup_retention_count(self):
-        """Updating backup retention count updates settings."""
-        service = SchedulerService()
-        assert service._settings.backup_retention_count == 10  # default
-
-        with patch.object(service.scheduler, "get_job", return_value=None):
-            service.update_settings(backup_retention_count=5)
-
-            assert service._settings.backup_retention_count == 5
-
 
 class TestSchedulerServiceScheduleJobs:
     """Tests for scheduling jobs."""
@@ -289,7 +279,6 @@ class TestSchedulerServiceBackupExecution:
             mock_backup.create_backup.assert_called_once_with(
                 description="Scheduled automatic backup",
                 source="scheduled",
-                retention_count=service._settings.backup_retention_count,
             )
 
     @pytest.mark.asyncio
@@ -397,7 +386,6 @@ class TestSchedulerSettingsModel:
         assert settings.auto_backup_enabled is False
         assert settings.auto_backup_interval_hours == 24
         assert settings.demo_reset_interval_hours == 1
-        assert settings.backup_retention_count == 10
         assert settings.next_auto_backup is None
         assert settings.next_demo_reset is None
 
@@ -409,12 +397,10 @@ class TestSchedulerSettingsModel:
             auto_backup_enabled=True,
             auto_backup_interval_hours=12,
             demo_reset_interval_hours=4,
-            backup_retention_count=5,
             next_auto_backup=next_backup,
         )
 
         assert settings.auto_backup_enabled is True
         assert settings.auto_backup_interval_hours == 12
         assert settings.demo_reset_interval_hours == 4
-        assert settings.backup_retention_count == 5
         assert settings.next_auto_backup == next_backup
