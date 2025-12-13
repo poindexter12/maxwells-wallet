@@ -64,7 +64,7 @@ docker-migrate: ## Run database migrations in Docker
 
 docker-demo-seed: ## Seed demo data and create demo backup in Docker
 	@echo "$(BLUE)Setting up demo data...$(NC)"
-	docker compose run --rm maxwells-wallet python -m scripts.setup_demo
+	docker compose run --rm maxwells-wallet demo-setup
 	@echo "$(GREEN)✓ Demo data seeded$(NC)"
 
 docker-demo-up: ## Start Docker container in demo mode
