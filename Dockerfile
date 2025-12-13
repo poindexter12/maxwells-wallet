@@ -159,8 +159,20 @@ case "${1:-run}" in
     echo "Migrations complete."
     ;;
   seed)
-    echo "Note: Sample data seeding is not yet implemented."
-    echo "The database is ready for use - import your own CSV files."
+    if [ ! -f /data/wallet.db ]; then
+        init_database
+    fi
+    echo "Seeding database with sample data..."
+    python -m scripts.seed --clear
+    echo "Seeding complete."
+    ;;
+  demo-setup)
+    if [ ! -f /data/wallet.db ]; then
+        init_database
+    fi
+    echo "Setting up demo mode..."
+    python -m scripts.setup_demo
+    echo "Demo setup complete."
     ;;
   shell)
     exec /bin/bash
@@ -180,12 +192,16 @@ case "${1:-run}" in
     echo ""
     echo "  run          Start the application (default)"
     echo "  migrate      Run database migrations only"
+    echo "  seed         Seed database with sample data"
+    echo "  demo-setup   Set up demo mode (seed + create demo backup)"
     echo "  shell        Open a bash shell"
     echo "  backend-only Run backend API only (no frontend)"
     echo "  help         Show this help message"
     echo ""
     echo "Examples:"
     echo "  docker compose up -d"
+    echo "  docker compose run --rm maxwells-wallet seed"
+    echo "  docker compose run --rm maxwells-wallet demo-setup"
     echo "  docker compose run -it --rm maxwells-wallet shell"
     ;;
   *)
