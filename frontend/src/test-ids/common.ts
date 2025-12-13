@@ -3,4 +3,5 @@
  */
 export const COMMON_IDS = {
   HELP_DISMISS: 'help-dismiss',
+  DEMO_BANNER: 'demo-banner',
 } as const;

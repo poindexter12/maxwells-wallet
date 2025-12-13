@@ -4,14 +4,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db
 from app.routers import transactions, import_router, reports, budgets, tag_rules, recurring, admin, tags, transfers, merchants, accounts, filters, dashboard, dashboards, test, settings
 from app.observability import setup_observability, ObservabilitySettings
+from app.services.scheduler import scheduler_service
+from app.middleware import add_demo_mode_middleware
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     await init_db()
+    scheduler_service.start()
     yield
-    # Shutdown (nothing needed for now)
+    # Shutdown
+    scheduler_service.stop()
 
 
 tags_metadata = [
@@ -74,6 +78,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Demo mode middleware (blocks restricted operations when DEMO_MODE=true)
+add_demo_mode_middleware(app)
 
 # Include routers
 app.include_router(transactions.router)

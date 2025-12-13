@@ -5,10 +5,13 @@
 .PHONY: docker docker-build docker-build-force docker-up docker-down docker-logs
 .PHONY: docker-shell docker-clean docker-seed docker-migrate
 .PHONY: docker-with-pseudo docker-build-pseudo
+.PHONY: docker-with-demo docker-demo-up docker-demo-seed
 
 docker: docker-build docker-up ## Build and start Docker container
 
 docker-with-pseudo: docker-build-pseudo docker-up ## Build and start Docker with pseudo locale for i18n QA
+
+docker-with-demo: docker-build docker-demo-up ## Build and start Docker in demo mode
 
 docker-build-pseudo: ## Build Docker image with pseudo locale enabled (no cache)
 	@echo "$(BLUE)Building Docker image with pseudo locale (no cache)...$(NC)"
@@ -58,3 +61,17 @@ docker-migrate: ## Run database migrations in Docker
 	@echo "$(BLUE)Running migrations...$(NC)"
 	docker compose run --rm maxwells-wallet migrate
 	@echo "$(GREEN)✓ Migrations complete$(NC)"
+
+docker-demo-seed: ## Seed demo data and create demo backup in Docker
+	@echo "$(BLUE)Setting up demo data...$(NC)"
+	docker compose run --rm maxwells-wallet demo-setup
+	@echo "$(GREEN)✓ Demo data seeded$(NC)"
+
+docker-demo-up: ## Start Docker container in demo mode
+	@echo "$(BLUE)Starting Docker container in demo mode...$(NC)"
+	DEMO_MODE=true docker compose up -d
+	@echo "$(GREEN)✓ Container started in demo mode$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Demo mode enabled - data resets hourly$(NC)"
+	@echo "Frontend: http://localhost:3000"
+	@echo "Backend:  http://localhost:3001"
