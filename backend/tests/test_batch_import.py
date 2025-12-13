@@ -39,11 +39,11 @@ Date,Description,Amount,Running Bal.
 
         # Check response structure
         assert "files" in data
-        assert "totalfiles" in data
+        assert "total_files" in data
         assert "total_transactions" in data
         assert "total_duplicates" in data
 
-        assert data["totalfiles"] == 2
+        assert data["total_files"] == 2
         assert len(data["files"]) == 2
 
         # Check each file preview
