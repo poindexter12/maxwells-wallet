@@ -887,7 +887,12 @@
       "interval": "Intervalo de cópias",
       "nextBackup": "Próxima cópia",
       "retentionHelp": "Mantém cópias horárias por 24h, diárias por 7 dias, semanais por 4 semanas, mensais por 1 ano",
-      "demoResetInterval": "Intervalo de reinício demo"
+      "demoResetInterval": "Intervalo de reinício demo",
+      "intervals": {
+        "hour": "1 hora",
+        "day": "1 dia",
+        "week": "1 semana"
+      }
     },
     "fields": {
       "description": "Descrição",

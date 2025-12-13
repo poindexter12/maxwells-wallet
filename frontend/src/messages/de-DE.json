@@ -887,7 +887,12 @@
       "interval": "Sicherungsintervall",
       "nextBackup": "Nächste Sicherung",
       "retentionHelp": "Behält stündliche Sicherungen für 24h, tägliche für 7 Tage, wöchentliche für 4 Wochen, monatliche für 1 Jahr",
-      "demoResetInterval": "Demo-Zurücksetzungsintervall"
+      "demoResetInterval": "Demo-Zurücksetzungsintervall",
+      "intervals": {
+        "hour": "1 Stunde",
+        "day": "1 Tag",
+        "week": "1 Woche"
+      }
     },
     "fields": {
       "description": "Beschreibung",

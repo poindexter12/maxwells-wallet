@@ -887,7 +887,12 @@
       "interval": "Intervallo backup",
       "nextBackup": "Prossimo backup",
       "retentionHelp": "Mantiene backup orari per 24h, giornalieri per 7 giorni, settimanali per 4 settimane, mensili per 1 anno",
-      "demoResetInterval": "Intervallo ripristino demo"
+      "demoResetInterval": "Intervallo ripristino demo",
+      "intervals": {
+        "hour": "1 ora",
+        "day": "1 giorno",
+        "week": "1 settimana"
+      }
     },
     "fields": {
       "description": "Descrizione",
