@@ -90,11 +90,13 @@ jobs:
 
       - name: Run linter (ruff)
         run: uv run ruff check .
-        continue-on-error: true
+
+      - name: Check for dead code (vulture)
+        run: uv run vulture app
 
       - name: Run type checker (mypy)
         run: uv run mypy app --ignore-missing-imports
-        continue-on-error: true
+        continue-on-error: true  # TODO: Fix mypy errors and remove this
 
       - name: Run tests with coverage
         run: uv run pytest tests/ -v --cov=app --cov-report=xml --cov-report=term-missing --ignore=tests/e2e --ignore=tests/performance

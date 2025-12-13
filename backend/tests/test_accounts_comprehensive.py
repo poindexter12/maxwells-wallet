@@ -1,6 +1,7 @@
 """
 Comprehensive tests for accounts.py router to increase coverage.
 """
+
 import pytest
 from httpx import AsyncClient
 
@@ -49,9 +50,7 @@ class TestAccountsComprehensive:
         if accounts:
             account_source = accounts[0].get("account_source") or accounts[0].get("account")
             if account_source:
-                response = await client.patch(f"/api/v1/accounts/{account_source}", json={
-                    "credit_limit": 5000.00
-                })
+                response = await client.patch(f"/api/v1/accounts/{account_source}", json={"credit_limit": 5000.00})
                 # Might succeed or fail depending on account type
                 assert response.status_code in [200, 400, 422]
 
@@ -64,15 +63,11 @@ class TestAccountsComprehensive:
         if accounts:
             account_source = accounts[0].get("account_source") or accounts[0].get("account")
             if account_source:
-                response = await client.patch(f"/api/v1/accounts/{account_source}", json={
-                    "due_day": 15
-                })
+                response = await client.patch(f"/api/v1/accounts/{account_source}", json={"due_day": 15})
                 assert response.status_code in [200, 400, 422]
 
     @pytest.mark.asyncio
     async def test_update_nonexistent_account(self, client: AsyncClient):
         """Update nonexistent account returns 404"""
-        response = await client.patch("/api/v1/accounts/NONEXISTENT-9999", json={
-            "credit_limit": 1000.00
-        })
+        response = await client.patch("/api/v1/accounts/NONEXISTENT-9999", json={"credit_limit": 1000.00})
         assert response.status_code == 404

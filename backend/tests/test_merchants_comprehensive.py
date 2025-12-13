@@ -1,6 +1,7 @@
 """
 Comprehensive tests for merchants.py router to increase coverage to 90%+.
 """
+
 import pytest
 from httpx import AsyncClient
 
@@ -63,12 +64,7 @@ class TestMerchantAliases:
     @pytest.mark.asyncio
     async def test_create_alias_contains(self, client: AsyncClient):
         """Create a contains-type alias"""
-        alias_data = {
-            "pattern": "AMZN",
-            "canonical_name": "Amazon",
-            "match_type": "contains",
-            "priority": 100
-        }
+        alias_data = {"pattern": "AMZN", "canonical_name": "Amazon", "match_type": "contains", "priority": 100}
         response = await client.post("/api/v1/merchants/aliases", json=alias_data)
         assert response.status_code in [201, 400]  # 400 if already exists
 
@@ -85,7 +81,7 @@ class TestMerchantAliases:
             "pattern": "WHOLE FOODS MARKET",
             "canonical_name": "Whole Foods",
             "match_type": "exact",
-            "priority": 90
+            "priority": 90,
         }
         response = await client.post("/api/v1/merchants/aliases", json=alias_data)
         assert response.status_code in [201, 400]
@@ -97,7 +93,7 @@ class TestMerchantAliases:
             "pattern": r"STARBUCKS.*\d+",
             "canonical_name": "Starbucks",
             "match_type": "regex",
-            "priority": 80
+            "priority": 80,
         }
         response = await client.post("/api/v1/merchants/aliases", json=alias_data)
         assert response.status_code in [201, 400]
@@ -105,12 +101,7 @@ class TestMerchantAliases:
     @pytest.mark.asyncio
     async def test_create_alias_invalid_regex(self, client: AsyncClient):
         """Create alias with invalid regex pattern fails"""
-        alias_data = {
-            "pattern": r"[invalid(regex",
-            "canonical_name": "Test",
-            "match_type": "regex",
-            "priority": 50
-        }
+        alias_data = {"pattern": r"[invalid(regex", "canonical_name": "Test", "match_type": "regex", "priority": 50}
         response = await client.post("/api/v1/merchants/aliases", json=alias_data)
         assert response.status_code == 400
         assert response.json()["detail"]["error_code"] == "INVALID_REGEX"
@@ -122,7 +113,7 @@ class TestMerchantAliases:
             "pattern": "DUPLICATE_PATTERN_TEST",
             "canonical_name": "Test",
             "match_type": "contains",
-            "priority": 50
+            "priority": 50,
         }
         # First creation
         response1 = await client.post("/api/v1/merchants/aliases", json=alias_data)
@@ -141,7 +132,7 @@ class TestMerchantAliases:
             "pattern": "GET_BY_ID_TEST",
             "canonical_name": "Test Merchant",
             "match_type": "contains",
-            "priority": 60
+            "priority": 60,
         }
         create_response = await client.post("/api/v1/merchants/aliases", json=alias_data)
 
@@ -166,7 +157,7 @@ class TestMerchantAliases:
             "pattern": "UPDATE_TEST",
             "canonical_name": "Original Name",
             "match_type": "contains",
-            "priority": 50
+            "priority": 50,
         }
         create_response = await client.post("/api/v1/merchants/aliases", json=alias_data)
 
@@ -174,10 +165,7 @@ class TestMerchantAliases:
             alias_id = create_response.json()["id"]
 
             # Update it
-            update_data = {
-                "canonical_name": "Updated Name",
-                "priority": 75
-            }
+            update_data = {"canonical_name": "Updated Name", "priority": 75}
             response = await client.patch(f"/api/v1/merchants/aliases/{alias_id}", json=update_data)
             assert response.status_code == 200
             assert response.json()["canonical_name"] == "Updated Name"
@@ -191,7 +179,7 @@ class TestMerchantAliases:
             "pattern": "REGEX_UPDATE_TEST",
             "canonical_name": "Test",
             "match_type": "contains",
-            "priority": 50
+            "priority": 50,
         }
         create_response = await client.post("/api/v1/merchants/aliases", json=alias_data)
 
@@ -199,10 +187,7 @@ class TestMerchantAliases:
             alias_id = create_response.json()["id"]
 
             # Update to valid regex
-            update_data = {
-                "pattern": r"REGEX.*TEST",
-                "match_type": "regex"
-            }
+            update_data = {"pattern": r"REGEX.*TEST", "match_type": "regex"}
             response = await client.patch(f"/api/v1/merchants/aliases/{alias_id}", json=update_data)
             assert response.status_code == 200
 
@@ -214,7 +199,7 @@ class TestMerchantAliases:
             "pattern": "INVALID_REGEX_UPDATE",
             "canonical_name": "Test",
             "match_type": "contains",
-            "priority": 50
+            "priority": 50,
         }
         create_response = await client.post("/api/v1/merchants/aliases", json=alias_data)
 
@@ -222,10 +207,7 @@ class TestMerchantAliases:
             alias_id = create_response.json()["id"]
 
             # Update to invalid regex
-            update_data = {
-                "pattern": r"[invalid(regex",
-                "match_type": "regex"
-            }
+            update_data = {"pattern": r"[invalid(regex", "match_type": "regex"}
             response = await client.patch(f"/api/v1/merchants/aliases/{alias_id}", json=update_data)
             assert response.status_code == 400
 
@@ -239,12 +221,7 @@ class TestMerchantAliases:
     async def test_delete_alias(self, client: AsyncClient):
         """Delete an alias"""
         # Create alias
-        alias_data = {
-            "pattern": "DELETE_TEST",
-            "canonical_name": "To Delete",
-            "match_type": "contains",
-            "priority": 30
-        }
+        alias_data = {"pattern": "DELETE_TEST", "canonical_name": "To Delete", "match_type": "contains", "priority": 30}
         create_response = await client.post("/api/v1/merchants/aliases", json=alias_data)
 
         if create_response.status_code == 201:
@@ -284,7 +261,7 @@ class TestApplyAliases:
             "pattern": "DRY_RUN_TEST",
             "canonical_name": "Dry Run Result",
             "match_type": "contains",
-            "priority": 100
+            "priority": 100,
         }
         await client.post("/api/v1/merchants/aliases", json=alias_data)
 
@@ -304,7 +281,7 @@ class TestApplyAliases:
             "pattern": "APPLY_TEST",
             "canonical_name": "Applied Merchant",
             "match_type": "contains",
-            "priority": 100
+            "priority": 100,
         }
         await client.post("/api/v1/merchants/aliases", json=alias_data)
 
@@ -323,7 +300,7 @@ class TestApplyAliases:
             "pattern": "MATCH_COUNT_TEST",
             "canonical_name": "Match Count Result",
             "match_type": "contains",
-            "priority": 100
+            "priority": 100,
         }
         create_response = await client.post("/api/v1/merchants/aliases", json=alias_data)
 
@@ -378,7 +355,7 @@ class TestAliasSuggestions:
             "pattern": "EXCLUDE_FROM_SUGGESTIONS",
             "canonical_name": "Already Aliased",
             "match_type": "contains",
-            "priority": 50
+            "priority": 50,
         }
         await client.post("/api/v1/merchants/aliases", json=alias_data)
 
@@ -400,7 +377,7 @@ class TestAliasMatchTypes:
             "pattern": "Exact Match Test",
             "canonical_name": "Exact Result",
             "match_type": "exact",
-            "priority": 100
+            "priority": 100,
         }
         response = await client.post("/api/v1/merchants/aliases", json=alias_data)
         assert response.status_code in [201, 400]
@@ -412,7 +389,7 @@ class TestAliasMatchTypes:
             "pattern": "SUBSTR",
             "canonical_name": "Substring Result",
             "match_type": "contains",
-            "priority": 100
+            "priority": 100,
         }
         response = await client.post("/api/v1/merchants/aliases", json=alias_data)
         assert response.status_code in [201, 400]
@@ -420,12 +397,7 @@ class TestAliasMatchTypes:
     @pytest.mark.asyncio
     async def test_regex_match_complex(self, client: AsyncClient):
         """Regex match with complex pattern"""
-        alias_data = {
-            "pattern": r"^STORE\s+#\d{3,}",
-            "canonical_name": "Store",
-            "match_type": "regex",
-            "priority": 100
-        }
+        alias_data = {"pattern": r"^STORE\s+#\d{3,}", "canonical_name": "Store", "match_type": "regex", "priority": 100}
         response = await client.post("/api/v1/merchants/aliases", json=alias_data)
         assert response.status_code in [201, 400]
 
@@ -438,7 +410,7 @@ class TestAliasMatchTypes:
                 "pattern": f"PRIORITY_{priority}_TEST",
                 "canonical_name": f"Priority {priority}",
                 "match_type": "contains",
-                "priority": priority
+                "priority": priority,
             }
             await client.post("/api/v1/merchants/aliases", json=alias_data)
 

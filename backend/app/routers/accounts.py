@@ -3,6 +3,7 @@ Account management endpoints.
 
 Provides account summary with balances, due dates, and credit limits.
 """
+
 from fastapi import APIRouter, Depends
 from sqlmodel import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +12,7 @@ from datetime import date, timedelta
 from pydantic import BaseModel
 
 from app.database import get_session
-from app.models import Tag, Transaction, TagUpdate
+from app.models import Tag, Transaction
 from app.errors import ErrorCode, not_found, bad_request
 
 router = APIRouter(prefix="/api/v1/accounts", tags=["accounts"])
@@ -19,6 +20,7 @@ router = APIRouter(prefix="/api/v1/accounts", tags=["accounts"])
 
 class AccountSummary(BaseModel):
     """Summary of an account with balance and metadata"""
+
     account: str  # account_source value (e.g., "AMEX-53004")
     balance: float  # Current balance (negative for credit cards with balance owed)
     transaction_count: int
@@ -31,6 +33,7 @@ class AccountSummary(BaseModel):
 
 class AccountUpdate(BaseModel):
     """Update account metadata"""
+
     due_day: Optional[int] = None
     credit_limit: Optional[float] = None
     description: Optional[str] = None
@@ -72,9 +75,7 @@ def calculate_next_due_date(due_day: int) -> date:
 
 
 @router.get("/summary", response_model=List[AccountSummary])
-async def get_account_summary(
-    session: AsyncSession = Depends(get_session)
-):
+async def get_account_summary(session: AsyncSession = Depends(get_session)):
     """
     Get summary of all accounts with balances and metadata.
 
@@ -82,20 +83,22 @@ async def get_account_summary(
     Balance excludes transfer transactions to avoid double-counting.
     """
     # Get all account tags with their metadata
-    account_tags_result = await session.execute(
-        select(Tag).where(Tag.namespace == "account")
-    )
+    account_tags_result = await session.execute(select(Tag).where(Tag.namespace == "account"))
     account_tags = {tag.value: tag for tag in account_tags_result.scalars().all()}
 
     # Calculate balance and count per account_source
     # Exclude transfers (is_transfer=True) to avoid double-counting
-    balance_query = select(
-        Transaction.account_source,
-        func.sum(Transaction.amount).label("balance"),
-        func.count(Transaction.id).label("count")
-    ).where(
-        Transaction.is_transfer == False  # noqa: E712
-    ).group_by(Transaction.account_source)
+    balance_query = (
+        select(
+            Transaction.account_source,
+            func.sum(Transaction.amount).label("balance"),
+            func.count(Transaction.id).label("count"),
+        )
+        .where(
+            Transaction.is_transfer == False  # noqa: E712
+        )
+        .group_by(Transaction.account_source)
+    )
 
     result = await session.execute(balance_query)
     account_balances = result.all()
@@ -117,16 +120,18 @@ async def get_account_summary(
         if credit_limit and balance < 0:
             available = credit_limit + balance  # balance is negative, so this subtracts
 
-        summaries.append(AccountSummary(
-            account=account_source,
-            balance=balance or 0.0,
-            transaction_count=count,
-            due_day=due_day,
-            next_due_date=next_due,
-            credit_limit=credit_limit,
-            available_credit=available,
-            description=description,
-        ))
+        summaries.append(
+            AccountSummary(
+                account=account_source,
+                balance=balance or 0.0,
+                transaction_count=count,
+                due_day=due_day,
+                next_due_date=next_due,
+                credit_limit=credit_limit,
+                available_credit=available,
+                description=description,
+            )
+        )
 
     # Sort by balance ascending (most negative/owed first)
     summaries.sort(key=lambda x: x.balance)
@@ -135,18 +140,14 @@ async def get_account_summary(
 
 
 @router.get("/{account_source}", response_model=AccountSummary)
-async def get_account(
-    account_source: str,
-    session: AsyncSession = Depends(get_session)
-):
+async def get_account(account_source: str, session: AsyncSession = Depends(get_session)):
     """Get summary for a specific account."""
     # Get balance for this account
     balance_query = select(
-        func.sum(Transaction.amount).label("balance"),
-        func.count(Transaction.id).label("count")
+        func.sum(Transaction.amount).label("balance"), func.count(Transaction.id).label("count")
     ).where(
         Transaction.account_source == account_source,
-        Transaction.is_transfer == False  # noqa: E712
+        Transaction.is_transfer == False,  # noqa: E712
     )
 
     result = await session.execute(balance_query)
@@ -159,10 +160,7 @@ async def get_account(
 
     # Get tag metadata
     tag_result = await session.execute(
-        select(Tag).where(
-            Tag.namespace == "account",
-            Tag.value == account_source.lower()
-        )
+        select(Tag).where(Tag.namespace == "account", Tag.value == account_source.lower())
     )
     tag = tag_result.scalar_one_or_none()
 
@@ -189,11 +187,7 @@ async def get_account(
 
 
 @router.patch("/{account_source}", response_model=AccountSummary)
-async def update_account(
-    account_source: str,
-    update: AccountUpdate,
-    session: AsyncSession = Depends(get_session)
-):
+async def update_account(account_source: str, update: AccountUpdate, session: AsyncSession = Depends(get_session)):
     """
     Update account metadata (due date, credit limit, description).
 
@@ -209,19 +203,14 @@ async def update_account(
 
     # Check account exists (has transactions)
     count_result = await session.execute(
-        select(func.count(Transaction.id)).where(
-            Transaction.account_source == account_source
-        )
+        select(func.count(Transaction.id)).where(Transaction.account_source == account_source)
     )
     if count_result.scalar() == 0:
         raise not_found(ErrorCode.ACCOUNT_NOT_FOUND, account_source=account_source)
 
     # Get or create account tag
     tag_result = await session.execute(
-        select(Tag).where(
-            Tag.namespace == "account",
-            Tag.value == account_source.lower()
-        )
+        select(Tag).where(Tag.namespace == "account", Tag.value == account_source.lower())
     )
     tag = tag_result.scalar_one_or_none()
 

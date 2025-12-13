@@ -14,7 +14,7 @@ import pytest
 from pathlib import Path
 from playwright.sync_api import Page, expect
 
-from .conftest import E2EHelpers, FRONTEND_URL
+from .conftest import E2EHelpers
 
 
 @pytest.mark.e2e
@@ -195,7 +195,8 @@ class TestDataIntegrity:
         # Get preview count
         preview_text = page.locator("text=/\\d+ transaction/i").text_content()
         import re
-        match = re.search(r'(\d+)\s*transaction', preview_text, re.I)
+
+        match = re.search(r"(\d+)\s*transaction", preview_text, re.I)
         if not match:
             pytest.skip("Could not parse transaction count from preview")
         preview_count = int(match.group(1))

@@ -7,6 +7,7 @@ Tests the /api/v1/dashboards endpoints including:
 - Cloning and reordering
 - Widget management under dashboards
 """
+
 import pytest
 from httpx import AsyncClient
 
@@ -80,11 +81,7 @@ class TestDashboardCreate:
     @pytest.mark.asyncio
     async def test_create_dashboard(self, client: AsyncClient):
         """Create a new dashboard"""
-        dashboard_data = {
-            "name": "My Dashboard",
-            "description": "A test dashboard",
-            "date_range_type": "ytd"
-        }
+        dashboard_data = {"name": "My Dashboard", "description": "A test dashboard", "date_range_type": "ytd"}
 
         response = await client.post("/api/v1/dashboards", json=dashboard_data)
         assert response.status_code == 201
@@ -100,10 +97,7 @@ class TestDashboardCreate:
     async def test_create_dashboard_with_date_range(self, client: AsyncClient):
         """Create dashboard with various date range types"""
         for range_type in ["mtd", "qtd", "ytd", "last_30_days", "last_90_days", "last_year"]:
-            dashboard_data = {
-                "name": f"Dashboard {range_type}",
-                "date_range_type": range_type
-            }
+            dashboard_data = {"name": f"Dashboard {range_type}", "date_range_type": range_type}
 
             response = await client.post("/api/v1/dashboards", json=dashboard_data)
             assert response.status_code == 201
@@ -126,10 +120,7 @@ class TestDashboardCreate:
         old_default_id = old_defaults[0]["id"]
 
         # Create new default
-        response = await client.post("/api/v1/dashboards", json={
-            "name": "New Default",
-            "is_default": True
-        })
+        response = await client.post("/api/v1/dashboards", json={"name": "New Default", "is_default": True})
         assert response.status_code == 201
         new_default = response.json()
         assert new_default["is_default"] is True
@@ -169,9 +160,7 @@ class TestDashboardUpdate:
         dashboard_id = create_response.json()["id"]
 
         # Update it
-        response = await client.patch(f"/api/v1/dashboards/{dashboard_id}", json={
-            "name": "Updated Name"
-        })
+        response = await client.patch(f"/api/v1/dashboards/{dashboard_id}", json={"name": "Updated Name"})
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "Updated Name"
@@ -183,9 +172,7 @@ class TestDashboardUpdate:
         list_response = await client.get("/api/v1/dashboards")
         dashboard_id = list_response.json()[0]["id"]
 
-        response = await client.patch(f"/api/v1/dashboards/{dashboard_id}", json={
-            "date_range_type": "qtd"
-        })
+        response = await client.patch(f"/api/v1/dashboards/{dashboard_id}", json={"date_range_type": "qtd"})
         assert response.status_code == 200
         assert response.json()["date_range_type"] == "qtd"
         assert "date_range" in response.json()
@@ -214,9 +201,7 @@ class TestDashboardUpdate:
             secondary_id = another_response.json()["id"]
 
         # Update secondary to be default
-        response = await client.patch(f"/api/v1/dashboards/{secondary_id}", json={
-            "is_default": True
-        })
+        response = await client.patch(f"/api/v1/dashboards/{secondary_id}", json={"is_default": True})
         assert response.status_code == 200
         assert response.json()["is_default"] is True
 
@@ -301,11 +286,9 @@ class TestDashboardClone:
     async def test_clone_dashboard(self, client: AsyncClient):
         """Clone a dashboard with its settings"""
         # Create a dashboard with specific settings
-        create_response = await client.post("/api/v1/dashboards", json={
-            "name": "Original",
-            "description": "Test description",
-            "date_range_type": "ytd"
-        })
+        create_response = await client.post(
+            "/api/v1/dashboards", json={"name": "Original", "description": "Test description", "date_range_type": "ytd"}
+        )
         original_id = create_response.json()["id"]
 
         # Clone it
@@ -391,10 +374,7 @@ class TestDashboardReorder:
         dashboards = list_response.json()
 
         # Reverse the order
-        new_order = [
-            {"id": d["id"], "position": len(dashboards) - i - 1}
-            for i, d in enumerate(dashboards)
-        ]
+        new_order = [{"id": d["id"], "position": len(dashboards) - i - 1} for i, d in enumerate(dashboards)]
 
         response = await client.put("/api/v1/dashboards/reorder", json=new_order)
         assert response.status_code == 200
@@ -413,9 +393,7 @@ class TestDashboardReorder:
     @pytest.mark.asyncio
     async def test_reorder_nonexistent_dashboard(self, client: AsyncClient):
         """Reorder with non-existent dashboard fails"""
-        response = await client.put("/api/v1/dashboards/reorder", json=[
-            {"id": 99999, "position": 0}
-        ])
+        response = await client.put("/api/v1/dashboards/reorder", json=[{"id": 99999, "position": 0}])
         assert response.status_code == 404
 
 
@@ -453,11 +431,7 @@ class TestDashboardWidgets:
         dashboard_id = create_response.json()["id"]
 
         # Create widget
-        widget_data = {
-            "widget_type": "custom_chart",
-            "position": 99,
-            "is_visible": True
-        }
+        widget_data = {"widget_type": "custom_chart", "position": 99, "is_visible": True}
 
         response = await client.post(f"/api/v1/dashboards/{dashboard_id}/widgets", json=widget_data)
         assert response.status_code == 201
@@ -469,10 +443,7 @@ class TestDashboardWidgets:
     @pytest.mark.asyncio
     async def test_create_widget_on_nonexistent_dashboard(self, client: AsyncClient):
         """Create widget on non-existent dashboard returns 404"""
-        response = await client.post("/api/v1/dashboards/99999/widgets", json={
-            "widget_type": "test",
-            "position": 0
-        })
+        response = await client.post("/api/v1/dashboards/99999/widgets", json={"widget_type": "test", "position": 0})
         assert response.status_code == 404
 
     @pytest.mark.asyncio

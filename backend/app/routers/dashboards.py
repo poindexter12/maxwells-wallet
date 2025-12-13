@@ -4,6 +4,7 @@ Dashboards API
 Manages named dashboards with filters and view settings.
 Each dashboard can have its own set of widgets.
 """
+
 from fastapi import APIRouter, Depends
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,9 +14,12 @@ from pydantic import BaseModel
 
 from app.database import get_session
 from app.models import (
-    Dashboard, DashboardCreate, DashboardUpdate,
-    DashboardWidget, DashboardWidgetCreate,
-    DateRangeType
+    Dashboard,
+    DashboardCreate,
+    DashboardUpdate,
+    DashboardWidget,
+    DashboardWidgetCreate,
+    DateRangeType,
 )
 from app.errors import ErrorCode, not_found, bad_request
 
@@ -91,6 +95,7 @@ def calculate_date_range(range_type: DateRangeType) -> Dict[str, Any]:
 
 class DateRange(BaseModel):
     """Calculated date range for dashboard"""
+
     start_date: str
     end_date: str
     label: str
@@ -98,6 +103,7 @@ class DateRange(BaseModel):
 
 class DashboardResponse(BaseModel):
     """Dashboard with calculated date range"""
+
     id: int
     name: str
     description: Optional[str]
@@ -126,6 +132,7 @@ def dashboard_to_response(dashboard: Dashboard) -> DashboardResponse:
         updated_at=dashboard.updated_at,
     )
 
+
 router = APIRouter(prefix="/api/v1/dashboards", tags=["dashboards"])
 
 # Default widget configuration - used to initialize new dashboards
@@ -145,9 +152,7 @@ DEFAULT_WIDGETS = [
 
 async def get_or_create_default_dashboard(session: AsyncSession) -> Dashboard:
     """Get the default dashboard, creating one if none exists."""
-    result = await session.execute(
-        select(Dashboard).where(Dashboard.is_default == True)
-    )
+    result = await session.execute(select(Dashboard).where(Dashboard.is_default.is_(True)))
     dashboard = result.scalar_one_or_none()
 
     if not dashboard:
@@ -157,7 +162,7 @@ async def get_or_create_default_dashboard(session: AsyncSession) -> Dashboard:
             description="Default dashboard",
             date_range_type=DateRangeType.mtd,
             is_default=True,
-            position=0
+            position=0,
         )
         session.add(dashboard)
         await session.commit()
@@ -169,9 +174,7 @@ async def get_or_create_default_dashboard(session: AsyncSession) -> Dashboard:
 @router.get("", response_model=List[DashboardResponse])
 async def list_dashboards(session: AsyncSession = Depends(get_session)):
     """List all dashboards ordered by position, with calculated date ranges."""
-    result = await session.execute(
-        select(Dashboard).order_by(Dashboard.position)
-    )
+    result = await session.execute(select(Dashboard).order_by(Dashboard.position))
     dashboards = list(result.scalars().all())
 
     # Ensure at least one default dashboard exists
@@ -192,9 +195,7 @@ async def get_default_dashboard(session: AsyncSession = Depends(get_session)):
 @router.get("/{dashboard_id}", response_model=DashboardResponse)
 async def get_dashboard(dashboard_id: int, session: AsyncSession = Depends(get_session)):
     """Get a dashboard by ID with calculated date range."""
-    result = await session.execute(
-        select(Dashboard).where(Dashboard.id == dashboard_id)
-    )
+    result = await session.execute(select(Dashboard).where(Dashboard.id == dashboard_id))
     dashboard = result.scalar_one_or_none()
     if not dashboard:
         raise not_found(ErrorCode.DASHBOARD_NOT_FOUND, dashboard_id=dashboard_id)
@@ -202,24 +203,20 @@ async def get_dashboard(dashboard_id: int, session: AsyncSession = Depends(get_s
 
 
 @router.post("", response_model=DashboardResponse, status_code=201)
-async def create_dashboard(
-    dashboard: DashboardCreate,
-    session: AsyncSession = Depends(get_session)
-):
+async def create_dashboard(dashboard: DashboardCreate, session: AsyncSession = Depends(get_session)):
     """Create a new dashboard.
 
     If is_default is True, clears the default flag from other dashboards.
     Initializes with default widgets.
     """
     import logging
+
     logger = logging.getLogger(__name__)
 
     try:
         # If setting as default, clear other defaults first
         if dashboard.is_default:
-            result = await session.execute(
-                select(Dashboard).where(Dashboard.is_default == True)
-            )
+            result = await session.execute(select(Dashboard).where(Dashboard.is_default.is_(True)))
             for existing in result.scalars().all():
                 existing.is_default = False
 
@@ -232,6 +229,7 @@ async def create_dashboard(
         # Initialize with default widgets using raw SQL to avoid SQLite async RETURNING issues
         from sqlalchemy import text
         from datetime import datetime
+
         now = datetime.utcnow()
         for widget_data in DEFAULT_WIDGETS:
             await session.execute(
@@ -249,7 +247,7 @@ async def create_dashboard(
                     "width": widget_data["width"],
                     "is_visible": widget_data["is_visible"],
                     "config": widget_data.get("config"),  # Explicitly handle None
-                }
+                },
             )
         await session.commit()
         logger.info(f"Created {len(DEFAULT_WIDGETS)} widgets for dashboard {db_dashboard.id}")
@@ -261,15 +259,9 @@ async def create_dashboard(
 
 
 @router.patch("/{dashboard_id}", response_model=DashboardResponse)
-async def update_dashboard(
-    dashboard_id: int,
-    dashboard: DashboardUpdate,
-    session: AsyncSession = Depends(get_session)
-):
+async def update_dashboard(dashboard_id: int, dashboard: DashboardUpdate, session: AsyncSession = Depends(get_session)):
     """Update a dashboard's settings."""
-    result = await session.execute(
-        select(Dashboard).where(Dashboard.id == dashboard_id)
-    )
+    result = await session.execute(select(Dashboard).where(Dashboard.id == dashboard_id))
     db_dashboard = result.scalar_one_or_none()
     if not db_dashboard:
         raise not_found(ErrorCode.DASHBOARD_NOT_FOUND, dashboard_id=dashboard_id)
@@ -278,9 +270,7 @@ async def update_dashboard(
 
     # If setting as default, clear other defaults first
     if update_data.get("is_default"):
-        existing_result = await session.execute(
-            select(Dashboard).where(Dashboard.is_default == True)
-        )
+        existing_result = await session.execute(select(Dashboard).where(Dashboard.is_default.is_(True)))
         for existing in existing_result.scalars().all():
             if existing.id != dashboard_id:
                 existing.is_default = False
@@ -301,9 +291,7 @@ async def delete_dashboard(dashboard_id: int, session: AsyncSession = Depends(ge
     Cannot delete the last dashboard or a default dashboard
     (unless it's the only one and you're replacing it).
     """
-    result = await session.execute(
-        select(Dashboard).where(Dashboard.id == dashboard_id)
-    )
+    result = await session.execute(select(Dashboard).where(Dashboard.id == dashboard_id))
     dashboard = result.scalar_one_or_none()
     if not dashboard:
         raise not_found(ErrorCode.DASHBOARD_NOT_FOUND, dashboard_id=dashboard_id)
@@ -322,9 +310,7 @@ async def delete_dashboard(dashboard_id: int, session: AsyncSession = Depends(ge
                 break
 
     # Delete associated widgets first
-    widgets_result = await session.execute(
-        select(DashboardWidget).where(DashboardWidget.dashboard_id == dashboard_id)
-    )
+    widgets_result = await session.execute(select(DashboardWidget).where(DashboardWidget.dashboard_id == dashboard_id))
     for widget in widgets_result.scalars().all():
         await session.delete(widget)
 
@@ -333,14 +319,9 @@ async def delete_dashboard(dashboard_id: int, session: AsyncSession = Depends(ge
 
 
 @router.post("/{dashboard_id}/clone", response_model=DashboardResponse, status_code=201)
-async def clone_dashboard(
-    dashboard_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def clone_dashboard(dashboard_id: int, session: AsyncSession = Depends(get_session)):
     """Clone a dashboard with all its widgets."""
-    result = await session.execute(
-        select(Dashboard).where(Dashboard.id == dashboard_id)
-    )
+    result = await session.execute(select(Dashboard).where(Dashboard.id == dashboard_id))
     original = result.scalar_one_or_none()
     if not original:
         raise not_found(ErrorCode.DASHBOARD_NOT_FOUND, dashboard_id=dashboard_id)
@@ -353,9 +334,7 @@ async def clone_dashboard(
     # Clone dashboard - use numeric suffix (language-neutral)
     # Find existing names with same base to avoid duplicates
     base_name = original.name
-    existing_names_result = await session.execute(
-        select(Dashboard.name).where(Dashboard.name.like(f"{base_name}%"))
-    )
+    existing_names_result = await session.execute(select(Dashboard.name).where(Dashboard.name.like(f"{base_name}%")))
     existing_names = {r[0] for r in existing_names_result.all()}
 
     # Try "Name 2", "Name 3", etc.
@@ -370,16 +349,14 @@ async def clone_dashboard(
         description=original.description,
         date_range_type=original.date_range_type,
         is_default=False,
-        position=max_position + 1
+        position=max_position + 1,
     )
     session.add(new_dashboard)
     await session.commit()
     await session.refresh(new_dashboard)
 
     # Clone widgets
-    widgets_result = await session.execute(
-        select(DashboardWidget).where(DashboardWidget.dashboard_id == dashboard_id)
-    )
+    widgets_result = await session.execute(select(DashboardWidget).where(DashboardWidget.dashboard_id == dashboard_id))
     for original_widget in widgets_result.scalars().all():
         new_widget = DashboardWidget(
             dashboard_id=new_dashboard.id,
@@ -387,7 +364,7 @@ async def clone_dashboard(
             position=original_widget.position,
             width=original_widget.width,
             is_visible=original_widget.is_visible,
-            config=original_widget.config
+            config=original_widget.config,
         )
         session.add(new_widget)
     await session.commit()
@@ -396,22 +373,15 @@ async def clone_dashboard(
 
 
 @router.post("/{dashboard_id}/set-default", response_model=DashboardResponse)
-async def set_default_dashboard(
-    dashboard_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def set_default_dashboard(dashboard_id: int, session: AsyncSession = Depends(get_session)):
     """Set a dashboard as the default."""
-    result = await session.execute(
-        select(Dashboard).where(Dashboard.id == dashboard_id)
-    )
+    result = await session.execute(select(Dashboard).where(Dashboard.id == dashboard_id))
     dashboard = result.scalar_one_or_none()
     if not dashboard:
         raise not_found(ErrorCode.DASHBOARD_NOT_FOUND, dashboard_id=dashboard_id)
 
     # Clear other defaults
-    all_result = await session.execute(
-        select(Dashboard).where(Dashboard.is_default == True)
-    )
+    all_result = await session.execute(select(Dashboard).where(Dashboard.is_default.is_(True)))
     for existing in all_result.scalars().all():
         existing.is_default = False
 
@@ -423,10 +393,7 @@ async def set_default_dashboard(
 
 
 @router.put("/reorder", response_model=List[DashboardResponse])
-async def reorder_dashboards(
-    order: List[dict],
-    session: AsyncSession = Depends(get_session)
-):
+async def reorder_dashboards(order: List[dict], session: AsyncSession = Depends(get_session)):
     """Update dashboard positions for tab ordering.
 
     Expects list of {"id": int, "position": int} objects.
@@ -436,14 +403,9 @@ async def reorder_dashboards(
         new_position = item.get("position")
 
         if dashboard_id is None or new_position is None:
-            raise bad_request(
-                ErrorCode.VALIDATION_ERROR,
-                "Each item must have 'id' and 'position' fields"
-            )
+            raise bad_request(ErrorCode.VALIDATION_ERROR, "Each item must have 'id' and 'position' fields")
 
-        result = await session.execute(
-            select(Dashboard).where(Dashboard.id == dashboard_id)
-        )
+        result = await session.execute(select(Dashboard).where(Dashboard.id == dashboard_id))
         dashboard = result.scalar_one_or_none()
         if not dashboard:
             raise not_found(ErrorCode.DASHBOARD_NOT_FOUND, dashboard_id=dashboard_id)
@@ -454,33 +416,25 @@ async def reorder_dashboards(
     await session.commit()
 
     # Return updated order
-    result = await session.execute(
-        select(Dashboard).order_by(Dashboard.position)
-    )
+    result = await session.execute(select(Dashboard).order_by(Dashboard.position))
     dashboards = list(result.scalars().all())
     return [dashboard_to_response(d) for d in dashboards]
 
 
 # Widget endpoints scoped under dashboards
 
+
 @router.get("/{dashboard_id}/widgets", response_model=List[DashboardWidget])
-async def list_dashboard_widgets(
-    dashboard_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def list_dashboard_widgets(dashboard_id: int, session: AsyncSession = Depends(get_session)):
     """Get all widgets for a dashboard, initializing defaults if needed."""
     # Verify dashboard exists
-    dash_result = await session.execute(
-        select(Dashboard).where(Dashboard.id == dashboard_id)
-    )
+    dash_result = await session.execute(select(Dashboard).where(Dashboard.id == dashboard_id))
     dashboard = dash_result.scalar_one_or_none()
     if not dashboard:
         raise not_found(ErrorCode.DASHBOARD_NOT_FOUND, dashboard_id=dashboard_id)
 
     result = await session.execute(
-        select(DashboardWidget)
-        .where(DashboardWidget.dashboard_id == dashboard_id)
-        .order_by(DashboardWidget.position)
+        select(DashboardWidget).where(DashboardWidget.dashboard_id == dashboard_id).order_by(DashboardWidget.position)
     )
     widgets = list(result.scalars().all())
 
@@ -489,22 +443,15 @@ async def list_dashboard_widgets(
 
 @router.post("/{dashboard_id}/widgets", response_model=DashboardWidget, status_code=201)
 async def create_dashboard_widget(
-    dashboard_id: int,
-    widget: DashboardWidgetCreate,
-    session: AsyncSession = Depends(get_session)
+    dashboard_id: int, widget: DashboardWidgetCreate, session: AsyncSession = Depends(get_session)
 ):
     """Create a new widget on a dashboard."""
     # Verify dashboard exists
-    dash_result = await session.execute(
-        select(Dashboard).where(Dashboard.id == dashboard_id)
-    )
+    dash_result = await session.execute(select(Dashboard).where(Dashboard.id == dashboard_id))
     if not dash_result.scalar_one_or_none():
         raise not_found(ErrorCode.DASHBOARD_NOT_FOUND, dashboard_id=dashboard_id)
 
-    db_widget = DashboardWidget(
-        dashboard_id=dashboard_id,
-        **widget.model_dump(exclude={"dashboard_id"})
-    )
+    db_widget = DashboardWidget(dashboard_id=dashboard_id, **widget.model_dump(exclude={"dashboard_id"}))
     session.add(db_widget)
     await session.commit()
     await session.refresh(db_widget)

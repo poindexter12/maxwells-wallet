@@ -138,8 +138,7 @@ class TestTagRulesPage:
 
         # Look for toggle switch or checkbox
         toggle = page.locator(
-            "input[type='checkbox'], [role='switch'], "
-            "button[aria-label*='enable' i], button[aria-label*='disable' i]"
+            "input[type='checkbox'], [role='switch'], button[aria-label*='enable' i], button[aria-label*='disable' i]"
         )
 
         if toggle.count() == 0:
@@ -164,8 +163,7 @@ class TestApplyRules:
 
         # Look for apply all button
         apply_button = page.locator(
-            "button:has-text('Apply'), button:has-text('Apply All'), "
-            "button:has-text('Run Rules')"
+            "button:has-text('Apply'), button:has-text('Apply All'), button:has-text('Run Rules')"
         )
 
         if apply_button.count() == 0:
@@ -184,7 +182,6 @@ class TestApplyRules:
         test_data_files: dict,
     ):
         """Test that applying rules actually tags transactions."""
-        from pathlib import Path
 
         if not test_data_files:
             pytest.skip("No test data files available")
@@ -315,7 +312,7 @@ class TestRuleManagement:
         if delete_button.count() == 0:
             pytest.skip("No rules to delete")
 
-        initial_count = delete_button.count()
+        _initial_count = delete_button.count()
 
         delete_button.first.click()
 

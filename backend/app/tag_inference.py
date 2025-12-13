@@ -3,71 +3,165 @@ import re
 
 # Default bucket tag patterns - maps bucket value to keyword patterns
 BUCKET_PATTERNS = {
-    'income': [
-        'payroll', 'salary', 'deposit', 'haemonetics', 'income', 'refund',
-        'reimbursement', 'payment received'
+    "income": ["payroll", "salary", "deposit", "haemonetics", "income", "refund", "reimbursement", "payment received"],
+    "groceries": [
+        "grocery",
+        "supermarket",
+        "trader joe",
+        "whole foods",
+        "sprouts",
+        "ralphs",
+        "vons",
+        "safeway",
+        "kroger",
+        "albertsons",
+        "costco",
+        "sam's club",
     ],
-    'groceries': [
-        'grocery', 'supermarket', 'trader joe', 'whole foods', 'sprouts',
-        'ralphs', 'vons', 'safeway', 'kroger', 'albertsons', 'costco', 'sam\'s club'
+    "dining": [
+        "restaurant",
+        "starbucks",
+        "coffee",
+        "cafe",
+        "pizza",
+        "chipotle",
+        "mcdonald",
+        "burger",
+        "taco",
+        "subway",
+        "domino",
+        "doordash",
+        "uber eats",
+        "grubhub",
+        "bar",
+        "brewery",
+        "bistro",
+        "grill",
     ],
-    'dining': [
-        'restaurant', 'starbucks', 'coffee', 'cafe', 'pizza', 'chipotle',
-        'mcdonald', 'burger', 'taco', 'subway', 'domino', 'doordash',
-        'uber eats', 'grubhub', 'bar', 'brewery', 'bistro', 'grill'
+    "shopping": [
+        "amazon",
+        "target",
+        "walmart",
+        "ebay",
+        "etsy",
+        "mall",
+        "store",
+        "retail",
+        "merchandise",
+        "shopping",
+        "purchase",
+        "clothing",
+        "apparel",
+        "wholesale",
     ],
-    'shopping': [
-        'amazon', 'target', 'walmart', 'ebay', 'etsy', 'mall', 'store',
-        'retail', 'merchandise', 'shopping', 'purchase', 'clothing',
-        'apparel', 'wholesale'
+    "utilities": [
+        "electric",
+        "gas",
+        "water",
+        "internet",
+        "cable",
+        "phone",
+        "mobile",
+        "t-mobile",
+        "verizon",
+        "at&t",
+        "sprint",
+        "sdge",
+        "sd gas",
+        "utility",
+        "ting internet",
+        "comcast",
+        "spectrum",
     ],
-    'utilities': [
-        'electric', 'gas', 'water', 'internet', 'cable', 'phone', 'mobile',
-        't-mobile', 'verizon', 'at&t', 'sprint', 'sdge', 'sd gas', 'utility',
-        'ting internet', 'comcast', 'spectrum'
+    "transportation": [
+        "gas station",
+        "chevron",
+        "shell",
+        "arco",
+        "mobil",
+        "exxon",
+        "uber",
+        "lyft",
+        "taxi",
+        "toll",
+        "parking",
+        "dmv",
+        "auto",
+        "the toll roads",
     ],
-    'transportation': [
-        'gas station', 'chevron', 'shell', 'arco', 'mobil', 'exxon',
-        'uber', 'lyft', 'taxi', 'toll', 'parking', 'dmv', 'auto',
-        'the toll roads'
+    "entertainment": [
+        "netflix",
+        "hulu",
+        "disney",
+        "spotify",
+        "apple music",
+        "movie",
+        "theater",
+        "cinema",
+        "concert",
+        "tickets",
+        "entertainment",
+        "game",
+        "playstation",
+        "xbox",
+        "steam",
     ],
-    'entertainment': [
-        'netflix', 'hulu', 'disney', 'spotify', 'apple music', 'movie',
-        'theater', 'cinema', 'concert', 'tickets', 'entertainment',
-        'game', 'playstation', 'xbox', 'steam'
+    "healthcare": [
+        "pharmacy",
+        "cvs",
+        "walgreens",
+        "doctor",
+        "medical",
+        "dental",
+        "dentist",
+        "orthodont",
+        "hospital",
+        "clinic",
+        "health",
+        "care",
+        "yoshikane",
+        "vet",
+        "veterinary",
     ],
-    'healthcare': [
-        'pharmacy', 'cvs', 'walgreens', 'doctor', 'medical', 'dental',
-        'dentist', 'orthodont', 'hospital', 'clinic', 'health', 'care',
-        'yoshikane', 'vet', 'veterinary'
+    "education": [
+        "school",
+        "tuition",
+        "college",
+        "university",
+        "education",
+        "training",
+        "course",
+        "class",
+        "martial arts",
+        "gymnastics",
+        "teamsnap",
     ],
-    'education': [
-        'school', 'tuition', 'college', 'university', 'education',
-        'training', 'course', 'class', 'martial arts', 'gymnastics',
-        'teamsnap'
-    ],
-    'housing': [
-        'rent', 'mortgage', 'hoa', 'association', 'dues', 'property',
-        'rancho ponderosa', 'lease', 'housing'
-    ],
-    'subscriptions': [
-        'subscription', 'membership', 'monthly', 'annual', 'microsoft',
-        'apple', 'google', 'github', 'dropbox', 'icloud', 'chatgpt',
-        'openai', 'newshosting'
+    "housing": ["rent", "mortgage", "hoa", "association", "dues", "property", "rancho ponderosa", "lease", "housing"],
+    "subscriptions": [
+        "subscription",
+        "membership",
+        "monthly",
+        "annual",
+        "microsoft",
+        "apple",
+        "google",
+        "github",
+        "dropbox",
+        "icloud",
+        "chatgpt",
+        "openai",
+        "newshosting",
     ],
 }
 
 
 def normalize_text(text: str) -> str:
     """Normalize text for matching"""
-    return re.sub(r'[^a-z0-9\s]', '', text.lower())
+    return re.sub(r"[^a-z0-9\s]", "", text.lower())
 
 
 def infer_bucket_tag(
-    merchant: str,
-    description: str,
-    amount: float,
-    user_history: Dict[str, str] = None
+    merchant: str, description: str, amount: float, user_history: Dict[str, str] = None
 ) -> List[Tuple[str, float]]:
     """
     Infer bucket tag for a transaction
@@ -91,7 +185,7 @@ def infer_bucket_tag(
 
     # Income detection: positive amount
     if amount > 0:
-        return [('bucket:income', 0.9)]
+        return [("bucket:income", 0.9)]
 
     # Score each bucket
     scores = {}
@@ -111,7 +205,7 @@ def infer_bucket_tag(
 
     # Sort by score and return top 3
     if not scores:
-        return [('bucket:none', 0.1)]
+        return [("bucket:none", 0.1)]
 
     sorted_tags = sorted(scores.items(), key=lambda x: x[1], reverse=True)
     return sorted_tags[:3]

@@ -46,10 +46,12 @@ def setup_tracing(app: "FastAPI", settings: "ObservabilitySettings") -> None:
         return
 
     # Create resource with service info
-    resource = Resource.create({
-        SERVICE_NAME: settings.service_name,
-        SERVICE_VERSION: settings.service_version,
-    })
+    resource = Resource.create(
+        {
+            SERVICE_NAME: settings.service_name,
+            SERVICE_VERSION: settings.service_version,
+        }
+    )
 
     # Create tracer provider with sampling
     sampler = TraceIdRatioBased(settings.trace_sample_rate)

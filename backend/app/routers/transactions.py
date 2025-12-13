@@ -8,9 +8,15 @@ import re
 
 from app.database import get_session
 from app.models import (
-    Transaction, TransactionCreate, TransactionUpdate,
-    ReconciliationStatus, Tag, TransactionTag,
-    SplitItem, TransactionSplits, TransactionSplitResponse
+    Transaction,
+    TransactionCreate,
+    TransactionUpdate,
+    ReconciliationStatus,
+    Tag,
+    TransactionTag,
+    SplitItem,
+    TransactionSplits,
+    TransactionSplitResponse,
 )
 from app.utils.hashing import compute_transaction_content_hash
 from app.utils.pagination import encode_cursor, decode_cursor
@@ -30,9 +36,11 @@ class AddTagWithAmountRequest(BaseModel):
 
 class PaginatedTransactions(BaseModel):
     """Response model for cursor-paginated transactions."""
+
     items: List[Transaction]
     next_cursor: Optional[str] = None
     has_more: bool = False
+
 
 router = APIRouter(prefix="/api/v1/transactions", tags=["transactions"])
 
@@ -46,7 +54,7 @@ def validate_regex_pattern(pattern: str) -> None:
         raise bad_request(
             ErrorCode.INVALID_REGEX,
             f"Regex pattern too long (max {MAX_REGEX_LENGTH} characters)",
-            max_length=MAX_REGEX_LENGTH
+            max_length=MAX_REGEX_LENGTH,
         )
     try:
         re.compile(pattern)
@@ -80,20 +88,13 @@ def build_transaction_filter_query(
 
     # Account filtering via account_tag_id FK (preferred method)
     if account:
-        account_tag_subquery = (
-            select(Tag.id)
-            .where(and_(Tag.namespace == "account", Tag.value.in_(account)))
-        )
+        account_tag_subquery = select(Tag.id).where(and_(Tag.namespace == "account", Tag.value.in_(account)))
         query = query.where(Transaction.account_tag_id.in_(account_tag_subquery))
 
     if account_exclude:
-        exclude_tag_subquery = (
-            select(Tag.id)
-            .where(and_(Tag.namespace == "account", Tag.value.in_(account_exclude)))
-        )
+        exclude_tag_subquery = select(Tag.id).where(and_(Tag.namespace == "account", Tag.value.in_(account_exclude)))
         query = query.where(
-            (Transaction.account_tag_id.notin_(exclude_tag_subquery)) |
-            (Transaction.account_tag_id.is_(None))
+            (Transaction.account_tag_id.notin_(exclude_tag_subquery)) | (Transaction.account_tag_id.is_(None))
         )
 
     # Legacy account_source filter (for backward compatibility)
@@ -115,20 +116,21 @@ def build_transaction_filter_query(
             # SQLite requires regexp extension, PostgreSQL has built-in
             # Use op('REGEXP') for SQLite compatibility
             from sqlalchemy import or_
+
             query = query.where(
                 or_(
-                    Transaction.merchant.op('REGEXP')(search),
-                    Transaction.description.op('REGEXP')(search),
-                    Transaction.notes.op('REGEXP')(search)
+                    Transaction.merchant.op("REGEXP")(search),
+                    Transaction.description.op("REGEXP")(search),
+                    Transaction.notes.op("REGEXP")(search),
                 )
             )
         else:
             # Standard ILIKE search (case-insensitive substring)
             search_pattern = f"%{search}%"
             query = query.where(
-                (Transaction.merchant.ilike(search_pattern)) |
-                (Transaction.description.ilike(search_pattern)) |
-                (Transaction.notes.ilike(search_pattern))
+                (Transaction.merchant.ilike(search_pattern))
+                | (Transaction.description.ilike(search_pattern))
+                | (Transaction.notes.ilike(search_pattern))
             )
     if amount_min is not None:
         query = query.where(Transaction.amount >= amount_min)
@@ -138,7 +140,7 @@ def build_transaction_filter_query(
     # Filter by tags (requires join) - all specified tags must match (AND logic)
     if tag:
         for tag_str in tag:
-            parts = tag_str.split(':', 1)
+            parts = tag_str.split(":", 1)
             if len(parts) == 2:
                 namespace, value = parts
                 tag_subquery = (
@@ -151,7 +153,7 @@ def build_transaction_filter_query(
     # Exclude tags
     if tag_exclude:
         for tag_str in tag_exclude:
-            parts = tag_str.split(':', 1)
+            parts = tag_str.split(":", 1)
             if len(parts) == 2:
                 namespace, value = parts
                 exclude_subquery = (
@@ -163,10 +165,13 @@ def build_transaction_filter_query(
 
     return query
 
+
 @router.get("/count")
 async def count_transactions(
     account_source: Optional[str] = None,
-    account: Optional[List[str]] = Query(None, description="Filter by account tag values (can specify multiple, OR logic)"),
+    account: Optional[List[str]] = Query(
+        None, description="Filter by account tag values (can specify multiple, OR logic)"
+    ),
     account_exclude: Optional[List[str]] = Query(None, description="Exclude account tag values (can specify multiple)"),
     category: Optional[str] = None,
     reconciliation_status: Optional[ReconciliationStatus] = None,
@@ -176,10 +181,16 @@ async def count_transactions(
     search_regex: bool = Query(False, description="Use regex pattern matching instead of substring search"),
     amount_min: Optional[float] = None,
     amount_max: Optional[float] = None,
-    tag: Optional[List[str]] = Query(None, description="Filter by tags in namespace:value format (can specify multiple)"),
-    tag_exclude: Optional[List[str]] = Query(None, description="Exclude tags in namespace:value format (can specify multiple)"),
-    is_transfer: Optional[bool] = Query(None, description="Filter by transfer status (true=transfers only, false=non-transfers only)"),
-    session: AsyncSession = Depends(get_session)
+    tag: Optional[List[str]] = Query(
+        None, description="Filter by tags in namespace:value format (can specify multiple)"
+    ),
+    tag_exclude: Optional[List[str]] = Query(
+        None, description="Exclude tags in namespace:value format (can specify multiple)"
+    ),
+    is_transfer: Optional[bool] = Query(
+        None, description="Filter by transfer status (true=transfers only, false=non-transfers only)"
+    ),
+    session: AsyncSession = Depends(get_session),
 ):
     """Get total count of transactions matching filters"""
     base_query = select(func.count(Transaction.id))
@@ -211,7 +222,9 @@ async def list_transactions_paginated(
     cursor: Optional[str] = Query(None, description="Cursor from previous response for pagination"),
     limit: int = Query(100, ge=1, le=500),
     account_source: Optional[str] = None,
-    account: Optional[List[str]] = Query(None, description="Filter by account tag values (can specify multiple, OR logic)"),
+    account: Optional[List[str]] = Query(
+        None, description="Filter by account tag values (can specify multiple, OR logic)"
+    ),
     account_exclude: Optional[List[str]] = Query(None, description="Exclude account tag values (can specify multiple)"),
     category: Optional[str] = None,
     reconciliation_status: Optional[ReconciliationStatus] = None,
@@ -221,10 +234,16 @@ async def list_transactions_paginated(
     search_regex: bool = Query(False, description="Use regex pattern matching instead of substring search"),
     amount_min: Optional[float] = None,
     amount_max: Optional[float] = None,
-    tag: Optional[List[str]] = Query(None, description="Filter by tags in namespace:value format (can specify multiple)"),
-    tag_exclude: Optional[List[str]] = Query(None, description="Exclude tags in namespace:value format (can specify multiple)"),
-    is_transfer: Optional[bool] = Query(None, description="Filter by transfer status (true=transfers only, false=non-transfers only)"),
-    session: AsyncSession = Depends(get_session)
+    tag: Optional[List[str]] = Query(
+        None, description="Filter by tags in namespace:value format (can specify multiple)"
+    ),
+    tag_exclude: Optional[List[str]] = Query(
+        None, description="Exclude tags in namespace:value format (can specify multiple)"
+    ),
+    is_transfer: Optional[bool] = Query(
+        None, description="Filter by transfer status (true=transfers only, false=non-transfers only)"
+    ),
+    session: AsyncSession = Depends(get_session),
 ):
     """List transactions with cursor-based pagination for efficient deep pagination.
 
@@ -261,10 +280,7 @@ async def list_transactions_paginated(
             cursor_date, cursor_id = decoded
             # For descending order: get rows where (date, id) < (cursor_date, cursor_id)
             query = query.where(
-                or_(
-                    Transaction.date < cursor_date,
-                    and_(Transaction.date == cursor_date, Transaction.id < cursor_id)
-                )
+                or_(Transaction.date < cursor_date, and_(Transaction.date == cursor_date, Transaction.id < cursor_id))
             )
 
     # Order by date DESC, id DESC for consistent ordering
@@ -284,11 +300,7 @@ async def list_transactions_paginated(
         last_txn = transactions[-1]
         next_cursor = encode_cursor(last_txn.date, last_txn.id)
 
-    return PaginatedTransactions(
-        items=transactions,
-        next_cursor=next_cursor,
-        has_more=has_more
-    )
+    return PaginatedTransactions(items=transactions, next_cursor=next_cursor, has_more=has_more)
 
 
 @router.get("/", response_model=List[Transaction])
@@ -296,7 +308,9 @@ async def list_transactions(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     account_source: Optional[str] = None,
-    account: Optional[List[str]] = Query(None, description="Filter by account tag values (can specify multiple, OR logic)"),
+    account: Optional[List[str]] = Query(
+        None, description="Filter by account tag values (can specify multiple, OR logic)"
+    ),
     account_exclude: Optional[List[str]] = Query(None, description="Exclude account tag values (can specify multiple)"),
     category: Optional[str] = None,
     reconciliation_status: Optional[ReconciliationStatus] = None,
@@ -306,10 +320,16 @@ async def list_transactions(
     search_regex: bool = Query(False, description="Use regex pattern matching instead of substring search"),
     amount_min: Optional[float] = None,
     amount_max: Optional[float] = None,
-    tag: Optional[List[str]] = Query(None, description="Filter by tags in namespace:value format (can specify multiple)"),
-    tag_exclude: Optional[List[str]] = Query(None, description="Exclude tags in namespace:value format (can specify multiple)"),
-    is_transfer: Optional[bool] = Query(None, description="Filter by transfer status (true=transfers only, false=non-transfers only)"),
-    session: AsyncSession = Depends(get_session)
+    tag: Optional[List[str]] = Query(
+        None, description="Filter by tags in namespace:value format (can specify multiple)"
+    ),
+    tag_exclude: Optional[List[str]] = Query(
+        None, description="Exclude tags in namespace:value format (can specify multiple)"
+    ),
+    is_transfer: Optional[bool] = Query(
+        None, description="Filter by transfer status (true=transfers only, false=non-transfers only)"
+    ),
+    session: AsyncSession = Depends(get_session),
 ):
     """List transactions with filtering and pagination
 
@@ -347,25 +367,19 @@ async def list_transactions(
     transactions = result.scalars().all()
     return transactions
 
+
 @router.get("/{transaction_id}", response_model=Transaction)
-async def get_transaction(
-    transaction_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def get_transaction(transaction_id: int, session: AsyncSession = Depends(get_session)):
     """Get a single transaction by ID"""
-    result = await session.execute(
-        select(Transaction).where(Transaction.id == transaction_id)
-    )
+    result = await session.execute(select(Transaction).where(Transaction.id == transaction_id))
     transaction = result.scalar_one_or_none()
     if not transaction:
         raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
     return transaction
 
+
 @router.post("/", response_model=Transaction, status_code=201)
-async def create_transaction(
-    transaction: TransactionCreate,
-    session: AsyncSession = Depends(get_session)
-):
+async def create_transaction(transaction: TransactionCreate, session: AsyncSession = Depends(get_session)):
     """Create a new transaction"""
     db_transaction = Transaction(**transaction.model_dump())
     db_transaction.reconciliation_status = ReconciliationStatus.manually_entered
@@ -376,7 +390,7 @@ async def create_transaction(
             date=db_transaction.date,
             amount=db_transaction.amount,
             description=db_transaction.description,
-            account_source=db_transaction.account_source
+            account_source=db_transaction.account_source,
         )
 
     session.add(db_transaction)
@@ -384,16 +398,13 @@ async def create_transaction(
     await session.refresh(db_transaction)
     return db_transaction
 
+
 @router.patch("/{transaction_id}", response_model=Transaction)
 async def update_transaction(
-    transaction_id: int,
-    transaction: TransactionUpdate,
-    session: AsyncSession = Depends(get_session)
+    transaction_id: int, transaction: TransactionUpdate, session: AsyncSession = Depends(get_session)
 ):
     """Update a transaction"""
-    result = await session.execute(
-        select(Transaction).where(Transaction.id == transaction_id)
-    )
+    result = await session.execute(select(Transaction).where(Transaction.id == transaction_id))
     db_transaction = result.scalar_one_or_none()
     if not db_transaction:
         raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
@@ -408,15 +419,11 @@ async def update_transaction(
     await session.refresh(db_transaction)
     return db_transaction
 
+
 @router.delete("/{transaction_id}", status_code=204)
-async def delete_transaction(
-    transaction_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def delete_transaction(transaction_id: int, session: AsyncSession = Depends(get_session)):
     """Delete a transaction"""
-    result = await session.execute(
-        select(Transaction).where(Transaction.id == transaction_id)
-    )
+    result = await session.execute(select(Transaction).where(Transaction.id == transaction_id))
     transaction = result.scalar_one_or_none()
     if not transaction:
         raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
@@ -424,16 +431,13 @@ async def delete_transaction(
     await session.delete(transaction)
     await session.commit()
 
+
 @router.post("/bulk-update")
 async def bulk_update_transactions(
-    transaction_ids: List[int],
-    updates: TransactionUpdate,
-    session: AsyncSession = Depends(get_session)
+    transaction_ids: List[int], updates: TransactionUpdate, session: AsyncSession = Depends(get_session)
 ):
     """Bulk update multiple transactions"""
-    result = await session.execute(
-        select(Transaction).where(Transaction.id.in_(transaction_ids))
-    )
+    result = await session.execute(select(Transaction).where(Transaction.id.in_(transaction_ids)))
     transactions = result.scalars().all()
 
     if not transactions:
@@ -459,15 +463,11 @@ def parse_tag_string(tag_str: str) -> tuple:
 
 @router.post("/{transaction_id}/tags")
 async def add_tag_to_transaction(
-    transaction_id: int,
-    request: AddTagRequest,
-    session: AsyncSession = Depends(get_session)
+    transaction_id: int, request: AddTagRequest, session: AsyncSession = Depends(get_session)
 ):
     """Add a tag to a transaction"""
     # Validate transaction exists
-    txn_result = await session.execute(
-        select(Transaction).where(Transaction.id == transaction_id)
-    )
+    txn_result = await session.execute(select(Transaction).where(Transaction.id == transaction_id))
     transaction = txn_result.scalar_one_or_none()
     if not transaction:
         raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
@@ -479,9 +479,7 @@ async def add_tag_to_transaction(
         raise bad_request(ErrorCode.TAG_INVALID_FORMAT, str(e), tag=request.tag)
 
     # Get the tag
-    tag_result = await session.execute(
-        select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
-    )
+    tag_result = await session.execute(select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value)))
     tag = tag_result.scalar_one_or_none()
     if not tag:
         raise bad_request(ErrorCode.TAG_NOT_FOUND, tag=request.tag)
@@ -491,12 +489,7 @@ async def add_tag_to_transaction(
         existing_bucket_result = await session.execute(
             select(TransactionTag)
             .join(Tag)
-            .where(
-                and_(
-                    TransactionTag.transaction_id == transaction_id,
-                    Tag.namespace == "bucket"
-                )
-            )
+            .where(and_(TransactionTag.transaction_id == transaction_id, Tag.namespace == "bucket"))
         )
         for existing in existing_bucket_result.scalars().all():
             await session.delete(existing)
@@ -504,10 +497,7 @@ async def add_tag_to_transaction(
     # Check if this exact tag is already applied
     existing_result = await session.execute(
         select(TransactionTag).where(
-            and_(
-                TransactionTag.transaction_id == transaction_id,
-                TransactionTag.tag_id == tag.id
-            )
+            and_(TransactionTag.transaction_id == transaction_id, TransactionTag.tag_id == tag.id)
         )
     )
     if existing_result.scalar_one_or_none():
@@ -522,16 +512,10 @@ async def add_tag_to_transaction(
 
 
 @router.delete("/{transaction_id}/tags/{tag}")
-async def remove_tag_from_transaction(
-    transaction_id: int,
-    tag: str,
-    session: AsyncSession = Depends(get_session)
-):
+async def remove_tag_from_transaction(transaction_id: int, tag: str, session: AsyncSession = Depends(get_session)):
     """Remove a tag from a transaction"""
     # Validate transaction exists
-    txn_result = await session.execute(
-        select(Transaction).where(Transaction.id == transaction_id)
-    )
+    txn_result = await session.execute(select(Transaction).where(Transaction.id == transaction_id))
     transaction = txn_result.scalar_one_or_none()
     if not transaction:
         raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
@@ -543,9 +527,7 @@ async def remove_tag_from_transaction(
         raise bad_request(ErrorCode.TAG_INVALID_FORMAT, str(e), tag=tag)
 
     # Get the tag
-    tag_result = await session.execute(
-        select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
-    )
+    tag_result = await session.execute(select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value)))
     tag_obj = tag_result.scalar_one_or_none()
     if not tag_obj:
         raise bad_request(ErrorCode.TAG_NOT_FOUND, tag=tag)
@@ -553,10 +535,7 @@ async def remove_tag_from_transaction(
     # Find and remove the link
     link_result = await session.execute(
         select(TransactionTag).where(
-            and_(
-                TransactionTag.transaction_id == transaction_id,
-                TransactionTag.tag_id == tag_obj.id
-            )
+            and_(TransactionTag.transaction_id == transaction_id, TransactionTag.tag_id == tag_obj.id)
         )
     )
     link = link_result.scalar_one_or_none()
@@ -570,64 +549,46 @@ async def remove_tag_from_transaction(
 
 
 @router.get("/{transaction_id}/tags")
-async def get_transaction_tags(
-    transaction_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def get_transaction_tags(transaction_id: int, session: AsyncSession = Depends(get_session)):
     """Get all tags for a transaction"""
     # Validate transaction exists
-    txn_result = await session.execute(
-        select(Transaction).where(Transaction.id == transaction_id)
-    )
+    txn_result = await session.execute(select(Transaction).where(Transaction.id == transaction_id))
     transaction = txn_result.scalar_one_or_none()
     if not transaction:
         raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
 
     # Get tags from junction table (bucket, occasion, etc.)
     result = await session.execute(
-        select(Tag)
-        .join(TransactionTag)
-        .where(TransactionTag.transaction_id == transaction_id)
+        select(Tag).join(TransactionTag).where(TransactionTag.transaction_id == transaction_id)
     )
     tags = result.scalars().all()
 
-    tag_list = [
-        {"namespace": t.namespace, "value": t.value, "full": f"{t.namespace}:{t.value}"}
-        for t in tags
-    ]
+    tag_list = [{"namespace": t.namespace, "value": t.value, "full": f"{t.namespace}:{t.value}"} for t in tags]
 
     # Also include account tag from direct FK (account_tag_id)
     if transaction.account_tag_id:
-        account_result = await session.execute(
-            select(Tag).where(Tag.id == transaction.account_tag_id)
-        )
+        account_result = await session.execute(select(Tag).where(Tag.id == transaction.account_tag_id))
         account_tag = account_result.scalar_one_or_none()
         if account_tag:
-            tag_list.append({
-                "namespace": account_tag.namespace,
-                "value": account_tag.value,
-                "full": f"{account_tag.namespace}:{account_tag.value}"
-            })
+            tag_list.append(
+                {
+                    "namespace": account_tag.namespace,
+                    "value": account_tag.value,
+                    "full": f"{account_tag.namespace}:{account_tag.value}",
+                }
+            )
 
-    return {
-        "transaction_id": transaction_id,
-        "tags": tag_list
-    }
+    return {"transaction_id": transaction_id, "tags": tag_list}
 
 
 @router.get("/{transaction_id}/splits", response_model=TransactionSplitResponse)
-async def get_transaction_splits(
-    transaction_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def get_transaction_splits(transaction_id: int, session: AsyncSession = Depends(get_session)):
     """Get split allocations for a transaction.
 
     Returns the list of bucket splits with their amounts and the unallocated remainder.
     """
     # Validate transaction exists
-    txn_result = await session.execute(
-        select(Transaction).where(Transaction.id == transaction_id)
-    )
+    txn_result = await session.execute(select(Transaction).where(Transaction.id == transaction_id))
     transaction = txn_result.scalar_one_or_none()
     if not transaction:
         raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
@@ -640,16 +601,13 @@ async def get_transaction_splits(
             and_(
                 TransactionTag.transaction_id == transaction_id,
                 Tag.namespace == "bucket",
-                TransactionTag.amount.isnot(None)
+                TransactionTag.amount.isnot(None),
             )
         )
     )
     rows = result.all()
 
-    splits = [
-        SplitItem(tag=f"bucket:{row[0].value}", amount=row[1])
-        for row in rows
-    ]
+    splits = [SplitItem(tag=f"bucket:{row[0].value}", amount=row[1]) for row in rows]
 
     total_allocated = sum(s.amount for s in splits)
     unallocated = abs(transaction.amount) - total_allocated
@@ -658,15 +616,13 @@ async def get_transaction_splits(
         transaction_id=transaction_id,
         total_amount=abs(transaction.amount),
         splits=splits,
-        unallocated=max(0, unallocated)  # Don't show negative unallocated
+        unallocated=max(0, unallocated),  # Don't show negative unallocated
     )
 
 
 @router.put("/{transaction_id}/splits", response_model=TransactionSplitResponse)
 async def set_transaction_splits(
-    transaction_id: int,
-    splits_data: TransactionSplits,
-    session: AsyncSession = Depends(get_session)
+    transaction_id: int, splits_data: TransactionSplits, session: AsyncSession = Depends(get_session)
 ):
     """Set split allocations for a transaction.
 
@@ -675,9 +631,7 @@ async def set_transaction_splits(
     and over-allocation is also permitted (no validation enforcement).
     """
     # Validate transaction exists
-    txn_result = await session.execute(
-        select(Transaction).where(Transaction.id == transaction_id)
-    )
+    txn_result = await session.execute(select(Transaction).where(Transaction.id == transaction_id))
     transaction = txn_result.scalar_one_or_none()
     if not transaction:
         raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
@@ -690,7 +644,7 @@ async def set_transaction_splits(
             and_(
                 TransactionTag.transaction_id == transaction_id,
                 Tag.namespace == "bucket",
-                TransactionTag.amount.isnot(None)
+                TransactionTag.amount.isnot(None),
             )
         )
     )
@@ -701,12 +655,7 @@ async def set_transaction_splits(
     existing_bucket_result = await session.execute(
         select(TransactionTag)
         .join(Tag, TransactionTag.tag_id == Tag.id)
-        .where(
-            and_(
-                TransactionTag.transaction_id == transaction_id,
-                Tag.namespace == "bucket"
-            )
-        )
+        .where(and_(TransactionTag.transaction_id == transaction_id, Tag.namespace == "bucket"))
     )
     for existing in existing_bucket_result.scalars().all():
         await session.delete(existing)
@@ -724,23 +673,17 @@ async def set_transaction_splits(
                 ErrorCode.VALIDATION_ERROR,
                 f"Splits must use bucket tags, got '{namespace}'",
                 expected="bucket",
-                got=namespace
+                got=namespace,
             )
 
         # Get the tag
-        tag_result = await session.execute(
-            select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
-        )
+        tag_result = await session.execute(select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value)))
         tag = tag_result.scalar_one_or_none()
         if not tag:
             raise bad_request(ErrorCode.TAG_NOT_FOUND, tag=split.tag)
 
         # Create transaction tag with amount
-        txn_tag = TransactionTag(
-            transaction_id=transaction_id,
-            tag_id=tag.id,
-            amount=split.amount
-        )
+        txn_tag = TransactionTag(transaction_id=transaction_id, tag_id=tag.id, amount=split.amount)
         session.add(txn_tag)
 
     await session.commit()
@@ -750,18 +693,13 @@ async def set_transaction_splits(
 
 
 @router.delete("/{transaction_id}/splits")
-async def clear_transaction_splits(
-    transaction_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def clear_transaction_splits(transaction_id: int, session: AsyncSession = Depends(get_session)):
     """Remove all split allocations from a transaction.
 
     This removes the amount from bucket tags but doesn't remove the tags themselves.
     """
     # Validate transaction exists
-    txn_result = await session.execute(
-        select(Transaction).where(Transaction.id == transaction_id)
-    )
+    txn_result = await session.execute(select(Transaction).where(Transaction.id == transaction_id))
     transaction = txn_result.scalar_one_or_none()
     if not transaction:
         raise not_found(ErrorCode.TRANSACTION_NOT_FOUND, transaction_id=transaction_id)
@@ -770,12 +708,7 @@ async def clear_transaction_splits(
     existing_result = await session.execute(
         select(TransactionTag)
         .join(Tag, TransactionTag.tag_id == Tag.id)
-        .where(
-            and_(
-                TransactionTag.transaction_id == transaction_id,
-                Tag.namespace == "bucket"
-            )
-        )
+        .where(and_(TransactionTag.transaction_id == transaction_id, Tag.namespace == "bucket"))
     )
     deleted_count = 0
     for existing in existing_result.scalars().all():
@@ -790,7 +723,9 @@ async def clear_transaction_splits(
 @router.get("/export/csv")
 async def export_transactions_csv(
     account_source: Optional[str] = None,
-    account: Optional[List[str]] = Query(None, description="Filter by account tag values (can specify multiple, OR logic)"),
+    account: Optional[List[str]] = Query(
+        None, description="Filter by account tag values (can specify multiple, OR logic)"
+    ),
     account_exclude: Optional[List[str]] = Query(None, description="Exclude account tag values (can specify multiple)"),
     category: Optional[str] = None,
     reconciliation_status: Optional[ReconciliationStatus] = None,
@@ -800,10 +735,14 @@ async def export_transactions_csv(
     search_regex: bool = Query(False, description="Use regex pattern matching instead of substring search"),
     amount_min: Optional[float] = None,
     amount_max: Optional[float] = None,
-    tag: Optional[List[str]] = Query(None, description="Filter by tags in namespace:value format (can specify multiple)"),
-    tag_exclude: Optional[List[str]] = Query(None, description="Exclude tags in namespace:value format (can specify multiple)"),
+    tag: Optional[List[str]] = Query(
+        None, description="Filter by tags in namespace:value format (can specify multiple)"
+    ),
+    tag_exclude: Optional[List[str]] = Query(
+        None, description="Exclude tags in namespace:value format (can specify multiple)"
+    ),
     is_transfer: Optional[bool] = Query(None, description="Filter by transfer status"),
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
 ):
     """Export transactions matching filters as CSV.
 
@@ -844,38 +783,50 @@ async def export_transactions_csv(
     writer = csv.writer(output)
 
     # Write header
-    writer.writerow([
-        'Date', 'Amount', 'Merchant', 'Description', 'Account',
-        'Category', 'Status', 'Notes', 'Is Transfer', 'Reference ID'
-    ])
+    writer.writerow(
+        [
+            "Date",
+            "Amount",
+            "Merchant",
+            "Description",
+            "Account",
+            "Category",
+            "Status",
+            "Notes",
+            "Is Transfer",
+            "Reference ID",
+        ]
+    )
 
     # Write data
     for txn in transactions:
-        writer.writerow([
-            txn.date.isoformat() if txn.date else '',
-            txn.amount,
-            txn.merchant or '',
-            txn.description or '',
-            txn.account_source or '',
-            txn.category or '',
-            txn.reconciliation_status.value if txn.reconciliation_status else '',
-            txn.notes or '',
-            'Yes' if txn.is_transfer else 'No',
-            txn.reference_id or ''
-        ])
+        writer.writerow(
+            [
+                txn.date.isoformat() if txn.date else "",
+                txn.amount,
+                txn.merchant or "",
+                txn.description or "",
+                txn.account_source or "",
+                txn.category or "",
+                txn.reconciliation_status.value if txn.reconciliation_status else "",
+                txn.notes or "",
+                "Yes" if txn.is_transfer else "No",
+                txn.reference_id or "",
+            ]
+        )
 
     output.seek(0)
 
     # Generate filename with date range if provided
-    filename_parts = ['transactions']
+    filename_parts = ["transactions"]
     if start_date:
-        filename_parts.append(f'from_{start_date.isoformat()}')
+        filename_parts.append(f"from_{start_date.isoformat()}")
     if end_date:
-        filename_parts.append(f'to_{end_date.isoformat()}')
-    filename = '_'.join(filename_parts) + '.csv'
+        filename_parts.append(f"to_{end_date.isoformat()}")
+    filename = "_".join(filename_parts) + ".csv"
 
     return StreamingResponse(
         iter([output.getvalue()]),
-        media_type='text/csv',
-        headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

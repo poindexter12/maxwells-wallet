@@ -160,9 +160,7 @@ def parse_qfx(content: str, account_source: Optional[str] = None) -> List[Dict]:
 
 
 def parse_csv(
-    csv_content: str,
-    account_source: Optional[str] = None,
-    format_hint: Optional[ImportFormatType] = None
+    csv_content: str, account_source: Optional[str] = None, format_hint: Optional[ImportFormatType] = None
 ) -> Tuple[List[Dict], ImportFormatType]:
     """
     Parse CSV content and return transactions.

@@ -8,7 +8,6 @@ These tests verify that the auto-detection logic can:
 4. Generate a config that can parse the file successfully
 """
 
-import os
 from pathlib import Path
 
 import pytest
@@ -199,12 +198,14 @@ class TestColumnTypeDetection:
         hints = result["column_hints"]
 
         # Datetime column should be detected as date
-        assert hints.get("Datetime", {}).get("likely_type") == "date" or \
-               any(h.get("likely_type") == "date" for h in hints.values())
+        assert hints.get("Datetime", {}).get("likely_type") == "date" or any(
+            h.get("likely_type") == "date" for h in hints.values()
+        )
 
         # Amount column should be detected
-        assert hints.get("Amount (total)", {}).get("likely_type") == "amount" or \
-               any(h.get("likely_type") == "amount" for h in hints.values())
+        assert hints.get("Amount (total)", {}).get("likely_type") == "amount" or any(
+            h.get("likely_type") == "amount" for h in hints.values()
+        )
 
 
 class TestDateFormatDetection:
@@ -344,8 +345,9 @@ class TestSuggestedConfig:
         assert suggested.get("description_column") is not None
 
         # AMEX uses positive=expense, so sign inversion should be detected
-        assert suggested.get("amount_invert_sign") is True, \
+        assert suggested.get("amount_invert_sign") is True, (
             "Should detect that AMEX needs sign inversion (positive = expense)"
+        )
 
         config = build_config_from_suggestion(suggested, skip_rows=0)
         parser = CustomCsvParser(config)
@@ -356,8 +358,9 @@ class TestSuggestedConfig:
         # Check that expenses are negative (after inversion)
         # Most AMEX transactions should be expenses (negative after inversion)
         expense_count = sum(1 for t in transactions if t.amount < 0)
-        assert expense_count >= len(transactions) * 0.7, \
+        assert expense_count >= len(transactions) * 0.7, (
             f"Expected 70%+ expenses after inversion, got {expense_count}/{len(transactions)}"
+        )
 
     def test_inspira_hsa_suggested_config(self):
         """Inspira HSA should generate a working config."""
@@ -404,13 +407,16 @@ class TestSuggestedConfig:
 class TestEndToEndAutoDetect:
     """End-to-end tests: given a CSV file, auto-detect and parse successfully."""
 
-    @pytest.mark.parametrize("filename,expected_min_transactions", [
-        ("bofa_bank_anon.csv", 100),
-        ("bofa_cc_anon.csv", 50),
-        ("amex_cc_anon.csv", 30),
-        ("inspira_hsa_anon.csv", 50),
-        ("venmo_anon.csv", 1),
-    ])
+    @pytest.mark.parametrize(
+        "filename,expected_min_transactions",
+        [
+            ("bofa_bank_anon.csv", 100),
+            ("bofa_cc_anon.csv", 50),
+            ("amex_cc_anon.csv", 30),
+            ("inspira_hsa_anon.csv", 50),
+            ("venmo_anon.csv", 1),
+        ],
+    )
     def test_auto_detect_and_parse(self, filename, expected_min_transactions):
         """Test that we can auto-detect format and parse the file."""
         content = get_sample_file(filename)  # Skips if file not found
@@ -424,8 +430,9 @@ class TestEndToEndAutoDetect:
         parser = CustomCsvParser(config)
         transactions = parser.parse(content)
 
-        assert len(transactions) >= expected_min_transactions, \
+        assert len(transactions) >= expected_min_transactions, (
             f"Expected at least {expected_min_transactions} transactions, got {len(transactions)}"
+        )
 
         # Verify all transactions have valid data
         for txn in transactions:
@@ -438,6 +445,7 @@ class TestEndToEndAutoDetect:
 # ============================================================================
 # Helper functions for testing
 # ============================================================================
+
 
 def build_config_from_suggestion(suggested: dict, skip_rows: int) -> CustomCsvConfig:
     """Build a CustomCsvConfig from a suggested config dict."""
@@ -466,12 +474,12 @@ class TestColumnDetectionEdgeCases:
 
     def test_non_numeric_total_column_should_not_be_amount(self):
         """A column named 'Total' with text values should NOT be detected as amount."""
-        csv_content = '''ID,Date,Total,Details,Amount
+        csv_content = """ID,Date,Total,Details,Amount
 1,01/15/2025,Payment received,Coffee shop visit,100.00
 2,01/16/2025,Transfer complete,Grocery shopping,50.50
 3,01/17/2025,Refund processed,Restaurant dinner,-25.00
 4,01/18/2025,Purchase made,Gas for car,15.99
-5,01/19/2025,Direct deposit,Online order,200.00'''
+5,01/19/2025,Direct deposit,Online order,200.00"""
 
         result = analyze_csv_columns(csv_content, skip_rows=0)
         hints = result["column_hints"]
@@ -479,26 +487,27 @@ class TestColumnDetectionEdgeCases:
 
         # The "Total" column has text, not numbers - should NOT be detected as amount
         total_hint = hints.get("Total", {})
-        assert total_hint.get("likely_type") != "amount", \
+        assert total_hint.get("likely_type") != "amount", (
             f"Column 'Total' has text values, should not be amount but got: {total_hint}"
+        )
 
         # The "Amount" column SHOULD be detected as amount
         amount_hint = hints.get("Amount", {})
-        assert amount_hint.get("likely_type") == "amount", \
-            f"Column 'Amount' should be amount but got: {amount_hint}"
+        assert amount_hint.get("likely_type") == "amount", f"Column 'Amount' should be amount but got: {amount_hint}"
 
         # Suggested config should use "Amount", not "Total"
-        assert config.get("amount_column") == "Amount", \
+        assert config.get("amount_column") == "Amount", (
             f"amount_column should be 'Amount' but got: {config.get('amount_column')}"
+        )
 
     def test_amount_keyword_in_header_but_text_values_prefers_real_numbers(self):
         """When two columns have amount-like names, prefer the one with numeric data."""
-        csv_content = '''Date,Amount Type,Amount,Description
+        csv_content = """Date,Amount Type,Amount,Description
 01/15/2025,Debit,100.00,Coffee
 01/16/2025,Credit,-50.00,Refund
 01/17/2025,Debit,25.00,Lunch
 01/18/2025,Credit,-15.00,Return
-01/19/2025,Debit,200.00,Shopping'''
+01/19/2025,Debit,200.00,Shopping"""
 
         result = analyze_csv_columns(csv_content, skip_rows=0)
         config = result["suggested_config"]
@@ -506,10 +515,12 @@ class TestColumnDetectionEdgeCases:
 
         # "Amount Type" has text, "Amount" has numbers
         # Should prefer "Amount" as the amount column
-        assert config.get("amount_column") == "Amount", \
+        assert config.get("amount_column") == "Amount", (
             f"Should prefer numeric 'Amount' over text 'Amount Type', got: {config.get('amount_column')}"
+        )
 
         # Amount Type should be detected as description or unknown, not amount
         amount_type_hint = hints.get("Amount Type", {})
-        assert amount_type_hint.get("likely_type") != "amount", \
+        assert amount_type_hint.get("likely_type") != "amount", (
             f"'Amount Type' has text values, should not be amount: {amount_type_hint}"
+        )

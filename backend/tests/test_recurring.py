@@ -1,6 +1,7 @@
 """
 Tests for Recurring Transaction Detection (v0.3)
 """
+
 import pytest
 from httpx import AsyncClient
 from datetime import date, timedelta
@@ -19,7 +20,7 @@ class TestRecurringPatterns:
             "amount_max": 16.00,
             "frequency": "monthly",
             "confidence_score": 0.95,
-            "status": "active"
+            "status": "active",
         }
 
         response = await client.post("/api/v1/recurring", json=pattern_data)
@@ -53,12 +54,10 @@ class TestRecurringPatterns:
     @pytest.mark.asyncio
     async def test_get_pattern(self, client: AsyncClient, seed_categories):
         """Get a single pattern by ID"""
-        create_response = await client.post("/api/v1/recurring", json={
-            "merchant": "netflix",
-            "amount_min": 14.0,
-            "amount_max": 16.0,
-            "frequency": "monthly"
-        })
+        create_response = await client.post(
+            "/api/v1/recurring",
+            json={"merchant": "netflix", "amount_min": 14.0, "amount_max": 16.0, "frequency": "monthly"},
+        )
         pattern_id = create_response.json()["id"]
 
         response = await client.get(f"/api/v1/recurring/{pattern_id}")
@@ -71,12 +70,10 @@ class TestRecurringPatterns:
     @pytest.mark.asyncio
     async def test_update_pattern(self, client: AsyncClient, seed_categories):
         """Update a recurring pattern"""
-        create_response = await client.post("/api/v1/recurring", json={
-            "merchant": "netflix",
-            "amount_min": 14.0,
-            "amount_max": 16.0,
-            "frequency": "monthly"
-        })
+        create_response = await client.post(
+            "/api/v1/recurring",
+            json={"merchant": "netflix", "amount_min": 14.0, "amount_max": 16.0, "frequency": "monthly"},
+        )
         pattern_id = create_response.json()["id"]
 
         # Update status to paused
@@ -90,12 +87,10 @@ class TestRecurringPatterns:
     @pytest.mark.asyncio
     async def test_delete_pattern(self, client: AsyncClient, seed_categories):
         """Delete a recurring pattern"""
-        create_response = await client.post("/api/v1/recurring", json={
-            "merchant": "netflix",
-            "amount_min": 14.0,
-            "amount_max": 16.0,
-            "frequency": "monthly"
-        })
+        create_response = await client.post(
+            "/api/v1/recurring",
+            json={"merchant": "netflix", "amount_min": 14.0, "amount_max": 16.0, "frequency": "monthly"},
+        )
         pattern_id = create_response.json()["id"]
 
         # Delete
@@ -113,15 +108,18 @@ class TestRecurringPatterns:
         today = date.today()
         for i in range(4):  # 4 months of transactions
             month_ago = today - timedelta(days=30 * i)
-            await client.post("/api/v1/transactions", json={
-                "date": month_ago.isoformat(),
-                "amount": -14.99,
-                "description": "Netflix subscription",
-                "merchant": "Netflix",
-                "account_source": "TEST",
-                "category": "Subscriptions",
-                "reference_id": f"netflix_{i}"
-            })
+            await client.post(
+                "/api/v1/transactions",
+                json={
+                    "date": month_ago.isoformat(),
+                    "amount": -14.99,
+                    "description": "Netflix subscription",
+                    "merchant": "Netflix",
+                    "account_source": "TEST",
+                    "category": "Subscriptions",
+                    "reference_id": f"netflix_{i}",
+                },
+            )
 
         # Run detection
         response = await client.post("/api/v1/recurring/detect")
@@ -141,15 +139,18 @@ class TestRecurringPatterns:
         today = date.today()
         for i in range(5):  # 5 weeks of transactions
             week_ago = today - timedelta(days=7 * i)
-            await client.post("/api/v1/transactions", json={
-                "date": week_ago.isoformat(),
-                "amount": -50.00,
-                "description": "Grocery shopping",
-                "merchant": "Whole Foods",
-                "account_source": "TEST",
-                "category": "Groceries",
-                "reference_id": f"groceries_{i}"
-            })
+            await client.post(
+                "/api/v1/transactions",
+                json={
+                    "date": week_ago.isoformat(),
+                    "amount": -50.00,
+                    "description": "Grocery shopping",
+                    "merchant": "Whole Foods",
+                    "account_source": "TEST",
+                    "category": "Groceries",
+                    "reference_id": f"groceries_{i}",
+                },
+            )
 
         # Run detection
         response = await client.post("/api/v1/recurring/detect")
@@ -166,15 +167,18 @@ class TestRecurringPatterns:
         amounts = [-49.99, -51.50, -48.75, -50.25]  # ~$50 with variance
         for i, amount in enumerate(amounts):
             month_ago = today - timedelta(days=30 * i)
-            await client.post("/api/v1/transactions", json={
-                "date": month_ago.isoformat(),
-                "amount": amount,
-                "description": "Internet bill",
-                "merchant": "Comcast",
-                "account_source": "TEST",
-                "category": "Utilities",
-                "reference_id": f"comcast_{i}"
-            })
+            await client.post(
+                "/api/v1/transactions",
+                json={
+                    "date": month_ago.isoformat(),
+                    "amount": amount,
+                    "description": "Internet bill",
+                    "merchant": "Comcast",
+                    "account_source": "TEST",
+                    "category": "Utilities",
+                    "reference_id": f"comcast_{i}",
+                },
+            )
 
         # Run detection
         response = await client.post("/api/v1/recurring/detect")
@@ -193,14 +197,17 @@ class TestRecurringPatterns:
         # Only 2 transactions - below default minimum of 3
         for i in range(2):
             month_ago = today - timedelta(days=30 * i)
-            await client.post("/api/v1/transactions", json={
-                "date": month_ago.isoformat(),
-                "amount": -10.00,
-                "description": "Payment",
-                "merchant": "TwoTimesOnly",
-                "account_source": "TEST",
-                "reference_id": f"two_{i}"
-            })
+            await client.post(
+                "/api/v1/transactions",
+                json={
+                    "date": month_ago.isoformat(),
+                    "amount": -10.00,
+                    "description": "Payment",
+                    "merchant": "TwoTimesOnly",
+                    "account_source": "TEST",
+                    "reference_id": f"two_{i}",
+                },
+            )
 
         # Run detection with default min_occurrences=3
         response = await client.post("/api/v1/recurring/detect")
@@ -226,28 +233,31 @@ class TestRecurringPatterns:
         current_date = today
         for i, interval in enumerate(intervals):
             current_date = current_date - timedelta(days=interval)
-            await client.post("/api/v1/transactions", json={
-                "date": current_date.isoformat(),
-                "amount": -25.00,
-                "description": "Irregular service",
-                "merchant": "IrregularCo",
-                "account_source": "TEST",
-                "reference_id": f"irregular_{i}"
-            })
+            await client.post(
+                "/api/v1/transactions",
+                json={
+                    "date": current_date.isoformat(),
+                    "amount": -25.00,
+                    "description": "Irregular service",
+                    "merchant": "IrregularCo",
+                    "account_source": "TEST",
+                    "reference_id": f"irregular_{i}",
+                },
+            )
 
         # Run with high confidence threshold
         response = await client.post("/api/v1/recurring/detect?min_confidence=0.9")
         data = response.json()
 
         # Irregular pattern should have lower confidence
-        irregular = next((p for p in data["patterns"] if "irregularco" in p["merchant"].lower()), None)
+        _irregular = next((p for p in data["patterns"] if "irregularco" in p["merchant"].lower()), None)
         # Might not be detected with high threshold
 
         # Run with lower confidence threshold
         response = await client.post("/api/v1/recurring/detect?min_confidence=0.5")
         data = response.json()
 
-        irregular = next((p for p in data["patterns"] if "irregularco" in p["merchant"].lower()), None)
+        _irregular = next((p for p in data["patterns"] if "irregularco" in p["merchant"].lower()), None)
         # More likely to be detected with lower threshold
 
     @pytest.mark.asyncio
@@ -255,15 +265,18 @@ class TestRecurringPatterns:
         """Test upcoming recurring transaction predictions"""
         # Create a pattern with next_expected_date in the future
         tomorrow = date.today() + timedelta(days=1)
-        await client.post("/api/v1/recurring", json={
-            "merchant": "gym_membership",
-            "amount_min": 45.0,
-            "amount_max": 55.0,
-            "frequency": "monthly",
-            "next_expected_date": tomorrow.isoformat(),
-            "confidence_score": 0.9,
-            "status": "active"
-        })
+        await client.post(
+            "/api/v1/recurring",
+            json={
+                "merchant": "gym_membership",
+                "amount_min": 45.0,
+                "amount_max": 55.0,
+                "frequency": "monthly",
+                "next_expected_date": tomorrow.isoformat(),
+                "confidence_score": 0.9,
+                "status": "active",
+            },
+        )
 
         # Get upcoming predictions
         response = await client.get("/api/v1/recurring/predictions/upcoming?days_ahead=30")
@@ -281,15 +294,18 @@ class TestRecurringPatterns:
         """Test detection of missing expected transactions"""
         # Create a pattern with next_expected_date in the past
         week_ago = date.today() - timedelta(days=7)
-        await client.post("/api/v1/recurring", json={
-            "merchant": "overdue_bill",
-            "amount_min": 100.0,
-            "amount_max": 120.0,
-            "frequency": "monthly",
-            "next_expected_date": week_ago.isoformat(),
-            "confidence_score": 0.95,
-            "status": "active"
-        })
+        await client.post(
+            "/api/v1/recurring",
+            json={
+                "merchant": "overdue_bill",
+                "amount_min": 100.0,
+                "amount_max": 120.0,
+                "frequency": "monthly",
+                "next_expected_date": week_ago.isoformat(),
+                "confidence_score": 0.95,
+                "status": "active",
+            },
+        )
 
         # Get missing transactions
         response = await client.get("/api/v1/recurring/missing?days_overdue=7")
@@ -305,21 +321,27 @@ class TestRecurringPatterns:
     async def test_filter_by_status(self, client: AsyncClient, seed_categories):
         """Test filtering patterns by status"""
         # Create patterns with different statuses
-        await client.post("/api/v1/recurring", json={
-            "merchant": "active_pattern",
-            "amount_min": 10.0,
-            "amount_max": 12.0,
-            "frequency": "monthly",
-            "status": "active"
-        })
+        await client.post(
+            "/api/v1/recurring",
+            json={
+                "merchant": "active_pattern",
+                "amount_min": 10.0,
+                "amount_max": 12.0,
+                "frequency": "monthly",
+                "status": "active",
+            },
+        )
 
-        await client.post("/api/v1/recurring", json={
-            "merchant": "paused_pattern",
-            "amount_min": 20.0,
-            "amount_max": 22.0,
-            "frequency": "monthly",
-            "status": "paused"
-        })
+        await client.post(
+            "/api/v1/recurring",
+            json={
+                "merchant": "paused_pattern",
+                "amount_min": 20.0,
+                "amount_max": 22.0,
+                "frequency": "monthly",
+                "status": "paused",
+            },
+        )
 
         # Filter by active status
         response = await client.get("/api/v1/recurring?status=active")
@@ -335,15 +357,18 @@ class TestRecurringPatterns:
         today = date.today()
         for i in range(4):  # 4 quarters
             quarter_ago = today - timedelta(days=90 * i)
-            await client.post("/api/v1/transactions", json={
-                "date": quarter_ago.isoformat(),
-                "amount": -200.00,
-                "description": "Quarterly insurance",
-                "merchant": "Insurance Co",
-                "account_source": "TEST",
-                "category": "Insurance",
-                "reference_id": f"insurance_{i}"
-            })
+            await client.post(
+                "/api/v1/transactions",
+                json={
+                    "date": quarter_ago.isoformat(),
+                    "amount": -200.00,
+                    "description": "Quarterly insurance",
+                    "merchant": "Insurance Co",
+                    "account_source": "TEST",
+                    "category": "Insurance",
+                    "reference_id": f"insurance_{i}",
+                },
+            )
 
         # Run detection
         response = await client.post("/api/v1/recurring/detect")
@@ -359,20 +384,23 @@ class TestRecurringPatterns:
         today = date.today()
         for i in range(4):
             month_ago = today - timedelta(days=30 * i)
-            await client.post("/api/v1/transactions", json={
-                "date": month_ago.isoformat(),
-                "amount": -9.99,
-                "description": "Spotify Premium",
-                "merchant": "Spotify",
-                "account_source": "TEST",
-                "category": "Subscriptions",
-                "reference_id": f"spotify_{i}"
-            })
+            await client.post(
+                "/api/v1/transactions",
+                json={
+                    "date": month_ago.isoformat(),
+                    "amount": -9.99,
+                    "description": "Spotify Premium",
+                    "merchant": "Spotify",
+                    "account_source": "TEST",
+                    "category": "Subscriptions",
+                    "reference_id": f"spotify_{i}",
+                },
+            )
 
         # Run detection first time
         response1 = await client.post("/api/v1/recurring/detect")
         data1 = response1.json()
-        count1 = data1["detected_count"]
+        _count1 = data1["detected_count"]
 
         # Run detection again
         response2 = await client.post("/api/v1/recurring/detect")
@@ -389,19 +417,22 @@ class TestRecurringPatterns:
         categories = ["Subscriptions", "Subscriptions", "Subscriptions", "Entertainment"]
         for i, category in enumerate(categories):
             month_ago = today - timedelta(days=30 * i)
-            await client.post("/api/v1/transactions", json={
-                "date": month_ago.isoformat(),
-                "amount": -12.99,
-                "description": "Hulu",
-                "merchant": "Hulu",
-                "account_source": "TEST",
-                "category": category,
-                "reference_id": f"hulu_{i}"
-            })
+            await client.post(
+                "/api/v1/transactions",
+                json={
+                    "date": month_ago.isoformat(),
+                    "amount": -12.99,
+                    "description": "Hulu",
+                    "merchant": "Hulu",
+                    "account_source": "TEST",
+                    "category": category,
+                    "reference_id": f"hulu_{i}",
+                },
+            )
 
         # Run detection
         response = await client.post("/api/v1/recurring/detect")
-        data = response.json()
+        _data = response.json()
 
         # Get the created pattern
         patterns = await client.get("/api/v1/recurring")

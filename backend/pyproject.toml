@@ -73,3 +73,20 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "raise NotImplementedError",
 ]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+exclude = [
+    "alembic/versions",  # Auto-generated migration files
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = [
+    "E501",  # Line too long - less critical, handled by formatter if needed
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Allow unused imports in __init__.py (re-exports)
+"alembic/env.py" = ["F403", "F401"]  # Allow star imports in alembic

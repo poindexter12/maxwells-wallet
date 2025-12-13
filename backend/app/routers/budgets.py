@@ -21,9 +21,7 @@ def parse_tag_string(tag_str: str) -> tuple[str, str]:
 
 
 @router.get("/", response_model=List[Budget])
-async def list_budgets(
-    session: AsyncSession = Depends(get_session)
-):
+async def list_budgets(session: AsyncSession = Depends(get_session)):
     """List all budgets"""
     result = await session.execute(select(Budget).order_by(Budget.tag))
     budgets = result.scalars().all()
@@ -31,14 +29,9 @@ async def list_budgets(
 
 
 @router.get("/{budget_id}", response_model=Budget)
-async def get_budget(
-    budget_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def get_budget(budget_id: int, session: AsyncSession = Depends(get_session)):
     """Get a single budget by ID"""
-    result = await session.execute(
-        select(Budget).where(Budget.id == budget_id)
-    )
+    result = await session.execute(select(Budget).where(Budget.id == budget_id))
     budget = result.scalar_one_or_none()
     if not budget:
         raise not_found(ErrorCode.BUDGET_NOT_FOUND, budget_id=budget_id)
@@ -46,10 +39,7 @@ async def get_budget(
 
 
 @router.post("/", response_model=Budget, status_code=201)
-async def create_budget(
-    budget: BudgetCreate,
-    session: AsyncSession = Depends(get_session)
-):
+async def create_budget(budget: BudgetCreate, session: AsyncSession = Depends(get_session)):
     """Create a new budget"""
     # Validate tag format
     try:
@@ -58,19 +48,12 @@ async def create_budget(
         raise bad_request(ErrorCode.TAG_INVALID_FORMAT, str(e), tag=budget.tag)
 
     # Validate that the tag exists
-    tag_result = await session.execute(
-        select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
-    )
+    tag_result = await session.execute(select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value)))
     if not tag_result.scalar_one_or_none():
         raise bad_request(ErrorCode.TAG_NOT_FOUND, tag=budget.tag)
 
     # Check if budget already exists for this tag and period
-    result = await session.execute(
-        select(Budget).where(
-            Budget.tag == budget.tag,
-            Budget.period == budget.period
-        )
-    )
+    result = await session.execute(select(Budget).where(Budget.tag == budget.tag, Budget.period == budget.period))
     existing = result.scalar_one_or_none()
     if existing:
         raise bad_request(ErrorCode.BUDGET_ALREADY_EXISTS, tag=budget.tag, period=budget.period.value)
@@ -83,15 +66,9 @@ async def create_budget(
 
 
 @router.patch("/{budget_id}", response_model=Budget)
-async def update_budget(
-    budget_id: int,
-    budget: BudgetUpdate,
-    session: AsyncSession = Depends(get_session)
-):
+async def update_budget(budget_id: int, budget: BudgetUpdate, session: AsyncSession = Depends(get_session)):
     """Update a budget"""
-    result = await session.execute(
-        select(Budget).where(Budget.id == budget_id)
-    )
+    result = await session.execute(select(Budget).where(Budget.id == budget_id))
     db_budget = result.scalar_one_or_none()
     if not db_budget:
         raise not_found(ErrorCode.BUDGET_NOT_FOUND, budget_id=budget_id)
@@ -104,9 +81,7 @@ async def update_budget(
             raise bad_request(ErrorCode.TAG_INVALID_FORMAT, str(e), tag=budget.tag)
 
         # Validate that the tag exists
-        tag_result = await session.execute(
-            select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
-        )
+        tag_result = await session.execute(select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value)))
         if not tag_result.scalar_one_or_none():
             raise bad_request(ErrorCode.TAG_NOT_FOUND, tag=budget.tag)
 
@@ -122,14 +97,9 @@ async def update_budget(
 
 
 @router.delete("/{budget_id}", status_code=204)
-async def delete_budget(
-    budget_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def delete_budget(budget_id: int, session: AsyncSession = Depends(get_session)):
     """Delete a budget"""
-    result = await session.execute(
-        select(Budget).where(Budget.id == budget_id)
-    )
+    result = await session.execute(select(Budget).where(Budget.id == budget_id))
     budget = result.scalar_one_or_none()
     if not budget:
         raise not_found(ErrorCode.BUDGET_NOT_FOUND, budget_id=budget_id)
@@ -138,19 +108,12 @@ async def delete_budget(
     await session.commit()
 
 
-async def get_spending_for_tag(
-    session: AsyncSession,
-    tag_str: str,
-    start_date: date,
-    end_date: date
-) -> float:
+async def get_spending_for_tag(session: AsyncSession, tag_str: str, start_date: date, end_date: date) -> float:
     """Get total spending for transactions with a specific tag in date range"""
     namespace, value = parse_tag_string(tag_str)
 
     # Get the tag
-    tag_result = await session.execute(
-        select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
-    )
+    tag_result = await session.execute(select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value)))
     tag = tag_result.scalar_one_or_none()
     if not tag:
         return 0.0
@@ -160,13 +123,12 @@ async def get_spending_for_tag(
     if namespace == "account":
         # Accounts use direct FK (account_tag_id) on Transaction
         spending_result = await session.execute(
-            select(func.sum(Transaction.amount))
-            .where(
+            select(func.sum(Transaction.amount)).where(
                 Transaction.account_tag_id == tag.id,
                 Transaction.date >= start_date,
                 Transaction.date <= end_date,
                 Transaction.amount < 0,  # Only expenses
-                Transaction.is_transfer == False  # Exclude transfers
+                Transaction.is_transfer.is_(False),  # Exclude transfers
             )
         )
     else:
@@ -179,7 +141,7 @@ async def get_spending_for_tag(
                 Transaction.date >= start_date,
                 Transaction.date <= end_date,
                 Transaction.amount < 0,  # Only expenses
-                Transaction.is_transfer == False  # Exclude transfers
+                Transaction.is_transfer.is_(False),  # Exclude transfers
             )
         )
 
@@ -191,7 +153,7 @@ async def get_spending_for_tag(
 async def get_budget_status(
     year: Optional[int] = Query(None),
     month: Optional[int] = Query(None, ge=1, le=12),
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Get budget status for specified or current month
@@ -204,9 +166,7 @@ async def get_budget_status(
     month = month or now.month
 
     # Get all monthly budgets
-    result = await session.execute(
-        select(Budget).where(Budget.period == BudgetPeriod.monthly)
-    )
+    result = await session.execute(select(Budget).where(Budget.period == BudgetPeriod.monthly))
     budgets = result.scalars().all()
 
     # Calculate date range for this month
@@ -226,9 +186,7 @@ async def get_budget_status(
 
     for budget_item in budgets:
         # Get spending for this tag
-        spent_amount = await get_spending_for_tag(
-            session, budget_item.tag, start_date, end_date
-        )
+        spent_amount = await get_spending_for_tag(session, budget_item.tag, start_date, end_date)
 
         # Calculate metrics
         budget_amount = budget_item.amount
@@ -253,36 +211,38 @@ async def get_budget_status(
         # Parse tag for display
         namespace, value = parse_tag_string(budget_item.tag)
 
-        status_list.append({
-            "tag": budget_item.tag,
-            "tag_namespace": namespace,
-            "tag_value": value,
-            "budget_id": budget_item.id,
-            "budget_amount": budget_amount,
-            "spent_amount": spent_amount,
-            "actual_amount": spent_amount,  # Alias for frontend compatibility
-            "remaining": remaining,
-            "percentage_used": round(percentage_used, 1),
-            "status": status,
-            "days_elapsed": days_elapsed,
-            "days_in_month": days_in_month,
-            "projected_monthly": round(projected_monthly, 2)
-        })
+        status_list.append(
+            {
+                "tag": budget_item.tag,
+                "tag_namespace": namespace,
+                "tag_value": value,
+                "budget_id": budget_item.id,
+                "budget_amount": budget_amount,
+                "spent_amount": spent_amount,
+                "actual_amount": spent_amount,  # Alias for frontend compatibility
+                "remaining": remaining,
+                "percentage_used": round(percentage_used, 1),
+                "status": status,
+                "days_elapsed": days_elapsed,
+                "days_in_month": days_in_month,
+                "projected_monthly": round(projected_monthly, 2),
+            }
+        )
 
     return {
         "year": year,
         "month": month,
         "budgets": status_list,
-        "overall_status": "exceeded" if any(b["status"] == "exceeded" for b in status_list) else
-                         "warning" if any(b["status"] == "warning" for b in status_list) else
-                         "on_track"
+        "overall_status": "exceeded"
+        if any(b["status"] == "exceeded" for b in status_list)
+        else "warning"
+        if any(b["status"] == "warning" for b in status_list)
+        else "on_track",
     }
 
 
 @router.get("/alerts/active")
-async def get_budget_alerts(
-    session: AsyncSession = Depends(get_session)
-):
+async def get_budget_alerts(session: AsyncSession = Depends(get_session)):
     """
     Get active budget alerts (warning or exceeded)
 
@@ -302,13 +262,10 @@ async def get_budget_alerts(
             "actual_amount": b["actual_amount"],  # Alias for frontend compatibility
             "percentage_used": b["percentage_used"],
             "status": b["status"],
-            "message": f"Budget {b['status']}: {b['spent_amount']:.2f} / {b['budget_amount']:.2f} ({b['percentage_used']:.1f}%)"
+            "message": f"Budget {b['status']}: {b['spent_amount']:.2f} / {b['budget_amount']:.2f} ({b['percentage_used']:.1f}%)",
         }
         for b in budgets
         if b["status"] in ["warning", "exceeded"]
     ]
 
-    return {
-        "alert_count": len(alerts),
-        "alerts": alerts
-    }
+    return {"alert_count": len(alerts), "alerts": alerts}

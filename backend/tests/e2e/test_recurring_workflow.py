@@ -39,7 +39,6 @@ class TestRecurringPage:
         test_data_files: dict,
     ):
         """Test detecting recurring patterns from transaction history."""
-        from pathlib import Path
 
         if not test_data_files:
             pytest.skip("No test data files available")
@@ -120,7 +119,9 @@ class TestRecurringTabs:
         page.wait_for_load_state("networkidle")
 
         # Click on Missing tab
-        missing_tab = page.locator("button:has-text('Missing'), button:has-text('Overdue'), [role='tab']:has-text('Missing')")
+        missing_tab = page.locator(
+            "button:has-text('Missing'), button:has-text('Overdue'), [role='tab']:has-text('Missing')"
+        )
         if missing_tab.count() > 0:
             missing_tab.first.click()
             page.wait_for_load_state("networkidle")
@@ -201,9 +202,8 @@ class TestRecurringFrequencyBadges:
         page.wait_for_load_state("networkidle")
 
         # Look for frequency badges
-        frequency_badges = page.locator(
-            "text=/weekly|biweekly|monthly|quarterly|yearly/i, "
-            "[class*='badge'], [class*='frequency']"
+        _frequency_badges = page.locator(
+            "text=/weekly|biweekly|monthly|quarterly|yearly/i, [class*='badge'], [class*='frequency']"
         )
 
         # If there are patterns, badges should be visible
@@ -223,7 +223,7 @@ class TestRecurringConfidence:
         page.wait_for_load_state("networkidle")
 
         # Look for confidence percentage
-        confidence = page.locator("text=/%|confidence/i")
+        _confidence = page.locator("text=/%|confidence/i")
 
         # If patterns exist, confidence should be shown
         patterns = page.locator("[class*='pattern'], [data-testid*='pattern']")
@@ -242,7 +242,6 @@ class TestRecurringIntegration:
         test_data_files: dict,
     ):
         """Test that recurring detection updates after importing new transactions."""
-        from pathlib import Path
 
         if not test_data_files:
             pytest.skip("No test data files available")
@@ -258,7 +257,7 @@ class TestRecurringIntegration:
 
         # Get initial pattern count
         initial_patterns = page.locator("[class*='pattern'], [data-testid*='pattern']")
-        initial_count = initial_patterns.count()
+        _initial_count = initial_patterns.count()
 
         # Import more data
         csv_path = next(iter(test_data_files.values()))

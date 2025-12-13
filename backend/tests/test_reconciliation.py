@@ -1,6 +1,7 @@
 """
 Tests for FR-004: Reconciliation
 """
+
 import pytest
 from httpx import AsyncClient
 
@@ -16,10 +17,7 @@ class TestReconciliation:
         data = response.json()
 
         # Should only return unreconciled transactions
-        assert all(
-            txn["reconciliation_status"] == "unreconciled"
-            for txn in data
-        )
+        assert all(txn["reconciliation_status"] == "unreconciled" for txn in data)
         assert len(data) == 2  # Two unreconciled in seed data
 
     @pytest.mark.asyncio
@@ -30,12 +28,7 @@ class TestReconciliation:
         transaction_ids = [txn["id"] for txn in list_response.json()]
 
         # Bulk update category
-        bulk_data = {
-            "transaction_ids": transaction_ids,
-            "updates": {
-                "category": "Other"
-            }
-        }
+        bulk_data = {"transaction_ids": transaction_ids, "updates": {"category": "Other"}}
 
         response = await client.post("/api/v1/transactions/bulk-update", json=bulk_data)
         assert response.status_code == 200
@@ -56,12 +49,7 @@ class TestReconciliation:
         transaction_ids = [txn["id"] for txn in list_response.json()]
 
         # Bulk mark as reconciled
-        bulk_data = {
-            "transaction_ids": transaction_ids,
-            "updates": {
-                "reconciliation_status": "matched"
-            }
-        }
+        bulk_data = {"transaction_ids": transaction_ids, "updates": {"reconciliation_status": "matched"}}
 
         response = await client.post("/api/v1/transactions/bulk-update", json=bulk_data)
         assert response.status_code == 200
@@ -79,12 +67,7 @@ class TestReconciliation:
         transaction_id = list_response.json()[0]["id"]
 
         # Mark as ignored
-        bulk_data = {
-            "transaction_ids": [transaction_id],
-            "updates": {
-                "reconciliation_status": "ignored"
-            }
-        }
+        bulk_data = {"transaction_ids": [transaction_id], "updates": {"reconciliation_status": "ignored"}}
 
         response = await client.post("/api/v1/transactions/bulk-update", json=bulk_data)
         assert response.status_code == 200
@@ -105,10 +88,7 @@ class TestReconciliation:
         # Test each status transition
         for status in valid_statuses:
             update_data = {"reconciliation_status": status}
-            response = await client.patch(
-                f"/api/v1/transactions/{transaction_id}",
-                json=update_data
-            )
+            response = await client.patch(f"/api/v1/transactions/{transaction_id}", json=update_data)
             assert response.status_code == 200
             assert response.json()["reconciliation_status"] == status
 
@@ -121,15 +101,9 @@ class TestReconciliation:
         transaction_id = transaction["id"]
 
         # Quick categorize and reconcile in one request
-        update_data = {
-            "category": "Transportation",
-            "reconciliation_status": "matched"
-        }
+        update_data = {"category": "Transportation", "reconciliation_status": "matched"}
 
-        response = await client.patch(
-            f"/api/v1/transactions/{transaction_id}",
-            json=update_data
-        )
+        response = await client.patch(f"/api/v1/transactions/{transaction_id}", json=update_data)
         assert response.status_code == 200
         updated = response.json()
         assert updated["category"] == "Transportation"

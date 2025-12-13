@@ -1,6 +1,7 @@
 """
 Tests for demo mode middleware.
 """
+
 import pytest
 import re
 from unittest.mock import patch, MagicMock, AsyncMock
@@ -26,40 +27,33 @@ class TestBlockedEndpointsPatterns:
             ("POST", "/api/v1/import/custom/preview", True),
             ("POST", "/api/v1/import/custom/confirm", True),
             ("GET", "/api/v1/import/preview", False),  # GET not blocked
-
             # Import config management - should NOT be blocked (no personal data)
             ("POST", "/api/v1/import/custom/configs", False),
             ("POST", "/api/v1/import/custom/configs/import", False),
             ("GET", "/api/v1/import/custom/configs", False),
             ("GET", "/api/v1/import/formats", False),
-
             # Admin destructive operations - should be blocked
             ("DELETE", "/api/v1/admin/purge-all", True),
             ("DELETE", "/api/v1/admin/import-sessions/123", True),
             ("DELETE", "/api/v1/admin/import-sessions/99999", True),
             ("GET", "/api/v1/admin/import-sessions/123", False),  # GET not blocked
-
             # Backup restore - should be blocked
             ("POST", "/api/v1/admin/restore/backup_123", True),
             ("POST", "/api/v1/admin/restore/20241215_143022_123456", True),
             ("GET", "/api/v1/admin/restore/backup_123", False),  # GET not blocked
-
             # Backup deletion - should be blocked
             ("DELETE", "/api/v1/admin/backup/backup_123", True),
             ("DELETE", "/api/v1/admin/backup/20241215_143022_123456", True),
             ("GET", "/api/v1/admin/backup/backup_123", False),  # GET not blocked
             ("POST", "/api/v1/admin/backup", False),  # POST create not blocked
-
             # Bulk transaction operations - should be blocked
             ("DELETE", "/api/v1/transactions", True),
             ("POST", "/api/v1/transactions/bulk-delete", True),
             ("GET", "/api/v1/transactions", False),  # GET not blocked
             ("POST", "/api/v1/transactions", False),  # Regular POST not blocked
-
             # Test endpoints - should be blocked
             ("POST", "/api/v1/test/seed", True),
             ("DELETE", "/api/v1/test/clear", True),
-
             # Safe endpoints - should NOT be blocked
             ("GET", "/api/v1/admin/backups", False),
             ("POST", "/api/v1/admin/backup", False),
@@ -294,6 +288,7 @@ class TestDemoModeMiddlewareResponseContent:
 
             # Parse response body
             import json
+
             body = json.loads(response.body.decode())
 
             assert body["error_code"] == "DEMO_MODE_RESTRICTED"

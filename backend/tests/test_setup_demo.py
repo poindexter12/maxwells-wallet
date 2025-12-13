@@ -13,7 +13,6 @@ import sys
 from pathlib import Path
 
 import pytest
-from sqlalchemy import text
 from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import create_async_engine
 

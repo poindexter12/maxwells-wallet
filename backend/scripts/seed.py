@@ -19,16 +19,22 @@ import random
 import hashlib
 import argparse
 from datetime import date, datetime, timedelta
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text, delete
+from sqlalchemy import delete
 
-from app.database import async_session, engine
+from app.database import async_session
 from app.models import (
-    Tag, Transaction, TransactionTag, Budget, BudgetPeriod,
-    Dashboard, DashboardWidget, DateRangeType, TagRule,
-    ReconciliationStatus
+    Tag,
+    Transaction,
+    TransactionTag,
+    Budget,
+    BudgetPeriod,
+    Dashboard,
+    DashboardWidget,
+    DateRangeType,
+    TagRule,
+    ReconciliationStatus,
 )
 
 
@@ -37,10 +43,22 @@ from app.models import (
 # ============================================================================
 
 ACCOUNTS = [
-    {"value": "chase-checking", "description": "Chase Checking", "color": "#1e40af", "due_day": None, "credit_limit": None},
+    {
+        "value": "chase-checking",
+        "description": "Chase Checking",
+        "color": "#1e40af",
+        "due_day": None,
+        "credit_limit": None,
+    },
     {"value": "bofa-savings", "description": "BofA Savings", "color": "#15803d", "due_day": None, "credit_limit": None},
     {"value": "amex-gold", "description": "Amex Gold Card", "color": "#b45309", "due_day": 15, "credit_limit": 10000},
-    {"value": "chase-sapphire", "description": "Chase Sapphire", "color": "#0ea5e9", "due_day": 20, "credit_limit": 15000},
+    {
+        "value": "chase-sapphire",
+        "description": "Chase Sapphire",
+        "color": "#0ea5e9",
+        "due_day": 20,
+        "credit_limit": 15000,
+    },
     {"value": "inspira-hsa", "description": "Inspira HSA", "color": "#059669", "due_day": None, "credit_limit": None},
 ]
 
@@ -145,6 +163,7 @@ INCOME_SOURCES = [
 # Helper Functions
 # ============================================================================
 
+
 def generate_content_hash(date_val: date, amount: float, description: str, account: str) -> str:
     """Generate a content hash for deduplication."""
     content = f"{date_val.isoformat()}|{amount:.2f}|{description}|{account}"
@@ -161,6 +180,7 @@ def random_date_in_range(start: date, end: date) -> date:
 # ============================================================================
 # Seeding Functions
 # ============================================================================
+
 
 async def clear_data(session: AsyncSession):
     """Clear all existing data."""
@@ -337,7 +357,6 @@ async def seed_budgets(session: AsyncSession):
 
 async def seed_dashboards(session: AsyncSession):
     """Create dashboards with widgets."""
-    from datetime import datetime
     from sqlalchemy import insert
 
     print("Seeding dashboards...")
@@ -357,11 +376,51 @@ async def seed_dashboards(session: AsyncSession):
     # Widgets for default dashboard - use raw insert to avoid ORM identity issues
     now = datetime.utcnow()
     default_widget_data = [
-        {"dashboard_id": default_dashboard.id, "widget_type": "summary", "position": 0, "width": "full", "is_visible": True, "created_at": now, "updated_at": now},
-        {"dashboard_id": default_dashboard.id, "widget_type": "velocity", "position": 1, "width": "half", "is_visible": True, "created_at": now, "updated_at": now},
-        {"dashboard_id": default_dashboard.id, "widget_type": "bucket_pie", "position": 2, "width": "half", "is_visible": True, "created_at": now, "updated_at": now},
-        {"dashboard_id": default_dashboard.id, "widget_type": "top_merchants", "position": 3, "width": "half", "is_visible": True, "created_at": now, "updated_at": now},
-        {"dashboard_id": default_dashboard.id, "widget_type": "trends", "position": 4, "width": "full", "is_visible": True, "created_at": now, "updated_at": now},
+        {
+            "dashboard_id": default_dashboard.id,
+            "widget_type": "summary",
+            "position": 0,
+            "width": "full",
+            "is_visible": True,
+            "created_at": now,
+            "updated_at": now,
+        },
+        {
+            "dashboard_id": default_dashboard.id,
+            "widget_type": "velocity",
+            "position": 1,
+            "width": "half",
+            "is_visible": True,
+            "created_at": now,
+            "updated_at": now,
+        },
+        {
+            "dashboard_id": default_dashboard.id,
+            "widget_type": "bucket_pie",
+            "position": 2,
+            "width": "half",
+            "is_visible": True,
+            "created_at": now,
+            "updated_at": now,
+        },
+        {
+            "dashboard_id": default_dashboard.id,
+            "widget_type": "top_merchants",
+            "position": 3,
+            "width": "half",
+            "is_visible": True,
+            "created_at": now,
+            "updated_at": now,
+        },
+        {
+            "dashboard_id": default_dashboard.id,
+            "widget_type": "trends",
+            "position": 4,
+            "width": "full",
+            "is_visible": True,
+            "created_at": now,
+            "updated_at": now,
+        },
     ]
     await session.execute(insert(DashboardWidget), default_widget_data)
     await session.commit()
@@ -380,10 +439,42 @@ async def seed_dashboards(session: AsyncSession):
 
     # Widgets for YTD dashboard
     ytd_widget_data = [
-        {"dashboard_id": ytd_dashboard.id, "widget_type": "summary", "position": 0, "width": "full", "is_visible": True, "created_at": now, "updated_at": now},
-        {"dashboard_id": ytd_dashboard.id, "widget_type": "trends", "position": 1, "width": "full", "is_visible": True, "created_at": now, "updated_at": now},
-        {"dashboard_id": ytd_dashboard.id, "widget_type": "bucket_pie", "position": 2, "width": "half", "is_visible": True, "created_at": now, "updated_at": now},
-        {"dashboard_id": ytd_dashboard.id, "widget_type": "top_merchants", "position": 3, "width": "half", "is_visible": True, "created_at": now, "updated_at": now},
+        {
+            "dashboard_id": ytd_dashboard.id,
+            "widget_type": "summary",
+            "position": 0,
+            "width": "full",
+            "is_visible": True,
+            "created_at": now,
+            "updated_at": now,
+        },
+        {
+            "dashboard_id": ytd_dashboard.id,
+            "widget_type": "trends",
+            "position": 1,
+            "width": "full",
+            "is_visible": True,
+            "created_at": now,
+            "updated_at": now,
+        },
+        {
+            "dashboard_id": ytd_dashboard.id,
+            "widget_type": "bucket_pie",
+            "position": 2,
+            "width": "half",
+            "is_visible": True,
+            "created_at": now,
+            "updated_at": now,
+        },
+        {
+            "dashboard_id": ytd_dashboard.id,
+            "widget_type": "top_merchants",
+            "position": 3,
+            "width": "half",
+            "is_visible": True,
+            "created_at": now,
+            "updated_at": now,
+        },
     ]
     await session.execute(insert(DashboardWidget), ytd_widget_data)
     await session.commit()
@@ -443,6 +534,7 @@ async def seed_tag_rules(session: AsyncSession):
 # ============================================================================
 # Main Entry Point
 # ============================================================================
+
 
 async def seed_all(clear: bool = False):
     """Run all seeding operations."""

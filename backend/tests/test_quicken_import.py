@@ -7,6 +7,7 @@ Tests cover:
 - Format auto-detection
 - API endpoint integration
 """
+
 import pytest
 from httpx import AsyncClient
 from datetime import date
@@ -176,6 +177,7 @@ SAMPLE_QFX_CCARD = """<?xml version="1.0" encoding="utf-8"?>
 # Parser Registry Tests
 # =============================================================================
 
+
 class TestQuickenParsersRegistration:
     """Test QIF and QFX parsers are registered correctly"""
 
@@ -208,6 +210,7 @@ class TestQuickenParsersRegistration:
 # QIF Format Detection Tests
 # =============================================================================
 
+
 class TestQIFFormatDetection:
     """Test QIF format auto-detection"""
 
@@ -234,6 +237,7 @@ class TestQIFFormatDetection:
 # =============================================================================
 # QFX/OFX Format Detection Tests
 # =============================================================================
+
 
 class TestQFXFormatDetection:
     """Test QFX/OFX format auto-detection"""
@@ -268,6 +272,7 @@ class TestQFXFormatDetection:
 # =============================================================================
 # QIF Parsing Tests
 # =============================================================================
+
 
 class TestQIFParser:
     """Test QIF file parsing"""
@@ -390,6 +395,7 @@ PBIG DEPOSIT
 # QFX/OFX Parsing Tests
 # =============================================================================
 
+
 class TestQFXParser:
     """Test QFX/OFX file parsing"""
 
@@ -469,6 +475,7 @@ class TestQFXParser:
 # Wrapper Function Tests
 # =============================================================================
 
+
 class TestQuickenWrapperFunctions:
     """Test backwards-compatible wrapper functions"""
 
@@ -504,10 +511,7 @@ class TestQuickenWrapperFunctions:
 
     def test_parse_csv_with_qif_format_hint(self):
         """parse_csv() respects QIF format hint"""
-        transactions, format_type = parse_csv(
-            SAMPLE_QIF_BANK,
-            format_hint=ImportFormatType.qif
-        )
+        transactions, format_type = parse_csv(SAMPLE_QIF_BANK, format_hint=ImportFormatType.qif)
 
         assert format_type == ImportFormatType.qif
         assert len(transactions) == 3
@@ -516,6 +520,7 @@ class TestQuickenWrapperFunctions:
 # =============================================================================
 # API Integration Tests
 # =============================================================================
+
 
 class TestQuickenAPIImport:
     """Test API endpoints for QIF/QFX import"""
@@ -565,11 +570,7 @@ class TestQuickenAPIImport:
         files = {"file": ("bank.qif", io.BytesIO(SAMPLE_QIF_BANK.encode()), "text/plain")}
         data_payload = {"format_type": "qif", "account_source": "QIF-Checking"}
 
-        response = await client.post(
-            "/api/v1/import/confirm",
-            files=files,
-            data=data_payload
-        )
+        response = await client.post("/api/v1/import/confirm", files=files, data=data_payload)
 
         assert response.status_code == 200
         data = response.json()
@@ -583,11 +584,7 @@ class TestQuickenAPIImport:
         files = {"file": ("bank.qfx", io.BytesIO(SAMPLE_QFX.encode()), "text/plain")}
         data_payload = {"format_type": "qfx", "account_source": "QFX-Checking"}
 
-        response = await client.post(
-            "/api/v1/import/confirm",
-            files=files,
-            data=data_payload
-        )
+        response = await client.post("/api/v1/import/confirm", files=files, data=data_payload)
 
         assert response.status_code == 200
         data = response.json()
@@ -642,6 +639,7 @@ class TestQuickenAPIImport:
 # =============================================================================
 # Edge Cases and Error Handling
 # =============================================================================
+
 
 class TestQuickenEdgeCases:
     """Test edge cases and error handling"""

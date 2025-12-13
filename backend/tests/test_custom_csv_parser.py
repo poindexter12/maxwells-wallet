@@ -9,6 +9,7 @@ Tests cover:
 - Auto-detection helpers (date formats, amount formats)
 - API endpoints for custom format management
 """
+
 import pytest
 import json
 from datetime import date
@@ -71,6 +72,7 @@ CSV_NO_HEADER = """01/15/2025,-50.00,AMAZON PURCHASE,Shopping
 # CustomCsvConfig Tests
 # =============================================================================
 
+
 class TestCustomCsvConfig:
     """Test CustomCsvConfig dataclass"""
 
@@ -108,18 +110,20 @@ class TestCustomCsvConfig:
 
     def test_config_from_json(self):
         """Deserialize config from JSON"""
-        json_str = json.dumps({
-            "name": "Test Bank",
-            "account_source": "TEST-CHECKING",
-            "date_column": "Date",
-            "amount_column": "Amount",
-            "description_column": "Description",
-            "amount_invert_sign": True,
-            "row_handling": {
-                "skip_header_rows": 2,
-                "skip_patterns": ["PENDING"],
+        json_str = json.dumps(
+            {
+                "name": "Test Bank",
+                "account_source": "TEST-CHECKING",
+                "date_column": "Date",
+                "amount_column": "Amount",
+                "description_column": "Description",
+                "amount_invert_sign": True,
+                "row_handling": {
+                    "skip_header_rows": 2,
+                    "skip_patterns": ["PENDING"],
+                },
             }
-        })
+        )
         config = CustomCsvConfig.from_json(json_str)
 
         assert config.name == "Test Bank"
@@ -160,6 +164,7 @@ class TestCustomCsvConfig:
 # =============================================================================
 # CustomCsvParser Tests - Named Columns
 # =============================================================================
+
 
 class TestCustomCsvParserNamedColumns:
     """Test CustomCsvParser with column names"""
@@ -332,6 +337,7 @@ End of Statement
 # CustomCsvParser Tests - Index-Based Columns
 # =============================================================================
 
+
 class TestCustomCsvParserIndexColumns:
     """Test CustomCsvParser with column indexes"""
 
@@ -375,6 +381,7 @@ class TestCustomCsvParserIndexColumns:
 # =============================================================================
 # Auto-Detection Helper Tests
 # =============================================================================
+
 
 class TestAutoDetection:
     """Test auto-detection helper functions"""
@@ -494,6 +501,7 @@ jkl,mno,pqr
 # =============================================================================
 # API Endpoint Tests
 # =============================================================================
+
 
 @pytest.mark.asyncio
 class TestCustomCsvApiEndpoints:
@@ -620,7 +628,7 @@ class TestCustomCsvApiEndpoints:
                 "name": "My Test Config",
                 "description": "Test configuration",
                 "config_json": json.dumps(config),
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -643,7 +651,7 @@ class TestCustomCsvApiEndpoints:
             json={
                 "name": "List Test Config",
                 "config_json": json.dumps(config),
-            }
+            },
         )
 
         response = await client.get("/api/v1/import/custom/configs")
@@ -668,7 +676,7 @@ class TestCustomCsvApiEndpoints:
             json={
                 "name": "Get Test Config",
                 "config_json": json.dumps(config),
-            }
+            },
         )
         config_id = create_response.json()["id"]
 
@@ -693,14 +701,11 @@ class TestCustomCsvApiEndpoints:
             json={
                 "name": "Update Test Config",
                 "config_json": json.dumps(config),
-            }
+            },
         )
         config_id = create_response.json()["id"]
 
-        response = await client.put(
-            f"/api/v1/import/custom/configs/{config_id}",
-            json={"name": "Updated Config Name"}
-        )
+        response = await client.put(f"/api/v1/import/custom/configs/{config_id}", json={"name": "Updated Config Name"})
 
         assert response.status_code == 200
         result = response.json()
@@ -721,7 +726,7 @@ class TestCustomCsvApiEndpoints:
             json={
                 "name": "Delete Test Config",
                 "config_json": json.dumps(config),
-            }
+            },
         )
         config_id = create_response.json()["id"]
 
@@ -750,7 +755,7 @@ class TestCustomCsvApiEndpoints:
                 "name": "Export Test Config",
                 "description": "Test export",
                 "config_json": json.dumps(config),
-            }
+            },
         )
         config_id = create_response.json()["id"]
 
@@ -765,7 +770,7 @@ class TestCustomCsvApiEndpoints:
             json={
                 "name": "Imported Config",
                 "config": exported["config"],
-            }
+            },
         )
 
         assert import_response.status_code == 200
@@ -784,7 +789,7 @@ class TestCustomCsvConfigParsing:
         'description' in the config_json, causing parsing to fail.
         The description should be stored separately, not in config_json.
         """
-        config_json = '''{
+        config_json = """{
             "name": "Test Format",
             "account_source": "test-account",
             "date_column": "Date",
@@ -794,7 +799,7 @@ class TestCustomCsvConfigParsing:
             "amount_sign_convention": "negative_prefix",
             "description": "This field should be ignored",
             "some_future_field": "also ignored"
-        }'''
+        }"""
 
         # This should NOT raise an error
         config = CustomCsvConfig.from_json(config_json)
@@ -807,7 +812,7 @@ class TestCustomCsvConfigParsing:
 
     def test_from_json_with_row_handling(self):
         """Config JSON with nested row_handling should parse correctly."""
-        config_json = '''{
+        config_json = """{
             "name": "Test Format",
             "account_source": "test-account",
             "date_column": "Date",
@@ -818,7 +823,7 @@ class TestCustomCsvConfigParsing:
                 "skip_footer_rows": 2,
                 "skip_empty_rows": true
             }
-        }'''
+        }"""
 
         config = CustomCsvConfig.from_json(config_json)
 
@@ -830,6 +835,7 @@ class TestCustomCsvConfigParsing:
 # =============================================================================
 # Header Signature Tests
 # =============================================================================
+
 
 class TestHeaderSignature:
     """Test header signature computation for auto-matching CSV formats."""
@@ -972,7 +978,7 @@ class TestHeaderSignatureApi:
                 "name": "Signature Test Config",
                 "config_json": json.dumps(config),
                 "header_signature": signature,
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -997,7 +1003,7 @@ class TestHeaderSignatureApi:
                 "name": "Match Test Config",
                 "config_json": json.dumps(config),
                 "header_signature": signature,
-            }
+            },
         )
 
         # Now auto-detect a CSV with matching headers

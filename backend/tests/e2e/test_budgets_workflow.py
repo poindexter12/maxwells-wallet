@@ -91,7 +91,7 @@ class TestBudgetsPage:
         page.wait_for_load_state("networkidle")
 
         # Look for progress bars
-        progress_bars = page.locator("[role='progressbar'], progress, div[class*='progress']")
+        _progress_bars = page.locator("[role='progressbar'], progress, div[class*='progress']")
 
         # If budgets exist, progress bars should appear
         budget_elements = page.locator("[class*='budget'], [data-testid*='budget']")
@@ -152,7 +152,7 @@ class TestBudgetsPage:
         page.wait_for_load_state("networkidle")
 
         # Verify budget was deleted
-        final_budgets = page.locator("[class*='budget-item'], [data-testid*='budget']")
+        _final_budgets = page.locator("[class*='budget-item'], [data-testid*='budget']")
         # Should have one less budget or show empty state
         expect(page.locator("body")).to_be_visible()
 
@@ -167,7 +167,7 @@ class TestBudgetAlerts:
         page.wait_for_load_state("networkidle")
 
         # Look for alerts section
-        alerts_section = page.locator("text=/alert|warning|exceeded/i")
+        _alerts_section = page.locator("text=/alert|warning|exceeded/i")
 
         # Alerts section should exist (may or may not have active alerts)
         expect(page.locator("body")).to_be_visible()
@@ -178,9 +178,8 @@ class TestBudgetAlerts:
         page.wait_for_load_state("networkidle")
 
         # Look for warning indicators (red color, warning icons, etc.)
-        warning_indicators = page.locator(
-            "[class*='warning'], [class*='danger'], [class*='exceeded'], "
-            "[class*='red'], [class*='error']"
+        _warning_indicators = page.locator(
+            "[class*='warning'], [class*='danger'], [class*='exceeded'], [class*='red'], [class*='error']"
         )
 
         # If there are exceeded budgets, warning should be visible
@@ -193,7 +192,7 @@ class TestBudgetAlerts:
         page.wait_for_load_state("networkidle")
 
         # Look for percentage display
-        percentage = page.locator("text=/%/")
+        _percentage = page.locator("text=/%/")
 
         # If budgets exist with spending, percentage should be shown
         budget_cards = page.locator("[class*='budget']")
@@ -213,7 +212,6 @@ class TestBudgetIntegration:
         test_data_files: dict,
     ):
         """Test that budget status updates when transactions are imported."""
-        from pathlib import Path
 
         if not test_data_files:
             pytest.skip("No test data files available")

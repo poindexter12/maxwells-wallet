@@ -1,6 +1,7 @@
 """
 Tests for Merchant Alias functionality (v0.1)
 """
+
 import pytest
 from httpx import AsyncClient
 from datetime import date
@@ -16,7 +17,7 @@ class TestMerchantAliases:
             "pattern": "STARBUCKS #12345",
             "canonical_name": "Starbucks",
             "match_type": "exact",
-            "priority": 10
+            "priority": 10,
         }
 
         response = await client.post("/api/v1/merchants/aliases", json=alias_data)
@@ -32,12 +33,7 @@ class TestMerchantAliases:
     @pytest.mark.asyncio
     async def test_create_alias_contains_match(self, client: AsyncClient):
         """Create an alias with contains match type"""
-        alias_data = {
-            "pattern": "AMAZON",
-            "canonical_name": "Amazon",
-            "match_type": "contains",
-            "priority": 5
-        }
+        alias_data = {"pattern": "AMAZON", "canonical_name": "Amazon", "match_type": "contains", "priority": 5}
 
         response = await client.post("/api/v1/merchants/aliases", json=alias_data)
         assert response.status_code == 201
@@ -52,7 +48,7 @@ class TestMerchantAliases:
             "pattern": r"(?i)shell\s*(gas|station)?",
             "canonical_name": "Shell",
             "match_type": "regex",
-            "priority": 5
+            "priority": 5,
         }
 
         response = await client.post("/api/v1/merchants/aliases", json=alias_data)
@@ -64,11 +60,7 @@ class TestMerchantAliases:
     @pytest.mark.asyncio
     async def test_create_alias_invalid_regex(self, client: AsyncClient):
         """Creating alias with invalid regex should fail"""
-        alias_data = {
-            "pattern": r"[invalid(regex",
-            "canonical_name": "Test",
-            "match_type": "regex"
-        }
+        alias_data = {"pattern": r"[invalid(regex", "canonical_name": "Test", "match_type": "regex"}
 
         response = await client.post("/api/v1/merchants/aliases", json=alias_data)
         assert response.status_code == 400
@@ -77,11 +69,7 @@ class TestMerchantAliases:
     @pytest.mark.asyncio
     async def test_create_duplicate_alias(self, client: AsyncClient):
         """Creating duplicate alias should fail"""
-        alias_data = {
-            "pattern": "DUPLICATE_TEST",
-            "canonical_name": "Test",
-            "match_type": "exact"
-        }
+        alias_data = {"pattern": "DUPLICATE_TEST", "canonical_name": "Test", "match_type": "exact"}
 
         response1 = await client.post("/api/v1/merchants/aliases", json=alias_data)
         assert response1.status_code == 201
@@ -113,11 +101,9 @@ class TestMerchantAliases:
     @pytest.mark.asyncio
     async def test_get_alias(self, client: AsyncClient):
         """Get a single alias by ID"""
-        create_response = await client.post("/api/v1/merchants/aliases", json={
-            "pattern": "GET_TEST",
-            "canonical_name": "Test",
-            "match_type": "exact"
-        })
+        create_response = await client.post(
+            "/api/v1/merchants/aliases", json={"pattern": "GET_TEST", "canonical_name": "Test", "match_type": "exact"}
+        )
         alias_id = create_response.json()["id"]
 
         response = await client.get(f"/api/v1/merchants/aliases/{alias_id}")
@@ -133,12 +119,10 @@ class TestMerchantAliases:
     @pytest.mark.asyncio
     async def test_update_alias(self, client: AsyncClient):
         """Update an alias"""
-        create_response = await client.post("/api/v1/merchants/aliases", json={
-            "pattern": "UPDATE_TEST",
-            "canonical_name": "Before",
-            "match_type": "exact",
-            "priority": 1
-        })
+        create_response = await client.post(
+            "/api/v1/merchants/aliases",
+            json={"pattern": "UPDATE_TEST", "canonical_name": "Before", "match_type": "exact", "priority": 1},
+        )
         alias_id = create_response.json()["id"]
 
         update_data = {"canonical_name": "After", "priority": 99}
@@ -153,11 +137,10 @@ class TestMerchantAliases:
     @pytest.mark.asyncio
     async def test_delete_alias(self, client: AsyncClient):
         """Delete an alias"""
-        create_response = await client.post("/api/v1/merchants/aliases", json={
-            "pattern": "DELETE_TEST",
-            "canonical_name": "Test",
-            "match_type": "exact"
-        })
+        create_response = await client.post(
+            "/api/v1/merchants/aliases",
+            json={"pattern": "DELETE_TEST", "canonical_name": "Test", "match_type": "exact"},
+        )
         alias_id = create_response.json()["id"]
 
         response = await client.delete(f"/api/v1/merchants/aliases/{alias_id}")
@@ -174,21 +157,23 @@ class TestMerchantAliasApplication:
     async def test_apply_exact_match(self, client: AsyncClient):
         """Apply exact match alias"""
         # Create alias
-        await client.post("/api/v1/merchants/aliases", json={
-            "pattern": "WHOLE FOODS MKT #12345",
-            "canonical_name": "Whole Foods",
-            "match_type": "exact"
-        })
+        await client.post(
+            "/api/v1/merchants/aliases",
+            json={"pattern": "WHOLE FOODS MKT #12345", "canonical_name": "Whole Foods", "match_type": "exact"},
+        )
 
         # Create transaction with matching description
-        await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -50.00,
-            "description": "WHOLE FOODS MKT #12345",
-            "merchant": "WHOLE FOODS MKT #12345",
-            "account_source": "TEST",
-            "reference_id": "test_exact_1"
-        })
+        await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -50.00,
+                "description": "WHOLE FOODS MKT #12345",
+                "merchant": "WHOLE FOODS MKT #12345",
+                "account_source": "TEST",
+                "reference_id": "test_exact_1",
+            },
+        )
 
         # Apply aliases (dry run)
         response = await client.post("/api/v1/merchants/aliases/apply?dry_run=true")
@@ -203,30 +188,35 @@ class TestMerchantAliasApplication:
     @pytest.mark.asyncio
     async def test_apply_contains_match(self, client: AsyncClient):
         """Apply contains match alias"""
-        await client.post("/api/v1/merchants/aliases", json={
-            "pattern": "CHEVRON",
-            "canonical_name": "Chevron",
-            "match_type": "contains"
-        })
+        await client.post(
+            "/api/v1/merchants/aliases",
+            json={"pattern": "CHEVRON", "canonical_name": "Chevron", "match_type": "contains"},
+        )
 
         # Create transactions with descriptions containing the pattern
-        await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -40.00,
-            "description": "CHEVRON GAS STATION #999 SEATTLE WA",
-            "merchant": "CHEVRON GAS STATION",
-            "account_source": "TEST",
-            "reference_id": "test_contains_1"
-        })
+        await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -40.00,
+                "description": "CHEVRON GAS STATION #999 SEATTLE WA",
+                "merchant": "CHEVRON GAS STATION",
+                "account_source": "TEST",
+                "reference_id": "test_contains_1",
+            },
+        )
 
-        await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -35.00,
-            "description": "chevron fuel purchase",
-            "merchant": "chevron fuel",
-            "account_source": "TEST",
-            "reference_id": "test_contains_2"
-        })
+        await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -35.00,
+                "description": "chevron fuel purchase",
+                "merchant": "chevron fuel",
+                "account_source": "TEST",
+                "reference_id": "test_contains_2",
+            },
+        )
 
         response = await client.post("/api/v1/merchants/aliases/apply?dry_run=true")
         data = response.json()
@@ -237,29 +227,34 @@ class TestMerchantAliasApplication:
     @pytest.mark.asyncio
     async def test_apply_regex_match(self, client: AsyncClient):
         """Apply regex match alias"""
-        await client.post("/api/v1/merchants/aliases", json={
-            "pattern": r"(?i)taco\s*bell",
-            "canonical_name": "Taco Bell",
-            "match_type": "regex"
-        })
+        await client.post(
+            "/api/v1/merchants/aliases",
+            json={"pattern": r"(?i)taco\s*bell", "canonical_name": "Taco Bell", "match_type": "regex"},
+        )
 
-        await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -12.00,
-            "description": "TACO BELL #1234",
-            "merchant": "TACO BELL",
-            "account_source": "TEST",
-            "reference_id": "test_regex_1"
-        })
+        await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -12.00,
+                "description": "TACO BELL #1234",
+                "merchant": "TACO BELL",
+                "account_source": "TEST",
+                "reference_id": "test_regex_1",
+            },
+        )
 
-        await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -8.00,
-            "description": "TacoBell Mobile Order",
-            "merchant": "TacoBell",
-            "account_source": "TEST",
-            "reference_id": "test_regex_2"
-        })
+        await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -8.00,
+                "description": "TacoBell Mobile Order",
+                "merchant": "TacoBell",
+                "account_source": "TEST",
+                "reference_id": "test_regex_2",
+            },
+        )
 
         response = await client.post("/api/v1/merchants/aliases/apply?dry_run=true")
         data = response.json()
@@ -270,20 +265,22 @@ class TestMerchantAliasApplication:
     @pytest.mark.asyncio
     async def test_apply_persists_changes(self, client: AsyncClient):
         """Apply without dry_run should persist changes to database"""
-        await client.post("/api/v1/merchants/aliases", json={
-            "pattern": "PERSIST_TEST",
-            "canonical_name": "Persisted Merchant",
-            "match_type": "contains"
-        })
+        await client.post(
+            "/api/v1/merchants/aliases",
+            json={"pattern": "PERSIST_TEST", "canonical_name": "Persisted Merchant", "match_type": "contains"},
+        )
 
-        txn_response = await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -25.00,
-            "description": "PERSIST_TEST STORE",
-            "merchant": "Original Merchant",
-            "account_source": "TEST",
-            "reference_id": "test_persist_1"
-        })
+        txn_response = await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -25.00,
+                "description": "PERSIST_TEST STORE",
+                "merchant": "Original Merchant",
+                "account_source": "TEST",
+                "reference_id": "test_persist_1",
+            },
+        )
         txn_id = txn_response.json()["id"]
 
         # Apply without dry_run
@@ -301,30 +298,39 @@ class TestMerchantAliasApplication:
     async def test_apply_respects_priority(self, client: AsyncClient):
         """Higher priority aliases should be applied first"""
         # Create low priority alias (matches "PRIORITY TEST")
-        await client.post("/api/v1/merchants/aliases", json={
-            "pattern": "PRIORITY TEST",
-            "canonical_name": "Low Priority Result",
-            "match_type": "contains",
-            "priority": 1
-        })
+        await client.post(
+            "/api/v1/merchants/aliases",
+            json={
+                "pattern": "PRIORITY TEST",
+                "canonical_name": "Low Priority Result",
+                "match_type": "contains",
+                "priority": 1,
+            },
+        )
 
         # Create high priority alias (also matches "PRIORITY TEST" but is more general)
         # High priority should win even though both patterns match
-        await client.post("/api/v1/merchants/aliases", json={
-            "pattern": "PRIORITY",
-            "canonical_name": "High Priority Result",
-            "match_type": "contains",
-            "priority": 100
-        })
+        await client.post(
+            "/api/v1/merchants/aliases",
+            json={
+                "pattern": "PRIORITY",
+                "canonical_name": "High Priority Result",
+                "match_type": "contains",
+                "priority": 100,
+            },
+        )
 
-        await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -10.00,
-            "description": "PRIORITY TEST MERCHANT",
-            "merchant": "Original",
-            "account_source": "TEST",
-            "reference_id": "test_priority_1"
-        })
+        await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -10.00,
+                "description": "PRIORITY TEST MERCHANT",
+                "merchant": "Original",
+                "account_source": "TEST",
+                "reference_id": "test_priority_1",
+            },
+        )
 
         response = await client.post("/api/v1/merchants/aliases/apply?dry_run=true")
         data = response.json()
@@ -336,20 +342,22 @@ class TestMerchantAliasApplication:
     @pytest.mark.asyncio
     async def test_apply_no_change_when_already_matched(self, client: AsyncClient):
         """Don't update if merchant already matches canonical name"""
-        await client.post("/api/v1/merchants/aliases", json={
-            "pattern": "ALREADY",
-            "canonical_name": "Already Matched",
-            "match_type": "contains"
-        })
+        await client.post(
+            "/api/v1/merchants/aliases",
+            json={"pattern": "ALREADY", "canonical_name": "Already Matched", "match_type": "contains"},
+        )
 
-        await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -10.00,
-            "description": "ALREADY MATCHED STORE",
-            "merchant": "Already Matched",  # Already canonical
-            "account_source": "TEST",
-            "reference_id": "test_nochange_1"
-        })
+        await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -10.00,
+                "description": "ALREADY MATCHED STORE",
+                "merchant": "Already Matched",  # Already canonical
+                "account_source": "TEST",
+                "reference_id": "test_nochange_1",
+            },
+        )
 
         response = await client.post("/api/v1/merchants/aliases/apply?dry_run=true")
         data = response.json()
@@ -361,11 +369,10 @@ class TestMerchantAliasApplication:
     @pytest.mark.asyncio
     async def test_apply_updates_alias_stats(self, client: AsyncClient):
         """Applying aliases should update match_count and last_matched_date"""
-        create_response = await client.post("/api/v1/merchants/aliases", json={
-            "pattern": "STATS_TEST",
-            "canonical_name": "Stats Merchant",
-            "match_type": "contains"
-        })
+        create_response = await client.post(
+            "/api/v1/merchants/aliases",
+            json={"pattern": "STATS_TEST", "canonical_name": "Stats Merchant", "match_type": "contains"},
+        )
         alias_id = create_response.json()["id"]
 
         # Verify initial stats
@@ -375,14 +382,17 @@ class TestMerchantAliasApplication:
 
         # Create transactions
         for i in range(3):
-            await client.post("/api/v1/transactions", json={
-                "date": date.today().isoformat(),
-                "amount": -10.00,
-                "description": f"STATS_TEST STORE {i}",
-                "merchant": f"Original {i}",
-                "account_source": "TEST",
-                "reference_id": f"test_stats_{i}"
-            })
+            await client.post(
+                "/api/v1/transactions",
+                json={
+                    "date": date.today().isoformat(),
+                    "amount": -10.00,
+                    "description": f"STATS_TEST STORE {i}",
+                    "merchant": f"Original {i}",
+                    "account_source": "TEST",
+                    "reference_id": f"test_stats_{i}",
+                },
+            )
 
         # Apply aliases (not dry run)
         await client.post("/api/v1/merchants/aliases/apply?dry_run=false")
@@ -430,21 +440,23 @@ class TestAliasApplicationDuringImport:
     async def test_alias_applied_on_import(self, client: AsyncClient):
         """Aliases should be applied when importing new transactions"""
         # Create alias first
-        await client.post("/api/v1/merchants/aliases", json={
-            "pattern": "IMPORT_TEST",
-            "canonical_name": "Imported Merchant",
-            "match_type": "contains"
-        })
+        await client.post(
+            "/api/v1/merchants/aliases",
+            json={"pattern": "IMPORT_TEST", "canonical_name": "Imported Merchant", "match_type": "contains"},
+        )
 
         # Import transaction via direct API (simulating import)
-        txn_response = await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -15.00,
-            "description": "IMPORT_TEST PURCHASE",
-            "merchant": "IMPORT_TEST ORIGINAL",
-            "account_source": "TEST",
-            "reference_id": "test_import_alias_1"
-        })
+        txn_response = await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -15.00,
+                "description": "IMPORT_TEST PURCHASE",
+                "merchant": "IMPORT_TEST ORIGINAL",
+                "account_source": "TEST",
+                "reference_id": "test_import_alias_1",
+            },
+        )
 
         # Note: The direct transaction API doesn't apply aliases
         # Aliases are applied during CSV import

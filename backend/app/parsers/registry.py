@@ -98,10 +98,7 @@ class ParserRegistry:
     @classmethod
     def get_format_names(cls) -> Dict[str, str]:
         """Get mapping of format_key -> format_name for all parsers."""
-        return {
-            key: parser_class.format_name
-            for key, parser_class in cls._parsers.items()
-        }
+        return {key: parser_class.format_name for key, parser_class in cls._parsers.items()}
 
     @classmethod
     def clear(cls):

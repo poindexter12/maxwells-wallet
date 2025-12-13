@@ -7,7 +7,6 @@ along with configuration dataclasses for declarative parser configuration.
 
 import csv
 import io
-import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import date, datetime
@@ -17,14 +16,16 @@ from typing import Dict, List, Optional, Tuple
 
 class AmountSign(Enum):
     """How negative amounts are represented in the CSV"""
-    NEGATIVE_PREFIX = "negative_prefix"    # -50.00
-    PARENTHESES = "parentheses"            # (50.00)
-    PLUS_MINUS_PREFIX = "plus_minus"       # + $50.00 / - $50.00
+
+    NEGATIVE_PREFIX = "negative_prefix"  # -50.00
+    PARENTHESES = "parentheses"  # (50.00)
+    PLUS_MINUS_PREFIX = "plus_minus"  # + $50.00 / - $50.00
 
 
 @dataclass
 class ColumnMapping:
     """Maps CSV columns to transaction fields"""
+
     date_column: str
     amount_column: str
     description_column: str
@@ -43,6 +44,7 @@ class ColumnMapping:
 @dataclass
 class AmountConfig:
     """Configuration for parsing amount values"""
+
     sign_convention: AmountSign = AmountSign.NEGATIVE_PREFIX
     currency_prefix: str = ""  # e.g., "$"
     invert_sign: bool = False  # Flip sign after parsing (for CC statements)
@@ -52,6 +54,7 @@ class AmountConfig:
 @dataclass
 class DateConfig:
     """Configuration for parsing date values"""
+
     format: str = "%m/%d/%Y"  # strptime format
     use_iso_format: bool = False  # Use datetime.fromisoformat() instead
 
@@ -59,6 +62,7 @@ class DateConfig:
 @dataclass
 class ParsedTransaction:
     """Normalized transaction output from all parsers"""
+
     date: date
     amount: float
     description: str
@@ -72,15 +76,15 @@ class ParsedTransaction:
     def to_dict(self) -> Dict:
         """Convert to dictionary for API responses"""
         return {
-            'date': self.date,
-            'amount': self.amount,
-            'description': self.description,
-            'merchant': self.merchant,
-            'account_source': self.account_source,
-            'reference_id': self.reference_id,
-            'card_member': self.card_member,
-            'suggested_category': self.suggested_category,
-            'amex_category': self.source_category,  # backwards compat
+            "date": self.date,
+            "amount": self.amount,
+            "description": self.description,
+            "merchant": self.merchant,
+            "account_source": self.account_source,
+            "reference_id": self.reference_id,
+            "card_member": self.card_member,
+            "suggested_category": self.suggested_category,
+            "amex_category": self.source_category,  # backwards compat
         }
 
 
@@ -151,8 +155,8 @@ class CSVFormatParser(ABC):
         Default: Skips `skip_header_rows` lines and returns the rest.
         """
         if self.skip_header_rows > 0:
-            lines = csv_content.split('\n')
-            return '\n'.join(lines[self.skip_header_rows:])
+            lines = csv_content.split("\n")
+            return "\n".join(lines[self.skip_header_rows :])
         return csv_content
 
     def extract_merchant(self, row: Dict, description: str) -> str:
@@ -182,8 +186,8 @@ class CSVFormatParser(ABC):
         """
         date_col = self.column_mapping.date_column
         amount_col = self.column_mapping.amount_column
-        date_val = row.get(date_col, '').strip() if date_col else ''
-        amount_val = row.get(amount_col, '').strip() if amount_col else ''
+        date_val = row.get(date_col, "").strip() if date_col else ""
+        amount_val = row.get(amount_col, "").strip() if amount_col else ""
         return not date_val or not amount_val
 
     def get_default_account_source(self, csv_content: str, row: Dict) -> str:
@@ -203,7 +207,7 @@ class CSVFormatParser(ABC):
         Default: Uses reference column if available, else generates from date/amount.
         """
         if self.column_mapping.reference_column:
-            ref = row.get(self.column_mapping.reference_column, '').strip()
+            ref = row.get(self.column_mapping.reference_column, "").strip()
             if ref:
                 return ref
         return f"{self.format_key}_{date_val}_{amount}"
@@ -222,27 +226,27 @@ class CSVFormatParser(ABC):
 
         # Remove currency prefix
         if config.currency_prefix:
-            clean = clean.replace(config.currency_prefix, '')
+            clean = clean.replace(config.currency_prefix, "")
 
         # Remove thousands separator
-        clean = clean.replace(config.thousands_separator, '')
+        clean = clean.replace(config.thousands_separator, "")
 
         # Handle different sign conventions
         is_negative = False
 
         if config.sign_convention == AmountSign.PARENTHESES:
-            if clean.startswith('(') and clean.endswith(')'):
+            if clean.startswith("(") and clean.endswith(")"):
                 clean = clean[1:-1]
                 is_negative = True
         elif config.sign_convention == AmountSign.PLUS_MINUS_PREFIX:
-            clean = clean.replace(' ', '')
-            if clean.startswith('+'):
+            clean = clean.replace(" ", "")
+            if clean.startswith("+"):
                 clean = clean[1:]
-            elif clean.startswith('-'):
+            elif clean.startswith("-"):
                 clean = clean[1:]
                 is_negative = True
         else:  # NEGATIVE_PREFIX
-            if clean.startswith('-'):
+            if clean.startswith("-"):
                 clean = clean[1:]
                 is_negative = True
 
@@ -303,21 +307,21 @@ class CSVFormatParser(ABC):
 
             # Parse date
             date_col = self.column_mapping.date_column
-            date_str = row.get(date_col, '').strip()
+            date_str = row.get(date_col, "").strip()
             trans_date = self.parse_date(date_str)
             if trans_date is None:
                 continue
 
             # Parse amount
             amount_col = self.column_mapping.amount_column
-            amount_str = row.get(amount_col, '').strip()
+            amount_str = row.get(amount_col, "").strip()
             amount = self.parse_amount(amount_str)
             if amount is None:
                 continue
 
             # Get description
             desc_col = self.column_mapping.description_column
-            description = row.get(desc_col, '').strip()
+            description = row.get(desc_col, "").strip()
 
             # Extract merchant
             merchant = self.extract_merchant(row, description)
@@ -333,26 +337,28 @@ class CSVFormatParser(ABC):
             # Get card member if applicable
             card_member = None
             if self.column_mapping.card_member_column:
-                card_member = row.get(self.column_mapping.card_member_column, '').strip()
+                card_member = row.get(self.column_mapping.card_member_column, "").strip()
 
             # Map category
             source_category = None
             suggested_category = None
             if self.column_mapping.category_column:
-                source_category = row.get(self.column_mapping.category_column, '').strip()
+                source_category = row.get(self.column_mapping.category_column, "").strip()
                 if source_category:
                     suggested_category = self.map_category(source_category)
 
-            transactions.append(ParsedTransaction(
-                date=trans_date,
-                amount=amount,
-                description=description,
-                merchant=merchant,
-                account_source=effective_account,
-                reference_id=reference_id,
-                card_member=card_member,
-                suggested_category=suggested_category,
-                source_category=source_category,
-            ))
+            transactions.append(
+                ParsedTransaction(
+                    date=trans_date,
+                    amount=amount,
+                    description=description,
+                    merchant=merchant,
+                    account_source=effective_account,
+                    reference_id=reference_id,
+                    card_member=card_member,
+                    suggested_category=suggested_category,
+                    source_category=source_category,
+                )
+            )
 
         return transactions
