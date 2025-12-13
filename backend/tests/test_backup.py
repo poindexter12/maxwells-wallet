@@ -412,11 +412,13 @@ class TestBackupServiceEdgeCases:
         assert len(parts[2]) == 6  # ffffff (microseconds)
 
     def test_backup_filename_matches_id(self, backup_service):
-        """Test that backup filename is derived from ID."""
+        """Test that backup filename is derived from ID and includes tier."""
         metadata = backup_service.create_backup(description="Filename test", source="manual")
 
-        expected_filename = f"wallet_{metadata.id}.db.gz"
+        # New backups start as "hourly" tier
+        expected_filename = f"wallet_hourly_{metadata.id}.db.gz"
         assert metadata.filename == expected_filename
+        assert metadata.tier == "hourly"
 
     def test_list_backups_sorted_newest_first(self, backup_service):
         """Test that list_backups returns backups sorted by date descending."""
@@ -477,6 +479,67 @@ class TestBackupServiceGFSRetention:
             # All should be preserved (all within 24h tier)
             backups = service.list_backups()
             assert len(backups) == 10
+
+    def test_tier_promotion_renames_files(self, temp_backup_dir, temp_db_file):
+        """Test that backups get renamed when promoted to higher tiers."""
+        with patch('app.services.backup.settings') as mock_settings:
+            mock_settings.backup_dir = temp_backup_dir
+
+            service = BackupService()
+            service._db_path = Path(temp_db_file)
+
+            # Create a backup
+            metadata = service.create_backup(description="Test backup", source="manual")
+            original_filename = metadata.filename
+            backup_id = metadata.id
+
+            assert metadata.tier == "hourly"
+            assert "hourly" in original_filename
+
+            # Make it 2 days old (should become "daily" tier)
+            manifest = service._load_manifest()
+            manifest.backups[0].created_at = datetime.now(timezone.utc) - timedelta(days=2)
+            service._save_manifest(manifest)
+
+            # Run cleanup to trigger tier promotion
+            service.cleanup_old_backups()
+
+            # Check the backup was promoted and renamed
+            backup = service.get_backup(backup_id)
+            assert backup is not None
+            assert backup.tier == "daily"
+            assert "daily" in backup.filename
+            assert f"wallet_daily_{backup_id}.db.gz" == backup.filename
+
+            # Verify file was actually renamed on disk
+            assert (Path(temp_backup_dir) / backup.filename).exists()
+            assert not (Path(temp_backup_dir) / original_filename).exists()
+
+    def test_tier_promotion_to_monthly(self, temp_backup_dir, temp_db_file):
+        """Test that old backups get promoted to monthly tier."""
+        with patch('app.services.backup.settings') as mock_settings:
+            mock_settings.backup_dir = temp_backup_dir
+
+            service = BackupService()
+            service._db_path = Path(temp_db_file)
+
+            # Create a backup
+            metadata = service.create_backup(description="Old backup", source="manual")
+            backup_id = metadata.id
+
+            # Make it 2 months old (should become "monthly" tier)
+            manifest = service._load_manifest()
+            manifest.backups[0].created_at = datetime.now(timezone.utc) - timedelta(days=60)
+            service._save_manifest(manifest)
+
+            # Run cleanup to trigger tier promotion
+            service.cleanup_old_backups()
+
+            # Check the backup was promoted to monthly
+            backup = service.get_backup(backup_id)
+            assert backup is not None
+            assert backup.tier == "monthly"
+            assert "monthly" in backup.filename
 
 
 class TestBackupServiceInvalidDatabase:
