@@ -19,7 +19,7 @@ function formatDate(dateString: string): string {
 }
 
 const INTERVAL_OPTIONS = [
-  { value: 12, label: '12 hours' },
+  { value: 1, label: '1 hour' },
   { value: 24, label: '1 day' },
   { value: 168, label: '1 week' },
 ]
