@@ -22,7 +22,15 @@ jobs:
 
       - name: Extract version from tag
         id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          # Check if this is a pre-release (contains -beta, -rc, -alpha, etc.)
+          if [[ "$VERSION" =~ -(beta|rc|alpha) ]]; then
+            echo "PRERELEASE=true" >> $GITHUB_OUTPUT
+          else
+            echo "PRERELEASE=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Extract release notes from CHANGELOG
         id: changelog
