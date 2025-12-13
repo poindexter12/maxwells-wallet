@@ -24,8 +24,18 @@ if TYPE_CHECKING:
 # Endpoints blocked in demo mode
 # Format: (method, path_pattern)
 BLOCKED_ENDPOINTS = [
-    # Import operations
-    ("POST", r"^/api/v1/import.*"),
+    # Import file uploads (blocks user financial data from being uploaded)
+    # These endpoints accept file uploads which could contain personal data
+    ("POST", r"^/api/v1/import/preview$"),
+    ("POST", r"^/api/v1/import/confirm$"),
+    ("POST", r"^/api/v1/import/batch/upload$"),
+    ("POST", r"^/api/v1/import/batch/confirm$"),
+    ("POST", r"^/api/v1/import/analyze$"),
+    ("POST", r"^/api/v1/import/custom/auto-detect$"),
+    ("POST", r"^/api/v1/import/custom/preview$"),
+    ("POST", r"^/api/v1/import/custom/confirm$"),
+    # Note: /import/custom/configs and /import/custom/configs/import are ALLOWED
+    # because they only contain format configuration, not personal financial data
 
     # Admin destructive operations
     ("DELETE", r"^/api/v1/admin/purge-all$"),

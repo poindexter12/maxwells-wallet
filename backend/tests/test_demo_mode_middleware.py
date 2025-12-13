@@ -16,11 +16,22 @@ class TestBlockedEndpointsPatterns:
     @pytest.mark.parametrize(
         "method,path,should_match",
         [
-            # Import operations - should be blocked
+            # Import file upload operations - should be blocked
             ("POST", "/api/v1/import/preview", True),
             ("POST", "/api/v1/import/confirm", True),
-            ("POST", "/api/v1/import/batch", True),
+            ("POST", "/api/v1/import/batch/upload", True),
+            ("POST", "/api/v1/import/batch/confirm", True),
+            ("POST", "/api/v1/import/analyze", True),
+            ("POST", "/api/v1/import/custom/auto-detect", True),
+            ("POST", "/api/v1/import/custom/preview", True),
+            ("POST", "/api/v1/import/custom/confirm", True),
             ("GET", "/api/v1/import/preview", False),  # GET not blocked
+
+            # Import config management - should NOT be blocked (no personal data)
+            ("POST", "/api/v1/import/custom/configs", False),
+            ("POST", "/api/v1/import/custom/configs/import", False),
+            ("GET", "/api/v1/import/custom/configs", False),
+            ("GET", "/api/v1/import/formats", False),
 
             # Admin destructive operations - should be blocked
             ("DELETE", "/api/v1/admin/purge-all", True),
