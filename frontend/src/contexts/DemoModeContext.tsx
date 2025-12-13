@@ -7,11 +7,7 @@ export interface DemoModeState {
   message: string | null
 }
 
-interface DemoModeContextType extends DemoModeState {
-  // Add any methods if needed in the future
-}
-
-const DemoModeContext = createContext<DemoModeContextType | undefined>(undefined)
+const DemoModeContext = createContext<DemoModeState | undefined>(undefined)
 
 interface DemoModeProviderProps {
   children: ReactNode
@@ -27,7 +23,7 @@ export function DemoModeProvider({ children, isDemoMode, message }: DemoModeProv
   )
 }
 
-export function useDemoMode(): DemoModeContextType {
+export function useDemoMode(): DemoModeState {
   const context = useContext(DemoModeContext)
   if (context === undefined) {
     throw new Error('useDemoMode must be used within a DemoModeProvider')
