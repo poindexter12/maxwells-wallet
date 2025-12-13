@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useState } from 'react'
 import { NextIntlClientProvider } from 'next-intl'
 import { DashboardProvider } from '@/contexts/DashboardContext'
+import { DemoModeProvider } from '@/contexts/DemoModeContext'
 import { defaultLocale, Locale, isValidLocale } from '@/i18n'
 import universal from '@/messages/universal.json'
 
@@ -37,6 +38,8 @@ async function loadMessages(locale: string): Promise<Record<string, unknown>> {
 export function Providers({ children }: { children: ReactNode }) {
   const [locale, setLocale] = useState<Locale>(defaultLocale)
   const [messages, setMessages] = useState<Record<string, unknown> | null>(null)
+  const [demoMode, setDemoMode] = useState(false)
+  const [demoMessage, setDemoMessage] = useState<string | null>(null)
 
   useEffect(() => {
     async function initLocale() {
@@ -51,6 +54,10 @@ export function Providers({ children }: { children: ReactNode }) {
           if (isValidLocale(effectiveLocale)) {
             setLocale(effectiveLocale)
           }
+
+          // Set demo mode state
+          setDemoMode(data.demo_mode || false)
+          setDemoMessage(data.demo_message || null)
         }
       } catch (error) {
         console.error('Failed to fetch locale settings:', error)
@@ -78,9 +85,11 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      <DashboardProvider>
-        {children}
-      </DashboardProvider>
+      <DemoModeProvider isDemoMode={demoMode} message={demoMessage}>
+        <DashboardProvider>
+          {children}
+        </DashboardProvider>
+      </DemoModeProvider>
     </NextIntlClientProvider>
   )
 }

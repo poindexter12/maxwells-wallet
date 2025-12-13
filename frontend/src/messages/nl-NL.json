@@ -351,7 +351,8 @@
       "accounts": "Rekeningen",
       "occasions": "Gebeurtenissen",
       "expenses": "Uitgavencategorieën",
-      "allTags": "Alle Tags"
+      "allTags": "Alle Tags",
+      "backups": "Back-ups"
     },
     "overview": {
       "stats": {
@@ -863,5 +864,38 @@
     "clear": "Datum wissen",
     "openCalendar": "Kalender openen",
     "selectDate": "Datum selecteren"
+  },
+  "demo": {
+    "banner": "Demo-modus - Gegevens worden periodiek gereset. Sommige functies zijn uitgeschakeld.",
+    "featureDisabled": "Deze functie is uitgeschakeld in demo-modus."
+  },
+  "backup": {
+    "title": "Back-ups",
+    "description": "Database back-ups maken en herstellen.",
+    "createBackup": "Back-up maken",
+    "restoreBackup": "Herstellen",
+    "deleteBackup": "Verwijderen",
+    "noBackups": "Geen back-ups beschikbaar",
+    "backupCreated": "Back-up succesvol gemaakt",
+    "backupRestored": "Database hersteld vanaf back-up",
+    "backupDeleted": "Back-up verwijderd",
+    "confirmRestore": "Weet u zeker dat u deze back-up wilt herstellen? Huidige gegevens worden vervangen.",
+    "confirmDelete": "Weet u zeker dat u deze back-up wilt verwijderen?",
+    "schedule": {
+      "title": "Automatische back-ups",
+      "enabled": "Automatische back-ups inschakelen",
+      "interval": "Back-up interval",
+      "nextBackup": "Volgende back-up",
+      "retention": "Bewaren",
+      "retentionHelp": "Oudste back-ups worden automatisch verwijderd",
+      "demoResetInterval": "Demo reset-interval"
+    },
+    "fields": {
+      "description": "Beschrijving",
+      "created": "Gemaakt",
+      "size": "Grootte",
+      "source": "Bron",
+      "demoBackup": "Demo Back-up"
+    }
   }
 }

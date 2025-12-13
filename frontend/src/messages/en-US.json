@@ -347,6 +347,7 @@
       "overview": "Overview",
       "imports": "Imports",
       "health": "Health",
+      "backups": "Backups",
       "buckets": "Buckets",
       "accounts": "Accounts",
       "occasions": "Occasions",
@@ -863,5 +864,38 @@
     "clear": "Clear date",
     "openCalendar": "Open calendar",
     "selectDate": "Select date"
+  },
+  "demo": {
+    "banner": "Demo Mode - Data resets periodically. Some features are disabled.",
+    "featureDisabled": "This feature is disabled in demo mode."
+  },
+  "backup": {
+    "title": "Backups",
+    "description": "Create and restore database backups.",
+    "createBackup": "Create Backup",
+    "restoreBackup": "Restore",
+    "deleteBackup": "Delete",
+    "noBackups": "No backups available",
+    "backupCreated": "Backup created successfully",
+    "backupRestored": "Database restored from backup",
+    "backupDeleted": "Backup deleted",
+    "confirmRestore": "Are you sure you want to restore this backup? Current data will be replaced.",
+    "confirmDelete": "Are you sure you want to delete this backup?",
+    "schedule": {
+      "title": "Automatic Backups",
+      "enabled": "Enable automatic backups",
+      "interval": "Backup interval",
+      "nextBackup": "Next backup",
+      "retention": "Keep",
+      "retentionHelp": "Oldest backups are deleted automatically",
+      "demoResetInterval": "Demo reset interval"
+    },
+    "fields": {
+      "description": "Description",
+      "created": "Created",
+      "size": "Size",
+      "source": "Source",
+      "demoBackup": "Demo Backup"
+    }
   }
 }

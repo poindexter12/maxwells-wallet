@@ -351,7 +351,8 @@
       "accounts": "Cuentas",
       "occasions": "Ocasiones",
       "expenses": "Tipos de Gasto",
-      "allTags": "Todas las Etiquetas"
+      "allTags": "Todas las Etiquetas",
+      "backups": "Copias"
     },
     "overview": {
       "stats": {
@@ -863,5 +864,38 @@
     "clear": "Borrar fecha",
     "openCalendar": "Abrir calendario",
     "selectDate": "Seleccionar fecha"
+  },
+  "demo": {
+    "banner": "Modo Demo - Los datos se restablecen periódicamente. Algunas funciones están deshabilitadas.",
+    "featureDisabled": "Esta función está deshabilitada en modo demo."
+  },
+  "backup": {
+    "title": "Copias de seguridad",
+    "description": "Crear y restaurar copias de seguridad de la base de datos.",
+    "createBackup": "Crear copia",
+    "restoreBackup": "Restaurar",
+    "deleteBackup": "Eliminar",
+    "noBackups": "No hay copias de seguridad disponibles",
+    "backupCreated": "Copia de seguridad creada correctamente",
+    "backupRestored": "Base de datos restaurada desde la copia",
+    "backupDeleted": "Copia de seguridad eliminada",
+    "confirmRestore": "¿Está seguro de que desea restaurar esta copia? Los datos actuales serán reemplazados.",
+    "confirmDelete": "¿Está seguro de que desea eliminar esta copia de seguridad?",
+    "schedule": {
+      "title": "Copias automáticas",
+      "enabled": "Habilitar copias automáticas",
+      "interval": "Intervalo de copias",
+      "nextBackup": "Próxima copia",
+      "retention": "Conservar",
+      "retentionHelp": "Las copias más antiguas se eliminan automáticamente",
+      "demoResetInterval": "Intervalo de reinicio demo"
+    },
+    "fields": {
+      "description": "Descripción",
+      "created": "Creado",
+      "size": "Tamaño",
+      "source": "Origen",
+      "demoBackup": "Copia Demo"
+    }
   }
 }

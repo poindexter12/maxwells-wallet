@@ -24,4 +24,14 @@ export const ADMIN_IDS = {
   TAGS_TAB_LOADING: 'tags-tab-loading',
   TAGS_TAB_EMPTY: 'tags-tab-empty',
   TAGS_TAB_TABLE: 'tags-tab-table',
+
+  // Admin Backups
+  ADMIN_TAB_BACKUPS: 'admin-tab-backups',
+  BACKUP_LIST: 'backup-list',
+  BACKUP_CREATE_BUTTON: 'backup-create-button',
+  BACKUP_SCHEDULE_TOGGLE: 'backup-schedule-toggle',
+  BACKUP_SCHEDULE_INTERVAL: 'backup-schedule-interval',
+  BACKUP_RETENTION_SELECT: 'backup-retention-select',
+  BACKUP_LOADING: 'backup-loading',
+  BACKUP_EMPTY: 'backup-empty',
 } as const;

@@ -351,7 +351,8 @@
       "accounts": "Konten",
       "occasions": "Anlässe",
       "expenses": "Ausgabentypen",
-      "allTags": "Alle Tags"
+      "allTags": "Alle Tags",
+      "backups": "Sicherungen"
     },
     "overview": {
       "stats": {
@@ -863,5 +864,38 @@
     "clear": "Datum löschen",
     "openCalendar": "Kalender öffnen",
     "selectDate": "Datum auswählen"
+  },
+  "demo": {
+    "banner": "Demo-Modus - Daten werden regelmäßig zurückgesetzt. Einige Funktionen sind deaktiviert.",
+    "featureDisabled": "Diese Funktion ist im Demo-Modus deaktiviert."
+  },
+  "backup": {
+    "title": "Sicherungen",
+    "description": "Datenbanksicherungen erstellen und wiederherstellen.",
+    "createBackup": "Sicherung erstellen",
+    "restoreBackup": "Wiederherstellen",
+    "deleteBackup": "Löschen",
+    "noBackups": "Keine Sicherungen verfügbar",
+    "backupCreated": "Sicherung erfolgreich erstellt",
+    "backupRestored": "Datenbank aus Sicherung wiederhergestellt",
+    "backupDeleted": "Sicherung gelöscht",
+    "confirmRestore": "Möchten Sie diese Sicherung wirklich wiederherstellen? Aktuelle Daten werden ersetzt.",
+    "confirmDelete": "Möchten Sie diese Sicherung wirklich löschen?",
+    "schedule": {
+      "title": "Automatische Sicherungen",
+      "enabled": "Automatische Sicherungen aktivieren",
+      "interval": "Sicherungsintervall",
+      "nextBackup": "Nächste Sicherung",
+      "retention": "Behalten",
+      "retentionHelp": "Älteste Sicherungen werden automatisch gelöscht",
+      "demoResetInterval": "Demo-Zurücksetzungsintervall"
+    },
+    "fields": {
+      "description": "Beschreibung",
+      "created": "Erstellt",
+      "size": "Größe",
+      "source": "Quelle",
+      "demoBackup": "Demo-Sicherung"
+    }
   }
 }
