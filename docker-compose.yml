@@ -31,6 +31,9 @@ services:
       # - ./my-data:/import:ro
     environment:
       - DATABASE_URL=sqlite+aiosqlite:////data/wallet.db
+      # Demo mode (v0.9+) - set DEMO_MODE=true in .env or shell
+      - DEMO_MODE=${DEMO_MODE:-false}
+      - DEMO_RESET_INTERVAL_HOURS=${DEMO_RESET_INTERVAL_HOURS:-1}
       # Observability (v0.8+)
       - OTEL_ENABLED=true
       - OTEL_METRICS_ENABLED=true
