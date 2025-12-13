@@ -21,9 +21,10 @@ logger = logging.getLogger(__name__)
 class SchedulerSettings(BaseModel):
     """Configuration for scheduled backup jobs."""
 
-    auto_backup_enabled: bool = False
-    auto_backup_interval_hours: int = 24
-    demo_reset_interval_hours: int = 1  # Only used when DEMO_MODE=true
+    # These default to env var values from AppSettings
+    auto_backup_enabled: bool = settings.auto_backup_enabled
+    auto_backup_interval_hours: int = settings.auto_backup_interval_hours
+    demo_reset_interval_hours: int = settings.demo_reset_interval_hours
     next_auto_backup: Optional[datetime] = None
     next_demo_reset: Optional[datetime] = None
 
@@ -42,6 +43,10 @@ class SchedulerService:
             self.scheduler.start()
             self._started = True
             logger.info("Scheduler started")
+
+            # If auto backup is enabled via env var, start the auto backup job
+            if self._settings.auto_backup_enabled:
+                self.schedule_auto_backup(self._settings.auto_backup_interval_hours)
 
             # If demo mode is enabled, start the demo reset job
             if settings.demo_mode:
