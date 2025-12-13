@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Body
 from sqlmodel import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, List
+from typing import Optional, List, Literal
 from datetime import datetime
+from pydantic import BaseModel
 
 from app.database import get_session
 from app.models import (
@@ -12,6 +13,14 @@ from app.models import (
     ImportFormat, CustomFormatConfig, AppSettings
 )
 from app.errors import ErrorCode, not_found, bad_request
+from app.services.backup import backup_service, BackupMetadata
+
+
+class CreateBackupRequest(BaseModel):
+    """Request body for creating a backup."""
+    description: str = ""
+    source: Literal["manual", "scheduled", "pre_import", "demo_seed"] = "manual"
+    is_demo_backup: bool = False
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
@@ -315,4 +324,128 @@ async def get_admin_stats(
         "account_stats": account_stats,
         "total_import_sessions": total_sessions,
         "import_session_status": session_status
+    }
+
+
+# ============================================================================
+# Backup Management Endpoints
+# ============================================================================
+
+
+@router.get("/backups", response_model=list[BackupMetadata])
+async def list_backups():
+    """List all available database backups."""
+    return backup_service.list_backups()
+
+
+@router.post("/backup", response_model=BackupMetadata)
+async def create_backup(request: CreateBackupRequest = Body(default=CreateBackupRequest())):
+    """
+    Create a new database backup.
+
+    The backup will be stored as a gzip-compressed copy of the SQLite database.
+    GFS retention policy automatically manages backup cleanup.
+    """
+    return backup_service.create_backup(
+        description=request.description,
+        source=request.source,
+        is_demo_backup=request.is_demo_backup,
+    )
+
+
+@router.get("/backup/{backup_id}", response_model=BackupMetadata)
+async def get_backup(backup_id: str):
+    """Get metadata for a specific backup."""
+    backup = backup_service.get_backup(backup_id)
+    if backup is None:
+        raise not_found(ErrorCode.BACKUP_NOT_FOUND, backup_id=backup_id)
+    return backup
+
+
+@router.post("/restore/{backup_id}")
+async def restore_backup(
+    backup_id: str,
+    confirm: str = Query(..., description="Must be 'RESTORE' to confirm"),
+):
+    """
+    Restore the database from a backup.
+
+    WARNING: This will replace the current database with the backup.
+    All changes since the backup was created will be lost.
+
+    Pass confirm='RESTORE' to confirm the restore operation.
+    """
+    if confirm != "RESTORE":
+        raise bad_request(
+            ErrorCode.CONFIRMATION_REQUIRED,
+            "Must pass confirm='RESTORE' to confirm restore",
+            expected="RESTORE"
+        )
+
+    backup = backup_service.get_backup(backup_id)
+    if backup is None:
+        raise not_found(ErrorCode.BACKUP_NOT_FOUND, backup_id=backup_id)
+
+    backup_service.restore_backup(backup_id)
+
+    return {
+        "success": True,
+        "message": f"Database restored from backup {backup_id}",
+        "backup": backup,
+        "clear_browser_storage": True,  # Signal frontend to refresh
+    }
+
+
+@router.delete("/backup/{backup_id}")
+async def delete_backup(
+    backup_id: str,
+    confirm: str = Query(..., description="Must be 'DELETE' to confirm"),
+):
+    """
+    Delete a backup.
+
+    Cannot delete the demo backup. Pass confirm='DELETE' to confirm.
+    """
+    if confirm != "DELETE":
+        raise bad_request(
+            ErrorCode.CONFIRMATION_REQUIRED,
+            "Must pass confirm='DELETE' to confirm deletion",
+            expected="DELETE"
+        )
+
+    backup = backup_service.get_backup(backup_id)
+    if backup is None:
+        raise not_found(ErrorCode.BACKUP_NOT_FOUND, backup_id=backup_id)
+
+    if backup.is_demo_backup:
+        raise bad_request(
+            ErrorCode.CANNOT_DELETE_DEMO_BACKUP,
+            "Cannot delete the demo backup"
+        )
+
+    backup_service.delete_backup(backup_id)
+
+    return {
+        "success": True,
+        "message": f"Backup {backup_id} deleted",
+    }
+
+
+@router.post("/backup/{backup_id}/set-demo")
+async def set_demo_backup(backup_id: str):
+    """
+    Mark a backup as the demo backup.
+
+    The demo backup is used for automatic resets in demo mode.
+    Only one backup can be the demo backup at a time.
+    """
+    backup = backup_service.get_backup(backup_id)
+    if backup is None:
+        raise not_found(ErrorCode.BACKUP_NOT_FOUND, backup_id=backup_id)
+
+    backup_service.set_demo_backup(backup_id)
+
+    return {
+        "success": True,
+        "message": f"Backup {backup_id} is now the demo backup",
     }

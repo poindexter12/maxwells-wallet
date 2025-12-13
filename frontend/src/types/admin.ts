@@ -43,7 +43,28 @@ export interface TagWithUsage extends Tag {
   usage_count?: number
 }
 
-export type AdminTab = 'overview' | 'imports' | 'health' | 'all-tags' | 'buckets' | 'accounts' | 'occasions' | 'expense-types'
+export type AdminTab = 'overview' | 'imports' | 'health' | 'backups' | 'all-tags' | 'buckets' | 'accounts' | 'occasions' | 'expense-types'
+
+// Backup types
+export interface BackupMetadata {
+  id: string
+  filename: string
+  description: string
+  created_at: string
+  size_bytes: number
+  is_demo_backup: boolean
+  source: 'manual' | 'scheduled' | 'pre_import' | 'demo_seed'
+  db_version: string | null
+  tier: 'hourly' | 'daily' | 'weekly' | 'monthly'
+}
+
+export interface SchedulerSettings {
+  auto_backup_enabled: boolean
+  auto_backup_interval_hours: number
+  demo_reset_interval_hours: number
+  next_auto_backup: string | null
+  next_demo_reset: string | null
+}
 
 // Health/Observability types
 export interface LatencyPercentiles {

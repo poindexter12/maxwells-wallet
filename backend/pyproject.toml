@@ -23,6 +23,8 @@ dependencies = [
     "structlog>=24.1.0",
     "pydantic-settings>=2.0.0",
     "httpx>=0.25.0",
+    # Scheduling
+    "apscheduler>=3.10.0",
 ]
 
 [build-system]
@@ -45,6 +47,7 @@ dev = [
     "ruff>=0.4.0",
     "mypy>=1.10.0",
     "pip-audit>=2.7.0",
+    "freezegun>=1.5.5",
 ]
 
 [tool.vulture]

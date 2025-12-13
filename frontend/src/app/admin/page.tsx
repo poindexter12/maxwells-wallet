@@ -7,6 +7,7 @@ import { PageHelp } from '@/components/PageHelp'
 import { OverviewTab } from '@/components/admin/OverviewTab'
 import { ImportsTab } from '@/components/admin/ImportsTab'
 import { HealthTab } from '@/components/admin/HealthTab'
+import { BackupsTab } from '@/components/admin/BackupsTab'
 import { TagsTab } from '@/components/admin/TagsTab'
 import { CreateTagModal, EditTagModal } from '@/components/admin/TagModal'
 import {
@@ -299,6 +300,18 @@ export default function AdminPage() {
           >
             {t('tabs.health')}
           </button>
+          <button
+            data-testid={TEST_IDS.ADMIN_TAB_BACKUPS}
+            data-chaos-target="admin-tab-backups"
+            onClick={() => setActiveTab('backups')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'backups'
+                ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
+                : 'border-transparent text-theme-muted hover:text-theme hover:border-[var(--color-border-strong)]'
+            }`}
+          >
+            {t('tabs.backups')}
+          </button>
           {TAG_TABS.map((tab) => (
             <button
               key={tab.id}
@@ -338,6 +351,8 @@ export default function AdminPage() {
       )}
 
       {activeTab === 'health' && <HealthTab />}
+
+      {activeTab === 'backups' && <BackupsTab />}
 
       {currentTagTab && (
         <TagsTab

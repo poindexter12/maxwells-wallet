@@ -351,7 +351,8 @@
       "accounts": "Conti",
       "occasions": "Occasioni",
       "expenses": "Tipi di spesa",
-      "allTags": "Tutti i tag"
+      "allTags": "Tutti i tag",
+      "backups": "Backup"
     },
     "overview": {
       "stats": {
@@ -863,5 +864,42 @@
     "clear": "Cancella data",
     "openCalendar": "Apri calendario",
     "selectDate": "Seleziona data"
+  },
+  "demo": {
+    "banner": "Modalità Demo - I dati vengono reimpostati periodicamente. Alcune funzionalità sono disabilitate.",
+    "featureDisabled": "Questa funzionalità è disabilitata in modalità demo."
+  },
+  "backup": {
+    "title": "Backup",
+    "description": "Crea e ripristina backup del database.",
+    "createBackup": "Crea Backup",
+    "restoreBackup": "Ripristina",
+    "deleteBackup": "Elimina",
+    "noBackups": "Nessun backup disponibile",
+    "backupCreated": "Backup creato con successo",
+    "backupRestored": "Database ripristinato dal backup",
+    "backupDeleted": "Backup eliminato",
+    "confirmRestore": "Sei sicuro di voler ripristinare questo backup? I dati attuali verranno sostituiti.",
+    "confirmDelete": "Sei sicuro di voler eliminare questo backup?",
+    "schedule": {
+      "title": "Backup Automatici",
+      "enabled": "Abilita backup automatici",
+      "interval": "Intervallo backup",
+      "nextBackup": "Prossimo backup",
+      "retentionHelp": "Mantiene backup orari per 24h, giornalieri per 7 giorni, settimanali per 4 settimane, mensili per 1 anno",
+      "demoResetInterval": "Intervallo ripristino demo",
+      "intervals": {
+        "hour": "1 ora",
+        "day": "1 giorno",
+        "week": "1 settimana"
+      }
+    },
+    "fields": {
+      "description": "Descrizione",
+      "created": "Creato",
+      "size": "Dimensione",
+      "source": "Sorgente",
+      "demoBackup": "Backup Demo"
+    }
   }
 }
