@@ -1,16 +1,27 @@
 from fastapi import APIRouter, Depends, Query, Body
 from sqlmodel import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, List, Literal
+from typing import Literal
 from datetime import datetime
 from pydantic import BaseModel
 
 from app.database import get_session
 from app.models import (
-    Transaction, ImportSession, BatchImportSession,
-    Tag, TransactionTag, Budget, TagRule, RecurringPattern,
-    MerchantAlias, SavedFilter, Dashboard, DashboardWidget,
-    ImportFormat, CustomFormatConfig, AppSettings
+    Transaction,
+    ImportSession,
+    BatchImportSession,
+    Tag,
+    TransactionTag,
+    Budget,
+    TagRule,
+    RecurringPattern,
+    MerchantAlias,
+    SavedFilter,
+    Dashboard,
+    DashboardWidget,
+    ImportFormat,
+    CustomFormatConfig,
+    AppSettings,
 )
 from app.errors import ErrorCode, not_found, bad_request
 from app.services.backup import backup_service, BackupMetadata
@@ -18,55 +29,43 @@ from app.services.backup import backup_service, BackupMetadata
 
 class CreateBackupRequest(BaseModel):
     """Request body for creating a backup."""
+
     description: str = ""
     source: Literal["manual", "scheduled", "pre_import", "demo_seed"] = "manual"
     is_demo_backup: bool = False
+
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
 
 @router.get("/import-sessions")
-async def list_import_sessions(
-    session: AsyncSession = Depends(get_session)
-):
+async def list_import_sessions(session: AsyncSession = Depends(get_session)):
     """List all import sessions with stats"""
-    result = await session.execute(
-        select(ImportSession).order_by(ImportSession.created_at.desc())
-    )
+    result = await session.execute(select(ImportSession).order_by(ImportSession.created_at.desc()))
     sessions = result.scalars().all()
     return sessions
 
 
 @router.get("/import-sessions/{session_id}")
-async def get_import_session(
-    session_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def get_import_session(session_id: int, session: AsyncSession = Depends(get_session)):
     """Get details of a specific import session"""
-    result = await session.execute(
-        select(ImportSession).where(ImportSession.id == session_id)
-    )
+    result = await session.execute(select(ImportSession).where(ImportSession.id == session_id))
     import_session = result.scalar_one_or_none()
     if not import_session:
         raise not_found(ErrorCode.IMPORT_SESSION_NOT_FOUND, session_id=session_id)
 
     # Get associated transactions
-    txn_result = await session.execute(
-        select(Transaction).where(Transaction.import_session_id == session_id)
-    )
+    txn_result = await session.execute(select(Transaction).where(Transaction.import_session_id == session_id))
     transactions = txn_result.scalars().all()
 
-    return {
-        "session": import_session,
-        "transactions": transactions
-    }
+    return {"session": import_session, "transactions": transactions}
 
 
 @router.delete("/import-sessions/{session_id}")
 async def delete_import_session(
     session_id: int,
     confirm: str = Query(..., description="Must be 'DELETE' to confirm"),
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Delete an import session and all its transactions.
@@ -78,28 +77,20 @@ async def delete_import_session(
     """
     if confirm != "DELETE":
         raise bad_request(
-            ErrorCode.CONFIRMATION_REQUIRED,
-            "Must pass confirm='DELETE' to confirm deletion",
-            expected="DELETE"
+            ErrorCode.CONFIRMATION_REQUIRED, "Must pass confirm='DELETE' to confirm deletion", expected="DELETE"
         )
 
-    result = await session.execute(
-        select(ImportSession).where(ImportSession.id == session_id)
-    )
+    result = await session.execute(select(ImportSession).where(ImportSession.id == session_id))
     import_session = result.scalar_one_or_none()
     if not import_session:
         raise not_found(ErrorCode.IMPORT_SESSION_NOT_FOUND, session_id=session_id)
 
     # Count transactions that will be deleted
-    count_result = await session.execute(
-        select(func.count()).where(Transaction.import_session_id == session_id)
-    )
+    count_result = await session.execute(select(func.count()).where(Transaction.import_session_id == session_id))
     txn_count = count_result.scalar()
 
     # Delete transactions first
-    txn_result = await session.execute(
-        select(Transaction).where(Transaction.import_session_id == session_id)
-    )
+    txn_result = await session.execute(select(Transaction).where(Transaction.import_session_id == session_id))
     transactions = txn_result.scalars().all()
     for txn in transactions:
         await session.delete(txn)
@@ -110,16 +101,13 @@ async def delete_import_session(
 
     await session.commit()
 
-    return {
-        "deleted_transactions": txn_count,
-        "session_status": "rolled_back"
-    }
+    return {"deleted_transactions": txn_count, "session_status": "rolled_back"}
 
 
 @router.delete("/purge-all")
 async def purge_all_data(
     confirm: str = Query(..., description="Must be 'PURGE_ALL' to confirm"),
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
 ):
     """
     ⚠️ DANGER: Reset the entire application to a clean state.
@@ -143,9 +131,7 @@ async def purge_all_data(
     """
     if confirm != "PURGE_ALL":
         raise bad_request(
-            ErrorCode.CONFIRMATION_REQUIRED,
-            "Must pass confirm='PURGE_ALL' to confirm purge",
-            expected="PURGE_ALL"
+            ErrorCode.CONFIRMATION_REQUIRED, "Must pass confirm='PURGE_ALL' to confirm purge", expected="PURGE_ALL"
         )
 
     counts = {}
@@ -276,46 +262,32 @@ async def purge_all_data(
         "success": True,
         "counts": counts,
         "clear_browser_storage": True,  # Signal frontend to clear localStorage
-        "message": "All data has been purged. Application reset to clean state."
+        "message": "All data has been purged. Application reset to clean state.",
     }
 
 
 @router.get("/stats")
-async def get_admin_stats(
-    session: AsyncSession = Depends(get_session)
-):
+async def get_admin_stats(session: AsyncSession = Depends(get_session)):
     """Get database statistics for admin dashboard"""
     # Total transactions
-    txn_count_result = await session.execute(
-        select(func.count()).select_from(Transaction)
-    )
+    txn_count_result = await session.execute(select(func.count()).select_from(Transaction))
     total_transactions = txn_count_result.scalar()
 
     # Transactions by account source
     account_stats_result = await session.execute(
         select(
-            Transaction.account_source,
-            func.count().label('count'),
-            func.sum(Transaction.amount).label('total')
+            Transaction.account_source, func.count().label("count"), func.sum(Transaction.amount).label("total")
         ).group_by(Transaction.account_source)
     )
-    account_stats = [
-        {"account": row[0], "count": row[1], "total": row[2]}
-        for row in account_stats_result.fetchall()
-    ]
+    account_stats = [{"account": row[0], "count": row[1], "total": row[2]} for row in account_stats_result.fetchall()]
 
     # Import sessions
-    session_count_result = await session.execute(
-        select(func.count()).select_from(ImportSession)
-    )
+    session_count_result = await session.execute(select(func.count()).select_from(ImportSession))
     total_sessions = session_count_result.scalar()
 
     # Sessions by status
     status_result = await session.execute(
-        select(
-            ImportSession.status,
-            func.count().label('count')
-        ).group_by(ImportSession.status)
+        select(ImportSession.status, func.count().label("count")).group_by(ImportSession.status)
     )
     session_status = {row[0]: row[1] for row in status_result.fetchall()}
 
@@ -323,7 +295,7 @@ async def get_admin_stats(
         "total_transactions": total_transactions,
         "account_stats": account_stats,
         "total_import_sessions": total_sessions,
-        "import_session_status": session_status
+        "import_session_status": session_status,
     }
 
 
@@ -377,9 +349,7 @@ async def restore_backup(
     """
     if confirm != "RESTORE":
         raise bad_request(
-            ErrorCode.CONFIRMATION_REQUIRED,
-            "Must pass confirm='RESTORE' to confirm restore",
-            expected="RESTORE"
+            ErrorCode.CONFIRMATION_REQUIRED, "Must pass confirm='RESTORE' to confirm restore", expected="RESTORE"
         )
 
     backup = backup_service.get_backup(backup_id)
@@ -408,9 +378,7 @@ async def delete_backup(
     """
     if confirm != "DELETE":
         raise bad_request(
-            ErrorCode.CONFIRMATION_REQUIRED,
-            "Must pass confirm='DELETE' to confirm deletion",
-            expected="DELETE"
+            ErrorCode.CONFIRMATION_REQUIRED, "Must pass confirm='DELETE' to confirm deletion", expected="DELETE"
         )
 
     backup = backup_service.get_backup(backup_id)
@@ -418,10 +386,7 @@ async def delete_backup(
         raise not_found(ErrorCode.BACKUP_NOT_FOUND, backup_id=backup_id)
 
     if backup.is_demo_backup:
-        raise bad_request(
-            ErrorCode.CANNOT_DELETE_DEMO_BACKUP,
-            "Cannot delete the demo backup"
-        )
+        raise bad_request(ErrorCode.CANNOT_DELETE_DEMO_BACKUP, "Cannot delete the demo backup")
 
     backup_service.delete_backup(backup_id)
 

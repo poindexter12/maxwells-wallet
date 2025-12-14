@@ -25,7 +25,7 @@ class TagOrderUpdate(BaseModel):
 @router.get("/", response_model=List[Tag])
 async def list_tags(
     namespace: Optional[str] = Query(None, description="Filter by namespace (e.g., 'bucket', 'occasion')"),
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
 ):
     """List all tags, optionally filtered by namespace"""
     query = select(Tag)
@@ -39,27 +39,16 @@ async def list_tags(
 
 
 @router.get("/buckets", response_model=List[Tag])
-async def list_buckets(
-    session: AsyncSession = Depends(get_session)
-):
+async def list_buckets(session: AsyncSession = Depends(get_session)):
     """List all bucket tags (convenience endpoint for UI bucket dropdowns)"""
-    result = await session.execute(
-        select(Tag)
-        .where(Tag.namespace == "bucket")
-        .order_by(Tag.sort_order, Tag.value)
-    )
+    result = await session.execute(select(Tag).where(Tag.namespace == "bucket").order_by(Tag.sort_order, Tag.value))
     return result.scalars().all()
 
 
 @router.get("/{tag_id}", response_model=Tag)
-async def get_tag(
-    tag_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def get_tag(tag_id: int, session: AsyncSession = Depends(get_session)):
     """Get a single tag by ID"""
-    result = await session.execute(
-        select(Tag).where(Tag.id == tag_id)
-    )
+    result = await session.execute(select(Tag).where(Tag.id == tag_id))
     tag = result.scalar_one_or_none()
     if not tag:
         raise not_found(ErrorCode.TAG_NOT_FOUND, tag_id=tag_id)
@@ -67,17 +56,9 @@ async def get_tag(
 
 
 @router.get("/by-name/{namespace}/{value}", response_model=Tag)
-async def get_tag_by_name(
-    namespace: str,
-    value: str,
-    session: AsyncSession = Depends(get_session)
-):
+async def get_tag_by_name(namespace: str, value: str, session: AsyncSession = Depends(get_session)):
     """Get a tag by namespace and value"""
-    result = await session.execute(
-        select(Tag).where(
-            and_(Tag.namespace == namespace, Tag.value == value)
-        )
-    )
+    result = await session.execute(select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value)))
     tag = result.scalar_one_or_none()
     if not tag:
         raise not_found(ErrorCode.TAG_NOT_FOUND, namespace=namespace, value=value)
@@ -85,24 +66,13 @@ async def get_tag_by_name(
 
 
 @router.post("/", response_model=Tag, status_code=201)
-async def create_tag(
-    tag: TagCreate,
-    session: AsyncSession = Depends(get_session)
-):
+async def create_tag(tag: TagCreate, session: AsyncSession = Depends(get_session)):
     """Create a new tag"""
     # Check if tag with this namespace:value already exists
-    result = await session.execute(
-        select(Tag).where(
-            and_(Tag.namespace == tag.namespace, Tag.value == tag.value)
-        )
-    )
+    result = await session.execute(select(Tag).where(and_(Tag.namespace == tag.namespace, Tag.value == tag.value)))
     existing = result.scalar_one_or_none()
     if existing:
-        raise bad_request(
-            ErrorCode.TAG_ALREADY_EXISTS,
-            namespace=tag.namespace,
-            value=tag.value
-        )
+        raise bad_request(ErrorCode.TAG_ALREADY_EXISTS, namespace=tag.namespace, value=tag.value)
 
     db_tag = Tag(**tag.model_dump())
     session.add(db_tag)
@@ -112,15 +82,9 @@ async def create_tag(
 
 
 @router.patch("/{tag_id}", response_model=Tag)
-async def update_tag(
-    tag_id: int,
-    tag: TagUpdate,
-    session: AsyncSession = Depends(get_session)
-):
+async def update_tag(tag_id: int, tag: TagUpdate, session: AsyncSession = Depends(get_session)):
     """Update a tag's value and/or description"""
-    result = await session.execute(
-        select(Tag).where(Tag.id == tag_id)
-    )
+    result = await session.execute(select(Tag).where(Tag.id == tag_id))
     db_tag = result.scalar_one_or_none()
     if not db_tag:
         raise not_found(ErrorCode.TAG_NOT_FOUND, tag_id=tag_id)
@@ -128,16 +92,10 @@ async def update_tag(
     # If changing value, check for uniqueness within namespace
     if tag.value is not None and tag.value != db_tag.value:
         existing = await session.execute(
-            select(Tag).where(
-                and_(Tag.namespace == db_tag.namespace, Tag.value == tag.value)
-            )
+            select(Tag).where(and_(Tag.namespace == db_tag.namespace, Tag.value == tag.value))
         )
         if existing.scalar_one_or_none():
-            raise bad_request(
-                ErrorCode.TAG_ALREADY_EXISTS,
-                namespace=db_tag.namespace,
-                value=tag.value
-            )
+            raise bad_request(ErrorCode.TAG_ALREADY_EXISTS, namespace=db_tag.namespace, value=tag.value)
 
     # Update fields
     for key, value in tag.model_dump(exclude_unset=True).items():
@@ -151,14 +109,9 @@ async def update_tag(
 
 
 @router.delete("/{tag_id}", status_code=204)
-async def delete_tag(
-    tag_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def delete_tag(tag_id: int, session: AsyncSession = Depends(get_session)):
     """Delete a tag (will fail if tag is in use)"""
-    result = await session.execute(
-        select(Tag).where(Tag.id == tag_id)
-    )
+    result = await session.execute(select(Tag).where(Tag.id == tag_id))
     tag = result.scalar_one_or_none()
     if not tag:
         raise not_found(ErrorCode.TAG_NOT_FOUND, tag_id=tag_id)
@@ -181,14 +134,9 @@ async def delete_tag(
 
 
 @router.get("/{tag_id}/usage-count")
-async def get_tag_usage_count(
-    tag_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def get_tag_usage_count(tag_id: int, session: AsyncSession = Depends(get_session)):
     """Get the number of transactions using this tag"""
-    result = await session.execute(
-        select(Tag).where(Tag.id == tag_id)
-    )
+    result = await session.execute(select(Tag).where(Tag.id == tag_id))
     tag = result.scalar_one_or_none()
     if not tag:
         raise not_found(ErrorCode.TAG_NOT_FOUND, tag_id=tag_id)
@@ -202,15 +150,10 @@ async def get_tag_usage_count(
 
 
 @router.post("/reorder")
-async def reorder_tags(
-    order: TagOrderUpdate,
-    session: AsyncSession = Depends(get_session)
-):
+async def reorder_tags(order: TagOrderUpdate, session: AsyncSession = Depends(get_session)):
     """Update sort_order for multiple tags at once (for drag-and-drop)"""
     for item in order.tags:
-        result = await session.execute(
-            select(Tag).where(Tag.id == item.id)
-        )
+        result = await session.execute(select(Tag).where(Tag.id == item.id))
         tag = result.scalar_one_or_none()
         if tag:
             tag.sort_order = item.sort_order
@@ -221,16 +164,14 @@ async def reorder_tags(
 
 
 @router.get("/accounts/stats")
-async def get_account_stats(
-    session: AsyncSession = Depends(get_session)
-):
+async def get_account_stats(session: AsyncSession = Depends(get_session)):
     """Get account statistics using account_tag_id foreign key for reliable counts"""
     # Get account tags with aggregated transaction stats via account_tag_id FK
     result = await session.execute(
         select(
             Tag,
-            func.count(Transaction.id).label('count'),
-            func.coalesce(func.sum(Transaction.amount), 0).label('total')
+            func.count(Transaction.id).label("count"),
+            func.coalesce(func.sum(Transaction.amount), 0).label("total"),
         )
         .outerjoin(Transaction, Transaction.account_tag_id == Tag.id)
         .where(Tag.namespace == "account")
@@ -241,29 +182,27 @@ async def get_account_stats(
     accounts = []
     for row in result.fetchall():
         tag = row[0]
-        accounts.append({
-            "id": tag.id,
-            "value": tag.value,
-            "description": tag.description,
-            "color": tag.color,
-            "sort_order": tag.sort_order,
-            "transaction_count": row[1],
-            "total_amount": float(row[2])
-        })
+        accounts.append(
+            {
+                "id": tag.id,
+                "value": tag.value,
+                "description": tag.description,
+                "color": tag.color,
+                "sort_order": tag.sort_order,
+                "transaction_count": row[1],
+                "total_amount": float(row[2]),
+            }
+        )
 
     return {"accounts": accounts}
 
 
 @router.get("/buckets/stats")
-async def get_bucket_stats(
-    session: AsyncSession = Depends(get_session)
-):
+async def get_bucket_stats(session: AsyncSession = Depends(get_session)):
     """Get bucket statistics including transaction counts and totals"""
     # Get bucket tags
     tags_result = await session.execute(
-        select(Tag)
-        .where(Tag.namespace == "bucket")
-        .order_by(Tag.sort_order, Tag.value)
+        select(Tag).where(Tag.namespace == "bucket").order_by(Tag.sort_order, Tag.value)
     )
     bucket_tags = tags_result.scalars().all()
 
@@ -285,29 +224,27 @@ async def get_bucket_stats(
         )
         total_amount = amount_result.scalar() or 0
 
-        buckets.append({
-            "id": tag.id,
-            "value": tag.value,
-            "description": tag.description,
-            "color": tag.color,
-            "sort_order": tag.sort_order,
-            "transaction_count": txn_count,
-            "total_amount": total_amount
-        })
+        buckets.append(
+            {
+                "id": tag.id,
+                "value": tag.value,
+                "description": tag.description,
+                "color": tag.color,
+                "sort_order": tag.sort_order,
+                "transaction_count": txn_count,
+                "total_amount": total_amount,
+            }
+        )
 
     return {"buckets": buckets}
 
 
 @router.get("/occasions/stats")
-async def get_occasion_stats(
-    session: AsyncSession = Depends(get_session)
-):
+async def get_occasion_stats(session: AsyncSession = Depends(get_session)):
     """Get occasion statistics including transaction counts and totals"""
     # Get occasion tags
     tags_result = await session.execute(
-        select(Tag)
-        .where(Tag.namespace == "occasion")
-        .order_by(Tag.sort_order, Tag.value)
+        select(Tag).where(Tag.namespace == "occasion").order_by(Tag.sort_order, Tag.value)
     )
     occasion_tags = tags_result.scalars().all()
 
@@ -329,14 +266,16 @@ async def get_occasion_stats(
         )
         total_amount = amount_result.scalar() or 0
 
-        occasions.append({
-            "id": tag.id,
-            "value": tag.value,
-            "description": tag.description,
-            "color": tag.color,
-            "sort_order": tag.sort_order,
-            "transaction_count": txn_count,
-            "total_amount": total_amount
-        })
+        occasions.append(
+            {
+                "id": tag.id,
+                "value": tag.value,
+                "description": tag.description,
+                "color": tag.color,
+                "sort_order": tag.sort_order,
+                "transaction_count": txn_count,
+                "total_amount": total_amount,
+            }
+        )
 
     return {"occasions": occasions}

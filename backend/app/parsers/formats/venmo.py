@@ -57,35 +57,35 @@ class VenmoParser(CSVFormatParser):
 
     def can_parse(self, csv_content: str) -> Tuple[bool, float]:
         """Detect Venmo format by looking for characteristic headers."""
-        lines = csv_content.strip().split('\n')
+        lines = csv_content.strip().split("\n")
         for line in lines[:10]:
-            if 'Account Statement' in line:
+            if "Account Statement" in line:
                 return True, 0.95
-            if 'ID' in line and 'Datetime' in line and 'From' in line and 'To' in line:
+            if "ID" in line and "Datetime" in line and "From" in line and "To" in line:
                 return True, 0.90
         return False, 0.0
 
     def preprocess_content(self, csv_content: str) -> str:
         """Find the header row (contains ID,Datetime,Type) and return from there."""
-        lines = csv_content.strip().split('\n')
+        lines = csv_content.strip().split("\n")
         for i, line in enumerate(lines):
-            if 'ID' in line and 'Datetime' in line and 'Type' in line:
-                return '\n'.join(lines[i:])
+            if "ID" in line and "Datetime" in line and "Type" in line:
+                return "\n".join(lines[i:])
         return csv_content
 
     def should_skip_row(self, row: Dict) -> bool:
         """Skip balance rows and incomplete transactions."""
-        trans_id = row.get('ID', '').strip()
-        datetime_str = row.get('Datetime', '').strip()
-        amount_str = row.get('Amount (total)', '').strip()
-        status = row.get('Status', '').strip()
+        trans_id = row.get("ID", "").strip()
+        datetime_str = row.get("Datetime", "").strip()
+        amount_str = row.get("Amount (total)", "").strip()
+        status = row.get("Status", "").strip()
 
         # Skip rows without transaction data (balance rows)
         if not trans_id or not datetime_str or not amount_str:
             return True
 
         # Skip incomplete/failed transactions
-        if status and status.lower() != 'complete':
+        if status and status.lower() != "complete":
             return True
 
         return False
@@ -96,12 +96,12 @@ class VenmoParser(CSVFormatParser):
         - Received money: merchant is who sent it (From)
         - Sent money: merchant is who received it (To)
         """
-        from_user = row.get('From', '').strip()
-        to_user = row.get('To', '').strip()
-        amount_str = row.get('Amount (total)', '').strip()
+        from_user = row.get("From", "").strip()
+        to_user = row.get("To", "").strip()
+        amount_str = row.get("Amount (total)", "").strip()
 
         # Determine direction from amount sign
-        is_income = amount_str.strip().startswith('+')
+        is_income = amount_str.strip().startswith("+")
 
         if is_income:
             return from_user if from_user else "Venmo"
@@ -126,22 +126,22 @@ class VenmoParser(CSVFormatParser):
                 continue
 
             # Parse date
-            datetime_str = row.get('Datetime', '').strip()
+            datetime_str = row.get("Datetime", "").strip()
             trans_date = self.parse_date(datetime_str)
             if trans_date is None:
                 continue
 
             # Parse amount
-            amount_str = row.get('Amount (total)', '').strip()
+            amount_str = row.get("Amount (total)", "").strip()
             amount = self.parse_amount(amount_str)
             if amount is None:
                 continue
 
             # Build description from Note, or from Type/From/To if Note is empty
-            note = row.get('Note', '').strip()
-            trans_type = row.get('Type', '').strip()
-            from_user = row.get('From', '').strip()
-            to_user = row.get('To', '').strip()
+            note = row.get("Note", "").strip()
+            trans_type = row.get("Type", "").strip()
+            from_user = row.get("From", "").strip()
+            to_user = row.get("To", "").strip()
 
             if note:
                 description = note
@@ -155,19 +155,21 @@ class VenmoParser(CSVFormatParser):
             effective_account = account_source or self.get_default_account_source(csv_content, row)
 
             # Get reference ID
-            trans_id = row.get('ID', '').strip()
+            trans_id = row.get("ID", "").strip()
             reference_id = trans_id if trans_id else f"venmo_{datetime_str}_{amount}"
 
-            transactions.append(ParsedTransaction(
-                date=trans_date,
-                amount=amount,
-                description=description,
-                merchant=merchant,
-                account_source=effective_account,
-                reference_id=reference_id,
-                card_member=None,
-                suggested_category=None,
-                source_category=None,
-            ))
+            transactions.append(
+                ParsedTransaction(
+                    date=trans_date,
+                    amount=amount,
+                    description=description,
+                    merchant=merchant,
+                    account_source=effective_account,
+                    reference_id=reference_id,
+                    card_member=None,
+                    suggested_category=None,
+                    source_category=None,
+                )
+            )
 
         return transactions

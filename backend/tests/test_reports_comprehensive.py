@@ -1,6 +1,7 @@
 """
 Comprehensive tests for reports.py router to increase coverage to 90%+.
 """
+
 import pytest
 from httpx import AsyncClient
 from datetime import date, timedelta
@@ -13,9 +14,7 @@ class TestMonthlySummary:
     async def test_monthly_summary(self, client: AsyncClient, seed_transactions, seed_categories):
         """Get monthly summary"""
         today = date.today()
-        response = await client.get(
-            f"/api/v1/reports/monthly-summary?year={today.year}&month={today.month}"
-        )
+        response = await client.get(f"/api/v1/reports/monthly-summary?year={today.year}&month={today.month}")
         assert response.status_code == 200
         data = response.json()
         assert "year" in data
@@ -54,9 +53,7 @@ class TestSpendingTrends:
         today = date.today()
         start = (today - timedelta(days=90)).isoformat()
         end = today.isoformat()
-        response = await client.get(
-            f"/api/v1/reports/trends?start_date={start}&end_date={end}&group_by=month"
-        )
+        response = await client.get(f"/api/v1/reports/trends?start_date={start}&end_date={end}&group_by=month")
         assert response.status_code == 200
         data = response.json()
         assert data["group_by"] == "month"
@@ -68,9 +65,7 @@ class TestSpendingTrends:
         today = date.today()
         start = (today - timedelta(days=90)).isoformat()
         end = today.isoformat()
-        response = await client.get(
-            f"/api/v1/reports/trends?start_date={start}&end_date={end}&group_by=category"
-        )
+        response = await client.get(f"/api/v1/reports/trends?start_date={start}&end_date={end}&group_by=category")
         assert response.status_code == 200
         data = response.json()
         assert data["group_by"] == "category"
@@ -83,9 +78,7 @@ class TestSpendingTrends:
         today = date.today()
         start = (today - timedelta(days=90)).isoformat()
         end = today.isoformat()
-        response = await client.get(
-            f"/api/v1/reports/trends?start_date={start}&end_date={end}&group_by=account"
-        )
+        response = await client.get(f"/api/v1/reports/trends?start_date={start}&end_date={end}&group_by=account")
         assert response.status_code == 200
         data = response.json()
         assert data["group_by"] == "account"
@@ -98,9 +91,7 @@ class TestSpendingTrends:
         today = date.today()
         start = (today - timedelta(days=90)).isoformat()
         end = today.isoformat()
-        response = await client.get(
-            f"/api/v1/reports/trends?start_date={start}&end_date={end}&group_by=tag"
-        )
+        response = await client.get(f"/api/v1/reports/trends?start_date={start}&end_date={end}&group_by=tag")
         assert response.status_code == 200
         data = response.json()
         assert data["group_by"] == "tag"
@@ -151,9 +142,7 @@ class TestTopMerchants:
     async def test_top_merchants_specific_month(self, client: AsyncClient, seed_transactions):
         """Get top merchants for specific year/month"""
         today = date.today()
-        response = await client.get(
-            f"/api/v1/reports/top-merchants?year={today.year}&month={today.month}&limit=5"
-        )
+        response = await client.get(f"/api/v1/reports/top-merchants?year={today.year}&month={today.month}&limit=5")
         assert response.status_code == 200
         data = response.json()
         assert len(data["merchants"]) <= 5
@@ -211,9 +200,7 @@ class TestBucketSummary:
         today = date.today()
         start = (today - timedelta(days=30)).isoformat()
         end = today.isoformat()
-        response = await client.get(
-            f"/api/v1/reports/bucket-summary?start_date={start}&end_date={end}"
-        )
+        response = await client.get(f"/api/v1/reports/bucket-summary?start_date={start}&end_date={end}")
         assert response.status_code == 200
         data = response.json()
         assert data["date_range"]["start"] == start
@@ -271,9 +258,7 @@ class TestSpendingVelocity:
     async def test_spending_velocity_current(self, client: AsyncClient, seed_transactions, seed_categories):
         """Get spending velocity for current month"""
         today = date.today()
-        response = await client.get(
-            f"/api/v1/reports/spending-velocity?year={today.year}&month={today.month}"
-        )
+        response = await client.get(f"/api/v1/reports/spending-velocity?year={today.year}&month={today.month}")
         assert response.status_code == 200
         data = response.json()
         assert "year" in data
@@ -295,9 +280,7 @@ class TestSpendingVelocity:
             year, month = today.year - 1, 10
         else:
             year, month = today.year, today.month - 2
-        response = await client.get(
-            f"/api/v1/reports/spending-velocity?year={year}&month={month}"
-        )
+        response = await client.get(f"/api/v1/reports/spending-velocity?year={year}&month={month}")
         assert response.status_code == 200
         data = response.json()
         assert data["pace"] == "completed"
@@ -322,9 +305,7 @@ class TestAnomalies:
     async def test_detect_anomalies(self, client: AsyncClient, seed_transactions, seed_categories):
         """Detect spending anomalies"""
         today = date.today()
-        response = await client.get(
-            f"/api/v1/reports/anomalies?year={today.year}&month={today.month}"
-        )
+        response = await client.get(f"/api/v1/reports/anomalies?year={today.year}&month={today.month}")
         assert response.status_code == 200
         data = response.json()
         assert "year" in data
@@ -344,15 +325,11 @@ class TestAnomalies:
         """Detect anomalies with custom threshold"""
         today = date.today()
         # More sensitive threshold
-        response = await client.get(
-            f"/api/v1/reports/anomalies?year={today.year}&month={today.month}&threshold=1.5"
-        )
+        response = await client.get(f"/api/v1/reports/anomalies?year={today.year}&month={today.month}&threshold=1.5")
         assert response.status_code == 200
 
         # Less sensitive threshold
-        response2 = await client.get(
-            f"/api/v1/reports/anomalies?year={today.year}&month={today.month}&threshold=3.0"
-        )
+        response2 = await client.get(f"/api/v1/reports/anomalies?year={today.year}&month={today.month}&threshold=3.0")
         assert response2.status_code == 200
 
     @pytest.mark.asyncio
@@ -368,9 +345,7 @@ class TestAnomalies:
     async def test_anomalies_summary_fields(self, client: AsyncClient, seed_transactions, seed_categories):
         """Verify anomaly summary fields"""
         today = date.today()
-        response = await client.get(
-            f"/api/v1/reports/anomalies?year={today.year}&month={today.month}"
-        )
+        response = await client.get(f"/api/v1/reports/anomalies?year={today.year}&month={today.month}")
         assert response.status_code == 200
         summary = response.json()["summary"]
         assert "total_anomalies" in summary

@@ -1,4 +1,5 @@
 """Saved filters router for managing saved search filters/views."""
+
 from fastapi import APIRouter, Depends, Query
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,14 +8,10 @@ from datetime import datetime, date, timedelta
 import json
 
 from app.database import get_session
-from app.models import (
-    SavedFilter, SavedFilterCreate, SavedFilterUpdate,
-    Transaction, ReconciliationStatus, Tag, TransactionTag
-)
+from app.models import SavedFilter, SavedFilterCreate, SavedFilterUpdate, Transaction, ReconciliationStatus
 from app.routers.transactions import build_transaction_filter_query
 from app.errors import ErrorCode, not_found
 from pydantic import BaseModel
-from sqlmodel import and_
 
 
 router = APIRouter(prefix="/api/v1/filters", tags=["filters"])
@@ -22,6 +19,7 @@ router = APIRouter(prefix="/api/v1/filters", tags=["filters"])
 
 class SavedFilterResponse(BaseModel):
     """Response model for saved filter with parsed lists"""
+
     id: int
     name: str
     description: Optional[str] = None
@@ -79,12 +77,12 @@ def db_to_response(db_filter: SavedFilter) -> SavedFilterResponse:
 @router.get("/", response_model=List[SavedFilterResponse])
 async def list_filters(
     pinned_only: bool = Query(False, description="Only return pinned filters"),
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
 ):
     """List all saved filters, ordered by pinned status and use count."""
     query = select(SavedFilter)
     if pinned_only:
-        query = query.where(SavedFilter.is_pinned == True)
+        query = query.where(SavedFilter.is_pinned.is_(True))
     query = query.order_by(SavedFilter.is_pinned.desc(), SavedFilter.use_count.desc())
 
     result = await session.execute(query)
@@ -93,10 +91,7 @@ async def list_filters(
 
 
 @router.post("/", response_model=SavedFilterResponse, status_code=201)
-async def create_filter(
-    filter_create: SavedFilterCreate,
-    session: AsyncSession = Depends(get_session)
-):
+async def create_filter(filter_create: SavedFilterCreate, session: AsyncSession = Depends(get_session)):
     """Create a new saved filter."""
     db_filter = SavedFilter(
         name=filter_create.name,
@@ -109,7 +104,9 @@ async def create_filter(
         search_regex=filter_create.search_regex,
         amount_min=filter_create.amount_min,
         amount_max=filter_create.amount_max,
-        reconciliation_status=filter_create.reconciliation_status.value if filter_create.reconciliation_status else None,
+        reconciliation_status=filter_create.reconciliation_status.value
+        if filter_create.reconciliation_status
+        else None,
         is_transfer=filter_create.is_transfer,
         category=filter_create.category,
         date_range_type=filter_create.date_range_type,
@@ -126,14 +123,9 @@ async def create_filter(
 
 
 @router.get("/{filter_id}", response_model=SavedFilterResponse)
-async def get_filter(
-    filter_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def get_filter(filter_id: int, session: AsyncSession = Depends(get_session)):
     """Get a single saved filter by ID."""
-    result = await session.execute(
-        select(SavedFilter).where(SavedFilter.id == filter_id)
-    )
+    result = await session.execute(select(SavedFilter).where(SavedFilter.id == filter_id))
     db_filter = result.scalar_one_or_none()
     if not db_filter:
         raise not_found(ErrorCode.FILTER_NOT_FOUND, filter_id=filter_id)
@@ -141,15 +133,9 @@ async def get_filter(
 
 
 @router.patch("/{filter_id}", response_model=SavedFilterResponse)
-async def update_filter(
-    filter_id: int,
-    filter_update: SavedFilterUpdate,
-    session: AsyncSession = Depends(get_session)
-):
+async def update_filter(filter_id: int, filter_update: SavedFilterUpdate, session: AsyncSession = Depends(get_session)):
     """Update a saved filter."""
-    result = await session.execute(
-        select(SavedFilter).where(SavedFilter.id == filter_id)
-    )
+    result = await session.execute(select(SavedFilter).where(SavedFilter.id == filter_id))
     db_filter = result.scalar_one_or_none()
     if not db_filter:
         raise not_found(ErrorCode.FILTER_NOT_FOUND, filter_id=filter_id)
@@ -157,13 +143,13 @@ async def update_filter(
     update_data = filter_update.model_dump(exclude_unset=True)
 
     # Convert lists to JSON strings for storage
-    for field in ['accounts', 'accounts_exclude', 'tags', 'tags_exclude']:
+    for field in ["accounts", "accounts_exclude", "tags", "tags_exclude"]:
         if field in update_data and update_data[field] is not None:
             update_data[field] = json.dumps(update_data[field])
 
     # Convert enum to string
-    if 'reconciliation_status' in update_data and update_data['reconciliation_status'] is not None:
-        update_data['reconciliation_status'] = update_data['reconciliation_status'].value
+    if "reconciliation_status" in update_data and update_data["reconciliation_status"] is not None:
+        update_data["reconciliation_status"] = update_data["reconciliation_status"].value
 
     for key, value in update_data.items():
         setattr(db_filter, key, value)
@@ -176,14 +162,9 @@ async def update_filter(
 
 
 @router.delete("/{filter_id}", status_code=204)
-async def delete_filter(
-    filter_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def delete_filter(filter_id: int, session: AsyncSession = Depends(get_session)):
     """Delete a saved filter."""
-    result = await session.execute(
-        select(SavedFilter).where(SavedFilter.id == filter_id)
-    )
+    result = await session.execute(select(SavedFilter).where(SavedFilter.id == filter_id))
     db_filter = result.scalar_one_or_none()
     if not db_filter:
         raise not_found(ErrorCode.FILTER_NOT_FOUND, filter_id=filter_id)
@@ -197,15 +178,13 @@ async def apply_filter(
     filter_id: int,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
 ):
     """Apply a saved filter and return matching transactions.
 
     Also updates the filter's use_count and last_used_at.
     """
-    result = await session.execute(
-        select(SavedFilter).where(SavedFilter.id == filter_id)
-    )
+    result = await session.execute(select(SavedFilter).where(SavedFilter.id == filter_id))
     db_filter = result.scalar_one_or_none()
     if not db_filter:
         raise not_found(ErrorCode.FILTER_NOT_FOUND, filter_id=filter_id)
@@ -262,14 +241,9 @@ async def apply_filter(
 
 
 @router.post("/{filter_id}/toggle-pin", response_model=SavedFilterResponse)
-async def toggle_pin(
-    filter_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def toggle_pin(filter_id: int, session: AsyncSession = Depends(get_session)):
     """Toggle the pinned status of a filter."""
-    result = await session.execute(
-        select(SavedFilter).where(SavedFilter.id == filter_id)
-    )
+    result = await session.execute(select(SavedFilter).where(SavedFilter.id == filter_id))
     db_filter = result.scalar_one_or_none()
     if not db_filter:
         raise not_found(ErrorCode.FILTER_NOT_FOUND, filter_id=filter_id)

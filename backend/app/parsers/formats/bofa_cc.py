@@ -45,9 +45,9 @@ class BofaCCParser(CSVFormatParser):
 
     def can_parse(self, csv_content: str) -> Tuple[bool, float]:
         """Detect BofA CC format by looking for specific header columns."""
-        lines = csv_content.strip().split('\n')
+        lines = csv_content.strip().split("\n")
         for line in lines[:10]:
-            if 'Posted Date' in line and 'Reference Number' in line and 'Payee' in line:
+            if "Posted Date" in line and "Reference Number" in line and "Payee" in line:
                 return True, 0.95
         return False, 0.0
 
@@ -55,7 +55,7 @@ class BofaCCParser(CSVFormatParser):
         """Extract merchant from Payee field - take first part before comma."""
         if not description:
             return ""
-        return description.split(',')[0].strip()
+        return description.split(",")[0].strip()
 
     def get_default_account_source(self, csv_content: str, row: Dict) -> str:
         """Default account source for BofA CC."""

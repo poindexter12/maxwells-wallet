@@ -7,13 +7,10 @@ Tests cover:
 - Combined filter scenarios
 - Edge cases and validation
 """
+
 import pytest
 from httpx import AsyncClient
-from datetime import date
-from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models import Transaction, Tag, TransactionTag
 
 
 class TestAccountFiltering:
@@ -313,10 +310,7 @@ class TestOccasionTagFiltering:
         txn_id = response.json()[0]["id"]
 
         # Add vacation occasion tag
-        add_response = await client.post(
-            f"/api/v1/transactions/{txn_id}/tags",
-            json={"tag": "occasion:vacation"}
-        )
+        add_response = await client.post(f"/api/v1/transactions/{txn_id}/tags", json={"tag": "occasion:vacation"})
         assert add_response.status_code == 200
 
         # Filter by occasion
@@ -332,10 +326,7 @@ class TestOccasionTagFiltering:
         # Add vacation tag to first 2 transactions
         response = await client.get("/api/v1/transactions")
         for txn in response.json()[:2]:
-            await client.post(
-                f"/api/v1/transactions/{txn['id']}/tags",
-                json={"tag": "occasion:vacation"}
-            )
+            await client.post(f"/api/v1/transactions/{txn['id']}/tags", json={"tag": "occasion:vacation"})
 
         # Exclude vacation
         filter_response = await client.get("/api/v1/transactions?tag_exclude=occasion:vacation")

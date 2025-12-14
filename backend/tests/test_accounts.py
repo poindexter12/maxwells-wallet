@@ -7,9 +7,10 @@ Tests cover:
 - Next due date calculation
 - Account updates
 """
+
 import pytest
 from httpx import AsyncClient
-from datetime import date, timedelta
+from datetime import date
 
 from app.routers.accounts import calculate_next_due_date
 
@@ -17,6 +18,7 @@ from app.routers.accounts import calculate_next_due_date
 # =============================================================================
 # Unit Tests for Due Date Calculation
 # =============================================================================
+
 
 class TestDueDateCalculation:
     """Test calculate_next_due_date function"""
@@ -75,6 +77,7 @@ class TestDueDateCalculation:
 # API Integration Tests
 # =============================================================================
 
+
 class TestAccountSummaryEndpoint:
     """Test GET /api/v1/accounts/summary"""
 
@@ -86,9 +89,7 @@ class TestAccountSummaryEndpoint:
         assert response.json() == []
 
     @pytest.mark.asyncio
-    async def test_get_account_summary_with_transactions(
-        self, client: AsyncClient, seed_categories
-    ):
+    async def test_get_account_summary_with_transactions(self, client: AsyncClient, seed_categories):
         """Account summary includes all accounts with transactions"""
         # Create some transactions in different accounts
         tx1 = {
@@ -96,21 +97,21 @@ class TestAccountSummaryEndpoint:
             "amount": -150.00,
             "description": "Test purchase",
             "merchant": "AMAZON",
-            "account_source": "AMEX-1234"
+            "account_source": "AMEX-1234",
         }
         tx2 = {
             "date": "2024-12-02",
             "amount": -50.00,
             "description": "Another purchase",
             "merchant": "TARGET",
-            "account_source": "AMEX-1234"
+            "account_source": "AMEX-1234",
         }
         tx3 = {
             "date": "2024-12-01",
             "amount": 3000.00,
             "description": "Payroll",
             "merchant": "EMPLOYER",
-            "account_source": "BOFA-Checking"
+            "account_source": "BOFA-Checking",
         }
 
         await client.post("/api/v1/transactions", json=tx1)
@@ -133,9 +134,7 @@ class TestAccountSummaryEndpoint:
         assert data[1]["transaction_count"] == 1
 
     @pytest.mark.asyncio
-    async def test_account_summary_excludes_transfers(
-        self, client: AsyncClient, seed_categories
-    ):
+    async def test_account_summary_excludes_transfers(self, client: AsyncClient, seed_categories):
         """Balance calculation excludes transfer transactions"""
         # Create a regular transaction
         tx1 = {
@@ -144,7 +143,7 @@ class TestAccountSummaryEndpoint:
             "description": "CC Payment",
             "merchant": "BANK TRANSFER",
             "account_source": "BOFA-Checking",
-            "is_transfer": True
+            "is_transfer": True,
         }
         tx2 = {
             "date": "2024-12-01",
@@ -152,7 +151,7 @@ class TestAccountSummaryEndpoint:
             "description": "Groceries",
             "merchant": "GROCERY STORE",
             "account_source": "BOFA-Checking",
-            "is_transfer": False
+            "is_transfer": False,
         }
 
         await client.post("/api/v1/transactions", json=tx1)
@@ -184,7 +183,7 @@ class TestAccountDetailEndpoint:
             "amount": -250.00,
             "description": "Purchase",
             "merchant": "STORE",
-            "account_source": "CHASE-5678"
+            "account_source": "CHASE-5678",
         }
         await client.post("/api/v1/transactions", json=tx)
 
@@ -203,10 +202,7 @@ class TestAccountUpdateEndpoint:
     @pytest.mark.asyncio
     async def test_update_account_not_found(self, client: AsyncClient):
         """Update non-existent account returns 404"""
-        response = await client.patch(
-            "/api/v1/accounts/NONEXISTENT-123",
-            json={"due_day": 15}
-        )
+        response = await client.patch("/api/v1/accounts/NONEXISTENT-123", json={"due_day": 15})
         assert response.status_code == 404
 
     @pytest.mark.asyncio
@@ -218,15 +214,12 @@ class TestAccountUpdateEndpoint:
             "amount": -100.00,
             "description": "Test",
             "merchant": "STORE",
-            "account_source": "AMEX-9999"
+            "account_source": "AMEX-9999",
         }
         await client.post("/api/v1/transactions", json=tx)
 
         # Update due day
-        response = await client.patch(
-            "/api/v1/accounts/AMEX-9999",
-            json={"due_day": 15}
-        )
+        response = await client.patch("/api/v1/accounts/AMEX-9999", json={"due_day": 15})
         assert response.status_code == 200
 
         data = response.json()
@@ -241,14 +234,11 @@ class TestAccountUpdateEndpoint:
             "amount": -1000.00,
             "description": "Test",
             "merchant": "STORE",
-            "account_source": "VISA-1111"
+            "account_source": "VISA-1111",
         }
         await client.post("/api/v1/transactions", json=tx)
 
-        response = await client.patch(
-            "/api/v1/accounts/VISA-1111",
-            json={"credit_limit": 5000.00}
-        )
+        response = await client.patch("/api/v1/accounts/VISA-1111", json={"credit_limit": 5000.00})
         assert response.status_code == 200
 
         data = response.json()
@@ -263,41 +253,30 @@ class TestAccountUpdateEndpoint:
             "amount": -50.00,
             "description": "Test",
             "merchant": "STORE",
-            "account_source": "TEST-ACCT"
+            "account_source": "TEST-ACCT",
         }
         await client.post("/api/v1/transactions", json=tx)
 
         # Due day out of range
-        response = await client.patch(
-            "/api/v1/accounts/TEST-ACCT",
-            json={"due_day": 32}
-        )
+        response = await client.patch("/api/v1/accounts/TEST-ACCT", json={"due_day": 32})
         assert response.status_code == 400
 
-        response = await client.patch(
-            "/api/v1/accounts/TEST-ACCT",
-            json={"due_day": 0}
-        )
+        response = await client.patch("/api/v1/accounts/TEST-ACCT", json={"due_day": 0})
         assert response.status_code == 400
 
     @pytest.mark.asyncio
-    async def test_update_account_negative_credit_limit(
-        self, client: AsyncClient, seed_categories
-    ):
+    async def test_update_account_negative_credit_limit(self, client: AsyncClient, seed_categories):
         """Negative credit limit returns 400"""
         tx = {
             "date": "2024-12-01",
             "amount": -50.00,
             "description": "Test",
             "merchant": "STORE",
-            "account_source": "TEST-ACCT2"
+            "account_source": "TEST-ACCT2",
         }
         await client.post("/api/v1/transactions", json=tx)
 
-        response = await client.patch(
-            "/api/v1/accounts/TEST-ACCT2",
-            json={"credit_limit": -1000}
-        )
+        response = await client.patch("/api/v1/accounts/TEST-ACCT2", json={"credit_limit": -1000})
         assert response.status_code == 400
 
     @pytest.mark.asyncio
@@ -308,14 +287,11 @@ class TestAccountUpdateEndpoint:
             "amount": -50.00,
             "description": "Test",
             "merchant": "STORE",
-            "account_source": "AMEX-PLAT"
+            "account_source": "AMEX-PLAT",
         }
         await client.post("/api/v1/transactions", json=tx)
 
-        response = await client.patch(
-            "/api/v1/accounts/AMEX-PLAT",
-            json={"description": "My Platinum Card"}
-        )
+        response = await client.patch("/api/v1/accounts/AMEX-PLAT", json={"description": "My Platinum Card"})
         assert response.status_code == 200
 
         data = response.json()
@@ -334,18 +310,14 @@ class TestAccountSummaryWithMetadata:
             "amount": -500.00,
             "description": "Test",
             "merchant": "STORE",
-            "account_source": "DISCOVER-2222"
+            "account_source": "DISCOVER-2222",
         }
         await client.post("/api/v1/transactions", json=tx)
 
         # Set metadata
         await client.patch(
             "/api/v1/accounts/DISCOVER-2222",
-            json={
-                "due_day": 20,
-                "credit_limit": 10000.00,
-                "description": "Discover It Card"
-            }
+            json={"due_day": 20, "credit_limit": 10000.00, "description": "Discover It Card"},
         )
 
         # Get summary

@@ -1,6 +1,7 @@
 """
 Tests for Batch Import Feature
 """
+
 import pytest
 from httpx import AsyncClient
 import io
@@ -92,7 +93,7 @@ Date,Description,Amount,Running Bal.
 11/10/2025,STARBUCKS,JOHN DOE,XXXXX-53004,-12.50,,,,,,,320251100001,Restaurant-Dining
 """
 
-        files = [
+        _files = [
             ("files", ("file1.csv", io.BytesIO(csv1.encode()), "text/csv")),
             ("files", ("file2.csv", io.BytesIO(csv2.encode()), "text/csv")),
         ]
@@ -100,26 +101,19 @@ Date,Description,Amount,Running Bal.
         # Build request JSON
         request_json = {
             "files": [
-                {
-                    "filename": "file1.csv",
-                    "account_source": None,
-                    "format_type": "amex_cc"
-                },
-                {
-                    "filename": "file2.csv",
-                    "account_source": None,
-                    "format_type": "amex_cc"
-                }
+                {"filename": "file1.csv", "account_source": None, "format_type": "amex_cc"},
+                {"filename": "file2.csv", "account_source": None, "format_type": "amex_cc"},
             ],
-            "save_format": False
+            "save_format": False,
         }
 
         # Send as multipart form data with JSON in a field
         import json
+
         form_data = [
             ("files", ("file1.csv", io.BytesIO(csv1.encode()), "text/csv")),
             ("files", ("file2.csv", io.BytesIO(csv2.encode()), "text/csv")),
-            ("request", (None, json.dumps(request_json), "application/json"))
+            ("request", (None, json.dumps(request_json), "application/json")),
         ]
 
         response = await client.post("/api/v1/import/batch/confirm", files=form_data)
@@ -143,26 +137,21 @@ Date,Description,Amount,Running Bal.
 11/15/2025,AMAZON.COM,JOHN DOE,XXXXX-53004,-199.99,,,,,,,320251150001,Merchandise
 """
 
-        csv2 = """Date,Description,Card Member,Account #,Amount,Extended Details,Appears On Your Statement As,Address,City/State,Zip Code,Country,Reference,Category
+        _csv2 = """Date,Description,Card Member,Account #,Amount,Extended Details,Appears On Your Statement As,Address,City/State,Zip Code,Country,Reference,Category
 11/10/2025,STARBUCKS,JOHN DOE,XXXXX-53004,-12.50,,,,,,,320251100001,Restaurant-Dining
 """
 
         # Only import file1
         import json
+
         request_json = {
-            "files": [
-                {
-                    "filename": "file1.csv",
-                    "account_source": None,
-                    "format_type": "amex_cc"
-                }
-            ],
-            "save_format": False
+            "files": [{"filename": "file1.csv", "account_source": None, "format_type": "amex_cc"}],
+            "save_format": False,
         }
 
         form_data = [
             ("files", ("file1.csv", io.BytesIO(csv1.encode()), "text/csv")),
-            ("request", (None, json.dumps(request_json), "application/json"))
+            ("request", (None, json.dumps(request_json), "application/json")),
         ]
 
         response = await client.post("/api/v1/import/batch/confirm", files=form_data)

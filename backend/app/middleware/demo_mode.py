@@ -36,21 +36,16 @@ BLOCKED_ENDPOINTS = [
     ("POST", r"^/api/v1/import/custom/confirm$"),
     # Note: /import/custom/configs and /import/custom/configs/import are ALLOWED
     # because they only contain format configuration, not personal financial data
-
     # Admin destructive operations
     ("DELETE", r"^/api/v1/admin/purge-all$"),
     ("DELETE", r"^/api/v1/admin/import-sessions/\d+$"),
-
     # Backup restore (we'll allow demo restore separately)
     ("POST", r"^/api/v1/admin/restore/.*"),
-
     # Backup deletion
     ("DELETE", r"^/api/v1/admin/backup/.*"),
-
     # Bulk transaction operations
     ("DELETE", r"^/api/v1/transactions$"),  # Bulk delete
     ("POST", r"^/api/v1/transactions/bulk-delete$"),
-
     # Test endpoints (seeding, clearing)
     ("POST", r"^/api/v1/test/seed$"),
     ("DELETE", r"^/api/v1/test/clear$"),

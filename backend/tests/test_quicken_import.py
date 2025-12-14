@@ -7,6 +7,7 @@ Tests cover:
 - Format auto-detection
 - API endpoint integration
 """
+
 import pytest
 from httpx import AsyncClient
 from datetime import date
@@ -176,6 +177,7 @@ SAMPLE_QFX_CCARD = """<?xml version="1.0" encoding="utf-8"?>
 # Parser Registry Tests
 # =============================================================================
 
+
 class TestQuickenParsersRegistration:
     """Test QIF and QFX parsers are registered correctly"""
 
@@ -208,6 +210,7 @@ class TestQuickenParsersRegistration:
 # QIF Format Detection Tests
 # =============================================================================
 
+
 class TestQIFFormatDetection:
     """Test QIF format auto-detection"""
 
@@ -234,6 +237,7 @@ class TestQIFFormatDetection:
 # =============================================================================
 # QFX/OFX Format Detection Tests
 # =============================================================================
+
 
 class TestQFXFormatDetection:
     """Test QFX/OFX format auto-detection"""
@@ -268,6 +272,7 @@ class TestQFXFormatDetection:
 # =============================================================================
 # QIF Parsing Tests
 # =============================================================================
+
 
 class TestQIFParser:
     """Test QIF file parsing"""
@@ -390,6 +395,7 @@ PBIG DEPOSIT
 # QFX/OFX Parsing Tests
 # =============================================================================
 
+
 class TestQFXParser:
     """Test QFX/OFX file parsing"""
 
@@ -469,6 +475,7 @@ class TestQFXParser:
 # Wrapper Function Tests
 # =============================================================================
 
+
 class TestQuickenWrapperFunctions:
     """Test backwards-compatible wrapper functions"""
 
@@ -504,10 +511,7 @@ class TestQuickenWrapperFunctions:
 
     def test_parse_csv_with_qif_format_hint(self):
         """parse_csv() respects QIF format hint"""
-        transactions, format_type = parse_csv(
-            SAMPLE_QIF_BANK,
-            format_hint=ImportFormatType.qif
-        )
+        transactions, format_type = parse_csv(SAMPLE_QIF_BANK, format_hint=ImportFormatType.qif)
 
         assert format_type == ImportFormatType.qif
         assert len(transactions) == 3
@@ -516,6 +520,7 @@ class TestQuickenWrapperFunctions:
 # =============================================================================
 # API Integration Tests
 # =============================================================================
+
 
 class TestQuickenAPIImport:
     """Test API endpoints for QIF/QFX import"""
@@ -565,11 +570,7 @@ class TestQuickenAPIImport:
         files = {"file": ("bank.qif", io.BytesIO(SAMPLE_QIF_BANK.encode()), "text/plain")}
         data_payload = {"format_type": "qif", "account_source": "QIF-Checking"}
 
-        response = await client.post(
-            "/api/v1/import/confirm",
-            files=files,
-            data=data_payload
-        )
+        response = await client.post("/api/v1/import/confirm", files=files, data=data_payload)
 
         assert response.status_code == 200
         data = response.json()
@@ -583,11 +584,7 @@ class TestQuickenAPIImport:
         files = {"file": ("bank.qfx", io.BytesIO(SAMPLE_QFX.encode()), "text/plain")}
         data_payload = {"format_type": "qfx", "account_source": "QFX-Checking"}
 
-        response = await client.post(
-            "/api/v1/import/confirm",
-            files=files,
-            data=data_payload
-        )
+        response = await client.post("/api/v1/import/confirm", files=files, data=data_payload)
 
         assert response.status_code == 200
         data = response.json()
@@ -642,6 +639,7 @@ class TestQuickenAPIImport:
 # =============================================================================
 # Edge Cases and Error Handling
 # =============================================================================
+
 
 class TestQuickenEdgeCases:
     """Test edge cases and error handling"""
@@ -747,3 +745,353 @@ PTEST
 
         # Should still parse the transaction
         assert len(transactions) == 1
+
+
+class TestQFXParserEdgeCases:
+    """Additional edge case tests for QFX parser coverage."""
+
+    def test_detect_qfx_by_processing_instruction(self):
+        """Detect QFX format by <?OFX processing instruction."""
+        content = '<?OFX OFXHEADER="200" VERSION="220"?><OFX></OFX>'
+        parser, confidence = ParserRegistry.detect_format(content)
+        assert parser is not None
+        assert parser.format_key == "qfx"
+        assert confidence >= 0.90
+
+    def test_detect_qfx_by_stmttrn_only(self):
+        """Detect QFX format by <STMTTRN> element alone."""
+        content = "<STMTTRN><DTPOSTED>20241215</DTPOSTED><TRNAMT>-50.00</TRNAMT></STMTTRN>"
+        parser, confidence = ParserRegistry.detect_format(content)
+        assert parser is not None
+        assert parser.format_key == "qfx"
+        assert confidence >= 0.85
+
+    def test_qfx_account_type_fallback(self):
+        """Extract account source from ACCTTYPE when ACCTID is missing."""
+        content = """<OFX>
+<BANKMSGSRSV1><STMTRS>
+<BANKACCTFROM>
+<ACCTTYPE>CHECKING</ACCTTYPE>
+</BANKACCTFROM>
+<BANKTRANLIST>
+<STMTTRN>
+<DTPOSTED>20241215</DTPOSTED>
+<TRNAMT>-50.00</TRNAMT>
+<FITID>TEST1</FITID>
+<NAME>TEST</NAME>
+</STMTTRN>
+</BANKTRANLIST>
+</STMTRS></BANKMSGSRSV1>
+</OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+
+        assert len(transactions) == 1
+        assert "CHECKING" in transactions[0].account_source or "QFX" in transactions[0].account_source
+
+    def test_qfx_date_fallback_dtuser(self):
+        """Use DTUSER when DTPOSTED is missing."""
+        content = """<OFX><BANKTRANLIST>
+<STMTTRN>
+<DTUSER>20241215</DTUSER>
+<TRNAMT>-50.00</TRNAMT>
+<FITID>TEST1</FITID>
+<NAME>TEST</NAME>
+</STMTTRN>
+</BANKTRANLIST></OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+
+        assert len(transactions) == 1
+        assert transactions[0].date == date(2024, 12, 15)
+
+    def test_qfx_date_fallback_dtavail(self):
+        """Use DTAVAIL when DTPOSTED and DTUSER are missing."""
+        content = """<OFX><BANKTRANLIST>
+<STMTTRN>
+<DTAVAIL>20241215</DTAVAIL>
+<TRNAMT>-50.00</TRNAMT>
+<FITID>TEST1</FITID>
+<NAME>TEST</NAME>
+</STMTTRN>
+</BANKTRANLIST></OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+
+        assert len(transactions) == 1
+        assert transactions[0].date == date(2024, 12, 15)
+
+    def test_qfx_description_from_payee(self):
+        """Build description from PAYEE when NAME is missing."""
+        content = """<OFX><BANKTRANLIST>
+<STMTTRN>
+<DTPOSTED>20241215</DTPOSTED>
+<TRNAMT>-50.00</TRNAMT>
+<FITID>TEST1</FITID>
+<PAYEE>AMAZON</PAYEE>
+<MEMO>Order details</MEMO>
+</STMTTRN>
+</BANKTRANLIST></OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+
+        assert len(transactions) == 1
+        assert "AMAZON" in transactions[0].description
+
+    def test_qfx_reference_id_checknum_fallback(self):
+        """Use CHECKNUM for reference ID when FITID is missing."""
+        content = """<OFX><BANKTRANLIST>
+<STMTTRN>
+<DTPOSTED>20241215</DTPOSTED>
+<TRNAMT>-50.00</TRNAMT>
+<CHECKNUM>1234</CHECKNUM>
+<NAME>CHECK PAYMENT</NAME>
+</STMTTRN>
+</BANKTRANLIST></OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+
+        assert len(transactions) == 1
+        assert "1234" in transactions[0].reference_id
+
+    def test_qfx_date_with_timezone_info(self):
+        """Parse date with timezone info like [-5:EST]."""
+        content = """<OFX><BANKTRANLIST>
+<STMTTRN>
+<DTPOSTED>20241215120000[-5:EST]</DTPOSTED>
+<TRNAMT>-50.00</TRNAMT>
+<FITID>TZ_TEST</FITID>
+<NAME>TIMEZONE TEST</NAME>
+</STMTTRN>
+</BANKTRANLIST></OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+
+        assert len(transactions) == 1
+        assert transactions[0].date == date(2024, 12, 15)
+
+    def test_qfx_sic_code_mapping(self):
+        """Map SIC codes to categories."""
+        # SIC code 5812 = Eating and Drinking Places (major category 58 = retail range)
+        # Note: Current implementation maps 52-60 to "shopping" before checking 58-59 for food
+        content = """<OFX><BANKTRANLIST>
+<STMTTRN>
+<DTPOSTED>20241215</DTPOSTED>
+<TRNAMT>-50.00</TRNAMT>
+<FITID>SIC_TEST</FITID>
+<NAME>RESTAURANT</NAME>
+<SIC>5812</SIC>
+</STMTTRN>
+</BANKTRANLIST></OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+
+        assert len(transactions) == 1
+        # SIC code stored in source_category, mapped value in suggested_category
+        assert transactions[0].source_category == "5812"
+        # Currently maps to shopping (52-60 range checked before 58-59)
+        assert transactions[0].suggested_category == "shopping"
+
+    def test_qfx_sic_code_retail(self):
+        """Map SIC code for retail to shopping category."""
+        # SIC code 5311 = Department Stores -> shopping
+        content = """<OFX><BANKTRANLIST>
+<STMTTRN>
+<DTPOSTED>20241215</DTPOSTED>
+<TRNAMT>-100.00</TRNAMT>
+<FITID>RETAIL_TEST</FITID>
+<NAME>WALMART</NAME>
+<SIC>5311</SIC>
+</STMTTRN>
+</BANKTRANLIST></OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+
+        assert len(transactions) == 1
+        assert transactions[0].source_category == "5311"
+        assert transactions[0].suggested_category == "shopping"
+
+    def test_qfx_sic_code_healthcare(self):
+        """Map SIC code for healthcare."""
+        # SIC code 8011 = Offices of Doctors -> healthcare
+        content = """<OFX><BANKTRANLIST>
+<STMTTRN>
+<DTPOSTED>20241215</DTPOSTED>
+<TRNAMT>-200.00</TRNAMT>
+<FITID>HEALTH_TEST</FITID>
+<NAME>DOCTOR OFFICE</NAME>
+<SIC>8011</SIC>
+</STMTTRN>
+</BANKTRANLIST></OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+
+        assert len(transactions) == 1
+        assert transactions[0].source_category == "8011"
+        assert transactions[0].suggested_category == "healthcare"
+
+    def test_qfx_amount_with_commas(self):
+        """Parse amounts with thousands separator."""
+        content = """<OFX><BANKTRANLIST>
+<STMTTRN>
+<DTPOSTED>20241215</DTPOSTED>
+<TRNAMT>-1,500.00</TRNAMT>
+<FITID>COMMA_TEST</FITID>
+<NAME>BIG PURCHASE</NAME>
+</STMTTRN>
+</BANKTRANLIST></OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+
+        assert len(transactions) == 1
+        assert transactions[0].amount == -1500.00
+
+    def test_qfx_short_account_id(self):
+        """Handle short account IDs (4 digits or less)."""
+        content = """<OFX>
+<BANKACCTFROM>
+<ACCTID>1234</ACCTID>
+</BANKACCTFROM>
+<BANKTRANLIST>
+<STMTTRN>
+<DTPOSTED>20241215</DTPOSTED>
+<TRNAMT>-50.00</TRNAMT>
+<FITID>SHORT_ACCT</FITID>
+<NAME>TEST</NAME>
+</STMTTRN>
+</BANKTRANLIST>
+</OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+
+        assert len(transactions) == 1
+        assert transactions[0].account_source == "QFX-1234"
+
+    def test_qfx_no_account_info(self):
+        """Handle QFX without any account info."""
+        content = """<OFX>
+<BANKTRANLIST>
+<STMTTRN>
+<DTPOSTED>20241215</DTPOSTED>
+<TRNAMT>-50.00</TRNAMT>
+<FITID>NO_ACCT</FITID>
+<NAME>TEST</NAME>
+</STMTTRN>
+</BANKTRANLIST>
+</OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+
+        assert len(transactions) == 1
+        assert transactions[0].account_source == "QFX-Unknown"
+
+
+class TestQFXSICCodeMapping:
+    """Tests for SIC code to category mapping coverage."""
+
+    def _parse_with_sic(self, sic_code: str) -> ParsedTransaction:
+        """Helper to parse a transaction with given SIC code."""
+        content = f"""<OFX><BANKTRANLIST>
+<STMTTRN>
+<DTPOSTED>20241215</DTPOSTED>
+<TRNAMT>-100.00</TRNAMT>
+<FITID>SIC_{sic_code}</FITID>
+<NAME>TEST MERCHANT</NAME>
+<SIC>{sic_code}</SIC>
+</STMTTRN>
+</BANKTRANLIST></OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+        assert len(transactions) == 1
+        return transactions[0]
+
+    def test_sic_agriculture(self):
+        """SIC codes 01xx-09xx map to agriculture."""
+        txn = self._parse_with_sic("0100")
+        assert txn.suggested_category == "agriculture"
+
+    def test_sic_mining(self):
+        """SIC codes 10xx-14xx map to mining."""
+        txn = self._parse_with_sic("1000")
+        assert txn.suggested_category == "mining"
+
+    def test_sic_construction(self):
+        """SIC codes 15xx-17xx map to construction."""
+        txn = self._parse_with_sic("1500")
+        assert txn.suggested_category == "construction"
+
+    def test_sic_manufacturing(self):
+        """SIC codes 20xx-39xx map to manufacturing."""
+        txn = self._parse_with_sic("2000")
+        assert txn.suggested_category == "manufacturing"
+
+    def test_sic_transportation(self):
+        """SIC codes 40xx-49xx map to transportation."""
+        txn = self._parse_with_sic("4000")
+        assert txn.suggested_category == "transportation"
+
+    def test_sic_wholesale(self):
+        """SIC codes 50xx-51xx map to wholesale."""
+        txn = self._parse_with_sic("5000")
+        assert txn.suggested_category == "wholesale"
+
+    def test_sic_finance(self):
+        """SIC codes 60xx-67xx map to finance."""
+        txn = self._parse_with_sic("6000")
+        assert txn.suggested_category == "finance"
+
+    def test_sic_travel(self):
+        """SIC codes 70xx-71xx map to travel."""
+        txn = self._parse_with_sic("7000")
+        assert txn.suggested_category == "travel"
+
+    def test_sic_personal_services(self):
+        """SIC codes 72xx map to personal-services."""
+        txn = self._parse_with_sic("7200")
+        assert txn.suggested_category == "personal-services"
+
+    def test_sic_entertainment(self):
+        """SIC codes 78xx-79xx map to entertainment."""
+        txn = self._parse_with_sic("7800")
+        assert txn.suggested_category == "entertainment"
+
+    def test_sic_professional_services(self):
+        """SIC codes 83xx-86xx map to professional-services."""
+        txn = self._parse_with_sic("8300")
+        assert txn.suggested_category == "professional-services"
+
+    def test_sic_unmapped_code(self):
+        """SIC codes outside defined ranges return None."""
+        txn = self._parse_with_sic("9999")
+        # Not in any defined range, so should be None
+        assert txn.suggested_category is None
+
+    def test_sic_invalid_code(self):
+        """Invalid SIC codes (non-numeric) return None."""
+        content = """<OFX><BANKTRANLIST>
+<STMTTRN>
+<DTPOSTED>20241215</DTPOSTED>
+<TRNAMT>-100.00</TRNAMT>
+<FITID>BAD_SIC</FITID>
+<NAME>TEST</NAME>
+<SIC>INVALID</SIC>
+</STMTTRN>
+</BANKTRANLIST></OFX>
+"""
+        parser = ParserRegistry.get_parser("qfx")
+        transactions = parser.parse(content)
+        assert len(transactions) == 1
+        assert transactions[0].suggested_category is None

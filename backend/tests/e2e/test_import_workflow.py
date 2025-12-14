@@ -13,7 +13,7 @@ import pytest
 from pathlib import Path
 from playwright.sync_api import Page, expect
 
-from .conftest import E2EHelpers, FRONTEND_URL
+from .conftest import E2EHelpers
 
 
 @pytest.mark.e2e

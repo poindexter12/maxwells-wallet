@@ -9,13 +9,14 @@ Comprehensive tests for all CSV import formats:
 
 Tests both the new parser class system and the backwards-compatible wrapper.
 """
+
 import pytest
 from httpx import AsyncClient
 from datetime import date
 import io
 
 # New parser system (preferred)
-from app.parsers import ParserRegistry, CSVFormatParser, ParsedTransaction
+from app.parsers import ParserRegistry, ParsedTransaction
 
 # Backwards-compat wrapper (deprecated but still tested)
 from app.csv_parser import (
@@ -35,6 +36,7 @@ from app.models import ImportFormatType
 # =============================================================================
 # Tests for New Parser Registry System
 # =============================================================================
+
 
 class TestParserRegistry:
     """Test the ParserRegistry class"""
@@ -248,6 +250,7 @@ Account Activity,,,,,,,,,,,,,,,,,,,,,
 # Unit Tests for CSV Parser Functions
 # =============================================================================
 
+
 class TestFormatDetection:
     """Test format auto-detection for all supported formats"""
 
@@ -447,14 +450,12 @@ class TestAmexParser:
     def test_merchant_extraction_from_description(self):
         """Extract merchant from Amex multi-space descriptions"""
         merchant = extract_merchant_from_description(
-            "TARGET              ENCINITAS           CA",
-            ImportFormatType.amex_cc
+            "TARGET              ENCINITAS           CA", ImportFormatType.amex_cc
         )
         assert merchant == "TARGET"
 
         merchant2 = extract_merchant_from_description(
-            "AplPay STARBUCKS    800-782-7282        WA",
-            ImportFormatType.amex_cc
+            "AplPay STARBUCKS    800-782-7282        WA", ImportFormatType.amex_cc
         )
         assert merchant2 == "AplPay STARBUCKS"
 
@@ -679,10 +680,7 @@ class TestParseCsvIntegration:
 11/15/2025,DEPOSIT,500.00,1500.00
 """
         # Force Amex format (will fail to parse properly, but tests hint override)
-        transactions, format_type = parse_csv(
-            csv_content,
-            format_hint=ImportFormatType.amex_cc
-        )
+        transactions, format_type = parse_csv(csv_content, format_hint=ImportFormatType.amex_cc)
 
         assert format_type == ImportFormatType.amex_cc
 
@@ -700,6 +698,7 @@ class TestParseCsvIntegration:
 # =============================================================================
 # API Integration Tests for CSV Import
 # =============================================================================
+
 
 class TestCSVImport:
     """FR-001: CSV Import"""
@@ -748,11 +747,7 @@ Date,Description,Amount,Running Bal.
         files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
         data_payload = {"account_source": "BOFA-1234"}
 
-        response = await client.post(
-            "/api/v1/import/preview",
-            files=files,
-            data=data_payload
-        )
+        response = await client.post("/api/v1/import/preview", files=files, data=data_payload)
 
         assert response.status_code == 200
         data = response.json()
@@ -776,11 +771,7 @@ Date,Description,Amount,Running Bal.
         files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
         data_payload = {"account_source": "BOFA-CC-1234"}
 
-        response = await client.post(
-            "/api/v1/import/preview",
-            files=files,
-            data=data_payload
-        )
+        response = await client.post("/api/v1/import/preview", files=files, data=data_payload)
 
         assert response.status_code == 200
         data = response.json()
@@ -810,11 +801,7 @@ Date,Description,Amount,Running Bal.
         files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
         data_payload = {"format_type": "amex_cc"}
 
-        confirm_response = await client.post(
-            "/api/v1/import/confirm",
-            files=files,
-            data=data_payload
-        )
+        confirm_response = await client.post("/api/v1/import/confirm", files=files, data=data_payload)
         assert confirm_response.status_code == 200
         confirm_data = confirm_response.json()
 
@@ -825,11 +812,7 @@ Date,Description,Amount,Running Bal.
         files2 = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
         data_payload2 = {"format_type": "amex_cc"}
 
-        confirm_response2 = await client.post(
-            "/api/v1/import/confirm",
-            files=files2,
-            data=data_payload2
-        )
+        confirm_response2 = await client.post("/api/v1/import/confirm", files=files2, data=data_payload2)
         assert confirm_response2.status_code == 200
         confirm_data2 = confirm_response2.json()
 
@@ -891,11 +874,7 @@ Date,Description,Amount,Running Bal.
         files = {"file": ("hsa_export.csv", io.BytesIO(csv_content.encode()), "text/csv")}
         data_payload = {"account_source": "Inspira-HSA"}
 
-        response = await client.post(
-            "/api/v1/import/preview",
-            files=files,
-            data=data_payload
-        )
+        response = await client.post("/api/v1/import/preview", files=files, data=data_payload)
 
         assert response.status_code == 200
         data = response.json()
@@ -929,11 +908,7 @@ Account Activity,,,,,,,,,,,,,,,,,,,,,
         files = {"file": ("venmo_statement.csv", io.BytesIO(csv_content.encode()), "text/csv")}
         data_payload = {"account_source": "Venmo"}
 
-        response = await client.post(
-            "/api/v1/import/preview",
-            files=files,
-            data=data_payload
-        )
+        response = await client.post("/api/v1/import/preview", files=files, data=data_payload)
 
         assert response.status_code == 200
         data = response.json()
@@ -963,11 +938,7 @@ Account Activity,,,,,,,,,,,,,,,,,,,,,
         files = {"file": ("hsa.csv", io.BytesIO(csv_content.encode()), "text/csv")}
         data_payload = {"format_type": "inspira_hsa", "account_source": "Inspira-HSA"}
 
-        response = await client.post(
-            "/api/v1/import/confirm",
-            files=files,
-            data=data_payload
-        )
+        response = await client.post("/api/v1/import/confirm", files=files, data=data_payload)
 
         assert response.status_code == 200
         data = response.json()
@@ -988,11 +959,7 @@ Account Activity,,,,,,,,,,,,,,,,,,,,,
         files = {"file": ("venmo.csv", io.BytesIO(csv_content.encode()), "text/csv")}
         data_payload = {"format_type": "venmo", "account_source": "Venmo"}
 
-        response = await client.post(
-            "/api/v1/import/confirm",
-            files=files,
-            data=data_payload
-        )
+        response = await client.post("/api/v1/import/confirm", files=files, data=data_payload)
 
         assert response.status_code == 200
         data = response.json()

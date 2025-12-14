@@ -1,7 +1,7 @@
 """
 Tests for content hashing utilities used in transaction deduplication.
 """
-import pytest
+
 from datetime import date
 
 from app.utils.hashing import (
@@ -96,29 +96,25 @@ class TestContentHashing:
 
         # Different date
         diff_date = compute_transaction_content_hash(
-            date=date(2025, 11, 16), amount=199.99,
-            description="AMAZON PURCHASE", account_source="amex"
+            date=date(2025, 11, 16), amount=199.99, description="AMAZON PURCHASE", account_source="amex"
         )
         assert diff_date != base_hash
 
         # Different amount
         diff_amount = compute_transaction_content_hash(
-            date=date(2025, 11, 15), amount=200.00,
-            description="AMAZON PURCHASE", account_source="amex"
+            date=date(2025, 11, 15), amount=200.00, description="AMAZON PURCHASE", account_source="amex"
         )
         assert diff_amount != base_hash
 
         # Different description
         diff_desc = compute_transaction_content_hash(
-            date=date(2025, 11, 15), amount=199.99,
-            description="WALMART PURCHASE", account_source="amex"
+            date=date(2025, 11, 15), amount=199.99, description="WALMART PURCHASE", account_source="amex"
         )
         assert diff_desc != base_hash
 
         # Different account
         diff_account = compute_transaction_content_hash(
-            date=date(2025, 11, 15), amount=199.99,
-            description="AMAZON PURCHASE", account_source="bofa"
+            date=date(2025, 11, 15), amount=199.99, description="AMAZON PURCHASE", account_source="bofa"
         )
         assert diff_account != base_hash
 
@@ -215,14 +211,14 @@ class TestCrossAccountHashing:
             amount=199.99,
             description="AMAZON PURCHASE",
             account_source="AMEX-53004",
-            include_account=False
+            include_account=False,
         )
         hash_acct2 = compute_transaction_content_hash(
             date=date(2025, 11, 15),
             amount=199.99,
             description="AMAZON PURCHASE",
             account_source="BOFA-Checking",
-            include_account=False
+            include_account=False,
         )
         assert hash_acct1 == hash_acct2
 
@@ -233,14 +229,14 @@ class TestCrossAccountHashing:
             amount=199.99,
             description="AMAZON PURCHASE",
             account_source="AMEX-53004",
-            include_account=True
+            include_account=True,
         )
         hash_acct2 = compute_transaction_content_hash(
             date=date(2025, 11, 15),
             amount=199.99,
             description="AMAZON PURCHASE",
             account_source="BOFA-Checking",
-            include_account=True
+            include_account=True,
         )
         assert hash_acct1 != hash_acct2
 
@@ -265,7 +261,7 @@ class TestCrossAccountHashing:
             amount=199.99,
             description="AMAZON PURCHASE",
             account_source="any",
-            include_account=False
+            include_account=False,
         )
 
         # Different date
@@ -274,7 +270,7 @@ class TestCrossAccountHashing:
             amount=199.99,
             description="AMAZON PURCHASE",
             account_source="any",
-            include_account=False
+            include_account=False,
         )
         assert diff_date != base_hash
 
@@ -284,7 +280,7 @@ class TestCrossAccountHashing:
             amount=200.00,
             description="AMAZON PURCHASE",
             account_source="any",
-            include_account=False
+            include_account=False,
         )
         assert diff_amount != base_hash
 
@@ -294,6 +290,6 @@ class TestCrossAccountHashing:
             amount=199.99,
             description="WALMART PURCHASE",
             account_source="any",
-            include_account=False
+            include_account=False,
         )
         assert diff_desc != base_hash

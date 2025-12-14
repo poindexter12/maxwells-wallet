@@ -14,9 +14,11 @@ from app.services.scheduler import scheduler_service, SchedulerSettings
 
 class BackupScheduleUpdate(BaseModel):
     """Request body for updating backup schedule settings."""
+
     auto_backup_enabled: Optional[bool] = None
     auto_backup_interval_hours: Optional[int] = None
     demo_reset_interval_hours: Optional[int] = None
+
 
 router = APIRouter(prefix="/api/v1/settings", tags=["settings"])
 
@@ -73,10 +75,7 @@ def parse_accept_language(accept_language: str) -> str:
 
 
 @router.get("")
-async def get_settings(
-    request: Request,
-    session: AsyncSession = Depends(get_session)
-):
+async def get_settings(request: Request, session: AsyncSession = Depends(get_session)):
     """Get application settings with resolved effective locale.
 
     Returns the stored language preference and the effective locale
@@ -114,10 +113,7 @@ async def get_settings(
 
 
 @router.patch("")
-async def update_settings(
-    updates: AppSettingsUpdate,
-    session: AsyncSession = Depends(get_session)
-):
+async def update_settings(updates: AppSettingsUpdate, session: AsyncSession = Depends(get_session)):
     """Update application settings.
 
     Uses upsert pattern - creates settings row if it doesn't exist.
@@ -138,10 +134,7 @@ async def update_settings(
     await session.commit()
     await session.refresh(settings)
 
-    return {
-        "language": settings.language.value,
-        "updated_at": settings.updated_at.isoformat()
-    }
+    return {"language": settings.language.value, "updated_at": settings.updated_at.isoformat()}
 
 
 @router.get("/backup", response_model=SchedulerSettings)

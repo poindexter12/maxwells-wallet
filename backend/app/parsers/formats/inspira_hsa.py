@@ -51,17 +51,17 @@ class InspiraHSAParser(CSVFormatParser):
 
     def can_parse(self, csv_content: str) -> Tuple[bool, float]:
         """Detect Inspira HSA format by looking for specific columns."""
-        lines = csv_content.strip().split('\n')
+        lines = csv_content.strip().split("\n")
         for line in lines[:10]:
-            if 'Transaction ID' in line and 'Transaction Type' in line and 'Expense Category' in line:
+            if "Transaction ID" in line and "Transaction Type" in line and "Expense Category" in line:
                 return True, 0.95
         return False, 0.0
 
     def should_skip_row(self, row: Dict) -> bool:
         """Use Posted Date if available, fall back to Origination Date."""
-        date_str = row.get('Posted Date', '') or row.get('Origination Date', '')
-        date_str = date_str.strip() if date_str else ''
-        amount_str = row.get('Amount', '').strip()
+        date_str = row.get("Posted Date", "") or row.get("Origination Date", "")
+        date_str = date_str.strip() if date_str else ""
+        amount_str = row.get("Amount", "").strip()
         return not date_str or not amount_str
 
     def parse_date(self, date_str: str):
@@ -71,7 +71,7 @@ class InspiraHSAParser(CSVFormatParser):
 
     def extract_merchant(self, row: Dict, description: str) -> str:
         """Extract merchant from description or transaction type."""
-        trans_type = row.get('Transaction Type', '').strip()
+        trans_type = row.get("Transaction Type", "").strip()
 
         if description and description.split():
             return description.split()[0]
@@ -81,8 +81,8 @@ class InspiraHSAParser(CSVFormatParser):
 
     def map_category(self, source_category: str) -> Optional[str]:
         """Map Inspira category to our categories."""
-        if source_category == 'Medical':
-            return 'Healthcare'
+        if source_category == "Medical":
+            return "Healthcare"
         return None
 
     def get_default_account_source(self, csv_content: str, row: Dict) -> str:
@@ -101,13 +101,13 @@ class InspiraHSAParser(CSVFormatParser):
 
         for row in reader:
             # Handle date fallback - use Posted Date, fall back to Origination Date
-            date_str = row.get('Posted Date', '') or row.get('Origination Date', '')
-            date_str = date_str.strip() if date_str else ''
+            date_str = row.get("Posted Date", "") or row.get("Origination Date", "")
+            date_str = date_str.strip() if date_str else ""
 
             if not date_str:
                 continue
 
-            amount_str = row.get('Amount', '').strip()
+            amount_str = row.get("Amount", "").strip()
             if not amount_str:
                 continue
 
@@ -122,8 +122,8 @@ class InspiraHSAParser(CSVFormatParser):
                 continue
 
             # Get description, fall back to transaction type
-            description = row.get('Description', '').strip()
-            trans_type = row.get('Transaction Type', '').strip()
+            description = row.get("Description", "").strip()
+            trans_type = row.get("Transaction Type", "").strip()
             if not description:
                 description = trans_type
 
@@ -137,19 +137,21 @@ class InspiraHSAParser(CSVFormatParser):
             reference_id = self.get_reference_id(row, trans_date, amount)
 
             # Map category
-            source_category = row.get('Expense Category', '').strip()
+            source_category = row.get("Expense Category", "").strip()
             suggested_category = self.map_category(source_category) if source_category else None
 
-            transactions.append(ParsedTransaction(
-                date=trans_date,
-                amount=amount,
-                description=description,
-                merchant=merchant,
-                account_source=effective_account,
-                reference_id=reference_id,
-                card_member=None,
-                suggested_category=suggested_category,
-                source_category=source_category,
-            ))
+            transactions.append(
+                ParsedTransaction(
+                    date=trans_date,
+                    amount=amount,
+                    description=description,
+                    merchant=merchant,
+                    account_source=effective_account,
+                    reference_id=reference_id,
+                    card_member=None,
+                    suggested_category=suggested_category,
+                    source_category=source_category,
+                )
+            )
 
         return transactions

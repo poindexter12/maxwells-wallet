@@ -1,6 +1,7 @@
 """
 Comprehensive tests for import_router.py to increase coverage to 90%+.
 """
+
 import pytest
 from httpx import AsyncClient
 import io
@@ -81,7 +82,7 @@ class TestImportPreview:
         # Create CSV with 150 transactions
         lines = ["Date,Description,Card Member,Account #,Amount"]
         for i in range(150):
-            lines.append(f"11/{(i % 28) + 1:02d}/2025,MERCHANT {i},JOHN DOE,XXXXX-00001,-{i+1}.00")
+            lines.append(f"11/{(i % 28) + 1:02d}/2025,MERCHANT {i},JOHN DOE,XXXXX-00001,-{i + 1}.00")
         csv_content = "\n".join(lines)
 
         files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
@@ -157,11 +158,7 @@ class TestImportConfirm:
 11/15/2025,SAVE FORMAT TEST,JOHN DOE,XXXXX-00001,-55.00
 """
         files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
-        data = {
-            "format_type": "amex_cc",
-            "account_source": "SaveFormatTest",
-            "save_format": "true"
-        }
+        data = {"format_type": "amex_cc", "account_source": "SaveFormatTest", "save_format": "true"}
         response = await client.post("/api/v1/import/confirm", files=files, data=data)
         assert response.status_code == 200
         result = response.json()
@@ -193,11 +190,7 @@ class TestImportFormats:
 11/15/2025,DELETE FORMAT TEST,JOHN DOE,XXXXX-00001,-10.00
 """
         files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
-        data = {
-            "format_type": "amex_cc",
-            "account_source": "DeleteFormatTest",
-            "save_format": "true"
-        }
+        data = {"format_type": "amex_cc", "account_source": "DeleteFormatTest", "save_format": "true"}
         await client.post("/api/v1/import/confirm", files=files, data=data)
 
         # Get the format
@@ -281,7 +274,7 @@ class TestBatchImport:
                 {"filename": "file1.csv", "account_source": "BatchConfirm1", "format_type": "amex_cc"},
                 {"filename": "file2.csv", "account_source": "BatchConfirm2", "format_type": "amex_cc"},
             ],
-            "save_format": False
+            "save_format": False,
         }
 
         files = [
@@ -290,9 +283,7 @@ class TestBatchImport:
         ]
 
         response = await client.post(
-            "/api/v1/import/batch/confirm",
-            files=files,
-            data={"request": json.dumps(request_data)}
+            "/api/v1/import/batch/confirm", files=files, data={"request": json.dumps(request_data)}
         )
         assert response.status_code == 200
         result = response.json()
@@ -310,9 +301,7 @@ class TestBatchImport:
         ]
 
         response = await client.post(
-            "/api/v1/import/batch/confirm",
-            files=files,
-            data={"request": json.dumps(request_data)}
+            "/api/v1/import/batch/confirm", files=files, data={"request": json.dumps(request_data)}
         )
         assert response.status_code == 400
         assert response.json()["detail"]["error_code"] == "IMPORT_NO_FILES"
@@ -321,10 +310,8 @@ class TestBatchImport:
     async def test_batch_confirm_file_not_found(self, client: AsyncClient):
         """Batch confirm with missing file fails"""
         request_data = {
-            "files": [
-                {"filename": "nonexistent.csv", "account_source": "Test", "format_type": "amex_cc"}
-            ],
-            "save_format": False
+            "files": [{"filename": "nonexistent.csv", "account_source": "Test", "format_type": "amex_cc"}],
+            "save_format": False,
         }
 
         files = [
@@ -332,9 +319,7 @@ class TestBatchImport:
         ]
 
         response = await client.post(
-            "/api/v1/import/batch/confirm",
-            files=files,
-            data={"request": json.dumps(request_data)}
+            "/api/v1/import/batch/confirm", files=files, data={"request": json.dumps(request_data)}
         )
         assert response.status_code == 400
         # File exists but with wrong name, so it's a validation error
@@ -352,7 +337,7 @@ class TestBatchImport:
                 {"filename": "file1.csv", "account_source": "CrossDup1", "format_type": "amex_cc"},
                 {"filename": "file2.csv", "account_source": "CrossDup2", "format_type": "amex_cc"},
             ],
-            "save_format": False
+            "save_format": False,
         }
 
         files = [
@@ -361,9 +346,7 @@ class TestBatchImport:
         ]
 
         response = await client.post(
-            "/api/v1/import/batch/confirm",
-            files=files,
-            data={"request": json.dumps(request_data)}
+            "/api/v1/import/batch/confirm", files=files, data={"request": json.dumps(request_data)}
         )
         assert response.status_code == 200
         result = response.json()
@@ -377,10 +360,8 @@ class TestBatchImport:
 11/15/2025,BATCH SAVE FMT,JOHN DOE,XXXXX-00001,-50.00
 """
         request_data = {
-            "files": [
-                {"filename": "file1.csv", "account_source": "BatchSaveFormat", "format_type": "amex_cc"}
-            ],
-            "save_format": True
+            "files": [{"filename": "file1.csv", "account_source": "BatchSaveFormat", "format_type": "amex_cc"}],
+            "save_format": True,
         }
 
         files = [
@@ -388,9 +369,7 @@ class TestBatchImport:
         ]
 
         response = await client.post(
-            "/api/v1/import/batch/confirm",
-            files=files,
-            data={"request": json.dumps(request_data)}
+            "/api/v1/import/batch/confirm", files=files, data={"request": json.dumps(request_data)}
         )
         assert response.status_code == 200
         result = response.json()
@@ -404,12 +383,7 @@ class TestImportWithMerchantAliases:
     async def test_import_applies_merchant_aliases(self, client: AsyncClient, seed_categories):
         """Import applies merchant aliases to normalize merchant names"""
         # First create a merchant alias
-        alias_data = {
-            "pattern": "AMZN",
-            "canonical_name": "Amazon",
-            "match_type": "contains",
-            "priority": 100
-        }
+        alias_data = {"pattern": "AMZN", "canonical_name": "Amazon", "match_type": "contains", "priority": 100}
         await client.post("/api/v1/merchants/aliases", json=alias_data)
 
         # Import a transaction that should match the alias
@@ -484,7 +458,7 @@ class TestMerchantAliasMatching:
             "pattern": "WALMART SUPERCENTER",
             "canonical_name": "Walmart",
             "match_type": "exact",
-            "priority": 100
+            "priority": 100,
         }
         await client.post("/api/v1/merchants/aliases", json=alias_data)
 
@@ -504,7 +478,7 @@ class TestMerchantAliasMatching:
             "pattern": "COSTCO",
             "canonical_name": "Costco Wholesale",
             "match_type": "contains",
-            "priority": 90
+            "priority": 90,
         }
         await client.post("/api/v1/merchants/aliases", json=alias_data)
 
@@ -520,12 +494,7 @@ class TestMerchantAliasMatching:
     @pytest.mark.asyncio
     async def test_import_with_regex_match_alias(self, client: AsyncClient, seed_categories):
         """Import applies regex match merchant alias"""
-        alias_data = {
-            "pattern": r"^SQ \*.*",
-            "canonical_name": "Square Payment",
-            "match_type": "regex",
-            "priority": 80
-        }
+        alias_data = {"pattern": r"^SQ \*.*", "canonical_name": "Square Payment", "match_type": "regex", "priority": 80}
         await client.post("/api/v1/merchants/aliases", json=alias_data)
 
         csv_content = """Date,Description,Card Member,Account #,Amount
@@ -559,11 +528,7 @@ class TestImportFormatPersistence:
 11/15/2025,NEW FORMAT TEST,JOHN DOE,XXXXX-00001,-22.00
 """
         files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
-        data = {
-            "format_type": "amex_cc",
-            "account_source": "NewFormatAccount123",
-            "save_format": "true"
-        }
+        data = {"format_type": "amex_cc", "account_source": "NewFormatAccount123", "save_format": "true"}
         response = await client.post("/api/v1/import/confirm", files=files, data=data)
         assert response.status_code == 200
         assert response.json()["format_saved"] is True
@@ -582,11 +547,7 @@ class TestImportFormatPersistence:
 11/15/2025,UPDATE FORMAT TEST 1,JOHN DOE,XXXXX-00001,-11.00
 """
         files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
-        data = {
-            "format_type": "amex_cc",
-            "account_source": "UpdateFormatAccount",
-            "save_format": "true"
-        }
+        data = {"format_type": "amex_cc", "account_source": "UpdateFormatAccount", "save_format": "true"}
         await client.post("/api/v1/import/confirm", files=files, data=data)
 
         # Second import with different format to update
@@ -594,11 +555,7 @@ class TestImportFormatPersistence:
 11/16/2025,UPDATE FORMAT TEST 2,JOHN DOE,XXXXX-00001,-12.00
 """
         files2 = {"file": ("test2.csv", io.BytesIO(csv_content2.encode()), "text/csv")}
-        data2 = {
-            "format_type": "amex_cc",
-            "account_source": "UpdateFormatAccount",
-            "save_format": "true"
-        }
+        data2 = {"format_type": "amex_cc", "account_source": "UpdateFormatAccount", "save_format": "true"}
         response = await client.post("/api/v1/import/confirm", files=files2, data=data2)
         assert response.status_code == 200
         assert response.json()["format_saved"] is True
@@ -611,11 +568,7 @@ class TestImportFormatPersistence:
 11/15/2025,SAVED FORMAT PREVIEW,JOHN DOE,XXXXX-00001,-33.00
 """
         files = {"file": ("test.csv", io.BytesIO(csv_content.encode()), "text/csv")}
-        data = {
-            "format_type": "amex_cc",
-            "account_source": "SavedFormatPreview",
-            "save_format": "true"
-        }
+        data = {"format_type": "amex_cc", "account_source": "SavedFormatPreview", "save_format": "true"}
         await client.post("/api/v1/import/confirm", files=files, data=data)
 
         # Preview with same account should use saved format
@@ -624,9 +577,7 @@ class TestImportFormatPersistence:
 """
         files2 = {"file": ("test2.csv", io.BytesIO(csv_content2.encode()), "text/csv")}
         response = await client.post(
-            "/api/v1/import/preview",
-            files=files2,
-            data={"account_source": "SavedFormatPreview"}
+            "/api/v1/import/preview", files=files2, data={"account_source": "SavedFormatPreview"}
         )
         assert response.status_code == 200
 
@@ -725,16 +676,14 @@ class TestBatchImportAdvanced:
                 {"filename": "batch1.csv", "account_source": "MultiBatch1", "format_type": "amex_cc"},
                 {"filename": "batch2.csv", "account_source": "MultiBatch2", "format_type": "amex_cc"},
             ],
-            "save_format": False
+            "save_format": False,
         }
         files = [
             ("files", ("batch1.csv", io.BytesIO(csv1.encode()), "text/csv")),
             ("files", ("batch2.csv", io.BytesIO(csv2.encode()), "text/csv")),
         ]
         response = await client.post(
-            "/api/v1/import/batch/confirm",
-            files=files,
-            data={"request": json.dumps(request_data)}
+            "/api/v1/import/batch/confirm", files=files, data={"request": json.dumps(request_data)}
         )
         assert response.status_code == 200
         result = response.json()
@@ -748,18 +697,14 @@ class TestBatchImportAdvanced:
 11/15/2025,BATCH SAVE EACH,JOHN DOE,XXXXX-00001,-66.00
 """
         request_data = {
-            "files": [
-                {"filename": "save.csv", "account_source": "BatchSaveEach123", "format_type": "amex_cc"}
-            ],
-            "save_format": True
+            "files": [{"filename": "save.csv", "account_source": "BatchSaveEach123", "format_type": "amex_cc"}],
+            "save_format": True,
         }
         files = [
             ("files", ("save.csv", io.BytesIO(csv_content.encode()), "text/csv")),
         ]
         response = await client.post(
-            "/api/v1/import/batch/confirm",
-            files=files,
-            data={"request": json.dumps(request_data)}
+            "/api/v1/import/batch/confirm", files=files, data={"request": json.dumps(request_data)}
         )
         assert response.status_code == 200
         assert response.json()["format_saved"] is True
@@ -778,10 +723,8 @@ class TestBatchImportAdvanced:
 11/15/2025,BATCH UPDATE FMT 1,JOHN DOE,XXXXX-00001,-11.00
 """
         request1 = {
-            "files": [
-                {"filename": "update1.csv", "account_source": "BatchUpdateFmt", "format_type": "amex_cc"}
-            ],
-            "save_format": True
+            "files": [{"filename": "update1.csv", "account_source": "BatchUpdateFmt", "format_type": "amex_cc"}],
+            "save_format": True,
         }
         files1 = [("files", ("update1.csv", io.BytesIO(csv1.encode()), "text/csv"))]
         await client.post("/api/v1/import/batch/confirm", files=files1, data={"request": json.dumps(request1)})
@@ -791,16 +734,12 @@ class TestBatchImportAdvanced:
 11/16/2025,BATCH UPDATE FMT 2,JOHN DOE,XXXXX-00001,-22.00
 """
         request2 = {
-            "files": [
-                {"filename": "update2.csv", "account_source": "BatchUpdateFmt", "format_type": "amex_cc"}
-            ],
-            "save_format": True
+            "files": [{"filename": "update2.csv", "account_source": "BatchUpdateFmt", "format_type": "amex_cc"}],
+            "save_format": True,
         }
         files2 = [("files", ("update2.csv", io.BytesIO(csv2.encode()), "text/csv"))]
         response = await client.post(
-            "/api/v1/import/batch/confirm",
-            files=files2,
-            data={"request": json.dumps(request2)}
+            "/api/v1/import/batch/confirm", files=files2, data={"request": json.dumps(request2)}
         )
         assert response.status_code == 200
 

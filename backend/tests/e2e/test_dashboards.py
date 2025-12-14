@@ -8,6 +8,7 @@ Run with: make test-e2e (starts servers) or with servers already running:
 Note: These tests require browsers to be installed. Run:
   playwright install chromium
 """
+
 import pytest
 import httpx
 from playwright.sync_api import Page, expect
@@ -35,8 +36,7 @@ def servers_available() -> bool:
 
 # Skip all tests in this module if servers aren't running
 pytestmark = pytest.mark.skipif(
-    not servers_available(),
-    reason="Frontend and/or backend servers not running. Start with: make dev"
+    not servers_available(), reason="Frontend and/or backend servers not running. Start with: make dev"
 )
 
 

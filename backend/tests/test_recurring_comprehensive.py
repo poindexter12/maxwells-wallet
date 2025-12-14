@@ -1,6 +1,7 @@
 """
 Comprehensive tests for recurring.py router to increase coverage.
 """
+
 import pytest
 from httpx import AsyncClient
 
@@ -45,7 +46,7 @@ class TestRecurringComprehensive:
             "merchant": "Netflix",
             "expected_amount": -15.99,
             "frequency": "monthly",
-            "is_subscription": True
+            "is_subscription": True,
         }
         response = await client.post("/api/v1/recurring", json=pattern_data)
         # May return 201 for success or 422 for validation error (both test the endpoint)
@@ -59,7 +60,7 @@ class TestRecurringComprehensive:
             "merchant": "Spotify",
             "expected_amount": -9.99,
             "frequency": "monthly",
-            "is_subscription": True
+            "is_subscription": True,
         }
         create_response = await client.post("/api/v1/recurring", json=pattern_data)
 
@@ -73,20 +74,13 @@ class TestRecurringComprehensive:
     async def test_update_pattern(self, client: AsyncClient, seed_transactions):
         """Update a recurring pattern"""
         # First create a pattern
-        pattern_data = {
-            "merchant": "Hulu",
-            "expected_amount": -7.99,
-            "frequency": "monthly",
-            "is_subscription": True
-        }
+        pattern_data = {"merchant": "Hulu", "expected_amount": -7.99, "frequency": "monthly", "is_subscription": True}
         create_response = await client.post("/api/v1/recurring", json=pattern_data)
 
         if create_response.status_code in [200, 201]:
             pattern_id = create_response.json().get("id")
             if pattern_id:
-                response = await client.patch(f"/api/v1/recurring/{pattern_id}", json={
-                    "expected_amount": -14.99
-                })
+                response = await client.patch(f"/api/v1/recurring/{pattern_id}", json={"expected_amount": -14.99})
                 assert response.status_code == 200
                 assert response.json()["expected_amount"] == -14.99
 
@@ -98,7 +92,7 @@ class TestRecurringComprehensive:
             "merchant": "Disney Plus",
             "expected_amount": -7.99,
             "frequency": "monthly",
-            "is_subscription": True
+            "is_subscription": True,
         }
         create_response = await client.post("/api/v1/recurring", json=pattern_data)
 

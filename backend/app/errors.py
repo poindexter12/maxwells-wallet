@@ -117,6 +117,7 @@ class AppException(HTTPException):
 
 # Convenience functions for common error patterns
 
+
 def not_found(error_code: ErrorCode, message: Optional[str] = None, **context: Any) -> AppException:
     """Create a 404 Not Found exception."""
     return AppException(404, error_code, message, context if context else None)

@@ -3,6 +3,7 @@ Tests for API validation layer - parameter validation, error handling, and edge 
 
 These tests ensure the API properly validates inputs and returns appropriate errors.
 """
+
 import pytest
 from httpx import AsyncClient
 
@@ -85,10 +86,7 @@ class TestTransactionEndpointValidation:
     @pytest.mark.asyncio
     async def test_update_nonexistent_transaction(self, client: AsyncClient, seed_transactions):
         """Updating nonexistent transaction returns 404"""
-        response = await client.patch(
-            "/api/v1/transactions/99999",
-            json={"notes": "test"}
-        )
+        response = await client.patch("/api/v1/transactions/99999", json={"notes": "test"})
         assert response.status_code == 404
 
 
@@ -109,10 +107,13 @@ class TestTagEndpointValidation:
     @pytest.mark.asyncio
     async def test_create_duplicate_tag_fails(self, client: AsyncClient, seed_tags):
         """Creating duplicate namespace:value fails with 400"""
-        response = await client.post("/api/v1/tags/", json={
-            "namespace": "bucket",
-            "value": "groceries"  # Already exists in seed_tags
-        })
+        response = await client.post(
+            "/api/v1/tags/",
+            json={
+                "namespace": "bucket",
+                "value": "groceries",  # Already exists in seed_tags
+            },
+        )
         assert response.status_code == 400
         assert response.json()["detail"]["error_code"] == "TAG_ALREADY_EXISTS"
 
@@ -132,20 +133,14 @@ class TestTagEndpointValidation:
     async def test_add_invalid_tag_format(self, client: AsyncClient, seed_transactions):
         """Adding tag without colon separator fails"""
         txn_id = (await client.get("/api/v1/transactions")).json()[0]["id"]
-        response = await client.post(
-            f"/api/v1/transactions/{txn_id}/tags",
-            json={"tag": "invalid_no_colon"}
-        )
+        response = await client.post(f"/api/v1/transactions/{txn_id}/tags", json={"tag": "invalid_no_colon"})
         assert response.status_code == 400
 
     @pytest.mark.asyncio
     async def test_add_nonexistent_tag_to_transaction(self, client: AsyncClient, seed_transactions):
         """Adding nonexistent tag to transaction fails"""
         txn_id = (await client.get("/api/v1/transactions")).json()[0]["id"]
-        response = await client.post(
-            f"/api/v1/transactions/{txn_id}/tags",
-            json={"tag": "bucket:nonexistent-bucket"}
-        )
+        response = await client.post(f"/api/v1/transactions/{txn_id}/tags", json={"tag": "bucket:nonexistent-bucket"})
         assert response.status_code == 400
 
     @pytest.mark.asyncio
@@ -163,46 +158,41 @@ class TestTransactionCreateValidation:
     async def test_create_transaction_missing_required_fields(self, client: AsyncClient, seed_categories):
         """Creating transaction without required fields fails"""
         # Missing date
-        response = await client.post("/api/v1/transactions", json={
-            "amount": -50.0,
-            "description": "Test",
-            "account_source": "TEST-123"
-        })
+        response = await client.post(
+            "/api/v1/transactions", json={"amount": -50.0, "description": "Test", "account_source": "TEST-123"}
+        )
         assert response.status_code == 422
 
         # Missing amount
-        response = await client.post("/api/v1/transactions", json={
-            "date": "2025-11-15",
-            "description": "Test",
-            "account_source": "TEST-123"
-        })
+        response = await client.post(
+            "/api/v1/transactions", json={"date": "2025-11-15", "description": "Test", "account_source": "TEST-123"}
+        )
         assert response.status_code == 422
 
         # Missing description
-        response = await client.post("/api/v1/transactions", json={
-            "date": "2025-11-15",
-            "amount": -50.0,
-            "account_source": "TEST-123"
-        })
+        response = await client.post(
+            "/api/v1/transactions", json={"date": "2025-11-15", "amount": -50.0, "account_source": "TEST-123"}
+        )
         assert response.status_code == 422
 
         # Missing account_source
-        response = await client.post("/api/v1/transactions", json={
-            "date": "2025-11-15",
-            "amount": -50.0,
-            "description": "Test"
-        })
+        response = await client.post(
+            "/api/v1/transactions", json={"date": "2025-11-15", "amount": -50.0, "description": "Test"}
+        )
         assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_create_transaction_valid_minimal(self, client: AsyncClient, seed_categories):
         """Creating transaction with minimal required fields succeeds"""
-        response = await client.post("/api/v1/transactions", json={
-            "date": "2025-11-15",
-            "amount": -50.0,
-            "description": "Test transaction",
-            "account_source": "TEST-123"
-        })
+        response = await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": "2025-11-15",
+                "amount": -50.0,
+                "description": "Test transaction",
+                "account_source": "TEST-123",
+            },
+        )
         assert response.status_code == 201
         data = response.json()
         assert data["reconciliation_status"] == "manually_entered"

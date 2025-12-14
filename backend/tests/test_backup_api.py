@@ -1,8 +1,9 @@
 """
 Tests for backup-related API endpoints in admin router.
 """
+
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from datetime import datetime, timezone
 from httpx import AsyncClient
 
@@ -202,9 +203,7 @@ class TestBackupAPIRestore:
         with patch("app.routers.admin.backup_service") as mock_service:
             mock_service.get_backup.return_value = None
 
-            response = await client.post(
-                "/api/v1/admin/restore/nonexistent_id?confirm=RESTORE"
-            )
+            response = await client.post("/api/v1/admin/restore/nonexistent_id?confirm=RESTORE")
 
             assert response.status_code == 404
             data = response.json()
@@ -226,9 +225,7 @@ class TestBackupAPIRestore:
             mock_service.get_backup.return_value = mock_backup
             mock_service.restore_backup.return_value = True
 
-            response = await client.post(
-                "/api/v1/admin/restore/20241215_143022_123456?confirm=RESTORE"
-            )
+            response = await client.post("/api/v1/admin/restore/20241215_143022_123456?confirm=RESTORE")
 
             assert response.status_code == 200
             data = response.json()
@@ -254,9 +251,7 @@ class TestBackupAPIRestore:
 
             # FileNotFoundError is not caught, propagates up
             with pytest.raises(FileNotFoundError, match="Backup file not found"):
-                await client.post(
-                    "/api/v1/admin/restore/20241215_143022_123456?confirm=RESTORE"
-                )
+                await client.post("/api/v1/admin/restore/20241215_143022_123456?confirm=RESTORE")
 
 
 class TestBackupAPIDelete:
@@ -283,9 +278,7 @@ class TestBackupAPIDelete:
         with patch("app.routers.admin.backup_service") as mock_service:
             mock_service.get_backup.return_value = None
 
-            response = await client.delete(
-                "/api/v1/admin/backup/nonexistent_id?confirm=DELETE"
-            )
+            response = await client.delete("/api/v1/admin/backup/nonexistent_id?confirm=DELETE")
 
             assert response.status_code == 404
             data = response.json()
@@ -307,9 +300,7 @@ class TestBackupAPIDelete:
             mock_service.get_backup.return_value = mock_backup
             mock_service.delete_backup.return_value = True
 
-            response = await client.delete(
-                "/api/v1/admin/backup/20241215_143022_123456?confirm=DELETE"
-            )
+            response = await client.delete("/api/v1/admin/backup/20241215_143022_123456?confirm=DELETE")
 
             assert response.status_code == 200
             data = response.json()
@@ -331,9 +322,7 @@ class TestBackupAPIDelete:
         with patch("app.routers.admin.backup_service") as mock_service:
             mock_service.get_backup.return_value = mock_backup
 
-            response = await client.delete(
-                "/api/v1/admin/backup/demo_backup_id?confirm=DELETE"
-            )
+            response = await client.delete("/api/v1/admin/backup/demo_backup_id?confirm=DELETE")
 
             assert response.status_code == 400
             data = response.json()
@@ -359,9 +348,7 @@ class TestBackupAPISetDemo:
             mock_service.get_backup.return_value = mock_backup
             mock_service.set_demo_backup.return_value = True
 
-            response = await client.post(
-                "/api/v1/admin/backup/20241215_143022_123456/set-demo"
-            )
+            response = await client.post("/api/v1/admin/backup/20241215_143022_123456/set-demo")
 
             assert response.status_code == 200
             data = response.json()
@@ -374,9 +361,7 @@ class TestBackupAPISetDemo:
         with patch("app.routers.admin.backup_service") as mock_service:
             mock_service.get_backup.return_value = None
 
-            response = await client.post(
-                "/api/v1/admin/backup/nonexistent/set-demo"
-            )
+            response = await client.post("/api/v1/admin/backup/nonexistent/set-demo")
 
             assert response.status_code == 404
             data = response.json()

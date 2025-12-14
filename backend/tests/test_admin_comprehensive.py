@@ -1,6 +1,7 @@
 """
 Comprehensive tests for admin.py router to increase coverage to 90%+.
 """
+
 import pytest
 from httpx import AsyncClient
 import io
@@ -122,37 +123,27 @@ class TestAdminPurge:
 
         # 1. Create a budget
         await client.post("/api/v1/tags", json={"namespace": "bucket", "value": "purge-test-bucket"})
-        await client.post("/api/v1/budgets", json={
-            "tag": "bucket:purge-test-bucket",
-            "amount": 100.0,
-            "period": "monthly"
-        })
+        await client.post(
+            "/api/v1/budgets", json={"tag": "bucket:purge-test-bucket", "amount": 100.0, "period": "monthly"}
+        )
 
         # 2. Create a tag rule
-        await client.post("/api/v1/tag-rules", json={
-            "tag": "bucket:purge-test-bucket",
-            "merchant_pattern": "PURGE_TEST",
-            "priority": 1
-        })
+        await client.post(
+            "/api/v1/tag-rules",
+            json={"tag": "bucket:purge-test-bucket", "merchant_pattern": "PURGE_TEST", "priority": 1},
+        )
 
         # 3. Create a merchant alias
-        await client.post("/api/v1/merchants/aliases", json={
-            "pattern": "PURGE_ALIAS",
-            "canonical_name": "Purge Test Merchant",
-            "match_type": "exact"
-        })
+        await client.post(
+            "/api/v1/merchants/aliases",
+            json={"pattern": "PURGE_ALIAS", "canonical_name": "Purge Test Merchant", "match_type": "exact"},
+        )
 
         # 4. Create a saved filter
-        await client.post("/api/v1/filters", json={
-            "name": "Purge Test Filter",
-            "filter_config": {"search": "test"}
-        })
+        await client.post("/api/v1/filters", json={"name": "Purge Test Filter", "filter_config": {"search": "test"}})
 
         # 5. Create a non-default dashboard
-        await client.post("/api/v1/dashboards", json={
-            "name": "Purge Test Dashboard",
-            "is_default": False
-        })
+        await client.post("/api/v1/dashboards", json={"name": "Purge Test Dashboard", "is_default": False})
 
         # 6. Create an occasion tag
         await client.post("/api/v1/tags", json={"namespace": "occasion", "value": "purge-test-occasion"})
@@ -220,11 +211,10 @@ class TestAdminPurge:
     async def test_purge_all_with_all_data_types(self, client: AsyncClient):
         """Purge with all data types to maximize coverage"""
         # Create recurring pattern
-        await client.post("/api/v1/recurring", json={
-            "merchant_pattern": "PURGE_RECURRING",
-            "expected_amount": 50.0,
-            "frequency": "monthly"
-        })
+        await client.post(
+            "/api/v1/recurring",
+            json={"merchant_pattern": "PURGE_RECURRING", "expected_amount": 50.0, "frequency": "monthly"},
+        )
 
         # Create app settings
         await client.patch("/api/v1/settings", json={"theme": "dark"})

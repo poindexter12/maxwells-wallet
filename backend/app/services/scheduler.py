@@ -5,13 +5,13 @@ Uses APScheduler with AsyncIOScheduler to run background tasks.
 """
 
 import logging
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime
 from typing import Optional
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from pydantic import BaseModel
-from sqlalchemy import func, text
+from sqlalchemy import text
 
 from app.config import settings
 from app.services.backup import backup_service
@@ -66,12 +66,8 @@ class SchedulerService:
         auto_backup_job = self.scheduler.get_job("auto_backup")
         demo_reset_job = self.scheduler.get_job("demo_reset")
 
-        self._settings.next_auto_backup = (
-            auto_backup_job.next_run_time if auto_backup_job else None
-        )
-        self._settings.next_demo_reset = (
-            demo_reset_job.next_run_time if demo_reset_job else None
-        )
+        self._settings.next_auto_backup = auto_backup_job.next_run_time if auto_backup_job else None
+        self._settings.next_demo_reset = demo_reset_job.next_run_time if demo_reset_job else None
 
         return self._settings
 
@@ -85,9 +81,7 @@ class SchedulerService:
         if auto_backup_enabled is not None:
             self._settings.auto_backup_enabled = auto_backup_enabled
             if auto_backup_enabled:
-                self.schedule_auto_backup(
-                    auto_backup_interval_hours or self._settings.auto_backup_interval_hours
-                )
+                self.schedule_auto_backup(auto_backup_interval_hours or self._settings.auto_backup_interval_hours)
             else:
                 self._remove_job("auto_backup")
 
@@ -174,14 +168,11 @@ class SchedulerService:
         relative to "now" rather than the original seed date.
         """
         from app.database import async_session
-        from app.models import Transaction, ImportSession, Budget
 
         try:
             async with async_session() as session:
                 # Find the max transaction date
-                result = await session.execute(
-                    text("SELECT MAX(date) FROM transactions")
-                )
+                result = await session.execute(text("SELECT MAX(date) FROM transactions"))
                 max_date_row = result.scalar()
 
                 if max_date_row is None:
@@ -210,7 +201,7 @@ class SchedulerService:
                         UPDATE transactions
                         SET date = date(date, :offset || ' days')
                     """),
-                    {"offset": days_offset}
+                    {"offset": days_offset},
                 )
 
                 # Update import session date ranges
@@ -221,7 +212,7 @@ class SchedulerService:
                             date_range_end = date(date_range_end, :offset || ' days')
                         WHERE date_range_start IS NOT NULL
                     """),
-                    {"offset": days_offset}
+                    {"offset": days_offset},
                 )
 
                 await session.commit()

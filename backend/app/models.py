@@ -7,6 +7,7 @@ from enum import Enum
 if TYPE_CHECKING:
     from typing import List
 
+
 class ReconciliationStatus(str, Enum):
     unreconciled = "unreconciled"
     matched = "matched"
@@ -16,32 +17,38 @@ class ReconciliationStatus(str, Enum):
 
 class DateRangeType(str, Enum):
     """Relative date range types for dashboards"""
-    mtd = "mtd"                     # Month to Date - start of current month to today
-    qtd = "qtd"                     # Quarter to Date - start of current quarter to today
-    ytd = "ytd"                     # Year to Date - Jan 1 to today
-    last_30_days = "last_30_days"   # Rolling 30 days ending today
-    last_90_days = "last_90_days"   # Rolling 90 days ending today
-    last_year = "last_year"         # Previous calendar year (Jan 1 - Dec 31)
+
+    mtd = "mtd"  # Month to Date - start of current month to today
+    qtd = "qtd"  # Quarter to Date - start of current quarter to today
+    ytd = "ytd"  # Year to Date - Jan 1 to today
+    last_30_days = "last_30_days"  # Rolling 30 days ending today
+    last_90_days = "last_90_days"  # Rolling 90 days ending today
+    last_year = "last_year"  # Previous calendar year (Jan 1 - Dec 31)
+
 
 class ImportFormatType(str, Enum):
-    bofa_bank = "bofa_bank"   # BofA Checking (Date,Description,Amount,Running Bal.)
-    bofa_cc = "bofa_cc"       # BofA Credit Card (Posted Date,Reference Number,Payee,Address,Amount)
-    amex_cc = "amex_cc"       # Amex Credit Card (Date,Description,Amount,Card Member,Account #)
+    bofa_bank = "bofa_bank"  # BofA Checking (Date,Description,Amount,Running Bal.)
+    bofa_cc = "bofa_cc"  # BofA Credit Card (Posted Date,Reference Number,Payee,Address,Amount)
+    amex_cc = "amex_cc"  # Amex Credit Card (Date,Description,Amount,Card Member,Account #)
     inspira_hsa = "inspira_hsa"  # Inspira HSA (Transaction ID,Transaction Type,Origination Date,...)
-    venmo = "venmo"           # Venmo (ID,Datetime,Type,Status,Note,From,To,Amount...)
-    qif = "qif"               # Quicken Interchange Format (text-based)
-    qfx = "qfx"               # Quicken Financial Exchange / OFX (XML-based)
-    custom = "custom"         # User-defined custom CSV format with configurable mappings
+    venmo = "venmo"  # Venmo (ID,Datetime,Type,Status,Note,From,To,Amount...)
+    qif = "qif"  # Quicken Interchange Format (text-based)
+    qfx = "qfx"  # Quicken Financial Exchange / OFX (XML-based)
+    custom = "custom"  # User-defined custom CSV format with configurable mappings
     unknown = "unknown"
+
 
 class BaseModel(SQLModel):
     """Base model with common fields"""
+
     id: Optional[int] = Field(default=None, primary_key=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+
 class TransactionTag(SQLModel, table=True):
     """Junction table linking transactions to tags with optional split amounts"""
+
     __tablename__ = "transaction_tags"
 
     transaction_id: int = Field(foreign_key="transactions.id", primary_key=True)
@@ -51,17 +58,18 @@ class TransactionTag(SQLModel, table=True):
 
 class Tag(BaseModel, table=True):
     """Namespaced tag for flexible transaction classification"""
+
     __tablename__ = "tags"
     __table_args__ = {"extend_existing": True}
 
     namespace: str = Field(index=True)  # "bucket", "occasion", "merchant", "account"
-    value: str = Field(index=True)       # "groceries", "vacation", "amazon", "amex-53004"
+    value: str = Field(index=True)  # "groceries", "vacation", "amazon", "amex-53004"
     description: Optional[str] = None
-    sort_order: int = Field(default=0)   # For drag-and-drop ordering within namespace
-    color: Optional[str] = None          # Hex color code (e.g., "#22c55e") for UI display
+    sort_order: int = Field(default=0)  # For drag-and-drop ordering within namespace
+    color: Optional[str] = None  # Hex color code (e.g., "#22c55e") for UI display
 
     # Account-specific fields (only used when namespace="account")
-    due_day: Optional[int] = None        # Day of month payment is due (1-31)
+    due_day: Optional[int] = None  # Day of month payment is due (1-31)
     credit_limit: Optional[float] = None  # Credit limit for credit card accounts
 
     # Note: Unique constraint on (namespace, value) added via migration
@@ -81,11 +89,13 @@ class TagUpdate(SQLModel):
     description: Optional[str] = None
     sort_order: Optional[int] = None
     color: Optional[str] = None
-    due_day: Optional[int] = None        # For account tags: day of month payment is due
+    due_day: Optional[int] = None  # For account tags: day of month payment is due
     credit_limit: Optional[float] = None  # For account tags: credit limit
+
 
 class Transaction(BaseModel, table=True):
     """Transaction model"""
+
     __tablename__ = "transactions"
 
     # Pydantic config for proper enum serialization
@@ -99,26 +109,29 @@ class Transaction(BaseModel, table=True):
     account_tag_id: Optional[int] = Field(default=None, foreign_key="tags.id", index=True)  # FK to account tag
     card_member: Optional[str] = None  # e.g., "JOSEPH W SEYMOUR"
     category: Optional[str] = Field(default=None, index=True)  # DEPRECATED: use tags instead
-    reconciliation_status: ReconciliationStatus = Field(
-        default=ReconciliationStatus.unreconciled,
-        index=True
-    )
+    reconciliation_status: ReconciliationStatus = Field(default=ReconciliationStatus.unreconciled, index=True)
     notes: Optional[str] = None
     reference_id: Optional[str] = Field(default=None, index=True)  # original bank reference/transaction ID
     import_session_id: Optional[int] = Field(default=None, foreign_key="import_sessions.id", index=True)
     content_hash: Optional[str] = Field(default=None, index=True)  # SHA256 hash for reliable deduplication
-    content_hash_no_account: Optional[str] = Field(default=None, index=True)  # Hash without account for cross-account detection
+    content_hash_no_account: Optional[str] = Field(
+        default=None, index=True
+    )  # Hash without account for cross-account detection
     is_transfer: bool = Field(default=False, index=True)  # True if internal transfer (excluded from spending)
-    linked_transaction_id: Optional[int] = Field(default=None, foreign_key="transactions.id", index=True)  # Link paired transfers
+    linked_transaction_id: Optional[int] = Field(
+        default=None, foreign_key="transactions.id", index=True
+    )  # Link paired transfers
 
     # Relationships
     tags: List["Tag"] = Relationship(back_populates="transactions", link_model=TransactionTag)
-    account_tag: Optional["Tag"] = Relationship(
-        sa_relationship_kwargs={"foreign_keys": "[Transaction.account_tag_id]"}
-    )
+    account_tag: Optional["Tag"] = Relationship(sa_relationship_kwargs={"foreign_keys": "[Transaction.account_tag_id]"})
     linked_transaction: Optional["Transaction"] = Relationship(
-        sa_relationship_kwargs={"foreign_keys": "[Transaction.linked_transaction_id]", "remote_side": "[Transaction.id]"}
+        sa_relationship_kwargs={
+            "foreign_keys": "[Transaction.linked_transaction_id]",
+            "remote_side": "[Transaction.id]",
+        }
     )
+
 
 class TransactionCreate(SQLModel):
     date: date_type
@@ -134,6 +147,7 @@ class TransactionCreate(SQLModel):
     content_hash: Optional[str] = None  # Optional - auto-generated if not provided
     is_transfer: bool = False
     linked_transaction_id: Optional[int] = None
+
 
 class TransactionUpdate(SQLModel):
     date: Optional[date_type] = None
@@ -151,18 +165,22 @@ class TransactionUpdate(SQLModel):
     is_transfer: Optional[bool] = None
     linked_transaction_id: Optional[int] = None
 
+
 class ImportFormat(BaseModel, table=True):
     """Saved import format preferences"""
+
     __tablename__ = "import_formats"
 
     account_source: str = Field(index=True, unique=True)  # e.g., "AMEX-53004", "BOFA-Checking"
     format_type: ImportFormatType  # bofa, amex, unknown
     custom_mappings: Optional[str] = None  # JSON string for custom column mappings if needed
 
+
 class ImportFormatCreate(SQLModel):
     account_source: str
     format_type: ImportFormatType
     custom_mappings: Optional[str] = None
+
 
 class ImportFormatUpdate(SQLModel):
     format_type: Optional[ImportFormatType] = None
@@ -171,6 +189,7 @@ class ImportFormatUpdate(SQLModel):
 
 class CustomFormatConfig(BaseModel, table=True):
     """Named custom CSV format configurations for reuse across accounts"""
+
     __tablename__ = "custom_format_configs"
 
     name: str = Field(index=True, unique=True)  # User-friendly name
@@ -196,6 +215,7 @@ class CustomFormatConfigUpdate(SQLModel):
 
 class ImportSession(BaseModel, table=True):
     """Tracks import batches for audit and rollback"""
+
     __tablename__ = "import_sessions"
 
     filename: str  # Original filename
@@ -212,6 +232,7 @@ class ImportSession(BaseModel, table=True):
 
 class BatchImportSession(BaseModel, table=True):
     """Tracks batch import operations (multiple files imported together)"""
+
     __tablename__ = "batch_import_sessions"
 
     total_files: int = 0
@@ -220,19 +241,22 @@ class BatchImportSession(BaseModel, table=True):
     total_duplicates: int = 0
     status: str = Field(default="pending")  # pending, in_progress, completed
 
+
 class BudgetPeriod(str, Enum):
     monthly = "monthly"
     yearly = "yearly"
 
+
 class Budget(BaseModel, table=True):
     """Budget tracking model"""
+
     __tablename__ = "budgets"
 
     tag: str = Field(index=True)  # Tag in namespace:value format (e.g., "bucket:groceries")
     amount: float  # Budget limit
     period: BudgetPeriod = Field(default=BudgetPeriod.monthly)
     start_date: Optional[date_type] = None  # Optional: specific start date
-    end_date: Optional[date_type] = None    # Optional: specific end date
+    end_date: Optional[date_type] = None  # Optional: specific end date
     rollover_enabled: bool = Field(default=False)
 
 
@@ -253,8 +277,10 @@ class BudgetUpdate(SQLModel):
     end_date: Optional[date_type] = None
     rollover_enabled: Optional[bool] = None
 
+
 class TagRule(BaseModel, table=True):
     """Tag auto-assignment rules (applies tags to transactions based on patterns)"""
+
     __tablename__ = "tag_rules"
 
     name: str  # User-friendly rule name
@@ -302,6 +328,7 @@ class TagRuleUpdate(SQLModel):
     account_source: Optional[str] = None
     match_all: Optional[bool] = None
 
+
 class RecurringFrequency(str, Enum):
     weekly = "weekly"
     biweekly = "biweekly"
@@ -309,13 +336,16 @@ class RecurringFrequency(str, Enum):
     quarterly = "quarterly"
     yearly = "yearly"
 
+
 class RecurringStatus(str, Enum):
     active = "active"
     paused = "paused"
     ended = "ended"
 
+
 class RecurringPattern(BaseModel, table=True):
     """Recurring transaction patterns (subscriptions, bills, etc.)"""
+
     __tablename__ = "recurring_patterns"
 
     merchant: str = Field(index=True)
@@ -324,11 +354,12 @@ class RecurringPattern(BaseModel, table=True):
     amount_max: float  # Max amount for fuzzy matching
     frequency: RecurringFrequency = Field(index=True)
     day_of_month: Optional[int] = None  # Expected day (for monthly)
-    day_of_week: Optional[int] = None   # Expected day (for weekly, 0=Monday)
+    day_of_week: Optional[int] = None  # Expected day (for weekly, 0=Monday)
     last_seen_date: Optional[date_type] = None
     next_expected_date: Optional[date_type] = None
     confidence_score: float = Field(default=0.0)  # 0-1 confidence
     status: RecurringStatus = Field(default=RecurringStatus.active)
+
 
 class RecurringPatternCreate(SQLModel):
     merchant: str
@@ -342,6 +373,7 @@ class RecurringPatternCreate(SQLModel):
     next_expected_date: Optional[date_type] = None
     confidence_score: float = 0.0
     status: RecurringStatus = RecurringStatus.active
+
 
 class RecurringPatternUpdate(SQLModel):
     merchant: Optional[str] = None
@@ -358,20 +390,21 @@ class RecurringPatternUpdate(SQLModel):
 
 
 class MerchantAliasMatchType(str, Enum):
-    exact = "exact"        # Exact string match (case-insensitive)
+    exact = "exact"  # Exact string match (case-insensitive)
     contains = "contains"  # Pattern contained in merchant string
-    regex = "regex"        # Regular expression match
+    regex = "regex"  # Regular expression match
 
 
 class MerchantAlias(BaseModel, table=True):
     """Merchant alias for normalizing messy bank merchant names"""
+
     __tablename__ = "merchant_aliases"
 
-    pattern: str = Field(index=True)        # Raw merchant string/pattern to match
-    canonical_name: str = Field(index=True) # Clean display name
+    pattern: str = Field(index=True)  # Raw merchant string/pattern to match
+    canonical_name: str = Field(index=True)  # Clean display name
     match_type: MerchantAliasMatchType = Field(default=MerchantAliasMatchType.exact)
     priority: int = Field(default=0, index=True)  # Higher = applied first
-    match_count: int = Field(default=0)     # Track how often this alias is used
+    match_count: int = Field(default=0)  # Track how often this alias is used
     last_matched_date: Optional[datetime] = None
 
 
@@ -391,6 +424,7 @@ class MerchantAliasUpdate(SQLModel):
 
 class SavedFilter(BaseModel, table=True):
     """Saved search filters for quick access to common queries"""
+
     __tablename__ = "saved_filters"
 
     name: str = Field(index=True)  # User-friendly name like "Amazon purchases"
@@ -466,17 +500,20 @@ class SavedFilterUpdate(SQLModel):
 # Split Transaction Models
 class SplitItem(SQLModel):
     """A single split allocation for a transaction"""
+
     tag: str  # Format: "bucket:groceries" or just bucket value
     amount: float
 
 
 class TransactionSplits(SQLModel):
     """Request model for setting transaction splits"""
+
     splits: List[SplitItem]
 
 
 class TransactionSplitResponse(SQLModel):
     """Response model showing transaction splits"""
+
     transaction_id: int
     total_amount: float
     splits: List[SplitItem]
@@ -486,6 +523,7 @@ class TransactionSplitResponse(SQLModel):
 # Dashboard Models
 class Dashboard(BaseModel, table=True):
     """Named dashboard configuration with date range and widgets"""
+
     __tablename__ = "dashboards"
 
     name: str = Field(index=True)
@@ -526,6 +564,7 @@ class DashboardUpdate(SQLModel):
 # Dashboard Widget Configuration Models
 class DashboardWidget(BaseModel, table=True):
     """User's dashboard widget configuration"""
+
     __tablename__ = "dashboard_widgets"
 
     # Foreign key to dashboard (nullable for migration - will be required after migration)
@@ -557,6 +596,7 @@ class DashboardWidgetUpdate(SQLModel):
 
 class DashboardLayoutUpdate(SQLModel):
     """Batch update for widget positions"""
+
     widgets: List[dict]  # [{"id": 1, "position": 0}, {"id": 2, "position": 1}, ...]
 
 
@@ -564,8 +604,10 @@ class DashboardLayoutUpdate(SQLModel):
 # Application Settings
 # ============================================================================
 
+
 class LanguagePreference(str, Enum):
     """User's language preference for i18n (BCP 47 locale codes)"""
+
     browser = "browser"  # Use Accept-Language header from browser
     en_us = "en-US"
     en_gb = "en-GB"
@@ -580,6 +622,7 @@ class LanguagePreference(str, Enum):
 
 class AppSettings(BaseModel, table=True):
     """Application-wide settings (single row, upsert pattern)"""
+
     __tablename__ = "app_settings"
 
     language: LanguagePreference = Field(default=LanguagePreference.browser)
@@ -588,4 +631,5 @@ class AppSettings(BaseModel, table=True):
 
 class AppSettingsUpdate(SQLModel):
     """Schema for updating app settings"""
+
     language: Optional[LanguagePreference] = None

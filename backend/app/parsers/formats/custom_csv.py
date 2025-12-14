@@ -14,7 +14,7 @@ import io
 import json
 import re
 from dataclasses import dataclass, field, fields
-from datetime import date, datetime
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from ..base import (
@@ -30,6 +30,7 @@ from ..base import (
 @dataclass
 class RowHandling:
     """Configuration for row filtering and skipping."""
+
     skip_header_rows: int = 0  # Rows to skip before CSV header (if find_header_row is False)
     skip_footer_rows: int = 0  # Rows to skip at end of file
     skip_patterns: List[str] = field(default_factory=list)  # Skip rows matching these patterns
@@ -46,6 +47,7 @@ class CustomCsvConfig:
     This config is stored as JSON in ImportFormat.custom_mappings.
     Columns can be specified by name (string) or index (int, 0-based).
     """
+
     # Identity
     name: str  # User-friendly name for this config
     account_source: str  # Default account source
@@ -156,9 +158,15 @@ class CustomCsvParser(CSVFormatParser):
             date_column=self._col_name(config.date_column, "date"),
             amount_column=self._col_name(config.amount_column, "amount"),
             description_column=self._col_name(config.description_column, "description"),
-            reference_column=self._col_name(config.reference_column, "reference") if config.reference_column is not None else None,
-            category_column=self._col_name(config.category_column, "category") if config.category_column is not None else None,
-            card_member_column=self._col_name(config.card_member_column, "card_member") if config.card_member_column is not None else None,
+            reference_column=self._col_name(config.reference_column, "reference")
+            if config.reference_column is not None
+            else None,
+            category_column=self._col_name(config.category_column, "category")
+            if config.category_column is not None
+            else None,
+            card_member_column=self._col_name(config.card_member_column, "card_member")
+            if config.card_member_column is not None
+            else None,
         )
 
         # Build amount config
@@ -206,7 +214,7 @@ class CustomCsvParser(CSVFormatParser):
 
     def preprocess_content(self, csv_content: str) -> str:
         """Skip header and footer rows, optionally auto-detecting header row."""
-        lines = csv_content.split('\n')
+        lines = csv_content.split("\n")
 
         # Find header row if configured
         if self.config.row_handling.find_header_row and self.config.row_handling.header_indicators:
@@ -228,7 +236,7 @@ class CustomCsvParser(CSVFormatParser):
         if end <= start:
             return ""
 
-        return '\n'.join(lines[start:end])
+        return "\n".join(lines[start:end])
 
     def should_skip_row(self, row: Dict[str, str]) -> bool:
         """Check if row should be skipped based on config."""
@@ -256,7 +264,7 @@ class CustomCsvParser(CSVFormatParser):
         if self.config.merchant_column is not None:
             merchant = self._get_value(row, self.config.merchant_column)
             if merchant:
-                return merchant[:self.config.merchant_max_length].strip()
+                return merchant[: self.config.merchant_max_length].strip()
 
         # Otherwise, extract from description
         merchant = description
@@ -266,13 +274,13 @@ class CustomCsvParser(CSVFormatParser):
             match = re.search(self.config.merchant_regex, description)
             if match:
                 merchant = match.group(1) if match.groups() else match.group(0)
-                return merchant[:self.config.merchant_max_length].strip()
+                return merchant[: self.config.merchant_max_length].strip()
 
         # Try first N words extraction
         if self.config.merchant_first_words > 0:
             words = description.split()
-            merchant = ' '.join(words[:self.config.merchant_first_words])
-            return merchant[:self.config.merchant_max_length].strip()
+            merchant = " ".join(words[: self.config.merchant_first_words])
+            return merchant[: self.config.merchant_max_length].strip()
 
         # Split on configured characters
         if self.config.merchant_split_chars:
@@ -281,7 +289,7 @@ class CustomCsvParser(CSVFormatParser):
                     merchant = merchant.split(char)[0]
                     break
 
-        return merchant[:self.config.merchant_max_length].strip()
+        return merchant[: self.config.merchant_max_length].strip()
 
     def get_default_account_source(self, csv_content: str, row: Dict[str, str]) -> str:
         """Return configured account source."""
@@ -300,7 +308,7 @@ class CustomCsvParser(CSVFormatParser):
         if not content.strip():
             return []
 
-        lines = content.split('\n')
+        lines = content.split("\n")
         if not lines:
             return []
 
@@ -309,8 +317,8 @@ class CustomCsvParser(CSVFormatParser):
 
         if uses_indexes:
             # Parse without header - create synthetic column names
-            reader = csv.reader(io.StringIO(content))
-            rows = list(reader)
+            csv_reader = csv.reader(io.StringIO(content))
+            rows = list(csv_reader)
 
             # Create dict rows with index-based keys
             for row_values in rows:
@@ -327,9 +335,9 @@ class CustomCsvParser(CSVFormatParser):
                     transactions.append(transaction)
         else:
             # Use DictReader for named columns
-            reader = csv.DictReader(io.StringIO(content))
+            dict_reader = csv.DictReader(io.StringIO(content))
 
-            for row in reader:
+            for row in dict_reader:
                 if self.should_skip_row(row):
                     continue
 
@@ -340,10 +348,7 @@ class CustomCsvParser(CSVFormatParser):
         return transactions
 
     def _parse_row(
-        self,
-        row: Dict[str, str],
-        csv_content: str,
-        account_source: Optional[str]
+        self, row: Dict[str, str], csv_content: str, account_source: Optional[str]
     ) -> Optional[ParsedTransaction]:
         """Parse a single row into a transaction."""
         # Parse date
@@ -475,16 +480,12 @@ def detect_amount_format(sample_values: List[str]) -> Dict[str, Any]:
         if not v:
             continue
         # Check for negative indicators
-        is_negative = (
-            v.startswith("-") or
-            v.startswith("- ") or
-            (v.startswith("(") and v.endswith(")"))
-        )
+        is_negative = v.startswith("-") or v.startswith("- ") or (v.startswith("(") and v.endswith(")"))
         if is_negative:
             negative_count += 1
         else:
             # Check if it's actually a number (not empty or zero)
-            cleaned = re.sub(r'[,$\s\+]', '', v)
+            cleaned = re.sub(r"[,$\s\+]", "", v)
             try:
                 val = float(cleaned)
                 if val != 0:
@@ -516,14 +517,14 @@ def analyze_csv_columns(csv_content: str, skip_rows: int = 0) -> Dict[str, Any]:
             }
         }
     """
-    lines = csv_content.split('\n')
+    lines = csv_content.split("\n")
     if skip_rows > 0:
         lines = lines[skip_rows:]
 
     if not lines:
         return {"headers": [], "sample_rows": [], "column_hints": {}}
 
-    reader = csv.reader(io.StringIO('\n'.join(lines)))
+    reader = csv.reader(io.StringIO("\n".join(lines)))
     rows = list(reader)
 
     if not rows:
@@ -609,7 +610,7 @@ def _analyze_column(header: str, samples: List[str]) -> Dict[str, Any]:
         non_empty = [s for s in samples if s.strip()]
         numeric_count = 0
         for s in non_empty:
-            cleaned = re.sub(r'[,$\s\(\)\+\-]', '', s)
+            cleaned = re.sub(r"[,$\s\(\)\+\-]", "", s)
             try:
                 float(cleaned)
                 numeric_count += 1
@@ -636,11 +637,7 @@ def _analyze_column(header: str, samples: List[str]) -> Dict[str, Any]:
             # Check that values are varied (unique) and text-like
             unique_ratio = len(set(non_empty)) / len(non_empty)
             # Count how many look like pure numbers
-            numeric_count = sum(
-                1
-                for s in non_empty
-                if re.match(r'^[\d,.$\s\(\)\+\-]+$', s.strip())
-            )
+            numeric_count = sum(1 for s in non_empty if re.match(r"^[\d,.$\s\(\)\+\-]+$", s.strip()))
             numeric_ratio = numeric_count / len(non_empty)
 
             # If mostly non-numeric and varied, boost confidence
@@ -768,11 +765,13 @@ def suggest_config(headers: List[str], column_hints: Dict[str, Any]) -> Dict[str
             config["card_member_column"] = header
 
     # Calculate completeness score
-    required_found = sum([
-        config["date_column"] is not None,
-        config["amount_column"] is not None,
-        config["description_column"] is not None,
-    ])
+    required_found = sum(
+        [
+            config["date_column"] is not None,
+            config["amount_column"] is not None,
+            config["description_column"] is not None,
+        ]
+    )
     config["_completeness"] = required_found / 3.0
 
     return config
@@ -789,16 +788,37 @@ def find_header_row(csv_content: str) -> Optional[Tuple[int, List[str]]]:
     2. Check if subsequent rows have data matching expected patterns
     3. Score each candidate row and pick the best
     """
-    lines = csv_content.split('\n')
+    lines = csv_content.split("\n")
 
     # Keywords commonly found in financial CSV headers
     header_keywords = {
-        "date", "posted", "transaction", "datetime", "time",
-        "amount", "debit", "credit", "total", "balance",
-        "description", "memo", "payee", "merchant", "name", "note",
-        "reference", "ref", "id", "number", "check",
-        "category", "type", "status",
-        "account", "card", "member",
+        "date",
+        "posted",
+        "transaction",
+        "datetime",
+        "time",
+        "amount",
+        "debit",
+        "credit",
+        "total",
+        "balance",
+        "description",
+        "memo",
+        "payee",
+        "merchant",
+        "name",
+        "note",
+        "reference",
+        "ref",
+        "id",
+        "number",
+        "check",
+        "category",
+        "type",
+        "status",
+        "account",
+        "card",
+        "member",
     }
 
     best_score = 0
@@ -834,10 +854,10 @@ def find_header_row(csv_content: str) -> Optional[Tuple[int, List[str]]]:
         for cell in row:
             cell = cell.strip()
             # Check for numeric values
-            if re.match(r'^[\$\-\+\(\)]?[\d,]+\.?\d*[\)]?$', cell.replace(',', '')):
+            if re.match(r"^[\$\-\+\(\)]?[\d,]+\.?\d*[\)]?$", cell.replace(",", "")):
                 score -= 3
             # Check for date patterns
-            if re.match(r'^\d{1,2}[/\-]\d{1,2}[/\-]\d{2,4}$', cell):
+            if re.match(r"^\d{1,2}[/\-]\d{1,2}[/\-]\d{2,4}$", cell):
                 score -= 3
 
         # Prefer rows with more non-empty columns
@@ -852,13 +872,11 @@ def find_header_row(csv_content: str) -> Optional[Tuple[int, List[str]]]:
 
                 # Next row should have numbers (amounts) or dates
                 has_numeric = any(
-                    re.match(r'^[\$\-\+\(\)]?[\d,]+\.?\d*[\)]?$', c.strip().replace(',', '').replace('$', ''))
-                    for c in next_row if c.strip()
+                    re.match(r"^[\$\-\+\(\)]?[\d,]+\.?\d*[\)]?$", c.strip().replace(",", "").replace("$", ""))
+                    for c in next_row
+                    if c.strip()
                 )
-                has_date = any(
-                    re.match(r'^\d{1,4}[/\-]\d{1,2}[/\-]\d{1,4}', c.strip())
-                    for c in next_row if c.strip()
-                )
+                has_date = any(re.match(r"^\d{1,4}[/\-]\d{1,2}[/\-]\d{1,4}", c.strip()) for c in next_row if c.strip())
 
                 if has_numeric or has_date:
                     score += 3
@@ -899,11 +917,13 @@ def auto_detect_csv_format(csv_content: str) -> Optional[CustomCsvConfig]:
     suggested = analysis.get("suggested_config", {})
 
     # Ensure required fields
-    if not all([
-        suggested.get("date_column"),
-        suggested.get("amount_column"),
-        suggested.get("description_column"),
-    ]):
+    if not all(
+        [
+            suggested.get("date_column"),
+            suggested.get("amount_column"),
+            suggested.get("description_column"),
+        ]
+    ):
         return None
 
     # Step 3: Build config
@@ -979,7 +999,7 @@ def compute_signature_from_csv(csv_content: str, skip_rows: int = 0) -> Optional
             return compute_header_signature(headers)
 
     # Otherwise, use the specified skip_rows
-    lines = csv_content.split('\n')
+    lines = csv_content.split("\n")
     if skip_rows >= len(lines):
         return None
 

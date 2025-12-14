@@ -7,11 +7,19 @@ from pydantic import BaseModel as PydanticBaseModel
 
 from app.database import get_session
 from app.models import (
-    Transaction, ImportFormat,
-    ImportFormatType, ReconciliationStatus, ImportSession,
-    Tag, TransactionTag, BatchImportSession,
-    MerchantAlias, MerchantAliasMatchType,
-    CustomFormatConfig, CustomFormatConfigCreate, CustomFormatConfigUpdate
+    Transaction,
+    ImportFormat,
+    ImportFormatType,
+    ReconciliationStatus,
+    ImportSession,
+    Tag,
+    TransactionTag,
+    BatchImportSession,
+    MerchantAlias,
+    MerchantAliasMatchType,
+    CustomFormatConfig,
+    CustomFormatConfigCreate,
+    CustomFormatConfigUpdate,
 )
 from app.csv_parser import parse_csv, detect_format
 from app.parsers import (
@@ -20,7 +28,6 @@ from app.parsers import (
     analyze_csv_columns,
     find_header_row,
     compute_header_signature,
-    compute_signature_from_csv,
 )
 from app.tag_inference import infer_bucket_tag
 from app.utils.hashing import compute_transaction_hash_from_dict
@@ -30,7 +37,7 @@ import re as regex_module
 router = APIRouter(prefix="/api/v1/import", tags=["import"])
 
 # Supported import file extensions
-SUPPORTED_EXTENSIONS = ('.csv', '.qif', '.qfx', '.ofx')
+SUPPORTED_EXTENSIONS = (".csv", ".qif", ".qfx", ".ofx")
 
 
 def is_valid_import_file(filename: str) -> bool:
@@ -40,9 +47,7 @@ def is_valid_import_file(filename: str) -> bool:
 
 async def get_or_create_bucket_tag(session: AsyncSession, bucket_value: str) -> Tag:
     """Get bucket tag by value, creating if needed"""
-    result = await session.execute(
-        select(Tag).where(and_(Tag.namespace == "bucket", Tag.value == bucket_value))
-    )
+    result = await session.execute(select(Tag).where(and_(Tag.namespace == "bucket", Tag.value == bucket_value)))
     tag = result.scalar_one_or_none()
     if not tag:
         # Create the bucket tag
@@ -59,18 +64,16 @@ async def get_or_create_account_tag(session: AsyncSession, account_source: str) 
     The description defaults to the original account_source as the display name.
     """
     # Normalize to tag value format
-    tag_value = account_source.lower().replace(' ', '-')
+    tag_value = account_source.lower().replace(" ", "-")
 
-    result = await session.execute(
-        select(Tag).where(and_(Tag.namespace == "account", Tag.value == tag_value))
-    )
+    result = await session.execute(select(Tag).where(and_(Tag.namespace == "account", Tag.value == tag_value)))
     tag = result.scalar_one_or_none()
     if not tag:
         # Create the account tag with original name as description (display name)
         tag = Tag(
             namespace="account",
             value=tag_value,
-            description=account_source  # Use original as default display name
+            description=account_source,  # Use original as default display name
         )
         session.add(tag)
         await session.flush()
@@ -85,12 +88,7 @@ async def apply_bucket_tag(session: AsyncSession, transaction_id: int, bucket_va
     existing_result = await session.execute(
         select(TransactionTag)
         .join(Tag)
-        .where(
-            and_(
-                TransactionTag.transaction_id == transaction_id,
-                Tag.namespace == "bucket"
-            )
-        )
+        .where(and_(TransactionTag.transaction_id == transaction_id, Tag.namespace == "bucket"))
     )
     for existing in existing_result.scalars().all():
         await session.delete(existing)
@@ -102,9 +100,7 @@ async def apply_bucket_tag(session: AsyncSession, transaction_id: int, bucket_va
 
 async def get_merchant_aliases(session: AsyncSession) -> List[MerchantAlias]:
     """Get all merchant aliases ordered by priority (highest first)"""
-    result = await session.execute(
-        select(MerchantAlias).order_by(MerchantAlias.priority.desc())
-    )
+    result = await session.execute(select(MerchantAlias).order_by(MerchantAlias.priority.desc()))
     return result.scalars().all()
 
 
@@ -139,9 +135,7 @@ def apply_merchant_alias(description: str, aliases: List[MerchantAlias]) -> Opti
 
 async def update_alias_match_stats(session: AsyncSession, alias_id: int):
     """Increment match count for an alias"""
-    result = await session.execute(
-        select(MerchantAlias).where(MerchantAlias.id == alias_id)
-    )
+    result = await session.execute(select(MerchantAlias).where(MerchantAlias.id == alias_id))
     alias = result.scalar_one_or_none()
     if alias:
         alias.match_count += 1
@@ -151,9 +145,11 @@ async def update_alias_match_stats(session: AsyncSession, alias_id: int):
 @router.post("/preview")
 async def preview_import(
     file: UploadFile = File(..., description="CSV, QIF, QFX, or OFX file to import"),
-    account_source: Optional[str] = Form(None, description="Account name (required for some formats like Bank of America)"),
+    account_source: Optional[str] = Form(
+        None, description="Account name (required for some formats like Bank of America)"
+    ),
     format_hint: Optional[ImportFormatType] = Form(None, description="Override auto-detection with specific format"),
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Preview import without saving to database.
@@ -175,18 +171,16 @@ async def preview_import(
         raise bad_request(
             ErrorCode.IMPORT_UNSUPPORTED_FORMAT,
             f"Unsupported file type. Supported formats: {', '.join(SUPPORTED_EXTENSIONS)}",
-            filename=file.filename
+            filename=file.filename,
         )
 
     # Read file content
     content = await file.read()
-    csv_content = content.decode('utf-8')
+    csv_content = content.decode("utf-8")
 
     # Check for saved import format preference
     if not format_hint and account_source:
-        result = await session.execute(
-            select(ImportFormat).where(ImportFormat.account_source == account_source)
-        )
+        result = await session.execute(select(ImportFormat).where(ImportFormat.account_source == account_source))
         saved_format = result.scalar_one_or_none()
         if saved_format:
             format_hint = saved_format.format_type
@@ -196,40 +190,35 @@ async def preview_import(
 
     # Build user history for bucket tag suggestions
     # Note: This uses the old category field for now during transition
-    all_txns_result = await session.execute(
-        select(Transaction).where(Transaction.category.isnot(None))
-    )
+    all_txns_result = await session.execute(select(Transaction).where(Transaction.category.isnot(None)))
     all_txns = all_txns_result.scalars().all()
     # Convert old category format to bucket tag format for user history
     user_history = {}
     for txn in all_txns:
         if txn.merchant and txn.category:
             merchant = txn.merchant.lower()
-            bucket_value = txn.category.lower().replace(' ', '-').replace('&', 'and')
+            bucket_value = txn.category.lower().replace(" ", "-").replace("&", "and")
             user_history[merchant] = f"bucket:{bucket_value}"
 
     # Add bucket tag suggestions to each transaction
     for txn in transactions:
         suggestions = infer_bucket_tag(
-            txn.get('merchant', ''),
-            txn.get('description', ''),
-            txn.get('amount', 0),
-            user_history
+            txn.get("merchant", ""), txn.get("description", ""), txn.get("amount", 0), user_history
         )
         # Get bucket value from tag
         if suggestions:
             tag = suggestions[0][0]  # e.g., "bucket:groceries"
-            bucket_value = tag.split(':', 1)[1] if ':' in tag else tag
-            txn['bucket'] = bucket_value
-            txn['bucket_tag'] = tag
+            bucket_value = tag.split(":", 1)[1] if ":" in tag else tag
+            txn["bucket"] = bucket_value
+            txn["bucket_tag"] = tag
             # Keep category for backwards compatibility
-            txn['category'] = bucket_value.replace('-', ' ').title()
+            txn["category"] = bucket_value.replace("-", " ").title()
 
     return {
         "detected_format": detected_format,
         "transaction_count": len(transactions),
         "transactions": transactions[:100],  # Limit preview to 100 transactions
-        "total_amount": sum(txn['amount'] for txn in transactions)
+        "total_amount": sum(txn["amount"] for txn in transactions),
     }
 
 
@@ -239,7 +228,7 @@ async def confirm_import(
     account_source: Optional[str] = Form(None, description="Account name"),
     format_type: ImportFormatType = Form(..., description="Confirmed format from preview"),
     save_format: bool = Form(False, description="Remember this format for future imports"),
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Confirm and save imported transactions to database.
@@ -257,12 +246,12 @@ async def confirm_import(
     if not is_valid_import_file(file.filename):
         raise bad_request(
             ErrorCode.IMPORT_UNSUPPORTED_FORMAT,
-            f"Unsupported file type. Supported formats: {', '.join(SUPPORTED_EXTENSIONS)}"
+            f"Unsupported file type. Supported formats: {', '.join(SUPPORTED_EXTENSIONS)}",
         )
 
     # Read file content
     content = await file.read()
-    file_content = content.decode('utf-8')
+    file_content = content.decode("utf-8")
 
     # Parse file with confirmed format
     transactions, _ = parse_csv(file_content, account_source, format_type)
@@ -271,15 +260,13 @@ async def confirm_import(
         raise bad_request(ErrorCode.IMPORT_NO_TRANSACTIONS)
 
     # Build user history for bucket tag suggestions
-    all_txns_result = await session.execute(
-        select(Transaction).where(Transaction.category.isnot(None))
-    )
+    all_txns_result = await session.execute(select(Transaction).where(Transaction.category.isnot(None)))
     all_txns = all_txns_result.scalars().all()
     user_history = {}
     for txn in all_txns:
         if txn.merchant and txn.category:
             merchant = txn.merchant.lower()
-            bucket_value = txn.category.lower().replace(' ', '-').replace('&', 'and')
+            bucket_value = txn.category.lower().replace(" ", "-").replace("&", "and")
             user_history[merchant] = f"bucket:{bucket_value}"
 
     # Load merchant aliases for normalization
@@ -293,7 +280,7 @@ async def confirm_import(
         transaction_count=0,
         duplicate_count=0,
         total_amount=0.0,
-        status="in_progress"
+        status="in_progress",
     )
     session.add(import_session)
     await session.flush()  # Get the ID
@@ -313,9 +300,7 @@ async def confirm_import(
 
         # Check for exact duplicate using content_hash (primary method)
         if content_hash:
-            dup_query = select(Transaction).where(
-                Transaction.content_hash == content_hash
-            )
+            dup_query = select(Transaction).where(Transaction.content_hash == content_hash)
             result = await session.execute(dup_query)
             existing = result.scalar_one_or_none()
 
@@ -327,25 +312,27 @@ async def confirm_import(
             if content_hash_no_account:
                 cross_account_query = select(Transaction).where(
                     Transaction.content_hash_no_account == content_hash_no_account,
-                    Transaction.account_source != txn_data['account_source']
+                    Transaction.account_source != txn_data["account_source"],
                 )
                 result = await session.execute(cross_account_query)
                 cross_match = result.scalar_one_or_none()
 
                 if cross_match:
-                    cross_account_warnings.append({
-                        "date": str(txn_data['date']),
-                        "amount": txn_data['amount'],
-                        "description": txn_data['description'][:50],
-                        "existing_account": cross_match.account_source,
-                        "importing_account": txn_data['account_source']
-                    })
+                    cross_account_warnings.append(
+                        {
+                            "date": str(txn_data["date"]),
+                            "amount": txn_data["amount"],
+                            "description": txn_data["description"][:50],
+                            "existing_account": cross_match.account_source,
+                            "importing_account": txn_data["account_source"],
+                        }
+                    )
         else:
             # Fallback to old deduplication logic if hash generation fails
             dup_query = select(Transaction).where(
-                Transaction.date == txn_data['date'],
-                Transaction.amount == txn_data['amount'],
-                Transaction.merchant == txn_data.get('merchant')
+                Transaction.date == txn_data["date"],
+                Transaction.amount == txn_data["amount"],
+                Transaction.merchant == txn_data.get("merchant"),
             )
             result = await session.execute(dup_query)
             existing = result.scalar_one_or_none()
@@ -356,48 +343,45 @@ async def confirm_import(
 
         # Infer bucket tag
         suggestions = infer_bucket_tag(
-            txn_data.get('merchant', ''),
-            txn_data.get('description', ''),
-            txn_data.get('amount', 0),
-            user_history
+            txn_data.get("merchant", ""), txn_data.get("description", ""), txn_data.get("amount", 0), user_history
         )
 
         # Determine bucket value
         if suggestions:
             bucket_tag = suggestions[0][0]  # e.g., "bucket:groceries"
-            bucket_value = bucket_tag.split(':', 1)[1] if ':' in bucket_tag else 'none'
+            bucket_value = bucket_tag.split(":", 1)[1] if ":" in bucket_tag else "none"
         else:
-            bucket_value = 'none'
+            bucket_value = "none"
 
         # Create transaction linked to import session
         # Keep category field for backwards compatibility during migration
-        category_display = bucket_value.replace('-', ' ').title() if bucket_value != 'none' else None
+        category_display = bucket_value.replace("-", " ").title() if bucket_value != "none" else None
 
         # Apply merchant alias to normalize merchant name
-        merchant_name = txn_data.get('merchant')
+        merchant_name = txn_data.get("merchant")
         if merchant_aliases:
-            aliased_merchant = apply_merchant_alias(txn_data['description'], merchant_aliases)
+            aliased_merchant = apply_merchant_alias(txn_data["description"], merchant_aliases)
             if aliased_merchant:
                 merchant_name = aliased_merchant
 
         db_transaction = Transaction(
-            date=txn_data['date'],
-            amount=txn_data['amount'],
-            description=txn_data['description'],
+            date=txn_data["date"],
+            amount=txn_data["amount"],
+            description=txn_data["description"],
             merchant=merchant_name,
-            account_source=txn_data['account_source'],
-            card_member=txn_data.get('card_member'),
+            account_source=txn_data["account_source"],
+            card_member=txn_data.get("card_member"),
             category=category_display,  # Legacy field
             reconciliation_status=ReconciliationStatus.unreconciled,
-            reference_id=txn_data.get('reference_id'),
+            reference_id=txn_data.get("reference_id"),
             import_session_id=import_session.id,
             content_hash=content_hash,  # Store computed hash
-            content_hash_no_account=content_hash_no_account  # Store hash without account for cross-account detection
+            content_hash_no_account=content_hash_no_account,  # Store hash without account for cross-account detection
         )
 
         # Set account_tag_id foreign key for data integrity
-        if txn_data['account_source']:
-            account_tag = await get_or_create_account_tag(session, txn_data['account_source'])
+        if txn_data["account_source"]:
+            account_tag = await get_or_create_account_tag(session, txn_data["account_source"])
             db_transaction.account_tag_id = account_tag.id
 
         session.add(db_transaction)
@@ -407,8 +391,8 @@ async def confirm_import(
         await apply_bucket_tag(session, db_transaction.id, bucket_value)
 
         imported_count += 1
-        total_amount += txn_data['amount']
-        dates.append(txn_data['date'])
+        total_amount += txn_data["amount"]
+        dates.append(txn_data["date"])
 
     # Update import session with final stats
     import_session.transaction_count = imported_count
@@ -422,19 +406,14 @@ async def confirm_import(
     # Save import format preference if requested
     if save_format and account_source:
         # Check if format already exists
-        result = await session.execute(
-            select(ImportFormat).where(ImportFormat.account_source == account_source)
-        )
+        result = await session.execute(select(ImportFormat).where(ImportFormat.account_source == account_source))
         existing_format = result.scalar_one_or_none()
 
         if existing_format:
             existing_format.format_type = format_type
             existing_format.updated_at = datetime.utcnow()
         else:
-            new_format = ImportFormat(
-                account_source=account_source,
-                format_type=format_type
-            )
+            new_format = ImportFormat(account_source=account_source, format_type=format_type)
             session.add(new_format)
 
     await session.commit()
@@ -444,7 +423,7 @@ async def confirm_import(
         "duplicates": duplicate_count,
         "skipped": skipped_count,
         "format_saved": save_format,
-        "import_session_id": import_session.id
+        "import_session_id": import_session.id,
     }
 
     # Include cross-account warnings if any transactions match in other accounts
@@ -456,9 +435,7 @@ async def confirm_import(
 
 
 @router.get("/formats")
-async def list_saved_formats(
-    session: AsyncSession = Depends(get_session)
-):
+async def list_saved_formats(session: AsyncSession = Depends(get_session)):
     """List saved import format preferences"""
     result = await session.execute(select(ImportFormat))
     formats = result.scalars().all()
@@ -466,14 +443,9 @@ async def list_saved_formats(
 
 
 @router.delete("/formats/{format_id}")
-async def delete_saved_format(
-    format_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def delete_saved_format(format_id: int, session: AsyncSession = Depends(get_session)):
     """Delete a saved import format"""
-    result = await session.execute(
-        select(ImportFormat).where(ImportFormat.id == format_id)
-    )
+    result = await session.execute(select(ImportFormat).where(ImportFormat.id == format_id))
     format_pref = result.scalar_one_or_none()
     if not format_pref:
         raise not_found(ErrorCode.IMPORT_FORMAT_NOT_FOUND, format_id=format_id)
@@ -486,6 +458,7 @@ async def delete_saved_format(
 # Batch Import Models
 class BatchFilePreview(PydanticBaseModel):
     """Preview data for a single file in batch import"""
+
     filename: str
     account_source: Optional[str] = None
     detected_format: ImportFormatType
@@ -500,6 +473,7 @@ class BatchFilePreview(PydanticBaseModel):
 
 class BatchConfirmFile(PydanticBaseModel):
     """Information about a file to confirm in batch import"""
+
     filename: str
     account_source: Optional[str]
     format_type: ImportFormatType
@@ -507,15 +481,13 @@ class BatchConfirmFile(PydanticBaseModel):
 
 class BatchConfirmRequest(PydanticBaseModel):
     """Request to confirm batch import"""
+
     files: List[BatchConfirmFile]
     save_format: bool = False
 
 
 @router.post("/batch/upload")
-async def batch_upload_preview(
-    files: List[UploadFile] = File(...),
-    session: AsyncSession = Depends(get_session)
-):
+async def batch_upload_preview(files: List[UploadFile] = File(...), session: AsyncSession = Depends(get_session)):
     """
     Upload multiple files for batch import preview.
 
@@ -537,7 +509,7 @@ async def batch_upload_preview(
             raise bad_request(
                 ErrorCode.IMPORT_UNSUPPORTED_FORMAT,
                 f"File {file.filename} has unsupported format. Supported: {', '.join(SUPPORTED_EXTENSIONS)}",
-                filename=file.filename
+                filename=file.filename,
             )
 
     previews: List[BatchFilePreview] = []
@@ -546,44 +518,40 @@ async def batch_upload_preview(
     all_batch_transactions: List[Dict[str, Any]] = []
 
     # Build user history for bucket tag suggestions
-    all_txns_result = await session.execute(
-        select(Transaction).where(Transaction.category.isnot(None))
-    )
+    all_txns_result = await session.execute(select(Transaction).where(Transaction.category.isnot(None)))
     all_txns = all_txns_result.scalars().all()
     user_history = {}
     for txn in all_txns:
         if txn.merchant and txn.category:
             merchant = txn.merchant.lower()
-            bucket_value = txn.category.lower().replace(' ', '-').replace('&', 'and')
+            bucket_value = txn.category.lower().replace(" ", "-").replace("&", "and")
             user_history[merchant] = f"bucket:{bucket_value}"
 
     # Process each file
     for file in files:
         # Read file content
         content = await file.read()
-        csv_content = content.decode('utf-8')
+        csv_content = content.decode("utf-8")
 
         # Try to infer account_source from filename if possible
         # e.g., "BOFA-Checking-2024.csv" -> "BOFA-Checking"
         account_source = None
         filename_lower = file.filename.lower()
-        if 'bofa' in filename_lower or 'bank-of-america' in filename_lower:
+        if "bofa" in filename_lower or "bank-of-america" in filename_lower:
             # Extract account info from filename (strip any supported extension)
             base_filename = file.filename
             for ext in SUPPORTED_EXTENSIONS:
                 if base_filename.lower().endswith(ext):
-                    base_filename = base_filename[:-len(ext)]
+                    base_filename = base_filename[: -len(ext)]
                     break
-            parts = base_filename.split('-')
+            parts = base_filename.split("-")
             if len(parts) >= 2:
-                account_source = '-'.join(parts[:2])
+                account_source = "-".join(parts[:2])
 
         # Check for saved import format preference
         format_hint = None
         if account_source:
-            result = await session.execute(
-                select(ImportFormat).where(ImportFormat.account_source == account_source)
-            )
+            result = await session.execute(select(ImportFormat).where(ImportFormat.account_source == account_source))
             saved_format = result.scalar_one_or_none()
             if saved_format:
                 format_hint = saved_format.format_type
@@ -594,57 +562,56 @@ async def batch_upload_preview(
         # Add bucket tag suggestions to each transaction
         for txn in transactions:
             suggestions = infer_bucket_tag(
-                txn.get('merchant', ''),
-                txn.get('description', ''),
-                txn.get('amount', 0),
-                user_history
+                txn.get("merchant", ""), txn.get("description", ""), txn.get("amount", 0), user_history
             )
             if suggestions:
                 tag = suggestions[0][0]
-                bucket_value = tag.split(':', 1)[1] if ':' in tag else tag
-                txn['bucket'] = bucket_value
-                txn['bucket_tag'] = tag
-                txn['category'] = bucket_value.replace('-', ' ').title()
+                bucket_value = tag.split(":", 1)[1] if ":" in tag else tag
+                txn["bucket"] = bucket_value
+                txn["bucket_tag"] = tag
+                txn["category"] = bucket_value.replace("-", " ").title()
 
         # Check for duplicates against existing DB transactions
         db_duplicate_count = 0
         for txn in transactions:
             dup_query = select(Transaction).where(
-                Transaction.date == txn['date'],
-                Transaction.amount == txn['amount'],
-                Transaction.reference_id == txn.get('reference_id')
+                Transaction.date == txn["date"],
+                Transaction.amount == txn["amount"],
+                Transaction.reference_id == txn.get("reference_id"),
             )
             result = await session.execute(dup_query)
             existing = result.scalar_one_or_none()
             if existing:
                 db_duplicate_count += 1
-                txn['is_db_duplicate'] = True
+                txn["is_db_duplicate"] = True
             else:
-                txn['is_db_duplicate'] = False
+                txn["is_db_duplicate"] = False
 
         # Check for cross-file duplicates (against previously processed files in this batch)
         cross_file_duplicate_count = 0
         for txn in transactions:
-            if txn.get('is_db_duplicate'):
+            if txn.get("is_db_duplicate"):
                 continue  # Already marked as DB duplicate
 
             # Check if this transaction matches any in previously processed files
             for batch_txn in all_batch_transactions:
-                if (txn['date'] == batch_txn['date'] and
-                    txn['amount'] == batch_txn['amount'] and
-                    txn.get('reference_id') == batch_txn.get('reference_id')):
+                if (
+                    txn["date"] == batch_txn["date"]
+                    and txn["amount"] == batch_txn["amount"]
+                    and txn.get("reference_id") == batch_txn.get("reference_id")
+                ):
                     cross_file_duplicate_count += 1
-                    txn['is_cross_file_duplicate'] = True
+                    txn["is_cross_file_duplicate"] = True
                     break
             else:
-                txn['is_cross_file_duplicate'] = False
+                txn["is_cross_file_duplicate"] = False
 
         # Add this file's transactions to the batch tracking
         all_batch_transactions.extend(transactions)
 
         # Calculate stats
-        total_amount = sum(txn['amount'] for txn in transactions)
-        dates = [txn['date'] for txn in transactions]
+        total_amount = sum(txn["amount"] for txn in transactions)
+        dates = [txn["date"] for txn in transactions]
         date_range_start = min(dates) if dates else None
         date_range_end = max(dates) if dates else None
 
@@ -659,7 +626,7 @@ async def batch_upload_preview(
             total_amount=total_amount,
             date_range_start=date_range_start,
             date_range_end=date_range_end,
-            transactions=transactions[:10]  # Preview first 10
+            transactions=transactions[:10],  # Preview first 10
         )
         previews.append(preview)
 
@@ -667,15 +634,13 @@ async def batch_upload_preview(
         "files": previews,
         "total_files": len(previews),
         "total_transactions": sum(p.transaction_count for p in previews),
-        "total_duplicates": sum(p.duplicate_count + p.cross_file_duplicate_count for p in previews)
+        "total_duplicates": sum(p.duplicate_count + p.cross_file_duplicate_count for p in previews),
     }
 
 
 @router.post("/batch/confirm")
 async def batch_confirm_import(
-    files: List[UploadFile] = File(...),
-    request: str = Form(...),
-    session: AsyncSession = Depends(get_session)
+    files: List[UploadFile] = File(...), request: str = Form(...), session: AsyncSession = Depends(get_session)
 ):
     """
     Confirm and import selected files from batch
@@ -694,23 +659,18 @@ async def batch_confirm_import(
         raise bad_request(ErrorCode.IMPORT_NO_FILES)
 
     # Create batch import session
-    batch_session = BatchImportSession(
-        total_files=len(request_obj.files),
-        status="in_progress"
-    )
+    batch_session = BatchImportSession(total_files=len(request_obj.files), status="in_progress")
     session.add(batch_session)
     await session.flush()  # Get the ID
 
     # Build user history for bucket tag suggestions
-    all_txns_result = await session.execute(
-        select(Transaction).where(Transaction.category.isnot(None))
-    )
+    all_txns_result = await session.execute(select(Transaction).where(Transaction.category.isnot(None)))
     all_txns = all_txns_result.scalars().all()
     user_history = {}
     for txn in all_txns:
         if txn.merchant and txn.category:
             merchant = txn.merchant.lower()
-            bucket_value = txn.category.lower().replace(' ', '-').replace('&', 'and')
+            bucket_value = txn.category.lower().replace(" ", "-").replace("&", "and")
             user_history[merchant] = f"bucket:{bucket_value}"
 
     # Load merchant aliases for normalization
@@ -732,21 +692,17 @@ async def batch_confirm_import(
             raise bad_request(
                 ErrorCode.VALIDATION_ERROR,
                 f"File {file_info.filename} not found in uploaded files",
-                filename=file_info.filename
+                filename=file_info.filename,
             )
 
         file = file_map[file_info.filename]
 
         # Read file content
         content = await file.read()
-        csv_content = content.decode('utf-8')
+        csv_content = content.decode("utf-8")
 
         # Parse CSV with confirmed format
-        transactions, _ = parse_csv(
-            csv_content,
-            file_info.account_source,
-            file_info.format_type
-        )
+        transactions, _ = parse_csv(csv_content, file_info.account_source, file_info.format_type)
 
         if not transactions:
             continue
@@ -760,7 +716,7 @@ async def batch_confirm_import(
             duplicate_count=0,
             total_amount=0.0,
             status="in_progress",
-            batch_import_id=batch_session.id
+            batch_import_id=batch_session.id,
         )
         session.add(import_session)
         await session.flush()
@@ -774,9 +730,9 @@ async def batch_confirm_import(
         for txn_data in transactions:
             # Check for duplicate against DB
             dup_query = select(Transaction).where(
-                Transaction.date == txn_data['date'],
-                Transaction.amount == txn_data['amount'],
-                Transaction.reference_id == txn_data.get('reference_id')
+                Transaction.date == txn_data["date"],
+                Transaction.amount == txn_data["amount"],
+                Transaction.reference_id == txn_data.get("reference_id"),
             )
             result = await session.execute(dup_query)
             existing = result.scalar_one_or_none()
@@ -788,9 +744,11 @@ async def batch_confirm_import(
             # Check for cross-file duplicate within this batch
             is_cross_file_dup = False
             for batch_txn in batch_transactions_to_import:
-                if (txn_data['date'] == batch_txn['date'] and
-                    txn_data['amount'] == batch_txn['amount'] and
-                    txn_data.get('reference_id') == batch_txn.get('reference_id')):
+                if (
+                    txn_data["date"] == batch_txn["date"]
+                    and txn_data["amount"] == batch_txn["amount"]
+                    and txn_data.get("reference_id") == batch_txn.get("reference_id")
+                ):
                     duplicate_count += 1
                     is_cross_file_dup = True
                     break
@@ -803,44 +761,41 @@ async def batch_confirm_import(
 
             # Infer bucket tag
             suggestions = infer_bucket_tag(
-                txn_data.get('merchant', ''),
-                txn_data.get('description', ''),
-                txn_data.get('amount', 0),
-                user_history
+                txn_data.get("merchant", ""), txn_data.get("description", ""), txn_data.get("amount", 0), user_history
             )
 
             if suggestions:
                 bucket_tag = suggestions[0][0]
-                bucket_value = bucket_tag.split(':', 1)[1] if ':' in bucket_tag else 'none'
+                bucket_value = bucket_tag.split(":", 1)[1] if ":" in bucket_tag else "none"
             else:
-                bucket_value = 'none'
+                bucket_value = "none"
 
             # Create transaction
-            category_display = bucket_value.replace('-', ' ').title() if bucket_value != 'none' else None
+            category_display = bucket_value.replace("-", " ").title() if bucket_value != "none" else None
 
             # Apply merchant alias to normalize merchant name
-            merchant_name = txn_data.get('merchant')
+            merchant_name = txn_data.get("merchant")
             if merchant_aliases:
-                aliased_merchant = apply_merchant_alias(txn_data['description'], merchant_aliases)
+                aliased_merchant = apply_merchant_alias(txn_data["description"], merchant_aliases)
                 if aliased_merchant:
                     merchant_name = aliased_merchant
 
             db_transaction = Transaction(
-                date=txn_data['date'],
-                amount=txn_data['amount'],
-                description=txn_data['description'],
+                date=txn_data["date"],
+                amount=txn_data["amount"],
+                description=txn_data["description"],
                 merchant=merchant_name,
-                account_source=txn_data['account_source'],
-                card_member=txn_data.get('card_member'),
+                account_source=txn_data["account_source"],
+                card_member=txn_data.get("card_member"),
                 category=category_display,
                 reconciliation_status=ReconciliationStatus.unreconciled,
-                reference_id=txn_data.get('reference_id'),
-                import_session_id=import_session.id
+                reference_id=txn_data.get("reference_id"),
+                import_session_id=import_session.id,
             )
 
             # Set account_tag_id foreign key
-            if txn_data['account_source']:
-                account_tag = await get_or_create_account_tag(session, txn_data['account_source'])
+            if txn_data["account_source"]:
+                account_tag = await get_or_create_account_tag(session, txn_data["account_source"])
                 db_transaction.account_tag_id = account_tag.id
 
             session.add(db_transaction)
@@ -850,8 +805,8 @@ async def batch_confirm_import(
             await apply_bucket_tag(session, db_transaction.id, bucket_value)
 
             imported_count += 1
-            file_total_amount += txn_data['amount']
-            dates.append(txn_data['date'])
+            file_total_amount += txn_data["amount"]
+            dates.append(txn_data["date"])
 
         # Update import session stats
         import_session.transaction_count = imported_count
@@ -865,12 +820,14 @@ async def batch_confirm_import(
         total_imported += imported_count
         total_duplicates += duplicate_count
 
-        results.append({
-            "filename": file_info.filename,
-            "imported": imported_count,
-            "duplicates": duplicate_count,
-            "import_session_id": import_session.id
-        })
+        results.append(
+            {
+                "filename": file_info.filename,
+                "imported": imported_count,
+                "duplicates": duplicate_count,
+                "import_session_id": import_session.id,
+            }
+        )
 
         # Save format preference if requested
         if request_obj.save_format and file_info.account_source:
@@ -883,10 +840,7 @@ async def batch_confirm_import(
                 existing_format.format_type = file_info.format_type
                 existing_format.updated_at = datetime.utcnow()
             else:
-                new_format = ImportFormat(
-                    account_source=file_info.account_source,
-                    format_type=file_info.format_type
-                )
+                new_format = ImportFormat(account_source=file_info.account_source, format_type=file_info.format_type)
                 session.add(new_format)
 
     # Update batch session stats
@@ -902,7 +856,7 @@ async def batch_confirm_import(
         "total_imported": total_imported,
         "total_duplicates": total_duplicates,
         "files": results,
-        "format_saved": request_obj.save_format
+        "format_saved": request_obj.save_format,
     }
 
 
@@ -910,8 +864,10 @@ async def batch_confirm_import(
 # Custom CSV Format Endpoints
 # ============================================================================
 
+
 class AnalyzeResponse(PydanticBaseModel):
     """Response from CSV analysis endpoint"""
+
     headers: List[str]
     sample_rows: List[List[str]]
     column_hints: Dict[str, Any]
@@ -923,11 +879,13 @@ class AnalyzeResponse(PydanticBaseModel):
 
 class CustomPreviewRequest(PydanticBaseModel):
     """Request for custom format preview"""
+
     config: Dict[str, Any]  # CustomCsvConfig as dict
 
 
 class CustomPreviewResponse(PydanticBaseModel):
     """Response from custom format preview"""
+
     transaction_count: int
     transactions: List[Dict[str, Any]]
     total_amount: float
@@ -953,19 +911,18 @@ async def analyze_csv_file(
     - **detected_format**: Auto-detected file format (if recognized)
     - **format_confidence**: Confidence score for detected format (0-1)
     """
-    if not file.filename.lower().endswith('.csv'):
+    if not file.filename.lower().endswith(".csv"):
         raise bad_request(
-            ErrorCode.IMPORT_UNSUPPORTED_FORMAT,
-            "Only CSV files can be analyzed for custom format creation"
+            ErrorCode.IMPORT_UNSUPPORTED_FORMAT, "Only CSV files can be analyzed for custom format creation"
         )
 
     content = await file.read()
-    csv_content = content.decode('utf-8')
+    csv_content = content.decode("utf-8")
 
     analysis = analyze_csv_columns(csv_content, skip_rows)
 
     # Count total rows
-    lines = csv_content.strip().split('\n')
+    lines = csv_content.strip().split("\n")
     row_count = max(0, len(lines) - 1 - skip_rows)  # Subtract header and skipped rows
 
     # Try to detect known format
@@ -983,12 +940,13 @@ async def analyze_csv_file(
         row_count=row_count,
         detected_format=detected_format,
         format_confidence=format_confidence,
-        suggested_config=analysis.get("suggested_config")
+        suggested_config=analysis.get("suggested_config"),
     )
 
 
 class AutoDetectResponse(PydanticBaseModel):
     """Response from auto-detect endpoint"""
+
     analysis: Dict[str, Any]  # Same as AnalyzeResponse
     config: Optional[Dict[str, Any]]  # Suggested config
     skip_rows: int  # Number of header rows to skip
@@ -1019,14 +977,11 @@ async def auto_detect_csv_format_endpoint(
     - **matched_config**: Saved config that matches this file's header signature (if any)
     - **header_signature**: Computed signature for this file's headers
     """
-    if not file.filename.lower().endswith('.csv'):
-        raise bad_request(
-            ErrorCode.IMPORT_UNSUPPORTED_FORMAT,
-            "Only CSV files can be auto-detected"
-        )
+    if not file.filename.lower().endswith(".csv"):
+        raise bad_request(ErrorCode.IMPORT_UNSUPPORTED_FORMAT, "Only CSV files can be auto-detected")
 
     content = await file.read()
-    csv_content = content.decode('utf-8')
+    csv_content = content.decode("utf-8")
 
     # Step 1: Find the header row
     header_result = find_header_row(csv_content)
@@ -1043,13 +998,12 @@ async def auto_detect_csv_format_endpoint(
 
         # Step 3: Look for saved config with matching signature
         result = await session.execute(
-            select(CustomFormatConfig).where(
-                CustomFormatConfig.header_signature == header_signature
-            )
+            select(CustomFormatConfig).where(CustomFormatConfig.header_signature == header_signature)
         )
         saved_config = result.scalar_one_or_none()
         if saved_config:
             import json
+
             matched_config = {
                 "id": saved_config.id,
                 "name": saved_config.name,
@@ -1066,9 +1020,9 @@ async def auto_detect_csv_format_endpoint(
 
     # Determine if detection was successful
     detection_successful = (
-        suggested.get("date_column") is not None and
-        suggested.get("amount_column") is not None and
-        suggested.get("description_column") is not None
+        suggested.get("date_column") is not None
+        and suggested.get("amount_column") is not None
+        and suggested.get("description_column") is not None
     ) or matched_config is not None
 
     return {
@@ -1085,7 +1039,7 @@ async def auto_detect_csv_format_endpoint(
 async def preview_custom_import(
     file: UploadFile = File(..., description="CSV file to preview"),
     config_json: str = Form(..., description="CustomCsvConfig as JSON string"),
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Preview import using a custom CSV format configuration.
@@ -1099,14 +1053,11 @@ async def preview_custom_import(
     - **total_amount**: Sum of all transaction amounts
     - **errors**: Any parsing errors encountered
     """
-    if not file.filename.lower().endswith('.csv'):
-        raise bad_request(
-            ErrorCode.IMPORT_UNSUPPORTED_FORMAT,
-            "Custom format preview only supports CSV files"
-        )
+    if not file.filename.lower().endswith(".csv"):
+        raise bad_request(ErrorCode.IMPORT_UNSUPPORTED_FORMAT, "Custom format preview only supports CSV files")
 
     content = await file.read()
-    csv_content = content.decode('utf-8')
+    csv_content = content.decode("utf-8")
 
     errors = []
     try:
@@ -1119,48 +1070,35 @@ async def preview_custom_import(
         parsed_transactions = parser.parse(csv_content)
     except Exception as e:
         errors.append(f"Parse error: {str(e)}")
-        return CustomPreviewResponse(
-            transaction_count=0,
-            transactions=[],
-            total_amount=0.0,
-            errors=errors
-        )
+        return CustomPreviewResponse(transaction_count=0, transactions=[], total_amount=0.0, errors=errors)
 
     # Convert ParsedTransaction objects to dicts
     transactions = [t.to_dict() for t in parsed_transactions]
 
     # Add bucket tag suggestions
-    all_txns_result = await session.execute(
-        select(Transaction).where(Transaction.category.isnot(None))
-    )
+    all_txns_result = await session.execute(select(Transaction).where(Transaction.category.isnot(None)))
     all_txns = all_txns_result.scalars().all()
     user_history = {}
     for txn in all_txns:
         if txn.merchant and txn.category:
             merchant = txn.merchant.lower()
-            bucket_value = txn.category.lower().replace(' ', '-').replace('&', 'and')
+            bucket_value = txn.category.lower().replace(" ", "-").replace("&", "and")
             user_history[merchant] = f"bucket:{bucket_value}"
 
     for txn in transactions:
         suggestions = infer_bucket_tag(
-            txn.get('merchant', ''),
-            txn.get('description', ''),
-            txn.get('amount', 0),
-            user_history
+            txn.get("merchant", ""), txn.get("description", ""), txn.get("amount", 0), user_history
         )
         if suggestions:
             tag = suggestions[0][0]
-            bucket_value = tag.split(':', 1)[1] if ':' in tag else tag
-            txn['bucket'] = bucket_value
-            txn['bucket_tag'] = tag
+            bucket_value = tag.split(":", 1)[1] if ":" in tag else tag
+            txn["bucket"] = bucket_value
+            txn["bucket_tag"] = tag
 
     total_amount = sum(t.amount for t in parsed_transactions)
 
     return CustomPreviewResponse(
-        transaction_count=len(transactions),
-        transactions=transactions[:100],
-        total_amount=total_amount,
-        errors=errors
+        transaction_count=len(transactions), transactions=transactions[:100], total_amount=total_amount, errors=errors
     )
 
 
@@ -1169,8 +1107,10 @@ async def confirm_custom_import(
     file: UploadFile = File(..., description="CSV file to import"),
     config_json: str = Form(..., description="CustomCsvConfig as JSON string"),
     save_config: bool = Form(False, description="Save the config for future use"),
-    header_signature: Optional[str] = Form(None, description="Header signature for auto-matching (computed by auto-detect)"),
-    session: AsyncSession = Depends(get_session)
+    header_signature: Optional[str] = Form(
+        None, description="Header signature for auto-matching (computed by auto-detect)"
+    ),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Confirm and import transactions using a custom CSV format configuration.
@@ -1184,14 +1124,11 @@ async def confirm_custom_import(
     - **config_saved**: Whether the config was saved for future use
     - **import_session_id**: ID for tracking this import batch
     """
-    if not file.filename.lower().endswith('.csv'):
-        raise bad_request(
-            ErrorCode.IMPORT_UNSUPPORTED_FORMAT,
-            "Custom format import only supports CSV files"
-        )
+    if not file.filename.lower().endswith(".csv"):
+        raise bad_request(ErrorCode.IMPORT_UNSUPPORTED_FORMAT, "Custom format import only supports CSV files")
 
     content = await file.read()
-    csv_content = content.decode('utf-8')
+    csv_content = content.decode("utf-8")
 
     # Parse and validate config
     try:
@@ -1210,15 +1147,13 @@ async def confirm_custom_import(
         raise bad_request(ErrorCode.IMPORT_NO_TRANSACTIONS)
 
     # Build user history for bucket tag suggestions
-    all_txns_result = await session.execute(
-        select(Transaction).where(Transaction.category.isnot(None))
-    )
+    all_txns_result = await session.execute(select(Transaction).where(Transaction.category.isnot(None)))
     all_txns = all_txns_result.scalars().all()
     user_history = {}
     for txn in all_txns:
         if txn.merchant and txn.category:
             merchant = txn.merchant.lower()
-            bucket_value = txn.category.lower().replace(' ', '-').replace('&', 'and')
+            bucket_value = txn.category.lower().replace(" ", "-").replace("&", "and")
             user_history[merchant] = f"bucket:{bucket_value}"
 
     # Load merchant aliases for normalization
@@ -1232,7 +1167,7 @@ async def confirm_custom_import(
         transaction_count=0,
         duplicate_count=0,
         total_amount=0.0,
-        status="in_progress"
+        status="in_progress",
     )
     session.add(import_session)
     await session.flush()
@@ -1253,9 +1188,7 @@ async def confirm_custom_import(
 
         # Check for exact duplicate
         if content_hash:
-            dup_query = select(Transaction).where(
-                Transaction.content_hash == content_hash
-            )
+            dup_query = select(Transaction).where(Transaction.content_hash == content_hash)
             result = await session.execute(dup_query)
             existing = result.scalar_one_or_none()
 
@@ -1267,62 +1200,61 @@ async def confirm_custom_import(
             if content_hash_no_account:
                 cross_query = select(Transaction).where(
                     Transaction.content_hash_no_account == content_hash_no_account,
-                    Transaction.account_source != txn_data['account_source']
+                    Transaction.account_source != txn_data["account_source"],
                 )
                 result = await session.execute(cross_query)
                 cross_match = result.scalar_one_or_none()
 
                 if cross_match:
-                    cross_account_warnings.append({
-                        "date": str(txn_data['date']),
-                        "amount": txn_data['amount'],
-                        "description": txn_data['description'][:50],
-                        "existing_account": cross_match.account_source,
-                        "importing_account": txn_data['account_source']
-                    })
+                    cross_account_warnings.append(
+                        {
+                            "date": str(txn_data["date"]),
+                            "amount": txn_data["amount"],
+                            "description": txn_data["description"][:50],
+                            "existing_account": cross_match.account_source,
+                            "importing_account": txn_data["account_source"],
+                        }
+                    )
 
         # Infer bucket tag
         suggestions = infer_bucket_tag(
-            txn_data.get('merchant', ''),
-            txn_data.get('description', ''),
-            txn_data.get('amount', 0),
-            user_history
+            txn_data.get("merchant", ""), txn_data.get("description", ""), txn_data.get("amount", 0), user_history
         )
 
         if suggestions:
             bucket_tag = suggestions[0][0]
-            bucket_value = bucket_tag.split(':', 1)[1] if ':' in bucket_tag else 'none'
+            bucket_value = bucket_tag.split(":", 1)[1] if ":" in bucket_tag else "none"
         else:
-            bucket_value = 'none'
+            bucket_value = "none"
 
-        category_display = bucket_value.replace('-', ' ').title() if bucket_value != 'none' else None
+        category_display = bucket_value.replace("-", " ").title() if bucket_value != "none" else None
 
         # Apply merchant alias
-        merchant_name = txn_data.get('merchant')
+        merchant_name = txn_data.get("merchant")
         if merchant_aliases:
-            aliased_merchant = apply_merchant_alias(txn_data['description'], merchant_aliases)
+            aliased_merchant = apply_merchant_alias(txn_data["description"], merchant_aliases)
             if aliased_merchant:
                 merchant_name = aliased_merchant
 
         # Create transaction
         db_transaction = Transaction(
-            date=txn_data['date'],
-            amount=txn_data['amount'],
-            description=txn_data['description'],
+            date=txn_data["date"],
+            amount=txn_data["amount"],
+            description=txn_data["description"],
             merchant=merchant_name,
-            account_source=txn_data['account_source'],
-            card_member=txn_data.get('card_member'),
+            account_source=txn_data["account_source"],
+            card_member=txn_data.get("card_member"),
             category=category_display,
             reconciliation_status=ReconciliationStatus.unreconciled,
-            reference_id=txn_data.get('reference_id'),
+            reference_id=txn_data.get("reference_id"),
             import_session_id=import_session.id,
             content_hash=content_hash,
-            content_hash_no_account=content_hash_no_account
+            content_hash_no_account=content_hash_no_account,
         )
 
         # Set account_tag_id
-        if txn_data['account_source']:
-            account_tag = await get_or_create_account_tag(session, txn_data['account_source'])
+        if txn_data["account_source"]:
+            account_tag = await get_or_create_account_tag(session, txn_data["account_source"])
             db_transaction.account_tag_id = account_tag.id
 
         session.add(db_transaction)
@@ -1332,8 +1264,8 @@ async def confirm_custom_import(
         await apply_bucket_tag(session, db_transaction.id, bucket_value)
 
         imported_count += 1
-        total_amount += txn_data['amount']
-        dates.append(txn_data['date'])
+        total_amount += txn_data["amount"]
+        dates.append(txn_data["date"])
 
     # Update import session
     import_session.transaction_count = imported_count
@@ -1348,9 +1280,7 @@ async def confirm_custom_import(
     config_saved = False
     if save_config:
         # Check if config with same name exists
-        result = await session.execute(
-            select(CustomFormatConfig).where(CustomFormatConfig.name == config.name)
-        )
+        result = await session.execute(select(CustomFormatConfig).where(CustomFormatConfig.name == config.name))
         existing_config = result.scalar_one_or_none()
 
         if existing_config:
@@ -1379,7 +1309,7 @@ async def confirm_custom_import(
         "imported": imported_count,
         "duplicates": duplicate_count,
         "config_saved": config_saved,
-        "import_session_id": import_session.id
+        "import_session_id": import_session.id,
     }
 
     if cross_account_warnings:
@@ -1393,11 +1323,9 @@ async def confirm_custom_import(
 # Custom Format Configuration CRUD
 # ============================================================================
 
+
 @router.post("/custom/configs")
-async def create_custom_config(
-    config: CustomFormatConfigCreate,
-    session: AsyncSession = Depends(get_session)
-):
+async def create_custom_config(config: CustomFormatConfigCreate, session: AsyncSession = Depends(get_session)):
     """
     Save a custom CSV format configuration.
 
@@ -1420,14 +1348,10 @@ async def create_custom_config(
         raise bad_request(ErrorCode.IMPORT_PARSE_ERROR, f"Invalid config JSON: {str(e)}")
 
     # Check for duplicate name
-    result = await session.execute(
-        select(CustomFormatConfig).where(CustomFormatConfig.name == config.name)
-    )
+    result = await session.execute(select(CustomFormatConfig).where(CustomFormatConfig.name == config.name))
     if result.scalar_one_or_none():
         raise bad_request(
-            ErrorCode.VALIDATION_ERROR,
-            f"A configuration named '{config.name}' already exists",
-            config_name=config.name
+            ErrorCode.VALIDATION_ERROR, f"A configuration named '{config.name}' already exists", config_name=config.name
         )
 
     db_config = CustomFormatConfig(
@@ -1444,25 +1368,16 @@ async def create_custom_config(
 
 
 @router.get("/custom/configs")
-async def list_custom_configs(
-    session: AsyncSession = Depends(get_session)
-):
+async def list_custom_configs(session: AsyncSession = Depends(get_session)):
     """List all saved custom CSV format configurations, ordered by usage count."""
-    result = await session.execute(
-        select(CustomFormatConfig).order_by(CustomFormatConfig.use_count.desc())
-    )
+    result = await session.execute(select(CustomFormatConfig).order_by(CustomFormatConfig.use_count.desc()))
     return result.scalars().all()
 
 
 @router.get("/custom/configs/{config_id}")
-async def get_custom_config(
-    config_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def get_custom_config(config_id: int, session: AsyncSession = Depends(get_session)):
     """Get a specific custom CSV format configuration."""
-    result = await session.execute(
-        select(CustomFormatConfig).where(CustomFormatConfig.id == config_id)
-    )
+    result = await session.execute(select(CustomFormatConfig).where(CustomFormatConfig.id == config_id))
     config = result.scalar_one_or_none()
     if not config:
         raise not_found(ErrorCode.IMPORT_CONFIG_NOT_FOUND, config_id=config_id)
@@ -1471,14 +1386,10 @@ async def get_custom_config(
 
 @router.put("/custom/configs/{config_id}")
 async def update_custom_config(
-    config_id: int,
-    update: CustomFormatConfigUpdate,
-    session: AsyncSession = Depends(get_session)
+    config_id: int, update: CustomFormatConfigUpdate, session: AsyncSession = Depends(get_session)
 ):
     """Update a custom CSV format configuration."""
-    result = await session.execute(
-        select(CustomFormatConfig).where(CustomFormatConfig.id == config_id)
-    )
+    result = await session.execute(select(CustomFormatConfig).where(CustomFormatConfig.id == config_id))
     config = result.scalar_one_or_none()
     if not config:
         raise not_found(ErrorCode.IMPORT_CONFIG_NOT_FOUND, config_id=config_id)
@@ -1492,14 +1403,12 @@ async def update_custom_config(
 
     # Check for duplicate name
     if update.name and update.name != config.name:
-        existing = await session.execute(
-            select(CustomFormatConfig).where(CustomFormatConfig.name == update.name)
-        )
+        existing = await session.execute(select(CustomFormatConfig).where(CustomFormatConfig.name == update.name))
         if existing.scalar_one_or_none():
             raise bad_request(
                 ErrorCode.VALIDATION_ERROR,
                 f"A configuration named '{update.name}' already exists",
-                config_name=update.name
+                config_name=update.name,
             )
 
     update_data = update.model_dump(exclude_unset=True)
@@ -1514,14 +1423,9 @@ async def update_custom_config(
 
 
 @router.delete("/custom/configs/{config_id}")
-async def delete_custom_config(
-    config_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def delete_custom_config(config_id: int, session: AsyncSession = Depends(get_session)):
     """Delete a custom CSV format configuration."""
-    result = await session.execute(
-        select(CustomFormatConfig).where(CustomFormatConfig.id == config_id)
-    )
+    result = await session.execute(select(CustomFormatConfig).where(CustomFormatConfig.id == config_id))
     config = result.scalar_one_or_none()
     if not config:
         raise not_found(ErrorCode.IMPORT_CONFIG_NOT_FOUND, config_id=config_id)
@@ -1532,42 +1436,32 @@ async def delete_custom_config(
 
 
 @router.get("/custom/configs/{config_id}/export")
-async def export_custom_config(
-    config_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def export_custom_config(config_id: int, session: AsyncSession = Depends(get_session)):
     """
     Export a custom CSV format configuration as JSON.
 
     The returned JSON can be imported on another instance using the import endpoint.
     """
-    result = await session.execute(
-        select(CustomFormatConfig).where(CustomFormatConfig.id == config_id)
-    )
+    result = await session.execute(select(CustomFormatConfig).where(CustomFormatConfig.id == config_id))
     config = result.scalar_one_or_none()
     if not config:
         raise not_found(ErrorCode.IMPORT_CONFIG_NOT_FOUND, config_id=config_id)
 
     import json
-    return {
-        "name": config.name,
-        "description": config.description,
-        "config": json.loads(config.config_json)
-    }
+
+    return {"name": config.name, "description": config.description, "config": json.loads(config.config_json)}
 
 
 class ImportConfigRequest(PydanticBaseModel):
     """Request to import a custom format configuration"""
+
     name: Optional[str] = None  # Override name (optional)
     description: Optional[str] = None  # Override description (optional)
     config: Dict[str, Any]  # The config to import
 
 
 @router.post("/custom/configs/import")
-async def import_custom_config(
-    request: ImportConfigRequest,
-    session: AsyncSession = Depends(get_session)
-):
+async def import_custom_config(request: ImportConfigRequest, session: AsyncSession = Depends(get_session)):
     """
     Import a custom CSV format configuration from JSON.
 
@@ -1578,7 +1472,7 @@ async def import_custom_config(
     # Build config object and validate
     config_json = json.dumps(request.config)
     try:
-        parsed_config = CustomCsvConfig.from_json(config_json)
+        _parsed_config = CustomCsvConfig.from_json(config_json)  # Validates config structure
     except Exception as e:
         raise bad_request(ErrorCode.IMPORT_PARSE_ERROR, f"Invalid config: {str(e)}")
 
@@ -1586,26 +1480,20 @@ async def import_custom_config(
     name = request.name or request.config.get("name", "Imported Config")
 
     # Check for duplicate name
-    result = await session.execute(
-        select(CustomFormatConfig).where(CustomFormatConfig.name == name)
-    )
+    result = await session.execute(select(CustomFormatConfig).where(CustomFormatConfig.name == name))
     if result.scalar_one_or_none():
         # Auto-generate unique name
         base_name = name
         counter = 1
         while True:
             name = f"{base_name} ({counter})"
-            result = await session.execute(
-                select(CustomFormatConfig).where(CustomFormatConfig.name == name)
-            )
+            result = await session.execute(select(CustomFormatConfig).where(CustomFormatConfig.name == name))
             if not result.scalar_one_or_none():
                 break
             counter += 1
 
     db_config = CustomFormatConfig(
-        name=name,
-        description=request.description or request.config.get("description"),
-        config_json=config_json
+        name=name, description=request.description or request.config.get("description"), config_json=config_json
     )
     session.add(db_config)
     await session.commit()

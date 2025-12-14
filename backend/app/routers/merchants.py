@@ -1,16 +1,14 @@
 """Merchant aliases router for normalizing merchant names"""
+
 from fastapi import APIRouter, Depends, Query
 from sqlmodel import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
+from typing import List
 from datetime import datetime
 import re
 
 from app.database import get_session
-from app.models import (
-    MerchantAlias, MerchantAliasCreate, MerchantAliasUpdate,
-    MerchantAliasMatchType, Transaction
-)
+from app.models import MerchantAlias, MerchantAliasCreate, MerchantAliasUpdate, MerchantAliasMatchType, Transaction
 from app.errors import ErrorCode, not_found, bad_request
 
 
@@ -38,19 +36,13 @@ def apply_alias_to_text(alias: MerchantAlias, text: str) -> bool:
 
 
 @router.get("/")
-async def list_merchants(
-    limit: int = Query(100, ge=1, le=500),
-    session: AsyncSession = Depends(get_session)
-):
+async def list_merchants(limit: int = Query(100, ge=1, le=500), session: AsyncSession = Depends(get_session)):
     """
     Get distinct merchants from transactions.
     Returns raw merchant names and their transaction counts.
     """
     result = await session.execute(
-        select(
-            Transaction.merchant,
-            func.count(Transaction.id).label("count")
-        )
+        select(Transaction.merchant, func.count(Transaction.id).label("count"))
         .where(Transaction.merchant.isnot(None))
         .group_by(Transaction.merchant)
         .order_by(func.count(Transaction.id).desc())
@@ -60,33 +52,21 @@ async def list_merchants(
 
     return {
         "count": len(merchants),
-        "merchants": [
-            {"name": m.merchant, "transaction_count": m.count}
-            for m in merchants
-        ]
+        "merchants": [{"name": m.merchant, "transaction_count": m.count} for m in merchants],
     }
 
 
 @router.get("/aliases", response_model=List[MerchantAlias])
-async def list_aliases(
-    session: AsyncSession = Depends(get_session)
-):
+async def list_aliases(session: AsyncSession = Depends(get_session)):
     """List all merchant aliases, ordered by priority (highest first)"""
-    result = await session.execute(
-        select(MerchantAlias).order_by(MerchantAlias.priority.desc())
-    )
+    result = await session.execute(select(MerchantAlias).order_by(MerchantAlias.priority.desc()))
     return result.scalars().all()
 
 
 @router.get("/aliases/{alias_id}", response_model=MerchantAlias)
-async def get_alias(
-    alias_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def get_alias(alias_id: int, session: AsyncSession = Depends(get_session)):
     """Get a single merchant alias by ID"""
-    result = await session.execute(
-        select(MerchantAlias).where(MerchantAlias.id == alias_id)
-    )
+    result = await session.execute(select(MerchantAlias).where(MerchantAlias.id == alias_id))
     alias = result.scalar_one_or_none()
     if not alias:
         raise not_found(ErrorCode.ALIAS_NOT_FOUND, alias_id=alias_id)
@@ -94,10 +74,7 @@ async def get_alias(
 
 
 @router.post("/aliases", response_model=MerchantAlias, status_code=201)
-async def create_alias(
-    alias: MerchantAliasCreate,
-    session: AsyncSession = Depends(get_session)
-):
+async def create_alias(alias: MerchantAliasCreate, session: AsyncSession = Depends(get_session)):
     """Create a new merchant alias"""
     # Validate regex pattern if match_type is regex
     if alias.match_type == MerchantAliasMatchType.regex:
@@ -109,17 +86,12 @@ async def create_alias(
     # Check for duplicate pattern
     result = await session.execute(
         select(MerchantAlias).where(
-            MerchantAlias.pattern == alias.pattern,
-            MerchantAlias.match_type == alias.match_type
+            MerchantAlias.pattern == alias.pattern, MerchantAlias.match_type == alias.match_type
         )
     )
     existing = result.scalar_one_or_none()
     if existing:
-        raise bad_request(
-            ErrorCode.ALIAS_ALREADY_EXISTS,
-            pattern=alias.pattern,
-            match_type=alias.match_type.value
-        )
+        raise bad_request(ErrorCode.ALIAS_ALREADY_EXISTS, pattern=alias.pattern, match_type=alias.match_type.value)
 
     db_alias = MerchantAlias(**alias.model_dump())
     session.add(db_alias)
@@ -129,15 +101,9 @@ async def create_alias(
 
 
 @router.patch("/aliases/{alias_id}", response_model=MerchantAlias)
-async def update_alias(
-    alias_id: int,
-    alias: MerchantAliasUpdate,
-    session: AsyncSession = Depends(get_session)
-):
+async def update_alias(alias_id: int, alias: MerchantAliasUpdate, session: AsyncSession = Depends(get_session)):
     """Update a merchant alias"""
-    result = await session.execute(
-        select(MerchantAlias).where(MerchantAlias.id == alias_id)
-    )
+    result = await session.execute(select(MerchantAlias).where(MerchantAlias.id == alias_id))
     db_alias = result.scalar_one_or_none()
     if not db_alias:
         raise not_found(ErrorCode.ALIAS_NOT_FOUND, alias_id=alias_id)
@@ -163,14 +129,9 @@ async def update_alias(
 
 
 @router.delete("/aliases/{alias_id}", status_code=204)
-async def delete_alias(
-    alias_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def delete_alias(alias_id: int, session: AsyncSession = Depends(get_session)):
     """Delete a merchant alias"""
-    result = await session.execute(
-        select(MerchantAlias).where(MerchantAlias.id == alias_id)
-    )
+    result = await session.execute(select(MerchantAlias).where(MerchantAlias.id == alias_id))
     alias = result.scalar_one_or_none()
     if not alias:
         raise not_found(ErrorCode.ALIAS_NOT_FOUND, alias_id=alias_id)
@@ -182,7 +143,7 @@ async def delete_alias(
 @router.post("/aliases/apply")
 async def apply_aliases(
     dry_run: bool = Query(False, description="Preview changes without applying"),
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Apply all aliases to transactions.
@@ -191,9 +152,7 @@ async def apply_aliases(
     from sqlalchemy import update
 
     # Get all aliases ordered by priority
-    result = await session.execute(
-        select(MerchantAlias).order_by(MerchantAlias.priority.desc())
-    )
+    result = await session.execute(select(MerchantAlias).order_by(MerchantAlias.priority.desc()))
     aliases = result.scalars().all()
 
     if not aliases:
@@ -201,8 +160,7 @@ async def apply_aliases(
 
     # Get transactions with descriptions that might need aliasing
     result = await session.execute(
-        select(Transaction.id, Transaction.description, Transaction.merchant)
-        .where(Transaction.description.isnot(None))
+        select(Transaction.id, Transaction.description, Transaction.merchant).where(Transaction.description.isnot(None))
     )
     transactions = result.all()
 
@@ -218,14 +176,16 @@ async def apply_aliases(
                 new_merchant = alias.canonical_name
 
                 if old_merchant != new_merchant:
-                    updates.append({
-                        "transaction_id": txn_id,
-                        "description": txn_description,
-                        "old_merchant": old_merchant,
-                        "new_merchant": new_merchant,
-                        "matched_alias_id": alias.id,
-                        "matched_pattern": alias.pattern
-                    })
+                    updates.append(
+                        {
+                            "transaction_id": txn_id,
+                            "description": txn_description,
+                            "old_merchant": old_merchant,
+                            "new_merchant": new_merchant,
+                            "matched_alias_id": alias.id,
+                            "matched_pattern": alias.pattern,
+                        }
+                    )
                     alias_match_counts[alias.id] += 1
                 break  # Stop at first matching alias
 
@@ -245,10 +205,7 @@ async def apply_aliases(
                 await session.execute(
                     update(MerchantAlias)
                     .where(MerchantAlias.id == alias.id)
-                    .values(
-                        match_count=MerchantAlias.match_count + alias_match_counts[alias.id],
-                        last_matched_date=now
-                    )
+                    .values(match_count=MerchantAlias.match_count + alias_match_counts[alias.id], last_matched_date=now)
                 )
 
         await session.commit()
@@ -256,14 +213,14 @@ async def apply_aliases(
     return {
         "dry_run": dry_run,
         "updated_count": len(updates),
-        "updates": updates[:100]  # Limit response size
+        "updates": updates[:100],  # Limit response size
     }
 
 
 @router.get("/aliases/suggestions")
 async def get_alias_suggestions(
     min_count: int = Query(3, ge=1, description="Minimum occurrences to suggest"),
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Suggest potential merchant aliases based on similar transaction descriptions.
@@ -271,11 +228,7 @@ async def get_alias_suggestions(
     """
     # Get merchants with counts
     result = await session.execute(
-        select(
-            Transaction.merchant,
-            Transaction.description,
-            func.count(Transaction.id).label("count")
-        )
+        select(Transaction.merchant, Transaction.description, func.count(Transaction.id).label("count"))
         .where(Transaction.merchant.isnot(None))
         .group_by(Transaction.merchant)
         .having(func.count(Transaction.id) >= min_count)
@@ -285,9 +238,7 @@ async def get_alias_suggestions(
     merchants = result.all()
 
     # Get existing aliases to exclude
-    alias_result = await session.execute(
-        select(MerchantAlias.pattern, MerchantAlias.canonical_name)
-    )
+    alias_result = await session.execute(select(MerchantAlias.pattern, MerchantAlias.canonical_name))
     existing_aliases = {row.pattern.lower(): row.canonical_name for row in alias_result.all()}
 
     suggestions = []
@@ -303,7 +254,7 @@ async def get_alias_suggestions(
             "raw_merchant": m.merchant,
             "transaction_count": m.count,
             "suggested_canonical": None,
-            "reason": None
+            "reason": None,
         }
 
         # Simple heuristics for suggestions
@@ -318,17 +269,14 @@ async def get_alias_suggestions(
                 cleaned = cleaned.split("#")[0].strip()
 
             # Remove card number suffixes
-            cleaned = re.sub(r'\d{4,}$', '', cleaned).strip()
+            cleaned = re.sub(r"\d{4,}$", "", cleaned).strip()
 
             # Clean up excessive spaces
-            cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+            cleaned = re.sub(r"\s+", " ", cleaned).strip()
 
             if cleaned != m.merchant and len(cleaned) > 2:
                 suggestion["suggested_canonical"] = cleaned.title()
                 suggestion["reason"] = "Cleaned location/number info"
                 suggestions.append(suggestion)
 
-    return {
-        "count": len(suggestions),
-        "suggestions": suggestions
-    }
+    return {"count": len(suggestions), "suggestions": suggestions}

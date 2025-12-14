@@ -5,10 +5,7 @@ from typing import List
 from datetime import datetime
 
 from app.database import get_session
-from app.models import (
-    TagRule, TagRuleCreate, TagRuleUpdate,
-    Transaction, Tag, TransactionTag
-)
+from app.models import TagRule, TagRuleCreate, TagRuleUpdate, Transaction, Tag, TransactionTag
 from app.errors import ErrorCode, not_found, bad_request
 
 router = APIRouter(prefix="/api/v1/tag-rules", tags=["tag-rules"])
@@ -72,26 +69,17 @@ def parse_tag_string(tag_str: str) -> tuple[str, str]:
 
 
 @router.get("/", response_model=List[TagRule])
-async def list_rules(
-    session: AsyncSession = Depends(get_session)
-):
+async def list_rules(session: AsyncSession = Depends(get_session)):
     """List all tag rules ordered by priority (highest first)"""
-    result = await session.execute(
-        select(TagRule).order_by(TagRule.priority.desc(), TagRule.created_at)
-    )
+    result = await session.execute(select(TagRule).order_by(TagRule.priority.desc(), TagRule.created_at))
     rules = result.scalars().all()
     return rules
 
 
 @router.get("/{rule_id}", response_model=TagRule)
-async def get_rule(
-    rule_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def get_rule(rule_id: int, session: AsyncSession = Depends(get_session)):
     """Get a single tag rule by ID"""
-    result = await session.execute(
-        select(TagRule).where(TagRule.id == rule_id)
-    )
+    result = await session.execute(select(TagRule).where(TagRule.id == rule_id))
     rule = result.scalar_one_or_none()
     if not rule:
         raise not_found(ErrorCode.RULE_NOT_FOUND, rule_id=rule_id)
@@ -99,10 +87,7 @@ async def get_rule(
 
 
 @router.post("/", response_model=TagRule, status_code=201)
-async def create_rule(
-    rule: TagRuleCreate,
-    session: AsyncSession = Depends(get_session)
-):
+async def create_rule(rule: TagRuleCreate, session: AsyncSession = Depends(get_session)):
     """Create a new tag rule"""
     # Validate tag format
     try:
@@ -111,24 +96,21 @@ async def create_rule(
         raise bad_request(ErrorCode.TAG_INVALID_FORMAT, str(e), tag=rule.tag)
 
     # Validate that the tag exists
-    tag_result = await session.execute(
-        select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
-    )
+    tag_result = await session.execute(select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value)))
     if not tag_result.scalar_one_or_none():
         raise bad_request(ErrorCode.TAG_NOT_FOUND, tag=rule.tag)
 
     # Validate that at least one match condition is specified
-    if not any([
-        rule.merchant_pattern,
-        rule.description_pattern,
-        rule.amount_min is not None,
-        rule.amount_max is not None,
-        rule.account_source
-    ]):
-        raise bad_request(
-            ErrorCode.VALIDATION_ERROR,
-            "At least one match condition must be specified"
-        )
+    if not any(
+        [
+            rule.merchant_pattern,
+            rule.description_pattern,
+            rule.amount_min is not None,
+            rule.amount_max is not None,
+            rule.account_source,
+        ]
+    ):
+        raise bad_request(ErrorCode.VALIDATION_ERROR, "At least one match condition must be specified")
 
     db_rule = TagRule(**rule.model_dump())
     session.add(db_rule)
@@ -138,15 +120,9 @@ async def create_rule(
 
 
 @router.patch("/{rule_id}", response_model=TagRule)
-async def update_rule(
-    rule_id: int,
-    rule: TagRuleUpdate,
-    session: AsyncSession = Depends(get_session)
-):
+async def update_rule(rule_id: int, rule: TagRuleUpdate, session: AsyncSession = Depends(get_session)):
     """Update a tag rule"""
-    result = await session.execute(
-        select(TagRule).where(TagRule.id == rule_id)
-    )
+    result = await session.execute(select(TagRule).where(TagRule.id == rule_id))
     db_rule = result.scalar_one_or_none()
     if not db_rule:
         raise not_found(ErrorCode.RULE_NOT_FOUND, rule_id=rule_id)
@@ -159,9 +135,7 @@ async def update_rule(
             raise bad_request(ErrorCode.TAG_INVALID_FORMAT, str(e), tag=rule.tag)
 
         # Validate that the tag exists
-        tag_result = await session.execute(
-            select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
-        )
+        tag_result = await session.execute(select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value)))
         if not tag_result.scalar_one_or_none():
             raise bad_request(ErrorCode.TAG_NOT_FOUND, tag=rule.tag)
 
@@ -177,14 +151,9 @@ async def update_rule(
 
 
 @router.delete("/{rule_id}", status_code=204)
-async def delete_rule(
-    rule_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def delete_rule(rule_id: int, session: AsyncSession = Depends(get_session)):
     """Delete a tag rule"""
-    result = await session.execute(
-        select(TagRule).where(TagRule.id == rule_id)
-    )
+    result = await session.execute(select(TagRule).where(TagRule.id == rule_id))
     rule = result.scalar_one_or_none()
     if not rule:
         raise not_found(ErrorCode.RULE_NOT_FOUND, rule_id=rule_id)
@@ -194,19 +163,14 @@ async def delete_rule(
 
 
 @router.post("/{rule_id}/test")
-async def test_rule(
-    rule_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def test_rule(rule_id: int, session: AsyncSession = Depends(get_session)):
     """
     Test a rule against existing transactions
 
     Returns matching transactions (preview mode)
     """
     # Get the rule
-    rule_result = await session.execute(
-        select(TagRule).where(TagRule.id == rule_id)
-    )
+    rule_result = await session.execute(select(TagRule).where(TagRule.id == rule_id))
     rule = rule_result.scalar_one_or_none()
     if not rule:
         raise not_found(ErrorCode.RULE_NOT_FOUND, rule_id=rule_id)
@@ -219,30 +183,28 @@ async def test_rule(
     matching_transactions = []
     for txn in transactions:
         if match_rule(txn, rule):
-            matching_transactions.append({
-                "id": txn.id,
-                "date": txn.date,
-                "merchant": txn.merchant,
-                "description": txn.description,
-                "amount": txn.amount,
-                "current_category": txn.category,  # Legacy field
-                "would_apply_tag": rule.tag
-            })
+            matching_transactions.append(
+                {
+                    "id": txn.id,
+                    "date": txn.date,
+                    "merchant": txn.merchant,
+                    "description": txn.description,
+                    "amount": txn.amount,
+                    "current_category": txn.category,  # Legacy field
+                    "would_apply_tag": rule.tag,
+                }
+            )
 
     return {
         "rule_id": rule_id,
         "rule_name": rule.name,
         "target_tag": rule.tag,
         "match_count": len(matching_transactions),
-        "matches": matching_transactions[:50]  # Limit to 50 for preview
+        "matches": matching_transactions[:50],  # Limit to 50 for preview
     }
 
 
-async def apply_tag_to_transaction(
-    session: AsyncSession,
-    transaction_id: int,
-    tag_str: str
-) -> bool:
+async def apply_tag_to_transaction(session: AsyncSession, transaction_id: int, tag_str: str) -> bool:
     """
     Apply a tag to a transaction via the junction table.
     For bucket tags, removes any existing bucket tag first (only one allowed).
@@ -251,9 +213,7 @@ async def apply_tag_to_transaction(
     namespace, value = parse_tag_string(tag_str)
 
     # Get the tag
-    tag_result = await session.execute(
-        select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value))
-    )
+    tag_result = await session.execute(select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value)))
     tag = tag_result.scalar_one_or_none()
     if not tag:
         return False
@@ -264,12 +224,7 @@ async def apply_tag_to_transaction(
         existing_bucket_result = await session.execute(
             select(TransactionTag)
             .join(Tag)
-            .where(
-                and_(
-                    TransactionTag.transaction_id == transaction_id,
-                    Tag.namespace == "bucket"
-                )
-            )
+            .where(and_(TransactionTag.transaction_id == transaction_id, Tag.namespace == "bucket"))
         )
         existing_buckets = existing_bucket_result.scalars().all()
         for existing in existing_buckets:
@@ -278,10 +233,7 @@ async def apply_tag_to_transaction(
     # Check if this exact tag is already applied
     existing_result = await session.execute(
         select(TransactionTag).where(
-            and_(
-                TransactionTag.transaction_id == transaction_id,
-                TransactionTag.tag_id == tag.id
-            )
+            and_(TransactionTag.transaction_id == transaction_id, TransactionTag.tag_id == tag.id)
         )
     )
     if existing_result.scalar_one_or_none():
@@ -294,9 +246,7 @@ async def apply_tag_to_transaction(
 
 
 @router.post("/apply")
-async def apply_rules(
-    session: AsyncSession = Depends(get_session)
-):
+async def apply_rules(session: AsyncSession = Depends(get_session)):
     """
     Apply all enabled rules to transactions without bucket tags
 
@@ -304,17 +254,12 @@ async def apply_rules(
     """
     # Get all enabled rules ordered by priority
     rules_result = await session.execute(
-        select(TagRule)
-        .where(TagRule.enabled == True)
-        .order_by(TagRule.priority.desc(), TagRule.created_at)
+        select(TagRule).where(TagRule.enabled.is_(True)).order_by(TagRule.priority.desc(), TagRule.created_at)
     )
     rules = rules_result.scalars().all()
 
     if not rules:
-        return {
-            "applied_count": 0,
-            "message": "No enabled rules found"
-        }
+        return {"applied_count": 0, "message": "No enabled rules found"}
 
     # Get transactions without a bucket tag (have bucket:none or no bucket at all)
     # For simplicity, we check all transactions and skip those with non-none bucket tags
@@ -329,12 +274,7 @@ async def apply_rules(
         current_bucket_result = await session.execute(
             select(Tag)
             .join(TransactionTag)
-            .where(
-                and_(
-                    TransactionTag.transaction_id == txn.id,
-                    Tag.namespace == "bucket"
-                )
-            )
+            .where(and_(TransactionTag.transaction_id == txn.id, Tag.namespace == "bucket"))
         )
         current_bucket = current_bucket_result.scalar_one_or_none()
 
@@ -373,24 +313,19 @@ async def apply_rules(
         "rules_applied": [
             {"rule_id": rule_id, "rule_name": stats["name"], "tag": stats["tag"], "matches": stats["count"]}
             for rule_id, stats in rule_stats.items()
-        ]
+        ],
     }
 
 
 @router.post("/{rule_id}/apply")
-async def apply_single_rule(
-    rule_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def apply_single_rule(rule_id: int, session: AsyncSession = Depends(get_session)):
     """
     Apply a specific rule to all matching transactions
 
     For bucket tags, overwrites existing bucket assignments
     """
     # Get the rule
-    rule_result = await session.execute(
-        select(TagRule).where(TagRule.id == rule_id)
-    )
+    rule_result = await session.execute(select(TagRule).where(TagRule.id == rule_id))
     rule = rule_result.scalar_one_or_none()
     if not rule:
         raise not_found(ErrorCode.RULE_NOT_FOUND, rule_id=rule_id)
@@ -417,9 +352,4 @@ async def apply_single_rule(
 
     await session.commit()
 
-    return {
-        "rule_id": rule_id,
-        "rule_name": rule.name,
-        "applied_count": applied_count,
-        "target_tag": rule.tag
-    }
+    return {"rule_id": rule_id, "rule_name": rule.name, "applied_count": applied_count, "target_tag": rule.tag}

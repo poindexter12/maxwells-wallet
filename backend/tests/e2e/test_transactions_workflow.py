@@ -93,7 +93,7 @@ class TestTransactionsPage:
         page.wait_for_load_state("networkidle")
 
         # Results should be filtered (either same or fewer results)
-        filtered_rows = page.locator("table tbody tr")
+        _filtered_rows = page.locator("table tbody tr")
         # Just verify the search didn't break the page
         expect(page.locator("table")).to_be_visible()
 
@@ -178,7 +178,7 @@ class TestTransactionsPage:
 
             # Bucket should still be set
             updated_row = page.locator("table tbody tr").first
-            updated_select = updated_row.locator("select")
+            _updated_select = updated_row.locator("select")
             # Just verify page still works after edit
             expect(page.locator("table")).to_be_visible()
 
@@ -201,7 +201,7 @@ class TestTransactionsPagination:
 
         if rows.count() >= 100:
             # Look for pagination controls
-            pagination = page.locator("text=/next|previous|page|load more/i")
+            _pagination = page.locator("text=/next|previous|page|load more/i")
             # Pagination might exist in various forms
             # Just verify page loads correctly
             expect(page.locator("table")).to_be_visible()
@@ -271,7 +271,7 @@ class TestDashboardIntegration:
         page.wait_for_load_state("networkidle")
 
         # Look for chart containers (common chart libraries use canvas or svg)
-        charts = page.locator("canvas, svg[class*='chart'], div[class*='chart']")
+        _charts = page.locator("canvas, svg[class*='chart'], div[class*='chart']")
 
         # Charts should be present (even if empty)
         # Just verify the page loads without errors

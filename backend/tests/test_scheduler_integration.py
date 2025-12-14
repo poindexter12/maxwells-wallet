@@ -4,12 +4,12 @@ Integration tests for scheduler service - tests actual timing behavior.
 These tests use short intervals and actually wait for jobs to fire,
 verifying the full integration between APScheduler and our backup service.
 """
+
 import asyncio
-import os
 import tempfile
 import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import patch
 
 from app.services.scheduler import SchedulerService
 from app.services.backup import BackupService
