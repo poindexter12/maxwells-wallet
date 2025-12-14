@@ -58,11 +58,13 @@ export default function ToolsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-theme" data-testid="tools-tabs">
+      <div className="border-b border-theme" data-testid="tools-tabs" role="tablist">
         <nav className="-mb-px flex space-x-8">
           {VALID_TABS.map((tab) => (
             <button
               key={tab}
+              role="tab"
+              aria-selected={activeTab === tab}
               onClick={() => handleTabChange(tab)}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === tab

@@ -474,8 +474,20 @@ async function executeAction(
       const amount = rng.int(100, 500);
       const deltaX = direction === 'left' ? -amount : direction === 'right' ? amount : 0;
       const deltaY = direction === 'up' ? -amount : direction === 'down' ? amount : 0;
-      await page.mouse.wheel(deltaX, deltaY);
-      return `scroll: ${direction} ${amount}px`;
+      try {
+        await page.mouse.wheel(deltaX, deltaY);
+        return `scroll: ${direction} ${amount}px`;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        // Navigation during scroll is expected in chaos testing - a prior click may have
+        // triggered a route change. This is not a bug, just bad timing.
+        if (msg.includes('Execution context was destroyed') || msg.includes('navigation')) {
+          // Wait for the new page to stabilize and return success
+          await page.waitForLoadState('domcontentloaded').catch(() => {});
+          return `scroll: ${direction} (navigation occurred, recovered)`;
+        }
+        throw e; // Re-throw other errors
+      }
     }
 
     case 'hover': {
@@ -913,9 +925,10 @@ async function executeDemonAction(
     }
 
     case 'fuzz-input': {
+      // Exclude checkbox/radio - they can't be filled, only clicked
       const inputs = await getVisibleElements(
         page,
-        'input:visible:not([type=file]):not([type=hidden]):not([readonly]), textarea:visible',
+        'input:visible:not([type=file]):not([type=hidden]):not([type=checkbox]):not([type=radio]):not([readonly]), textarea:visible',
         excludeSelectors
       );
       if (inputs.length === 0) return null;
