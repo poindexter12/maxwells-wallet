@@ -24,7 +24,7 @@ Reference: https://en.wikipedia.org/wiki/Open_Financial_Exchange
 
 import re
 from datetime import datetime, date
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 from ..base import CSVFormatParser, ParsedTransaction
 from ..registry import ParserRegistry
@@ -42,8 +42,8 @@ class QFXParser(CSVFormatParser):
 
     # Regex patterns for extracting OFX elements
     # OFX uses SGML-like syntax where closing tags are optional
-    STMTTRN_PATTERN = re.compile(r'<STMTTRN>(.*?)</STMTTRN>', re.DOTALL | re.IGNORECASE)
-    TAG_PATTERN = re.compile(r'<(\w+)>([^<]*)', re.IGNORECASE)
+    STMTTRN_PATTERN = re.compile(r"<STMTTRN>(.*?)</STMTTRN>", re.DOTALL | re.IGNORECASE)
+    TAG_PATTERN = re.compile(r"<(\w+)>([^<]*)", re.IGNORECASE)
 
     def can_parse(self, content: str) -> Tuple[bool, float]:
         """
@@ -55,19 +55,19 @@ class QFXParser(CSVFormatParser):
         content_upper = content.strip().upper()
 
         # Check for OFX header or root element
-        if '<OFX>' in content_upper:
+        if "<OFX>" in content_upper:
             return True, 0.95
 
         # Check for OFXHEADER
-        if 'OFXHEADER:' in content_upper:
+        if "OFXHEADER:" in content_upper:
             return True, 0.95
 
         # Check for <?OFX processing instruction
-        if '<?OFX' in content_upper:
+        if "<?OFX" in content_upper:
             return True, 0.90
 
         # Check for statement transaction elements
-        if '<STMTTRN>' in content_upper:
+        if "<STMTTRN>" in content_upper:
             return True, 0.85
 
         return False, 0.0
@@ -105,7 +105,7 @@ class QFXParser(CSVFormatParser):
         Looks for ACCTID (account ID) or ACCTTYPE elements.
         """
         # Try to find account ID
-        acct_match = re.search(r'<ACCTID>([^<]+)', content, re.IGNORECASE)
+        acct_match = re.search(r"<ACCTID>([^<]+)", content, re.IGNORECASE)
         if acct_match:
             acct_id = acct_match.group(1).strip()
             # Mask most digits for privacy, keep last 4
@@ -114,18 +114,14 @@ class QFXParser(CSVFormatParser):
             return f"QFX-{acct_id}"
 
         # Try to find account type
-        type_match = re.search(r'<ACCTTYPE>([^<]+)', content, re.IGNORECASE)
+        type_match = re.search(r"<ACCTTYPE>([^<]+)", content, re.IGNORECASE)
         if type_match:
             acct_type = type_match.group(1).strip()
             return f"QFX-{acct_type}"
 
         return "QFX-Unknown"
 
-    def _parse_transaction_block(
-        self,
-        block: str,
-        account_source: str
-    ) -> Optional[ParsedTransaction]:
+    def _parse_transaction_block(self, block: str, account_source: str) -> Optional[ParsedTransaction]:
         """
         Parse a single STMTTRN block into ParsedTransaction.
 
@@ -145,29 +141,29 @@ class QFXParser(CSVFormatParser):
                 fields[tag_name] = tag_value
 
         # Parse date (required) - DTPOSTED
-        date_str = fields.get('DTPOSTED', '')
+        date_str = fields.get("DTPOSTED", "")
         trans_date = self._parse_ofx_date(date_str)
         if not trans_date:
             # Try DTUSER or DTAVAIL as fallbacks
-            trans_date = self._parse_ofx_date(fields.get('DTUSER', ''))
+            trans_date = self._parse_ofx_date(fields.get("DTUSER", ""))
             if not trans_date:
-                trans_date = self._parse_ofx_date(fields.get('DTAVAIL', ''))
+                trans_date = self._parse_ofx_date(fields.get("DTAVAIL", ""))
         if not trans_date:
             return None
 
         # Parse amount (required) - TRNAMT
-        amount_str = fields.get('TRNAMT', '')
+        amount_str = fields.get("TRNAMT", "")
         amount = self._parse_ofx_amount(amount_str)
         if amount is None:
             return None
 
         # Get transaction type
-        tran_type = fields.get('TRNTYPE', 'OTHER')
+        tran_type = fields.get("TRNTYPE", "OTHER")
 
         # Get payee/description
-        name = fields.get('NAME', '')
-        memo = fields.get('MEMO', '')
-        payee = fields.get('PAYEE', '')  # Sometimes used instead of NAME
+        name = fields.get("NAME", "")
+        memo = fields.get("MEMO", "")
+        payee = fields.get("PAYEE", "")  # Sometimes used instead of NAME
 
         # Build description
         description_parts = []
@@ -178,25 +174,25 @@ class QFXParser(CSVFormatParser):
         if memo and memo not in description_parts:
             description_parts.append(memo)
 
-        description = ' - '.join(description_parts) if description_parts else f"{tran_type} Transaction"
+        description = " - ".join(description_parts) if description_parts else f"{tran_type} Transaction"
 
         # Merchant is NAME or PAYEE
         merchant = (name or payee or description)[:50].strip()
 
         # FITID is the gold standard for reference ID - unique from the bank
-        fitid = fields.get('FITID', '')
+        fitid = fields.get("FITID", "")
         if fitid:
             reference_id = f"qfx_{fitid}"
         else:
             # Fallback to date/amount
-            check_num = fields.get('CHECKNUM', '')
+            check_num = fields.get("CHECKNUM", "")
             if check_num:
                 reference_id = f"qfx_{trans_date}_{check_num}"
             else:
                 reference_id = f"qfx_{trans_date}_{amount}"
 
         # SIC code can help with categorization
-        sic = fields.get('SIC', '')
+        sic = fields.get("SIC", "")
         suggested_category = self._map_sic_code(sic) if sic else None
 
         return ParsedTransaction(
@@ -221,7 +217,7 @@ class QFXParser(CSVFormatParser):
             return None
 
         # Remove timezone info if present (e.g., [-5:EST])
-        date_str = re.sub(r'\[.*\]', '', date_str).strip()
+        date_str = re.sub(r"\[.*\]", "", date_str).strip()
 
         # Try to extract just the date portion (first 8 chars)
         if len(date_str) >= 8:
@@ -252,8 +248,8 @@ class QFXParser(CSVFormatParser):
 
         # Clean up the string
         clean = amount_str.strip()
-        clean = clean.replace(',', '')  # Remove thousands separator
-        clean = clean.replace(' ', '')
+        clean = clean.replace(",", "")  # Remove thousands separator
+        clean = clean.replace(" ", "")
 
         try:
             return float(clean)
@@ -278,32 +274,32 @@ class QFXParser(CSVFormatParser):
 
         # Major SIC categories
         if major in range(1, 10):
-            return 'agriculture'
+            return "agriculture"
         elif major in range(10, 15):
-            return 'mining'
+            return "mining"
         elif major in range(15, 18):
-            return 'construction'
+            return "construction"
         elif major in range(20, 40):
-            return 'manufacturing'
+            return "manufacturing"
         elif major in range(40, 50):
-            return 'transportation'
+            return "transportation"
         elif major in range(50, 52):
-            return 'wholesale'
+            return "wholesale"
         elif major in range(52, 60):
-            return 'shopping'  # Retail trade
+            return "shopping"  # Retail trade
         elif major in range(60, 68):
-            return 'finance'  # Finance, insurance, real estate
+            return "finance"  # Finance, insurance, real estate
         elif major in range(70, 72):
-            return 'travel'  # Hotels, lodging
+            return "travel"  # Hotels, lodging
         elif major in range(72, 73):
-            return 'personal-services'
+            return "personal-services"
         elif major in range(78, 80):
-            return 'entertainment'  # Motion pictures, recreation
+            return "entertainment"  # Motion pictures, recreation
         elif major in range(80, 83):
-            return 'healthcare'  # Health services
+            return "healthcare"  # Health services
         elif major in range(83, 87):
-            return 'professional-services'
+            return "professional-services"
         elif major in range(58, 59):
-            return 'food-and-drink'  # Eating and drinking places
+            return "food-and-drink"  # Eating and drinking places
 
         return None

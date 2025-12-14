@@ -81,6 +81,7 @@ def main():
     asyncio.run(setup_demo())
     # Force immediate exit to avoid APScheduler threads blocking
     import os
+
     os._exit(0)
 
 

@@ -1,6 +1,7 @@
 """
 Comprehensive tests for budgets.py router to increase coverage to 90%+.
 """
+
 import pytest
 from httpx import AsyncClient
 
@@ -18,11 +19,7 @@ class TestBudgetsCRUD:
     @pytest.mark.asyncio
     async def test_create_budget_success(self, client: AsyncClient, seed_categories):
         """Create a budget successfully"""
-        budget_data = {
-            "tag": "bucket:groceries",
-            "amount": 500.00,
-            "period": "monthly"
-        }
+        budget_data = {"tag": "bucket:groceries", "amount": 500.00, "period": "monthly"}
         response = await client.post("/api/v1/budgets", json=budget_data)
         assert response.status_code in [201, 400]  # 400 if already exists
 
@@ -37,7 +34,7 @@ class TestBudgetsCRUD:
         budget_data = {
             "tag": "invalid-format",  # Missing namespace:value format
             "amount": 500.00,
-            "period": "monthly"
+            "period": "monthly",
         }
         response = await client.post("/api/v1/budgets", json=budget_data)
         assert response.status_code == 400
@@ -46,11 +43,7 @@ class TestBudgetsCRUD:
     @pytest.mark.asyncio
     async def test_create_budget_nonexistent_tag(self, client: AsyncClient):
         """Create budget with nonexistent tag fails"""
-        budget_data = {
-            "tag": "bucket:nonexistent-bucket-12345",
-            "amount": 500.00,
-            "period": "monthly"
-        }
+        budget_data = {"tag": "bucket:nonexistent-bucket-12345", "amount": 500.00, "period": "monthly"}
         response = await client.post("/api/v1/budgets", json=budget_data)
         assert response.status_code == 400
         assert response.json()["detail"]["error_code"] == "TAG_NOT_FOUND"
@@ -59,16 +52,9 @@ class TestBudgetsCRUD:
     async def test_create_duplicate_budget(self, client: AsyncClient, seed_categories):
         """Create duplicate budget fails"""
         # First ensure tag exists
-        await client.post("/api/v1/tags", json={
-            "namespace": "bucket",
-            "value": "duplicate-test-bucket"
-        })
+        await client.post("/api/v1/tags", json={"namespace": "bucket", "value": "duplicate-test-bucket"})
 
-        budget_data = {
-            "tag": "bucket:duplicate-test-bucket",
-            "amount": 500.00,
-            "period": "monthly"
-        }
+        budget_data = {"tag": "bucket:duplicate-test-bucket", "amount": 500.00, "period": "monthly"}
         # Create first budget
         response1 = await client.post("/api/v1/budgets", json=budget_data)
 
@@ -82,15 +68,10 @@ class TestBudgetsCRUD:
     async def test_get_budget_by_id(self, client: AsyncClient, seed_categories):
         """Get budget by ID"""
         # Create a budget first
-        await client.post("/api/v1/tags", json={
-            "namespace": "bucket",
-            "value": "get-test-bucket"
-        })
-        create_response = await client.post("/api/v1/budgets", json={
-            "tag": "bucket:get-test-bucket",
-            "amount": 300.00,
-            "period": "monthly"
-        })
+        await client.post("/api/v1/tags", json={"namespace": "bucket", "value": "get-test-bucket"})
+        create_response = await client.post(
+            "/api/v1/budgets", json={"tag": "bucket:get-test-bucket", "amount": 300.00, "period": "monthly"}
+        )
 
         if create_response.status_code == 201:
             budget_id = create_response.json()["id"]
@@ -108,21 +89,14 @@ class TestBudgetsCRUD:
     async def test_update_budget_amount(self, client: AsyncClient, seed_categories):
         """Update budget amount"""
         # Create a budget first
-        await client.post("/api/v1/tags", json={
-            "namespace": "bucket",
-            "value": "update-amount-bucket"
-        })
-        create_response = await client.post("/api/v1/budgets", json={
-            "tag": "bucket:update-amount-bucket",
-            "amount": 300.00,
-            "period": "monthly"
-        })
+        await client.post("/api/v1/tags", json={"namespace": "bucket", "value": "update-amount-bucket"})
+        create_response = await client.post(
+            "/api/v1/budgets", json={"tag": "bucket:update-amount-bucket", "amount": 300.00, "period": "monthly"}
+        )
 
         if create_response.status_code == 201:
             budget_id = create_response.json()["id"]
-            update_response = await client.patch(f"/api/v1/budgets/{budget_id}", json={
-                "amount": 600.00
-            })
+            update_response = await client.patch(f"/api/v1/budgets/{budget_id}", json={"amount": 600.00})
             assert update_response.status_code == 200
             assert update_response.json()["amount"] == 600.00
 
@@ -130,26 +104,16 @@ class TestBudgetsCRUD:
     async def test_update_budget_tag(self, client: AsyncClient, seed_categories):
         """Update budget tag"""
         # Create tags
-        await client.post("/api/v1/tags", json={
-            "namespace": "bucket",
-            "value": "original-bucket"
-        })
-        await client.post("/api/v1/tags", json={
-            "namespace": "bucket",
-            "value": "new-bucket"
-        })
+        await client.post("/api/v1/tags", json={"namespace": "bucket", "value": "original-bucket"})
+        await client.post("/api/v1/tags", json={"namespace": "bucket", "value": "new-bucket"})
 
-        create_response = await client.post("/api/v1/budgets", json={
-            "tag": "bucket:original-bucket",
-            "amount": 300.00,
-            "period": "monthly"
-        })
+        create_response = await client.post(
+            "/api/v1/budgets", json={"tag": "bucket:original-bucket", "amount": 300.00, "period": "monthly"}
+        )
 
         if create_response.status_code == 201:
             budget_id = create_response.json()["id"]
-            update_response = await client.patch(f"/api/v1/budgets/{budget_id}", json={
-                "tag": "bucket:new-bucket"
-            })
+            update_response = await client.patch(f"/api/v1/budgets/{budget_id}", json={"tag": "bucket:new-bucket"})
             assert update_response.status_code == 200
             assert update_response.json()["tag"] == "bucket:new-bucket"
 
@@ -157,41 +121,29 @@ class TestBudgetsCRUD:
     async def test_update_budget_invalid_tag(self, client: AsyncClient, seed_categories):
         """Update budget with invalid tag format fails"""
         # Create a budget first
-        await client.post("/api/v1/tags", json={
-            "namespace": "bucket",
-            "value": "update-invalid-bucket"
-        })
-        create_response = await client.post("/api/v1/budgets", json={
-            "tag": "bucket:update-invalid-bucket",
-            "amount": 300.00,
-            "period": "monthly"
-        })
+        await client.post("/api/v1/tags", json={"namespace": "bucket", "value": "update-invalid-bucket"})
+        create_response = await client.post(
+            "/api/v1/budgets", json={"tag": "bucket:update-invalid-bucket", "amount": 300.00, "period": "monthly"}
+        )
 
         if create_response.status_code == 201:
             budget_id = create_response.json()["id"]
-            update_response = await client.patch(f"/api/v1/budgets/{budget_id}", json={
-                "tag": "invalid-format"
-            })
+            update_response = await client.patch(f"/api/v1/budgets/{budget_id}", json={"tag": "invalid-format"})
             assert update_response.status_code == 400
 
     @pytest.mark.asyncio
     async def test_update_budget_nonexistent_tag(self, client: AsyncClient, seed_categories):
         """Update budget with nonexistent tag fails"""
-        await client.post("/api/v1/tags", json={
-            "namespace": "bucket",
-            "value": "update-nonexist-bucket"
-        })
-        create_response = await client.post("/api/v1/budgets", json={
-            "tag": "bucket:update-nonexist-bucket",
-            "amount": 300.00,
-            "period": "monthly"
-        })
+        await client.post("/api/v1/tags", json={"namespace": "bucket", "value": "update-nonexist-bucket"})
+        create_response = await client.post(
+            "/api/v1/budgets", json={"tag": "bucket:update-nonexist-bucket", "amount": 300.00, "period": "monthly"}
+        )
 
         if create_response.status_code == 201:
             budget_id = create_response.json()["id"]
-            update_response = await client.patch(f"/api/v1/budgets/{budget_id}", json={
-                "tag": "bucket:does-not-exist-12345"
-            })
+            update_response = await client.patch(
+                f"/api/v1/budgets/{budget_id}", json={"tag": "bucket:does-not-exist-12345"}
+            )
             assert update_response.status_code == 400
             assert update_response.json()["detail"]["error_code"] == "TAG_NOT_FOUND"
 
@@ -204,15 +156,10 @@ class TestBudgetsCRUD:
     @pytest.mark.asyncio
     async def test_delete_budget(self, client: AsyncClient, seed_categories):
         """Delete a budget"""
-        await client.post("/api/v1/tags", json={
-            "namespace": "bucket",
-            "value": "delete-test-bucket"
-        })
-        create_response = await client.post("/api/v1/budgets", json={
-            "tag": "bucket:delete-test-bucket",
-            "amount": 300.00,
-            "period": "monthly"
-        })
+        await client.post("/api/v1/tags", json={"namespace": "bucket", "value": "delete-test-bucket"})
+        create_response = await client.post(
+            "/api/v1/budgets", json={"tag": "bucket:delete-test-bucket", "amount": 300.00, "period": "monthly"}
+        )
 
         if create_response.status_code == 201:
             budget_id = create_response.json()["id"]
@@ -260,15 +207,10 @@ class TestBudgetStatus:
     async def test_get_budget_status_with_data(self, client: AsyncClient, seed_transactions, seed_categories):
         """Get budget status with transactions to calculate spending"""
         # Create a budget for a tag that has transactions
-        await client.post("/api/v1/tags", json={
-            "namespace": "bucket",
-            "value": "status-test-bucket"
-        })
-        await client.post("/api/v1/budgets", json={
-            "tag": "bucket:status-test-bucket",
-            "amount": 1000.00,
-            "period": "monthly"
-        })
+        await client.post("/api/v1/tags", json={"namespace": "bucket", "value": "status-test-bucket"})
+        await client.post(
+            "/api/v1/budgets", json={"tag": "bucket:status-test-bucket", "amount": 1000.00, "period": "monthly"}
+        )
 
         response = await client.get("/api/v1/budgets/status/current")
         assert response.status_code == 200
@@ -298,41 +240,26 @@ class TestBudgetStatus:
     @pytest.mark.asyncio
     async def test_budget_yearly_period(self, client: AsyncClient, seed_categories):
         """Create a yearly budget"""
-        await client.post("/api/v1/tags", json={
-            "namespace": "bucket",
-            "value": "yearly-budget-test"
-        })
-        response = await client.post("/api/v1/budgets", json={
-            "tag": "bucket:yearly-budget-test",
-            "amount": 6000.00,
-            "period": "yearly"
-        })
+        await client.post("/api/v1/tags", json={"namespace": "bucket", "value": "yearly-budget-test"})
+        response = await client.post(
+            "/api/v1/budgets", json={"tag": "bucket:yearly-budget-test", "amount": 6000.00, "period": "yearly"}
+        )
         assert response.status_code in [201, 400]
 
     @pytest.mark.asyncio
     async def test_budget_with_occasion_tag(self, client: AsyncClient, seed_categories):
         """Create a budget for an occasion tag"""
-        await client.post("/api/v1/tags", json={
-            "namespace": "occasion",
-            "value": "vacation-2025"
-        })
-        response = await client.post("/api/v1/budgets", json={
-            "tag": "occasion:vacation-2025",
-            "amount": 3000.00,
-            "period": "yearly"
-        })
+        await client.post("/api/v1/tags", json={"namespace": "occasion", "value": "vacation-2025"})
+        response = await client.post(
+            "/api/v1/budgets", json={"tag": "occasion:vacation-2025", "amount": 3000.00, "period": "yearly"}
+        )
         assert response.status_code in [201, 400]
 
     @pytest.mark.asyncio
     async def test_budget_with_account_tag(self, client: AsyncClient, seed_categories):
         """Create a budget for an account tag"""
-        await client.post("/api/v1/tags", json={
-            "namespace": "account",
-            "value": "credit-card-spending"
-        })
-        response = await client.post("/api/v1/budgets", json={
-            "tag": "account:credit-card-spending",
-            "amount": 2000.00,
-            "period": "monthly"
-        })
+        await client.post("/api/v1/tags", json={"namespace": "account", "value": "credit-card-spending"})
+        response = await client.post(
+            "/api/v1/budgets", json={"tag": "account:credit-card-spending", "amount": 2000.00, "period": "monthly"}
+        )
         assert response.status_code in [201, 400]

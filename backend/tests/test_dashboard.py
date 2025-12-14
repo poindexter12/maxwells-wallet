@@ -1,6 +1,7 @@
 """
 Tests for Dashboard Widget API
 """
+
 import pytest
 from httpx import AsyncClient
 
@@ -56,12 +57,7 @@ class TestDashboardWidgets:
     @pytest.mark.asyncio
     async def test_create_widget(self, client: AsyncClient):
         """Create a new dashboard widget"""
-        widget_data = {
-            "widget_type": "custom_chart",
-            "position": 10,
-            "width": "full",
-            "is_visible": True
-        }
+        widget_data = {"widget_type": "custom_chart", "position": 10, "width": "full", "is_visible": True}
 
         response = await client.post("/api/v1/dashboard/widgets", json=widget_data)
         assert response.status_code == 201
@@ -78,9 +74,7 @@ class TestDashboardWidgets:
         list_response = await client.get("/api/v1/dashboard/widgets")
         widget_id = list_response.json()[0]["id"]
 
-        update_data = {
-            "width": "third"
-        }
+        update_data = {"width": "third"}
 
         response = await client.patch(f"/api/v1/dashboard/widgets/{widget_id}", json=update_data)
         assert response.status_code == 200
@@ -98,10 +92,9 @@ class TestDashboardWidgets:
     async def test_delete_widget(self, client: AsyncClient):
         """Delete a widget"""
         # Create a widget to delete
-        create_response = await client.post("/api/v1/dashboard/widgets", json={
-            "widget_type": "deleteme",
-            "position": 99
-        })
+        create_response = await client.post(
+            "/api/v1/dashboard/widgets", json={"widget_type": "deleteme", "position": 99}
+        )
         widget_id = create_response.json()["id"]
 
         # Delete it
@@ -126,12 +119,7 @@ class TestDashboardWidgets:
         widgets = list_response.json()
 
         # Reverse the order
-        layout_update = {
-            "widgets": [
-                {"id": w["id"], "position": len(widgets) - i - 1}
-                for i, w in enumerate(widgets)
-            ]
-        }
+        layout_update = {"widgets": [{"id": w["id"], "position": len(widgets) - i - 1} for i, w in enumerate(widgets)]}
 
         response = await client.put("/api/v1/dashboard/layout", json=layout_update)
         assert response.status_code == 200
@@ -144,17 +132,18 @@ class TestDashboardWidgets:
     @pytest.mark.asyncio
     async def test_update_layout_invalid_format(self, client: AsyncClient):
         """Layout update with missing fields fails"""
-        response = await client.put("/api/v1/dashboard/layout", json={
-            "widgets": [{"id": 1}]  # Missing position
-        })
+        response = await client.put(
+            "/api/v1/dashboard/layout",
+            json={
+                "widgets": [{"id": 1}]  # Missing position
+            },
+        )
         assert response.status_code == 400
 
     @pytest.mark.asyncio
     async def test_update_layout_nonexistent_widget(self, client: AsyncClient):
         """Layout update with non-existent widget fails"""
-        response = await client.put("/api/v1/dashboard/layout", json={
-            "widgets": [{"id": 99999, "position": 0}]
-        })
+        response = await client.put("/api/v1/dashboard/layout", json={"widgets": [{"id": 99999, "position": 0}]})
         assert response.status_code == 404
 
     @pytest.mark.asyncio
@@ -202,11 +191,7 @@ class TestDashboardWidgets:
         import json
 
         config = {"dateRange": "30d", "showLabels": True}
-        widget_data = {
-            "widget_type": "configured_widget",
-            "config": json.dumps(config),
-            "position": 20
-        }
+        widget_data = {"widget_type": "configured_widget", "config": json.dumps(config), "position": 20}
 
         response = await client.post("/api/v1/dashboard/widgets", json=widget_data)
         assert response.status_code == 201

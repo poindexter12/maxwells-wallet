@@ -4,6 +4,7 @@ Tests for New Analytics Features:
 - Spending Velocity
 - Anomaly Detection
 """
+
 import pytest
 from httpx import AsyncClient
 

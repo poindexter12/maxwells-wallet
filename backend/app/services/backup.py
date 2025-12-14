@@ -7,12 +7,10 @@ A manifest.json file tracks backup metadata.
 
 import gzip
 import json
-import os
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
-from urllib.parse import urlparse
 
 from pydantic import BaseModel
 
@@ -282,7 +280,7 @@ class BackupService:
         # Tier 3: Keep one backup per week for last 4 weeks (weekly)
         for weeks_ago in range(1, 5):
             # Start of the week (Monday)
-            week_start = (now - timedelta(weeks=weeks_ago))
+            week_start = now - timedelta(weeks=weeks_ago)
             week_start = week_start - timedelta(days=week_start.weekday())
             week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
             week_end = week_start + timedelta(weeks=1)

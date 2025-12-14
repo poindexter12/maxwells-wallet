@@ -1,9 +1,9 @@
 """
 Tests for Budget Tracking (v0.4 - Tags)
 """
+
 import pytest
 from httpx import AsyncClient
-from datetime import date
 
 
 class TestBudgets:
@@ -12,12 +12,7 @@ class TestBudgets:
     @pytest.mark.asyncio
     async def test_create_budget(self, client: AsyncClient, seed_categories):
         """Create a new budget with tag"""
-        budget_data = {
-            "tag": "bucket:groceries",
-            "amount": 500.00,
-            "period": "monthly",
-            "rollover_enabled": False
-        }
+        budget_data = {"tag": "bucket:groceries", "amount": 500.00, "period": "monthly", "rollover_enabled": False}
 
         response = await client.post("/api/v1/budgets", json=budget_data)
         assert response.status_code == 201
@@ -53,11 +48,9 @@ class TestBudgets:
     async def test_get_budget(self, client: AsyncClient, seed_categories):
         """Get a single budget by ID"""
         # Create budget
-        create_response = await client.post("/api/v1/budgets", json={
-            "tag": "bucket:groceries",
-            "amount": 500.00,
-            "period": "monthly"
-        })
+        create_response = await client.post(
+            "/api/v1/budgets", json={"tag": "bucket:groceries", "amount": 500.00, "period": "monthly"}
+        )
         budget_id = create_response.json()["id"]
 
         # Get budget
@@ -72,11 +65,9 @@ class TestBudgets:
     async def test_update_budget(self, client: AsyncClient, seed_categories):
         """Update a budget"""
         # Create budget
-        create_response = await client.post("/api/v1/budgets", json={
-            "tag": "bucket:groceries",
-            "amount": 500.00,
-            "period": "monthly"
-        })
+        create_response = await client.post(
+            "/api/v1/budgets", json={"tag": "bucket:groceries", "amount": 500.00, "period": "monthly"}
+        )
         budget_id = create_response.json()["id"]
 
         # Update budget
@@ -92,11 +83,9 @@ class TestBudgets:
     async def test_delete_budget(self, client: AsyncClient, seed_categories):
         """Delete a budget"""
         # Create budget
-        create_response = await client.post("/api/v1/budgets", json={
-            "tag": "bucket:groceries",
-            "amount": 500.00,
-            "period": "monthly"
-        })
+        create_response = await client.post(
+            "/api/v1/budgets", json={"tag": "bucket:groceries", "amount": 500.00, "period": "monthly"}
+        )
         budget_id = create_response.json()["id"]
 
         # Delete budget
@@ -110,11 +99,7 @@ class TestBudgets:
     @pytest.mark.asyncio
     async def test_duplicate_budget(self, client: AsyncClient, seed_categories):
         """Prevent duplicate budgets for same tag and period"""
-        budget_data = {
-            "tag": "bucket:groceries",
-            "amount": 500.00,
-            "period": "monthly"
-        }
+        budget_data = {"tag": "bucket:groceries", "amount": 500.00, "period": "monthly"}
 
         # Create first budget
         response1 = await client.post("/api/v1/budgets", json=budget_data)
@@ -129,11 +114,7 @@ class TestBudgets:
     async def test_budget_status(self, client: AsyncClient, seed_categories, seed_transactions):
         """Get budget status for current month"""
         # Create budget for a tag with transactions
-        await client.post("/api/v1/budgets", json={
-            "tag": "bucket:groceries",
-            "amount": 500.00,
-            "period": "monthly"
-        })
+        await client.post("/api/v1/budgets", json={"tag": "bucket:groceries", "amount": 500.00, "period": "monthly"})
 
         # Get budget status
         response = await client.get("/api/v1/budgets/status/current")
@@ -146,10 +127,7 @@ class TestBudgets:
         assert "overall_status" in data
 
         # Find groceries budget in status
-        groceries_budget = next(
-            (b for b in data["budgets"] if b["tag"] == "bucket:groceries"),
-            None
-        )
+        groceries_budget = next((b for b in data["budgets"] if b["tag"] == "bucket:groceries"), None)
         assert groceries_budget is not None
         assert "budget_amount" in groceries_budget
         assert "spent_amount" in groceries_budget
@@ -164,26 +142,28 @@ class TestBudgets:
     async def test_budget_status_calculation(self, client: AsyncClient, seed_categories):
         """Test budget status calculation logic"""
         from datetime import date as date_obj
+
         today = date_obj.today()
 
         # Create budget
-        await client.post("/api/v1/budgets", json={
-            "tag": "bucket:transportation",
-            "amount": 100.00,
-            "period": "monthly"
-        })
+        await client.post(
+            "/api/v1/budgets", json={"tag": "bucket:transportation", "amount": 100.00, "period": "monthly"}
+        )
 
         # Create transaction spending $90 (90% of budget - should be "warning")
         # First create transaction
-        txn_response = await client.post("/api/v1/transactions", json={
-            "date": today.isoformat(),
-            "amount": -90.00,
-            "description": "Gas",
-            "merchant": "Shell",
-            "account_source": "TEST",
-            "category": "Transportation",
-            "reference_id": "test_90"
-        })
+        txn_response = await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": today.isoformat(),
+                "amount": -90.00,
+                "description": "Gas",
+                "merchant": "Shell",
+                "account_source": "TEST",
+                "category": "Transportation",
+                "reference_id": "test_90",
+            },
+        )
 
         # Add tag to transaction via tags endpoint
         if txn_response.status_code == 201:
@@ -194,10 +174,7 @@ class TestBudgets:
         response = await client.get("/api/v1/budgets/status/current")
         data = response.json()
 
-        trans_budget = next(
-            (b for b in data["budgets"] if b["tag"] == "bucket:transportation"),
-            None
-        )
+        trans_budget = next((b for b in data["budgets"] if b["tag"] == "bucket:transportation"), None)
         assert trans_budget is not None
         assert trans_budget["spent_amount"] == 90.00
         assert trans_budget["remaining"] == 10.00
@@ -208,25 +185,27 @@ class TestBudgets:
     async def test_budget_alerts(self, client: AsyncClient, seed_categories):
         """Test budget alerts for warning/exceeded budgets"""
         from datetime import date as date_obj
+
         today = date_obj.today()
 
         # Create budget
-        await client.post("/api/v1/budgets", json={
-            "tag": "bucket:entertainment",
-            "amount": 100.00,
-            "period": "monthly"
-        })
+        await client.post(
+            "/api/v1/budgets", json={"tag": "bucket:entertainment", "amount": 100.00, "period": "monthly"}
+        )
 
         # Create transaction exceeding budget
-        txn_response = await client.post("/api/v1/transactions", json={
-            "date": today.isoformat(),
-            "amount": -120.00,
-            "description": "Concert tickets",
-            "merchant": "Ticketmaster",
-            "account_source": "TEST",
-            "category": "Entertainment",
-            "reference_id": "test_exceed"
-        })
+        txn_response = await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": today.isoformat(),
+                "amount": -120.00,
+                "description": "Concert tickets",
+                "merchant": "Ticketmaster",
+                "account_source": "TEST",
+                "category": "Entertainment",
+                "reference_id": "test_exceed",
+            },
+        )
 
         # Add tag to transaction
         if txn_response.status_code == 201:
@@ -242,10 +221,7 @@ class TestBudgets:
         assert len(data["alerts"]) >= 1
 
         # Should have an alert for entertainment
-        entertainment_alert = next(
-            (a for a in data["alerts"] if a["tag"] == "bucket:entertainment"),
-            None
-        )
+        entertainment_alert = next((a for a in data["alerts"] if a["tag"] == "bucket:entertainment"), None)
         assert entertainment_alert is not None
         assert entertainment_alert["status"] == "exceeded"
         assert entertainment_alert["spent_amount"] == 120.00
@@ -259,7 +235,7 @@ class TestBudgets:
             "period": "monthly",
             "start_date": "2025-11-01",
             "end_date": "2025-11-30",
-            "rollover_enabled": False
+            "rollover_enabled": False,
         }
 
         response = await client.post("/api/v1/budgets", json=budget_data)
@@ -273,11 +249,7 @@ class TestBudgets:
     async def test_budget_status_specific_month(self, client: AsyncClient, seed_categories, seed_transactions):
         """Get budget status for a specific month"""
         # Create budget
-        await client.post("/api/v1/budgets", json={
-            "tag": "bucket:groceries",
-            "amount": 500.00,
-            "period": "monthly"
-        })
+        await client.post("/api/v1/budgets", json={"tag": "bucket:groceries", "amount": 500.00, "period": "monthly"})
 
         # Get status for November 2025
         response = await client.get("/api/v1/budgets/status/current?year=2025&month=11")
@@ -290,11 +262,7 @@ class TestBudgets:
     @pytest.mark.asyncio
     async def test_zero_budget(self, client: AsyncClient, seed_categories):
         """Test edge case: budget with zero amount"""
-        budget_data = {
-            "tag": "bucket:subscriptions",
-            "amount": 0.00,
-            "period": "monthly"
-        }
+        budget_data = {"tag": "bucket:subscriptions", "amount": 0.00, "period": "monthly"}
 
         response = await client.post("/api/v1/budgets", json=budget_data)
         assert response.status_code == 201
@@ -309,7 +277,7 @@ class TestBudgets:
         budget_data = {
             "tag": "bucket:savings",
             "amount": -100.00,  # Negative for tracking income goals
-            "period": "monthly"
+            "period": "monthly",
         }
 
         # Should be allowed
@@ -322,7 +290,7 @@ class TestBudgets:
         budget_data = {
             "tag": "invalid-format",  # Missing namespace:value format
             "amount": 500.00,
-            "period": "monthly"
+            "period": "monthly",
         }
 
         response = await client.post("/api/v1/budgets", json=budget_data)
@@ -332,11 +300,7 @@ class TestBudgets:
     @pytest.mark.asyncio
     async def test_nonexistent_tag(self, client: AsyncClient, seed_categories):
         """Test budget creation with non-existent tag"""
-        budget_data = {
-            "tag": "bucket:nonexistent",
-            "amount": 500.00,
-            "period": "monthly"
-        }
+        budget_data = {"tag": "bucket:nonexistent", "amount": 500.00, "period": "monthly"}
 
         response = await client.post("/api/v1/budgets", json=budget_data)
         assert response.status_code == 400

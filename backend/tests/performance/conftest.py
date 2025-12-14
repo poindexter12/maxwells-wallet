@@ -40,6 +40,7 @@ from app.models import (
 # Query Counter - Detects N+1 queries
 # ============================================================================
 
+
 @dataclass
 class QueryCounter:
     """Counts SQL queries executed during a block of code."""
@@ -57,7 +58,7 @@ class QueryCounter:
     def assert_max_queries(self, max_count: int, message: str = ""):
         """Assert that no more than max_count queries were executed."""
         if self.count > max_count:
-            query_list = "\n".join(f"  {i+1}. {q[:100]}..." for i, q in enumerate(self.queries[:20]))
+            query_list = "\n".join(f"  {i + 1}. {q[:100]}..." for i, q in enumerate(self.queries[:20]))
             raise AssertionError(
                 f"Expected at most {max_count} queries, but got {self.count}. {message}\n"
                 f"First 20 queries:\n{query_list}"
@@ -67,6 +68,7 @@ class QueryCounter:
 # ============================================================================
 # Timing Utilities
 # ============================================================================
+
 
 @dataclass
 class TimingResult:
@@ -78,9 +80,7 @@ class TimingResult:
     def assert_under(self, max_ms: float, message: str = ""):
         """Assert response time is under threshold."""
         if self.duration_ms > max_ms:
-            raise AssertionError(
-                f"Expected response in <{max_ms}ms, got {self.duration_ms:.1f}ms. {message}"
-            )
+            raise AssertionError(f"Expected response in <{max_ms}ms, got {self.duration_ms:.1f}ms. {message}")
 
 
 @asynccontextmanager
@@ -174,6 +174,7 @@ def query_counter(perf_engine) -> QueryCounter:
 # ============================================================================
 # Test Client with Performance Database
 # ============================================================================
+
 
 @pytest_asyncio.fixture
 async def perf_client(perf_session_factory) -> AsyncGenerator[AsyncClient, None]:
@@ -316,6 +317,7 @@ async def seed_large_dataset(perf_session_factory) -> dict[str, Any]:
     async with perf_session_factory() as session:
         # Check if already seeded (use global flag for caching)
         from sqlalchemy import select, func
+
         result = await session.execute(select(func.count()).select_from(Transaction))
         existing_count = result.scalar()
 
@@ -328,8 +330,19 @@ async def seed_large_dataset(perf_session_factory) -> dict[str, Any]:
             }
 
         # Create tags
-        buckets = ["groceries", "dining", "utilities", "entertainment", "transportation",
-                   "shopping", "healthcare", "subscriptions", "travel", "personal", "income"]
+        buckets = [
+            "groceries",
+            "dining",
+            "utilities",
+            "entertainment",
+            "transportation",
+            "shopping",
+            "healthcare",
+            "subscriptions",
+            "travel",
+            "personal",
+            "income",
+        ]
 
         bucket_tags = {}
         for bucket in buckets:
@@ -501,6 +514,7 @@ async def seed_stress_dataset(stress_session_factory) -> dict[str, Any]:
 
     async with stress_session_factory() as session:
         from sqlalchemy import select, func
+
         result = await session.execute(select(func.count()).select_from(Transaction))
         existing_count = result.scalar()
 
@@ -513,8 +527,19 @@ async def seed_stress_dataset(stress_session_factory) -> dict[str, Any]:
             }
 
         # Create bucket tags
-        buckets = ["groceries", "dining", "utilities", "entertainment", "transportation",
-                   "shopping", "healthcare", "subscriptions", "travel", "personal", "income"]
+        buckets = [
+            "groceries",
+            "dining",
+            "utilities",
+            "entertainment",
+            "transportation",
+            "shopping",
+            "healthcare",
+            "subscriptions",
+            "travel",
+            "personal",
+            "income",
+        ]
 
         bucket_tags = {}
         for i, bucket in enumerate(buckets):
@@ -667,9 +692,14 @@ async def seed_stress_dataset(stress_session_factory) -> dict[str, Any]:
 
         # Create budgets for spending categories
         budget_amounts = {
-            "groceries": 800, "dining": 400, "entertainment": 200,
-            "shopping": 500, "transportation": 300, "utilities": 400,
-            "healthcare": 200, "subscriptions": 100,
+            "groceries": 800,
+            "dining": 400,
+            "entertainment": 200,
+            "shopping": 500,
+            "transportation": 300,
+            "utilities": 400,
+            "healthcare": 200,
+            "subscriptions": 100,
         }
         for bucket, amount in budget_amounts.items():
             budget = Budget(
@@ -717,6 +747,7 @@ async def seed_stress_dataset(stress_session_factory) -> dict[str, Any]:
 # ============================================================================
 # Performance Thresholds
 # ============================================================================
+
 
 class PerfThresholds:
     """Performance thresholds for assertions."""

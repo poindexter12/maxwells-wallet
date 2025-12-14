@@ -1,9 +1,9 @@
 """
 Tests for FR-005: Reports & Analytics
 """
+
 import pytest
 from httpx import AsyncClient
-from datetime import date
 
 
 class TestReportsAndAnalytics:
@@ -51,9 +51,7 @@ class TestReportsAndAnalytics:
     @pytest.mark.asyncio
     async def test_spending_trends_monthly(self, client: AsyncClient, seed_transactions):
         """FR-005.3: Spending Trends - Monthly grouping"""
-        response = await client.get(
-            "/api/v1/reports/trends?start_date=2025-10-01&end_date=2025-11-30&group_by=month"
-        )
+        response = await client.get("/api/v1/reports/trends?start_date=2025-10-01&end_date=2025-11-30&group_by=month")
         assert response.status_code == 200
         data = response.json()
 
@@ -154,9 +152,7 @@ class TestReportsAndAnalytics:
     @pytest.mark.asyncio
     async def test_spending_trends_by_tag(self, client: AsyncClient, seed_transactions):
         """Spending trends grouped by bucket tag"""
-        response = await client.get(
-            "/api/v1/reports/trends?start_date=2025-10-01&end_date=2025-11-30&group_by=tag"
-        )
+        response = await client.get("/api/v1/reports/trends?start_date=2025-10-01&end_date=2025-11-30&group_by=tag")
         assert response.status_code == 200
         data = response.json()
 
@@ -185,9 +181,7 @@ class TestReportsAndAnalytics:
     @pytest.mark.asyncio
     async def test_bucket_summary_with_date_range(self, client: AsyncClient, seed_transactions):
         """Bucket summary with date filtering"""
-        response = await client.get(
-            "/api/v1/reports/bucket-summary?start_date=2025-11-01&end_date=2025-11-30"
-        )
+        response = await client.get("/api/v1/reports/bucket-summary?start_date=2025-11-01&end_date=2025-11-30")
         assert response.status_code == 200
         data = response.json()
 
@@ -198,9 +192,7 @@ class TestReportsAndAnalytics:
     @pytest.mark.asyncio
     async def test_month_over_month_bucket_changes(self, client: AsyncClient, seed_transactions):
         """Month-over-month includes bucket changes"""
-        response = await client.get(
-            "/api/v1/reports/month-over-month?current_year=2025&current_month=11"
-        )
+        response = await client.get("/api/v1/reports/month-over-month?current_year=2025&current_month=11")
         assert response.status_code == 200
         data = response.json()
 
@@ -217,9 +209,7 @@ class TestReportsAndAnalytics:
     @pytest.mark.asyncio
     async def test_anomalies_include_bucket_info(self, client: AsyncClient, seed_transactions):
         """Anomaly detection includes bucket tags"""
-        response = await client.get(
-            "/api/v1/reports/anomalies?year=2025&month=11"
-        )
+        response = await client.get("/api/v1/reports/anomalies?year=2025&month=11")
         assert response.status_code == 200
         data = response.json()
 

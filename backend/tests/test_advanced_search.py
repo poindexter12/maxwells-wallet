@@ -7,14 +7,15 @@ Tests cover:
 - Saved filter apply
 - CSV export
 """
+
 import pytest
 from httpx import AsyncClient
-from datetime import date, timedelta
 
 
 # =============================================================================
 # Search Tests (including notes)
 # =============================================================================
+
 
 class TestSearchIncludesNotes:
     """Test that search includes the notes field"""
@@ -29,15 +30,12 @@ class TestSearchIncludesNotes:
             "description": "Regular purchase",
             "merchant": "STORE",
             "account_source": "TEST-ACCT",
-            "notes": "special_keyword_in_notes"
+            "notes": "special_keyword_in_notes",
         }
         await client.post("/api/v1/transactions", json=tx)
 
         # Search for text in notes
-        response = await client.get(
-            "/api/v1/transactions/",
-            params={"search": "special_keyword_in_notes"}
-        )
+        response = await client.get("/api/v1/transactions/", params={"search": "special_keyword_in_notes"})
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 1
@@ -51,14 +49,11 @@ class TestSearchIncludesNotes:
             "amount": -30.00,
             "description": "Test",
             "merchant": "UNIQUE_MERCHANT_NAME",
-            "account_source": "TEST-ACCT"
+            "account_source": "TEST-ACCT",
         }
         await client.post("/api/v1/transactions", json=tx)
 
-        response = await client.get(
-            "/api/v1/transactions/",
-            params={"search": "UNIQUE_MERCHANT"}
-        )
+        response = await client.get("/api/v1/transactions/", params={"search": "UNIQUE_MERCHANT"})
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 1
@@ -72,14 +67,11 @@ class TestSearchIncludesNotes:
             "amount": -40.00,
             "description": "DISTINCTIVE_DESCRIPTION_HERE",
             "merchant": "STORE",
-            "account_source": "TEST-ACCT"
+            "account_source": "TEST-ACCT",
         }
         await client.post("/api/v1/transactions", json=tx)
 
-        response = await client.get(
-            "/api/v1/transactions/",
-            params={"search": "DISTINCTIVE_DESCRIPTION"}
-        )
+        response = await client.get("/api/v1/transactions/", params={"search": "DISTINCTIVE_DESCRIPTION"})
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 1
@@ -90,6 +82,7 @@ class TestSearchIncludesNotes:
 # Regex Search Validation Tests
 # =============================================================================
 
+
 class TestRegexSearchValidation:
     """Test regex pattern validation for search_regex=true"""
 
@@ -97,8 +90,7 @@ class TestRegexSearchValidation:
     async def test_invalid_regex_returns_400(self, client: AsyncClient):
         """Invalid regex patterns should return 400 error"""
         response = await client.get(
-            "/api/v1/transactions/",
-            params={"search": "[invalid(regex", "search_regex": "true"}
+            "/api/v1/transactions/", params={"search": "[invalid(regex", "search_regex": "true"}
         )
         assert response.status_code == 400
         assert response.json()["detail"]["error_code"] == "INVALID_REGEX"
@@ -107,10 +99,7 @@ class TestRegexSearchValidation:
     async def test_regex_too_long_returns_400(self, client: AsyncClient):
         """Regex patterns exceeding max length should return 400"""
         long_pattern = "a" * 201  # Exceeds MAX_REGEX_LENGTH of 200
-        response = await client.get(
-            "/api/v1/transactions/",
-            params={"search": long_pattern, "search_regex": "true"}
-        )
+        response = await client.get("/api/v1/transactions/", params={"search": long_pattern, "search_regex": "true"})
         assert response.status_code == 400
         assert response.json()["detail"]["error_code"] == "INVALID_REGEX"
 
@@ -123,15 +112,12 @@ class TestRegexSearchValidation:
             "amount": -50.00,
             "description": "Test purchase",
             "merchant": "STORE123",
-            "account_source": "TEST-ACCT"
+            "account_source": "TEST-ACCT",
         }
         await client.post("/api/v1/transactions", json=tx)
 
         # Use valid regex pattern
-        response = await client.get(
-            "/api/v1/transactions/",
-            params={"search": "STORE[0-9]+", "search_regex": "true"}
-        )
+        response = await client.get("/api/v1/transactions/", params={"search": "STORE[0-9]+", "search_regex": "true"})
         assert response.status_code == 200
 
 
@@ -139,17 +125,14 @@ class TestRegexSearchValidation:
 # Saved Filters Tests
 # =============================================================================
 
+
 class TestSavedFiltersCreate:
     """Test saved filter creation"""
 
     @pytest.mark.asyncio
     async def test_create_simple_filter(self, client: AsyncClient):
         """Create a basic saved filter"""
-        filter_data = {
-            "name": "Amazon Purchases",
-            "description": "All purchases from Amazon",
-            "search": "Amazon"
-        }
+        filter_data = {"name": "Amazon Purchases", "description": "All purchases from Amazon", "search": "Amazon"}
         response = await client.post("/api/v1/filters/", json=filter_data)
         assert response.status_code == 201
 
@@ -176,7 +159,7 @@ class TestSavedFiltersCreate:
             "is_transfer": False,
             "date_range_type": "relative",
             "relative_days": 30,
-            "is_pinned": True
+            "is_pinned": True,
         }
         response = await client.post("/api/v1/filters/", json=filter_data)
         assert response.status_code == 201
@@ -242,10 +225,7 @@ class TestSavedFiltersGetUpdateDelete:
     @pytest.mark.asyncio
     async def test_get_filter(self, client: AsyncClient):
         """Get a single filter by ID"""
-        create_resp = await client.post(
-            "/api/v1/filters/",
-            json={"name": "Test Filter", "search": "test"}
-        )
+        create_resp = await client.post("/api/v1/filters/", json={"name": "Test Filter", "search": "test"})
         filter_id = create_resp.json()["id"]
 
         response = await client.get(f"/api/v1/filters/{filter_id}")
@@ -261,15 +241,11 @@ class TestSavedFiltersGetUpdateDelete:
     @pytest.mark.asyncio
     async def test_update_filter(self, client: AsyncClient):
         """Update a filter"""
-        create_resp = await client.post(
-            "/api/v1/filters/",
-            json={"name": "Original Name"}
-        )
+        create_resp = await client.post("/api/v1/filters/", json={"name": "Original Name"})
         filter_id = create_resp.json()["id"]
 
         response = await client.patch(
-            f"/api/v1/filters/{filter_id}",
-            json={"name": "Updated Name", "search": "new search"}
+            f"/api/v1/filters/{filter_id}", json={"name": "Updated Name", "search": "new search"}
         )
         assert response.status_code == 200
 
@@ -280,10 +256,7 @@ class TestSavedFiltersGetUpdateDelete:
     @pytest.mark.asyncio
     async def test_delete_filter(self, client: AsyncClient):
         """Delete a filter"""
-        create_resp = await client.post(
-            "/api/v1/filters/",
-            json={"name": "To Delete"}
-        )
+        create_resp = await client.post("/api/v1/filters/", json={"name": "To Delete"})
         filter_id = create_resp.json()["id"]
 
         response = await client.delete(f"/api/v1/filters/{filter_id}")
@@ -306,23 +279,20 @@ class TestSavedFiltersApply:
             "amount": -50.00,
             "description": "Amazon purchase",
             "merchant": "AMAZON",
-            "account_source": "TEST-ACCT"
+            "account_source": "TEST-ACCT",
         }
         tx2 = {
             "date": "2024-12-02",
             "amount": -30.00,
             "description": "Target purchase",
             "merchant": "TARGET",
-            "account_source": "TEST-ACCT"
+            "account_source": "TEST-ACCT",
         }
         await client.post("/api/v1/transactions", json=tx1)
         await client.post("/api/v1/transactions", json=tx2)
 
         # Create filter for Amazon
-        create_resp = await client.post(
-            "/api/v1/filters/",
-            json={"name": "Amazon Only", "search": "AMAZON"}
-        )
+        create_resp = await client.post("/api/v1/filters/", json={"name": "Amazon Only", "search": "AMAZON"})
         filter_id = create_resp.json()["id"]
 
         # Apply filter
@@ -342,14 +312,11 @@ class TestSavedFiltersApply:
             "amount": -50.00,
             "description": "Test",
             "merchant": "STORE",
-            "account_source": "TEST-ACCT"
+            "account_source": "TEST-ACCT",
         }
         await client.post("/api/v1/transactions", json=tx)
 
-        create_resp = await client.post(
-            "/api/v1/filters/",
-            json={"name": "Test Filter"}
-        )
+        create_resp = await client.post("/api/v1/filters/", json={"name": "Test Filter"})
         filter_id = create_resp.json()["id"]
         assert create_resp.json()["use_count"] == 0
 
@@ -369,10 +336,7 @@ class TestSavedFiltersTogglePin:
     @pytest.mark.asyncio
     async def test_toggle_pin(self, client: AsyncClient):
         """Toggle pin status"""
-        create_resp = await client.post(
-            "/api/v1/filters/",
-            json={"name": "Test", "is_pinned": False}
-        )
+        create_resp = await client.post("/api/v1/filters/", json={"name": "Test", "is_pinned": False})
         filter_id = create_resp.json()["id"]
         assert create_resp.json()["is_pinned"] is False
 
@@ -391,6 +355,7 @@ class TestSavedFiltersTogglePin:
 # CSV Export Tests
 # =============================================================================
 
+
 class TestCSVExport:
     """Test CSV export endpoint"""
 
@@ -403,14 +368,14 @@ class TestCSVExport:
             "amount": -50.00,
             "description": "Test purchase 1",
             "merchant": "STORE1",
-            "account_source": "TEST-ACCT"
+            "account_source": "TEST-ACCT",
         }
         tx2 = {
             "date": "2024-12-02",
             "amount": -75.00,
             "description": "Test purchase 2",
             "merchant": "STORE2",
-            "account_source": "TEST-ACCT"
+            "account_source": "TEST-ACCT",
         }
         await client.post("/api/v1/transactions", json=tx1)
         await client.post("/api/v1/transactions", json=tx2)
@@ -422,7 +387,7 @@ class TestCSVExport:
 
         # Parse CSV content
         content = response.text
-        lines = content.strip().split('\n')
+        lines = content.strip().split("\n")
         assert len(lines) == 3  # Header + 2 data rows
 
         # Check header
@@ -439,27 +404,24 @@ class TestCSVExport:
             "amount": -50.00,
             "description": "Amazon",
             "merchant": "AMAZON",
-            "account_source": "ACCT1"
+            "account_source": "ACCT1",
         }
         tx2 = {
             "date": "2024-12-02",
             "amount": -30.00,
             "description": "Target",
             "merchant": "TARGET",
-            "account_source": "ACCT2"
+            "account_source": "ACCT2",
         }
         await client.post("/api/v1/transactions", json=tx1)
         await client.post("/api/v1/transactions", json=tx2)
 
         # Export only Amazon transactions
-        response = await client.get(
-            "/api/v1/transactions/export/csv",
-            params={"search": "AMAZON"}
-        )
+        response = await client.get("/api/v1/transactions/export/csv", params={"search": "AMAZON"})
         assert response.status_code == 200
 
         content = response.text
-        lines = content.strip().split('\n')
+        lines = content.strip().split("\n")
         assert len(lines) == 2  # Header + 1 data row
         assert "AMAZON" in lines[1]
 
@@ -471,16 +433,12 @@ class TestCSVExport:
             "amount": -25.00,
             "description": "Test",
             "merchant": "STORE",
-            "account_source": "TEST"
+            "account_source": "TEST",
         }
         await client.post("/api/v1/transactions", json=tx)
 
         response = await client.get(
-            "/api/v1/transactions/export/csv",
-            params={
-                "start_date": "2024-12-01",
-                "end_date": "2024-12-31"
-            }
+            "/api/v1/transactions/export/csv", params={"start_date": "2024-12-01", "end_date": "2024-12-31"}
         )
         assert response.status_code == 200
 
@@ -491,12 +449,9 @@ class TestCSVExport:
     @pytest.mark.asyncio
     async def test_export_empty_result(self, client: AsyncClient, seed_categories):
         """Export with no matching transactions returns header only"""
-        response = await client.get(
-            "/api/v1/transactions/export/csv",
-            params={"search": "NONEXISTENT_SEARCH_TERM_XYZ"}
-        )
+        response = await client.get("/api/v1/transactions/export/csv", params={"search": "NONEXISTENT_SEARCH_TERM_XYZ"})
         assert response.status_code == 200
 
         content = response.text
-        lines = content.strip().split('\n')
+        lines = content.strip().split("\n")
         assert len(lines) == 1  # Header only

@@ -1,8 +1,9 @@
 """
 Tests for settings API endpoints, particularly demo mode and backup schedule.
 """
+
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from datetime import datetime, timezone
 from httpx import AsyncClient
 

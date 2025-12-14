@@ -1,6 +1,7 @@
 """
 Tests for Tag Rules Engine (v0.4)
 """
+
 import pytest
 from httpx import AsyncClient
 from datetime import date
@@ -18,7 +19,7 @@ class TestTagRules:
             "merchant_pattern": "starbucks",
             "priority": 10,
             "enabled": True,
-            "match_all": False
+            "match_all": False,
         }
 
         response = await client.post("/api/v1/tag-rules", json=rule_data)
@@ -56,11 +57,9 @@ class TestTagRules:
     @pytest.mark.asyncio
     async def test_get_rule(self, client: AsyncClient, seed_categories):
         """Get a single rule by ID"""
-        create_response = await client.post("/api/v1/tag-rules", json={
-            "name": "Test Rule",
-            "tag": "bucket:shopping",
-            "merchant_pattern": "amazon"
-        })
+        create_response = await client.post(
+            "/api/v1/tag-rules", json={"name": "Test Rule", "tag": "bucket:shopping", "merchant_pattern": "amazon"}
+        )
         rule_id = create_response.json()["id"]
 
         response = await client.get(f"/api/v1/tag-rules/{rule_id}")
@@ -73,11 +72,9 @@ class TestTagRules:
     @pytest.mark.asyncio
     async def test_update_rule(self, client: AsyncClient, seed_categories):
         """Update a rule"""
-        create_response = await client.post("/api/v1/tag-rules", json={
-            "name": "Test Rule",
-            "tag": "bucket:shopping",
-            "merchant_pattern": "amazon"
-        })
+        create_response = await client.post(
+            "/api/v1/tag-rules", json={"name": "Test Rule", "tag": "bucket:shopping", "merchant_pattern": "amazon"}
+        )
         rule_id = create_response.json()["id"]
 
         update_data = {"priority": 50, "enabled": False}
@@ -92,11 +89,9 @@ class TestTagRules:
     @pytest.mark.asyncio
     async def test_delete_rule(self, client: AsyncClient, seed_categories):
         """Delete a rule"""
-        create_response = await client.post("/api/v1/tag-rules", json={
-            "name": "Test Rule",
-            "tag": "bucket:shopping",
-            "merchant_pattern": "amazon"
-        })
+        create_response = await client.post(
+            "/api/v1/tag-rules", json={"name": "Test Rule", "tag": "bucket:shopping", "merchant_pattern": "amazon"}
+        )
         rule_id = create_response.json()["id"]
 
         response = await client.delete(f"/api/v1/tag-rules/{rule_id}")
@@ -123,7 +118,7 @@ class TestTagRules:
         rule_data = {
             "name": "Invalid Tag",
             "tag": "invalid-format",  # Missing namespace:value
-            "merchant_pattern": "test"
+            "merchant_pattern": "test",
         }
 
         response = await client.post("/api/v1/tag-rules", json=rule_data)
@@ -133,11 +128,7 @@ class TestTagRules:
     @pytest.mark.asyncio
     async def test_nonexistent_tag(self, client: AsyncClient, seed_categories):
         """Rule with non-existent tag should fail"""
-        rule_data = {
-            "name": "Bad Tag",
-            "tag": "bucket:nonexistent",
-            "merchant_pattern": "test"
-        }
+        rule_data = {"name": "Bad Tag", "tag": "bucket:nonexistent", "merchant_pattern": "test"}
 
         response = await client.post("/api/v1/tag-rules", json=rule_data)
         assert response.status_code == 400
@@ -146,21 +137,22 @@ class TestTagRules:
     @pytest.mark.asyncio
     async def test_merchant_pattern_matching(self, client: AsyncClient, seed_categories):
         """Test merchant pattern matching (case-insensitive)"""
-        await client.post("/api/v1/tag-rules", json={
-            "name": "Coffee Rule",
-            "tag": "bucket:dining",
-            "merchant_pattern": "starbucks"
-        })
+        await client.post(
+            "/api/v1/tag-rules", json={"name": "Coffee Rule", "tag": "bucket:dining", "merchant_pattern": "starbucks"}
+        )
 
         # Create transaction that should match
-        txn_response = await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -5.50,
-            "description": "Coffee purchase",
-            "merchant": "STARBUCKS #12345",
-            "account_source": "TEST",
-            "reference_id": "test_starbucks"
-        })
+        txn_response = await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -5.50,
+                "description": "Coffee purchase",
+                "merchant": "STARBUCKS #12345",
+                "account_source": "TEST",
+                "reference_id": "test_starbucks",
+            },
+        )
         txn_id = txn_response.json()["id"]
 
         # Apply rules
@@ -178,20 +170,21 @@ class TestTagRules:
     @pytest.mark.asyncio
     async def test_description_pattern_matching(self, client: AsyncClient, seed_categories):
         """Test description pattern matching"""
-        await client.post("/api/v1/tag-rules", json={
-            "name": "Payroll Rule",
-            "tag": "bucket:income",
-            "description_pattern": "payroll"
-        })
+        await client.post(
+            "/api/v1/tag-rules", json={"name": "Payroll Rule", "tag": "bucket:income", "description_pattern": "payroll"}
+        )
 
-        txn_response = await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": 3000.00,
-            "description": "DIRECT DEPOSIT PAYROLL",
-            "merchant": "Company Inc",
-            "account_source": "TEST",
-            "reference_id": "test_payroll"
-        })
+        txn_response = await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": 3000.00,
+                "description": "DIRECT DEPOSIT PAYROLL",
+                "merchant": "Company Inc",
+                "account_source": "TEST",
+                "reference_id": "test_payroll",
+            },
+        )
         txn_id = txn_response.json()["id"]
 
         response = await client.post("/api/v1/tag-rules/apply")
@@ -206,31 +199,35 @@ class TestTagRules:
     @pytest.mark.asyncio
     async def test_amount_range_matching(self, client: AsyncClient, seed_categories):
         """Test amount range matching"""
-        await client.post("/api/v1/tag-rules", json={
-            "name": "Large Purchases",
-            "tag": "bucket:shopping",
-            "amount_min": 100.00,
-            "amount_max": 1000.00
-        })
+        await client.post(
+            "/api/v1/tag-rules",
+            json={"name": "Large Purchases", "tag": "bucket:shopping", "amount_min": 100.00, "amount_max": 1000.00},
+        )
 
         # Create transactions
-        await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -500.00,
-            "description": "Big purchase",
-            "merchant": "Store",
-            "account_source": "TEST",
-            "reference_id": "test_large"
-        })
+        await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -500.00,
+                "description": "Big purchase",
+                "merchant": "Store",
+                "account_source": "TEST",
+                "reference_id": "test_large",
+            },
+        )
 
-        await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -50.00,
-            "description": "Small purchase",
-            "merchant": "Store",
-            "account_source": "TEST",
-            "reference_id": "test_small"
-        })
+        await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -50.00,
+                "description": "Small purchase",
+                "merchant": "Store",
+                "account_source": "TEST",
+                "reference_id": "test_small",
+            },
+        )
 
         response = await client.post("/api/v1/tag-rules/apply")
         data = response.json()
@@ -240,31 +237,40 @@ class TestTagRules:
     @pytest.mark.asyncio
     async def test_match_all_logic(self, client: AsyncClient, seed_categories):
         """Test AND logic (match_all=True)"""
-        await client.post("/api/v1/tag-rules", json={
-            "name": "Expensive Coffee",
-            "tag": "bucket:dining",
-            "merchant_pattern": "starbucks",
-            "amount_min": 10.00,
-            "match_all": True
-        })
+        await client.post(
+            "/api/v1/tag-rules",
+            json={
+                "name": "Expensive Coffee",
+                "tag": "bucket:dining",
+                "merchant_pattern": "starbucks",
+                "amount_min": 10.00,
+                "match_all": True,
+            },
+        )
 
-        await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -15.00,
-            "description": "Coffee",
-            "merchant": "Starbucks",
-            "account_source": "TEST",
-            "reference_id": "test_expensive"
-        })
+        await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -15.00,
+                "description": "Coffee",
+                "merchant": "Starbucks",
+                "account_source": "TEST",
+                "reference_id": "test_expensive",
+            },
+        )
 
-        await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -5.00,
-            "description": "Coffee",
-            "merchant": "Starbucks",
-            "account_source": "TEST",
-            "reference_id": "test_cheap"
-        })
+        await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -5.00,
+                "description": "Coffee",
+                "merchant": "Starbucks",
+                "account_source": "TEST",
+                "reference_id": "test_cheap",
+            },
+        )
 
         response = await client.post("/api/v1/tag-rules/apply")
         data = response.json()
@@ -274,31 +280,40 @@ class TestTagRules:
     @pytest.mark.asyncio
     async def test_match_any_logic(self, client: AsyncClient, seed_categories):
         """Test OR logic (match_all=False)"""
-        await client.post("/api/v1/tag-rules", json={
-            "name": "Gas Stations",
-            "tag": "bucket:transportation",
-            "merchant_pattern": "shell",
-            "description_pattern": "gas",
-            "match_all": False
-        })
+        await client.post(
+            "/api/v1/tag-rules",
+            json={
+                "name": "Gas Stations",
+                "tag": "bucket:transportation",
+                "merchant_pattern": "shell",
+                "description_pattern": "gas",
+                "match_all": False,
+            },
+        )
 
-        await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -40.00,
-            "description": "Fuel purchase",
-            "merchant": "Shell Gas Station",
-            "account_source": "TEST",
-            "reference_id": "test_shell"
-        })
+        await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -40.00,
+                "description": "Fuel purchase",
+                "merchant": "Shell Gas Station",
+                "account_source": "TEST",
+                "reference_id": "test_shell",
+            },
+        )
 
-        await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -35.00,
-            "description": "Gas station purchase",
-            "merchant": "Chevron",
-            "account_source": "TEST",
-            "reference_id": "test_chevron"
-        })
+        await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -35.00,
+                "description": "Gas station purchase",
+                "merchant": "Chevron",
+                "account_source": "TEST",
+                "reference_id": "test_chevron",
+            },
+        )
 
         response = await client.post("/api/v1/tag-rules/apply")
         data = response.json()
@@ -308,11 +323,10 @@ class TestTagRules:
     @pytest.mark.asyncio
     async def test_test_rule_endpoint(self, client: AsyncClient, seed_categories, seed_transactions):
         """Test the rule testing endpoint"""
-        create_response = await client.post("/api/v1/tag-rules", json={
-            "name": "Test Rule",
-            "tag": "bucket:groceries",
-            "merchant_pattern": "whole foods"
-        })
+        create_response = await client.post(
+            "/api/v1/tag-rules",
+            json={"name": "Test Rule", "tag": "bucket:groceries", "merchant_pattern": "whole foods"},
+        )
         rule_id = create_response.json()["id"]
 
         response = await client.post(f"/api/v1/tag-rules/{rule_id}/test")
@@ -327,21 +341,22 @@ class TestTagRules:
     @pytest.mark.asyncio
     async def test_apply_single_rule(self, client: AsyncClient, seed_categories):
         """Test applying a specific rule"""
-        create_response = await client.post("/api/v1/tag-rules", json={
-            "name": "Amazon Rule",
-            "tag": "bucket:shopping",
-            "merchant_pattern": "amazon"
-        })
+        create_response = await client.post(
+            "/api/v1/tag-rules", json={"name": "Amazon Rule", "tag": "bucket:shopping", "merchant_pattern": "amazon"}
+        )
         rule_id = create_response.json()["id"]
 
-        await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -50.00,
-            "description": "Purchase",
-            "merchant": "Amazon.com",
-            "account_source": "TEST",
-            "reference_id": "test_amazon"
-        })
+        await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -50.00,
+                "description": "Purchase",
+                "merchant": "Amazon.com",
+                "account_source": "TEST",
+                "reference_id": "test_amazon",
+            },
+        )
 
         response = await client.post(f"/api/v1/tag-rules/{rule_id}/apply")
         assert response.status_code == 200
@@ -353,21 +368,22 @@ class TestTagRules:
     @pytest.mark.asyncio
     async def test_disabled_rule_not_applied(self, client: AsyncClient, seed_categories):
         """Test that disabled rules are not applied"""
-        await client.post("/api/v1/tag-rules", json={
-            "name": "Disabled Rule",
-            "tag": "bucket:other",
-            "merchant_pattern": "test",
-            "enabled": False
-        })
+        await client.post(
+            "/api/v1/tag-rules",
+            json={"name": "Disabled Rule", "tag": "bucket:other", "merchant_pattern": "test", "enabled": False},
+        )
 
-        await client.post("/api/v1/transactions", json={
-            "date": date.today().isoformat(),
-            "amount": -10.00,
-            "description": "Purchase",
-            "merchant": "Test Merchant",
-            "account_source": "TEST",
-            "reference_id": "test_disabled"
-        })
+        await client.post(
+            "/api/v1/transactions",
+            json={
+                "date": date.today().isoformat(),
+                "amount": -10.00,
+                "description": "Purchase",
+                "merchant": "Test Merchant",
+                "account_source": "TEST",
+                "reference_id": "test_disabled",
+            },
+        )
 
         response = await client.post("/api/v1/tag-rules/apply")
         data = response.json()
@@ -377,25 +393,26 @@ class TestTagRules:
     @pytest.mark.asyncio
     async def test_rule_stats_tracking(self, client: AsyncClient, seed_categories):
         """Test that rule match count is tracked"""
-        create_response = await client.post("/api/v1/tag-rules", json={
-            "name": "Stats Test",
-            "tag": "bucket:shopping",
-            "merchant_pattern": "target"
-        })
+        create_response = await client.post(
+            "/api/v1/tag-rules", json={"name": "Stats Test", "tag": "bucket:shopping", "merchant_pattern": "target"}
+        )
         rule_id = create_response.json()["id"]
 
         get_response = await client.get(f"/api/v1/tag-rules/{rule_id}")
         assert get_response.json()["match_count"] == 0
 
         for i in range(3):
-            await client.post("/api/v1/transactions", json={
-                "date": date.today().isoformat(),
-                "amount": -20.00,
-                "description": "Purchase",
-                "merchant": "Target",
-                "account_source": "TEST",
-                "reference_id": f"test_stats_{i}"
-            })
+            await client.post(
+                "/api/v1/transactions",
+                json={
+                    "date": date.today().isoformat(),
+                    "amount": -20.00,
+                    "description": "Purchase",
+                    "merchant": "Target",
+                    "account_source": "TEST",
+                    "reference_id": f"test_stats_{i}",
+                },
+            )
 
         await client.post(f"/api/v1/tag-rules/{rule_id}/apply")
 

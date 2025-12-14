@@ -9,10 +9,7 @@ Format characteristics:
 - Description contains encoded merchant info
 """
 
-import csv
-import io
-import re
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Tuple
 
 from ..base import (
     CSVFormatParser,
@@ -20,7 +17,6 @@ from ..base import (
     AmountConfig,
     DateConfig,
     AmountSign,
-    ParsedTransaction,
 )
 from ..registry import ParserRegistry
 
@@ -49,28 +45,28 @@ class BofaBankParser(CSVFormatParser):
 
     def can_parse(self, csv_content: str) -> Tuple[bool, float]:
         """Detect BofA Bank format by looking for 'Running Bal.' column."""
-        lines = csv_content.strip().split('\n')
+        lines = csv_content.strip().split("\n")
         for line in lines[:10]:
-            if 'Running Bal.' in line:
+            if "Running Bal." in line:
                 return True, 0.95
         return False, 0.0
 
     def preprocess_content(self, csv_content: str) -> str:
         """Find the header row and return content from there."""
-        lines = csv_content.split('\n')
+        lines = csv_content.split("\n")
         for i, line in enumerate(lines):
-            if line.startswith('Date') and 'Description' in line and 'Amount' in line:
-                return '\n'.join(lines[i:])
+            if line.startswith("Date") and "Description" in line and "Amount" in line:
+                return "\n".join(lines[i:])
         return csv_content
 
     def should_skip_row(self, row: Dict) -> bool:
         """Skip summary rows and rows without valid data."""
-        date_str = row.get('Date', '').strip()
-        amount_str = row.get('Amount', '').strip()
+        date_str = row.get("Date", "").strip()
+        amount_str = row.get("Amount", "").strip()
 
         if not date_str or not amount_str:
             return True
-        if 'balance' in date_str.lower():
+        if "balance" in date_str.lower():
             return True
         return False
 
@@ -94,8 +90,8 @@ class BofaBankParser(CSVFormatParser):
         # Take first meaningful word(s)
         merchant = parts[0]
         # If there's more context before DES: or ID:, grab it
-        if len(parts) > 1 and not any(x in parts[1] for x in ['DES:', 'ID:', '/', 'XXXXX']):
-            merchant += ' ' + parts[1]
+        if len(parts) > 1 and not any(x in parts[1] for x in ["DES:", "ID:", "/", "XXXXX"]):
+            merchant += " " + parts[1]
 
         return merchant.strip()
 
@@ -105,5 +101,5 @@ class BofaBankParser(CSVFormatParser):
 
     def get_reference_id(self, row: Dict, date_val, amount: float) -> str:
         """Generate reference ID from date and amount."""
-        date_str = row.get('Date', '').strip()
+        date_str = row.get("Date", "").strip()
         return f"bofa_{date_str}_{amount}"

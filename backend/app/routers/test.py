@@ -45,13 +45,20 @@ async def seed_database(request: SeedRequest = SeedRequest()):
     """
     if not ENABLE_TEST_ENDPOINTS:
         raise HTTPException(
-            status_code=403,
-            detail="Test endpoints are disabled. Set ENABLE_TEST_ENDPOINTS=true to enable."
+            status_code=403, detail="Test endpoints are disabled. Set ENABLE_TEST_ENDPOINTS=true to enable."
         )
 
     try:
         # Import here to avoid loading seed script in production
-        from scripts.seed import async_session, clear_data, seed_tags, seed_transactions, seed_budgets, seed_dashboards, seed_tag_rules
+        from scripts.seed import (
+            async_session,
+            clear_data,
+            seed_tags,
+            seed_transactions,
+            seed_budgets,
+            seed_dashboards,
+            seed_tag_rules,
+        )
 
         async with async_session() as session:
             if request.clear:
@@ -64,8 +71,7 @@ async def seed_database(request: SeedRequest = SeedRequest()):
             await seed_tag_rules(session)
 
         return SeedResponse(
-            success=True,
-            message=f"Database seeded successfully with {request.num_transactions} transactions."
+            success=True, message=f"Database seeded successfully with {request.num_transactions} transactions."
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Seeding failed: {str(e)}")
@@ -81,8 +87,7 @@ async def clear_database():
     """
     if not ENABLE_TEST_ENDPOINTS:
         raise HTTPException(
-            status_code=403,
-            detail="Test endpoints are disabled. Set ENABLE_TEST_ENDPOINTS=true to enable."
+            status_code=403, detail="Test endpoints are disabled. Set ENABLE_TEST_ENDPOINTS=true to enable."
         )
 
     try:
@@ -91,10 +96,7 @@ async def clear_database():
         async with async_session() as session:
             await clear_data(session)
 
-        return SeedResponse(
-            success=True,
-            message="Database cleared successfully."
-        )
+        return SeedResponse(success=True, message="Database cleared successfully.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Clear failed: {str(e)}")
 

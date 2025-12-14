@@ -1,9 +1,9 @@
 """
 Tests for FR-002: Transaction Management
 """
+
 import pytest
 from httpx import AsyncClient
-from datetime import date
 
 
 class TestTransactionManagement:
@@ -67,7 +67,7 @@ class TestTransactionManagement:
             "account_source": "BOFA-1234",
             "category": "Transportation",
             "reconciliation_status": "manually_entered",
-            "reference_id": "manual_1"
+            "reference_id": "manual_1",
         }
 
         response = await client.post("/api/v1/transactions", json=new_transaction)
@@ -123,10 +123,7 @@ class TestTransactionManagement:
         """Bulk update with nonexistent transaction IDs returns 404"""
         response = await client.post(
             "/api/v1/transactions/bulk-update",
-            json={
-                "transaction_ids": [99998, 99999],
-                "updates": {"category": "Other"}
-            }
+            json={"transaction_ids": [99998, 99999], "updates": {"category": "Other"}},
         )
         assert response.status_code == 404
         assert response.json()["detail"]["error_code"] == "TRANSACTIONS_NOT_FOUND"

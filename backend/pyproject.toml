@@ -73,3 +73,61 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "raise NotImplementedError",
 ]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+exclude = [
+    "alembic/versions",  # Auto-generated migration files
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = [
+    "E501",  # Line too long - less critical, handled by formatter if needed
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Allow unused imports in __init__.py (re-exports)
+"alembic/env.py" = ["F403", "F401"]  # Allow star imports in alembic
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = false  # Too strict for existing codebase
+check_untyped_defs = true
+plugins = ["sqlalchemy.ext.mypy.plugin"]
+
+# Ignore third-party packages without stubs
+[[tool.mypy.overrides]]
+module = [
+    "apscheduler.*",
+    "sqlmodel.*",
+]
+ignore_missing_imports = true
+
+# SQLModel ORM-heavy modules - SQLModel's type system causes false positives
+# for column attribute methods like .in_(), .is_(), .isnot(), etc.
+[[tool.mypy.overrides]]
+module = [
+    "app.routers.reports",
+    "app.routers.import_router",
+    "app.routers.transactions",
+    "app.routers.merchants",
+    "app.routers.transfers",
+    "app.routers.tags",
+    "app.routers.tag_rules",
+    "app.routers.dashboards",
+    "app.routers.dashboard",
+    "app.routers.recurring",
+    "app.routers.filters",
+    "app.routers.accounts",
+    "app.routers.budgets",
+    "app.routers.admin",
+    "app.parsers.*",
+    "app.parsers.formats.*",
+    "app.middleware.*",
+    "app.observability.*",
+]
+disable_error_code = ["attr-defined", "union-attr", "arg-type", "var-annotated", "assignment", "index", "operator", "return-value", "call-overload", "no-any-return", "misc"]

@@ -2,8 +2,25 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db
-from app.routers import transactions, import_router, reports, budgets, tag_rules, recurring, admin, tags, transfers, merchants, accounts, filters, dashboard, dashboards, test, settings
-from app.observability import setup_observability, ObservabilitySettings
+from app.routers import (
+    transactions,
+    import_router,
+    reports,
+    budgets,
+    tag_rules,
+    recurring,
+    admin,
+    tags,
+    transfers,
+    merchants,
+    accounts,
+    filters,
+    dashboard,
+    dashboards,
+    test,
+    settings,
+)
+from app.observability import setup_observability
 from app.services.scheduler import scheduler_service
 from app.middleware import add_demo_mode_middleware
 
@@ -100,6 +117,7 @@ app.include_router(dashboards.router)
 app.include_router(test.router)
 app.include_router(settings.router)
 
+
 @app.get("/", tags=["health"])
 async def root():
     """API root - returns version and links to documentation."""
@@ -108,8 +126,9 @@ async def root():
         "version": "0.9.0-beta4",
         "docs": "/docs",
         "redoc": "/redoc",
-        "openapi": "/openapi.json"
+        "openapi": "/openapi.json",
     }
+
 
 @app.get("/health", tags=["health"])
 async def health():

@@ -2,11 +2,10 @@
 Tests to fill coverage gaps in various routers.
 Focuses on edge cases and less-tested code paths.
 """
+
 import pytest
 from httpx import AsyncClient
-from datetime import date
 import io
-import json
 
 
 class TestImportRouterGaps:
@@ -119,9 +118,7 @@ class TestReportsGaps:
     @pytest.mark.asyncio
     async def test_trends_by_account(self, client: AsyncClient, seed_transactions):
         """Spending trends grouped by account"""
-        response = await client.get(
-            "/api/v1/reports/trends?start_date=2025-10-01&end_date=2025-11-30&group_by=account"
-        )
+        response = await client.get("/api/v1/reports/trends?start_date=2025-10-01&end_date=2025-11-30&group_by=account")
         assert response.status_code == 200
         data = response.json()
 
@@ -132,9 +129,7 @@ class TestReportsGaps:
     @pytest.mark.asyncio
     async def test_top_merchants_specific_year_month(self, client: AsyncClient, seed_transactions):
         """Top merchants for specific year/month overrides period"""
-        response = await client.get(
-            "/api/v1/reports/top-merchants?limit=5&year=2025&month=11"
-        )
+        response = await client.get("/api/v1/reports/top-merchants?limit=5&year=2025&month=11")
         assert response.status_code == 200
         data = response.json()
         assert "merchants" in data
@@ -142,9 +137,7 @@ class TestReportsGaps:
     @pytest.mark.asyncio
     async def test_month_over_month_january(self, client: AsyncClient, seed_transactions):
         """Month-over-month handles January (previous = December of prior year)"""
-        response = await client.get(
-            "/api/v1/reports/month-over-month?current_year=2025&current_month=1"
-        )
+        response = await client.get("/api/v1/reports/month-over-month?current_year=2025&current_month=1")
         assert response.status_code == 200
         data = response.json()
 
@@ -154,9 +147,7 @@ class TestReportsGaps:
     @pytest.mark.asyncio
     async def test_spending_velocity(self, client: AsyncClient, seed_transactions):
         """Spending velocity calculates daily rates"""
-        response = await client.get(
-            "/api/v1/reports/spending-velocity?year=2025&month=11"
-        )
+        response = await client.get("/api/v1/reports/spending-velocity?year=2025&month=11")
         assert response.status_code == 200
         data = response.json()
 
@@ -168,9 +159,7 @@ class TestReportsGaps:
     @pytest.mark.asyncio
     async def test_spending_velocity_past_month(self, client: AsyncClient, seed_transactions):
         """Spending velocity for past month uses full month"""
-        response = await client.get(
-            "/api/v1/reports/spending-velocity?year=2025&month=10"
-        )
+        response = await client.get("/api/v1/reports/spending-velocity?year=2025&month=10")
         assert response.status_code == 200
         data = response.json()
 
@@ -180,14 +169,14 @@ class TestReportsGaps:
     async def test_anomalies_with_threshold(self, client: AsyncClient, seed_transactions):
         """Anomaly detection respects threshold parameter"""
         # Higher threshold = fewer anomalies
-        response = await client.get(
-            "/api/v1/reports/anomalies?year=2025&month=11&threshold=5.0"
-        )
+        response = await client.get("/api/v1/reports/anomalies?year=2025&month=11&threshold=5.0")
         assert response.status_code == 200
         data = response.json()
 
         assert "large_threshold_amount" in data["summary"]
-        assert data["summary"]["large_threshold_amount"] is not None or len(data["anomalies"]["large_transactions"]) == 0
+        assert (
+            data["summary"]["large_threshold_amount"] is not None or len(data["anomalies"]["large_transactions"]) == 0
+        )
 
     @pytest.mark.asyncio
     async def test_monthly_summary_december(self, client: AsyncClient, seed_transactions):
@@ -237,13 +226,7 @@ class TestFiltersRouter:
     async def test_create_and_list_filters(self, client: AsyncClient, seed_categories):
         """Create and list saved filters"""
         # Create a filter
-        filter_data = {
-            "name": "Test Filter",
-            "criteria": {
-                "min_amount": -100,
-                "max_amount": 0
-            }
-        }
+        filter_data = {"name": "Test Filter", "criteria": {"min_amount": -100, "max_amount": 0}}
         create_response = await client.post("/api/v1/filters", json=filter_data)
         assert create_response.status_code in [200, 201]
 
@@ -274,11 +257,7 @@ class TestMerchantsRouter:
     @pytest.mark.asyncio
     async def test_create_merchant_alias(self, client: AsyncClient):
         """Create a merchant alias"""
-        alias_data = {
-            "pattern": "AMZN",
-            "canonical_name": "Amazon",
-            "match_type": "contains"
-        }
+        alias_data = {"pattern": "AMZN", "canonical_name": "Amazon", "match_type": "contains"}
         response = await client.post("/api/v1/merchants/aliases", json=alias_data)
         assert response.status_code in [200, 201]
 
@@ -321,10 +300,7 @@ class TestTagsRouter:
     @pytest.mark.asyncio
     async def test_create_tag(self, client: AsyncClient, seed_categories):
         """Create a new tag"""
-        tag_data = {
-            "namespace": "bucket",
-            "value": "test-coverage-tag"
-        }
+        tag_data = {"namespace": "bucket", "value": "test-coverage-tag"}
         response = await client.post("/api/v1/tags", json=tag_data)
         assert response.status_code in [200, 201]
 
@@ -352,12 +328,7 @@ class TestTagRulesRouter:
     async def test_create_tag_rule(self, client: AsyncClient, seed_categories):
         """Create a tag rule"""
         # Use a tag that exists in seed_categories (groceries is standard)
-        rule_data = {
-            "name": "Test Rule",
-            "tag": "bucket:groceries",
-            "merchant_pattern": "STARBUCKS",
-            "priority": 10
-        }
+        rule_data = {"name": "Test Rule", "tag": "bucket:groceries", "merchant_pattern": "STARBUCKS", "priority": 10}
         response = await client.post("/api/v1/tag-rules", json=rule_data)
         # 200/201 if successful, 400 if tag doesn't exist - both exercise the code
         assert response.status_code in [200, 201, 400]
@@ -377,12 +348,7 @@ class TestBudgetsRouter:
     @pytest.mark.asyncio
     async def test_create_budget(self, client: AsyncClient, seed_categories):
         """Create a budget"""
-        budget_data = {
-            "name": "Test Budget",
-            "amount": 500.00,
-            "period": "monthly",
-            "bucket_tag_value": "groceries"
-        }
+        budget_data = {"name": "Test Budget", "amount": 500.00, "period": "monthly", "bucket_tag_value": "groceries"}
         response = await client.post("/api/v1/budgets", json=budget_data)
         # May fail if bucket doesn't exist, but that's okay - we're testing the endpoint
         assert response.status_code in [200, 201, 400, 422]

@@ -99,9 +99,7 @@ def calculate_latency_percentiles() -> dict[str, float]:
                         le = sample.labels.get("le", "+Inf")
                         if le != "+Inf":
                             bucket = float(le)
-                            bucket_counts[bucket] = bucket_counts.get(bucket, 0) + int(
-                                sample.value
-                            )
+                            bucket_counts[bucket] = bucket_counts.get(bucket, 0) + int(sample.value)
                     elif sample.name.endswith("_count"):
                         total_count += int(sample.value)
 

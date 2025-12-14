@@ -50,13 +50,13 @@ class QIFParser(CSVFormatParser):
         content_lower = content.strip().lower()
 
         # Check for QIF type header
-        if content_lower.startswith('!type:'):
+        if content_lower.startswith("!type:"):
             return True, 0.95
 
         # Check within first few lines
-        lines = content.strip().split('\n')[:10]
+        lines = content.strip().split("\n")[:10]
         for line in lines:
-            if line.strip().lower().startswith('!type:'):
+            if line.strip().lower().startswith("!type:"):
                 return True, 0.90
 
         return False, 0.0
@@ -73,7 +73,7 @@ class QIFParser(CSVFormatParser):
             List of ParsedTransaction objects
         """
         transactions = []
-        lines = content.strip().split('\n')
+        lines = content.strip().split("\n")
 
         # Track account type from header
         account_type = "Unknown"
@@ -86,20 +86,20 @@ class QIFParser(CSVFormatParser):
                 continue
 
             # Account type header
-            if line.lower().startswith('!type:'):
+            if line.lower().startswith("!type:"):
                 account_type = line[6:].strip()
                 continue
 
             # Account header (multi-account QIF files)
-            if line.lower().startswith('!account'):
+            if line.lower().startswith("!account"):
                 continue
 
             # Other headers we skip
-            if line.startswith('!'):
+            if line.startswith("!"):
                 continue
 
             # End of record
-            if line == '^':
+            if line == "^":
                 if current_record:
                     txn = self._parse_record(current_record, account_type, account_source)
                     if txn:
@@ -112,24 +112,24 @@ class QIFParser(CSVFormatParser):
                 field_code = line[0].upper()
                 field_value = line[1:].strip() if len(line) > 1 else ""
 
-                if field_code == 'D':
-                    current_record['date'] = field_value
-                elif field_code == 'T':
-                    current_record['amount'] = field_value
-                elif field_code == 'P':
-                    current_record['payee'] = field_value
-                elif field_code == 'M':
-                    current_record['memo'] = field_value
-                elif field_code == 'L':
-                    current_record['category'] = field_value
-                elif field_code == 'N':
-                    current_record['check_number'] = field_value
-                elif field_code == 'C':
-                    current_record['cleared'] = field_value
-                elif field_code == 'A':
+                if field_code == "D":
+                    current_record["date"] = field_value
+                elif field_code == "T":
+                    current_record["amount"] = field_value
+                elif field_code == "P":
+                    current_record["payee"] = field_value
+                elif field_code == "M":
+                    current_record["memo"] = field_value
+                elif field_code == "L":
+                    current_record["category"] = field_value
+                elif field_code == "N":
+                    current_record["check_number"] = field_value
+                elif field_code == "C":
+                    current_record["cleared"] = field_value
+                elif field_code == "A":
                     # Address can be multi-line, append
-                    existing = current_record.get('address', '')
-                    current_record['address'] = (existing + ' ' + field_value).strip()
+                    existing = current_record.get("address", "")
+                    current_record["address"] = (existing + " " + field_value).strip()
 
         # Handle last record if file doesn't end with ^
         if current_record:
@@ -140,10 +140,7 @@ class QIFParser(CSVFormatParser):
         return transactions
 
     def _parse_record(
-        self,
-        record: Dict[str, str],
-        account_type: str,
-        account_source: Optional[str]
+        self, record: Dict[str, str], account_type: str, account_source: Optional[str]
     ) -> Optional[ParsedTransaction]:
         """
         Convert a QIF record dict to ParsedTransaction.
@@ -157,20 +154,20 @@ class QIFParser(CSVFormatParser):
             ParsedTransaction or None if invalid
         """
         # Parse date (required)
-        date_str = record.get('date', '')
+        date_str = record.get("date", "")
         trans_date = self._parse_qif_date(date_str)
         if not trans_date:
             return None
 
         # Parse amount (required)
-        amount_str = record.get('amount', '')
+        amount_str = record.get("amount", "")
         amount = self._parse_qif_amount(amount_str)
         if amount is None:
             return None
 
         # Get payee/description
-        payee = record.get('payee', '')
-        memo = record.get('memo', '')
+        payee = record.get("payee", "")
+        memo = record.get("memo", "")
 
         # Build description from payee and memo
         if payee and memo:
@@ -188,14 +185,14 @@ class QIFParser(CSVFormatParser):
             effective_account = f"QIF-{account_type}"
 
         # Generate reference ID
-        check_num = record.get('check_number', '')
+        check_num = record.get("check_number", "")
         if check_num:
             reference_id = f"qif_{trans_date}_{check_num}"
         else:
             reference_id = f"qif_{trans_date}_{amount}"
 
         # Map category if present
-        source_category = record.get('category', '')
+        source_category = record.get("category", "")
         suggested_category = self._map_qif_category(source_category) if source_category else None
 
         return ParsedTransaction(
@@ -227,12 +224,12 @@ class QIFParser(CSVFormatParser):
 
         # Try common formats
         formats = [
-            "%m/%d/%Y",    # 12/15/2024
-            "%m/%d/%y",    # 12/15/24
-            "%m-%d-%Y",    # 12-15-2024
-            "%m-%d-%y",    # 12-15-24
-            "%d/%m/%Y",    # 15/12/2024 (international)
-            "%Y-%m-%d",    # 2024-12-15 (ISO)
+            "%m/%d/%Y",  # 12/15/2024
+            "%m/%d/%y",  # 12/15/24
+            "%m-%d-%Y",  # 12-15-2024
+            "%m-%d-%y",  # 12-15-24
+            "%d/%m/%Y",  # 15/12/2024 (international)
+            "%Y-%m-%d",  # 2024-12-15 (ISO)
         ]
 
         for fmt in formats:
@@ -257,9 +254,9 @@ class QIFParser(CSVFormatParser):
 
         # Remove currency symbols and whitespace
         clean = amount_str.strip()
-        clean = re.sub(r'[$£€]', '', clean)
-        clean = clean.replace(',', '')
-        clean = clean.replace(' ', '')
+        clean = re.sub(r"[$£€]", "", clean)
+        clean = clean.replace(",", "")
+        clean = clean.replace(" ", "")
 
         try:
             return float(clean)
@@ -276,37 +273,37 @@ class QIFParser(CSVFormatParser):
             return None
 
         # Take the top-level category
-        top_level = category.split(':')[0].strip()
+        top_level = category.split(":")[0].strip()
 
         # Basic mapping (can be expanded)
         category_map = {
-            'auto': 'transportation',
-            'car': 'transportation',
-            'fuel': 'transportation',
-            'gas': 'transportation',
-            'food': 'food-and-drink',
-            'groceries': 'groceries',
-            'dining': 'food-and-drink',
-            'restaurant': 'food-and-drink',
-            'utilities': 'utilities',
-            'phone': 'utilities',
-            'electric': 'utilities',
-            'medical': 'healthcare',
-            'healthcare': 'healthcare',
-            'doctor': 'healthcare',
-            'pharmacy': 'healthcare',
-            'entertainment': 'entertainment',
-            'shopping': 'shopping',
-            'clothing': 'shopping',
-            'travel': 'travel',
-            'vacation': 'travel',
-            'home': 'home',
-            'household': 'home',
-            'insurance': 'insurance',
-            'salary': 'income',
-            'income': 'income',
-            'paycheck': 'income',
-            'transfer': 'transfers',
+            "auto": "transportation",
+            "car": "transportation",
+            "fuel": "transportation",
+            "gas": "transportation",
+            "food": "food-and-drink",
+            "groceries": "groceries",
+            "dining": "food-and-drink",
+            "restaurant": "food-and-drink",
+            "utilities": "utilities",
+            "phone": "utilities",
+            "electric": "utilities",
+            "medical": "healthcare",
+            "healthcare": "healthcare",
+            "doctor": "healthcare",
+            "pharmacy": "healthcare",
+            "entertainment": "entertainment",
+            "shopping": "shopping",
+            "clothing": "shopping",
+            "travel": "travel",
+            "vacation": "travel",
+            "home": "home",
+            "household": "home",
+            "insurance": "insurance",
+            "salary": "income",
+            "income": "income",
+            "paycheck": "income",
+            "transfer": "transfers",
         }
 
         return category_map.get(top_level.lower())

@@ -8,8 +8,12 @@ import statistics
 
 from app.database import get_session
 from app.models import (
-    RecurringPattern, RecurringPatternCreate, RecurringPatternUpdate,
-    RecurringFrequency, RecurringStatus, Transaction
+    RecurringPattern,
+    RecurringPatternCreate,
+    RecurringPatternUpdate,
+    RecurringFrequency,
+    RecurringStatus,
+    Transaction,
 )
 from app.errors import ErrorCode, not_found
 
@@ -50,8 +54,7 @@ def detect_frequency(intervals: List[int]) -> Tuple[Optional[RecurringFrequency]
 
 @router.get("/", response_model=List[RecurringPattern])
 async def list_recurring_patterns(
-    status: Optional[RecurringStatus] = None,
-    session: AsyncSession = Depends(get_session)
+    status: Optional[RecurringStatus] = None, session: AsyncSession = Depends(get_session)
 ):
     """List all recurring patterns"""
     query = select(RecurringPattern).order_by(RecurringPattern.merchant)
@@ -65,10 +68,7 @@ async def list_recurring_patterns(
 
 
 @router.post("/", response_model=RecurringPattern, status_code=201)
-async def create_recurring_pattern(
-    pattern: RecurringPatternCreate,
-    session: AsyncSession = Depends(get_session)
-):
+async def create_recurring_pattern(pattern: RecurringPatternCreate, session: AsyncSession = Depends(get_session)):
     """Manually create a recurring pattern"""
     db_pattern = RecurringPattern(**pattern.model_dump())
     session.add(db_pattern)
@@ -79,14 +79,10 @@ async def create_recurring_pattern(
 
 @router.patch("/{pattern_id}", response_model=RecurringPattern)
 async def update_recurring_pattern(
-    pattern_id: int,
-    pattern: RecurringPatternUpdate,
-    session: AsyncSession = Depends(get_session)
+    pattern_id: int, pattern: RecurringPatternUpdate, session: AsyncSession = Depends(get_session)
 ):
     """Update a recurring pattern"""
-    result = await session.execute(
-        select(RecurringPattern).where(RecurringPattern.id == pattern_id)
-    )
+    result = await session.execute(select(RecurringPattern).where(RecurringPattern.id == pattern_id))
     db_pattern = result.scalar_one_or_none()
     if not db_pattern:
         raise not_found(ErrorCode.PATTERN_NOT_FOUND, pattern_id=pattern_id)
@@ -102,14 +98,9 @@ async def update_recurring_pattern(
 
 
 @router.delete("/{pattern_id}", status_code=204)
-async def delete_recurring_pattern(
-    pattern_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def delete_recurring_pattern(pattern_id: int, session: AsyncSession = Depends(get_session)):
     """Delete a recurring pattern"""
-    result = await session.execute(
-        select(RecurringPattern).where(RecurringPattern.id == pattern_id)
-    )
+    result = await session.execute(select(RecurringPattern).where(RecurringPattern.id == pattern_id))
     pattern = result.scalar_one_or_none()
     if not pattern:
         raise not_found(ErrorCode.PATTERN_NOT_FOUND, pattern_id=pattern_id)
@@ -122,7 +113,7 @@ async def delete_recurring_pattern(
 async def detect_recurring_patterns(
     min_occurrences: int = Query(3, ge=2, le=10),
     min_confidence: float = Query(0.7, ge=0.5, le=1.0),
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Detect recurring transaction patterns
@@ -130,9 +121,7 @@ async def detect_recurring_patterns(
     Analyzes transaction history to find subscriptions and recurring bills
     """
     # Get all transactions
-    result = await session.execute(
-        select(Transaction).order_by(Transaction.date)
-    )
+    result = await session.execute(select(Transaction).order_by(Transaction.date))
     all_transactions = result.scalars().all()
 
     # Group transactions by merchant
@@ -153,7 +142,7 @@ async def detect_recurring_patterns(
         # Calculate intervals between transactions
         intervals = []
         for i in range(1, len(transactions)):
-            days_diff = (transactions[i].date - transactions[i-1].date).days
+            days_diff = (transactions[i].date - transactions[i - 1].date).days
             intervals.append(days_diff)
 
         # Detect frequency
@@ -188,8 +177,7 @@ async def detect_recurring_patterns(
         # Check if pattern already exists
         existing = await session.execute(
             select(RecurringPattern).where(
-                RecurringPattern.merchant == merchant,
-                RecurringPattern.frequency == frequency
+                RecurringPattern.merchant == merchant, RecurringPattern.frequency == frequency
             )
         )
         if existing.scalar_one_or_none():
@@ -205,42 +193,36 @@ async def detect_recurring_patterns(
             last_seen_date=last_date,
             next_expected_date=next_date,
             confidence_score=confidence,
-            status=RecurringStatus.active
+            status=RecurringStatus.active,
         )
 
         session.add(pattern)
-        detected_patterns.append({
-            "merchant": merchant,
-            "frequency": frequency,
-            "confidence": round(confidence, 2),
-            "occurrences": len(transactions),
-            "average_amount": round(avg_amount, 2),
-            "next_expected": next_date.isoformat()
-        })
+        detected_patterns.append(
+            {
+                "merchant": merchant,
+                "frequency": frequency,
+                "confidence": round(confidence, 2),
+                "occurrences": len(transactions),
+                "average_amount": round(avg_amount, 2),
+                "next_expected": next_date.isoformat(),
+            }
+        )
 
     await session.commit()
 
-    return {
-        "detected_count": len(detected_patterns),
-        "patterns": detected_patterns
-    }
+    return {"detected_count": len(detected_patterns), "patterns": detected_patterns}
 
 
 @router.get("/predictions/upcoming")
 async def get_upcoming_recurring(
-    days_ahead: int = Query(30, ge=1, le=365),
-    session: AsyncSession = Depends(get_session)
+    days_ahead: int = Query(30, ge=1, le=365), session: AsyncSession = Depends(get_session)
 ):
     """
     Get predicted upcoming recurring transactions
 
     Returns transactions expected in the next N days
     """
-    result = await session.execute(
-        select(RecurringPattern).where(
-            RecurringPattern.status == RecurringStatus.active
-        )
-    )
+    result = await session.execute(select(RecurringPattern).where(RecurringPattern.status == RecurringStatus.active))
     patterns = result.scalars().all()
 
     today = date.today()
@@ -250,40 +232,34 @@ async def get_upcoming_recurring(
     for pattern in patterns:
         if pattern.next_expected_date and today <= pattern.next_expected_date <= end_date:
             days_until = (pattern.next_expected_date - today).days
-            upcoming.append({
-                "merchant": pattern.merchant,
-                "category": pattern.category,
-                "expected_date": pattern.next_expected_date.isoformat(),
-                "days_until": days_until,
-                "frequency": pattern.frequency,
-                "estimated_amount": round((pattern.amount_min + pattern.amount_max) / 2, 2),
-                "confidence": round(pattern.confidence_score, 2)
-            })
+            upcoming.append(
+                {
+                    "merchant": pattern.merchant,
+                    "category": pattern.category,
+                    "expected_date": pattern.next_expected_date.isoformat(),
+                    "days_until": days_until,
+                    "frequency": pattern.frequency,
+                    "estimated_amount": round((pattern.amount_min + pattern.amount_max) / 2, 2),
+                    "confidence": round(pattern.confidence_score, 2),
+                }
+            )
 
     # Sort by expected date
     upcoming.sort(key=lambda x: x["expected_date"])
 
-    return {
-        "count": len(upcoming),
-        "upcoming": upcoming
-    }
+    return {"count": len(upcoming), "upcoming": upcoming}
 
 
 @router.get("/missing")
 async def get_missing_recurring(
-    days_overdue: int = Query(7, ge=1, le=90),
-    session: AsyncSession = Depends(get_session)
+    days_overdue: int = Query(7, ge=1, le=90), session: AsyncSession = Depends(get_session)
 ):
     """
     Get expected recurring transactions that haven't appeared
 
     Returns patterns where next_expected_date has passed but no matching transaction found
     """
-    result = await session.execute(
-        select(RecurringPattern).where(
-            RecurringPattern.status == RecurringStatus.active
-        )
-    )
+    result = await session.execute(select(RecurringPattern).where(RecurringPattern.status == RecurringStatus.active))
     patterns = result.scalars().all()
 
     today = date.today()
@@ -293,33 +269,27 @@ async def get_missing_recurring(
     for pattern in patterns:
         if pattern.next_expected_date and pattern.next_expected_date <= cutoff_date:
             days_overdue_count = (today - pattern.next_expected_date).days
-            missing.append({
-                "merchant": pattern.merchant,
-                "category": pattern.category,
-                "expected_date": pattern.next_expected_date.isoformat(),
-                "days_overdue": days_overdue_count,
-                "frequency": pattern.frequency,
-                "estimated_amount": round((pattern.amount_min + pattern.amount_max) / 2, 2)
-            })
+            missing.append(
+                {
+                    "merchant": pattern.merchant,
+                    "category": pattern.category,
+                    "expected_date": pattern.next_expected_date.isoformat(),
+                    "days_overdue": days_overdue_count,
+                    "frequency": pattern.frequency,
+                    "estimated_amount": round((pattern.amount_min + pattern.amount_max) / 2, 2),
+                }
+            )
 
     # Sort by days overdue (most overdue first)
     missing.sort(key=lambda x: x["days_overdue"], reverse=True)
 
-    return {
-        "count": len(missing),
-        "missing": missing
-    }
+    return {"count": len(missing), "missing": missing}
 
 
 @router.get("/{pattern_id}", response_model=RecurringPattern)
-async def get_recurring_pattern(
-    pattern_id: int,
-    session: AsyncSession = Depends(get_session)
-):
+async def get_recurring_pattern(pattern_id: int, session: AsyncSession = Depends(get_session)):
     """Get a single recurring pattern by ID"""
-    result = await session.execute(
-        select(RecurringPattern).where(RecurringPattern.id == pattern_id)
-    )
+    result = await session.execute(select(RecurringPattern).where(RecurringPattern.id == pattern_id))
     pattern = result.scalar_one_or_none()
     if not pattern:
         raise not_found(ErrorCode.PATTERN_NOT_FOUND, pattern_id=pattern_id)

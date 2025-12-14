@@ -12,7 +12,6 @@ USAGE:
 """
 
 import os
-import time
 from pathlib import Path
 from typing import Generator
 
@@ -188,9 +187,5 @@ def helpers() -> E2EHelpers:
 # Pytest configuration
 def pytest_configure(config):
     """Configure pytest markers for E2E tests."""
-    config.addinivalue_line(
-        "markers", "e2e: mark test as end-to-end test"
-    )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow-running"
-    )
+    config.addinivalue_line("markers", "e2e: mark test as end-to-end test")
+    config.addinivalue_line("markers", "slow: mark test as slow-running")

@@ -1,7 +1,8 @@
 """Test configuration and fixtures"""
+
 import pytest
 import asyncio
-from sqlmodel import SQLModel, Session
+from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from httpx import AsyncClient, ASGITransport
@@ -15,7 +16,7 @@ os.environ["OTEL_METRICS_ENABLED"] = "false"
 
 from app.main import app
 from app.database import get_session
-from app.models import Transaction, ImportFormat, Tag, TransactionTag
+from app.models import Transaction, Tag, TransactionTag
 
 
 # Use in-memory SQLite for tests
@@ -33,11 +34,7 @@ def event_loop():
 @pytest.fixture(scope="function")
 async def async_engine():
     """Create async engine for tests"""
-    engine = create_async_engine(
-        TEST_DATABASE_URL,
-        echo=False,
-        connect_args={"check_same_thread": False}
-    )
+    engine = create_async_engine(TEST_DATABASE_URL, echo=False, connect_args={"check_same_thread": False})
 
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
@@ -50,11 +47,7 @@ async def async_engine():
 @pytest.fixture(scope="function")
 async def async_session(async_engine) -> AsyncGenerator[AsyncSession, None]:
     """Create async session for tests"""
-    async_session_maker = sessionmaker(
-        async_engine,
-        class_=AsyncSession,
-        expire_on_commit=False
-    )
+    async_session_maker = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session_maker() as session:
         yield session
@@ -63,16 +56,13 @@ async def async_session(async_engine) -> AsyncGenerator[AsyncSession, None]:
 @pytest.fixture(scope="function")
 async def client(async_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """Create test client with dependency override"""
+
     async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
         yield async_session
 
     app.dependency_overrides[get_session] = override_get_session
 
-    async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test",
-        follow_redirects=True
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test", follow_redirects=True) as client:
         yield client
 
     app.dependency_overrides.clear()
@@ -150,7 +140,7 @@ async def seed_transactions(async_session: AsyncSession, seed_categories):
             "reconciliation_status": "matched",
             "reference_id": "tx_income_1",
             "bucket_tag": "bucket:income",
-            "account_tag": "account:bofa-1234"
+            "account_tag": "account:bofa-1234",
         },
         {
             "date": date(2025, 11, 5),
@@ -163,7 +153,7 @@ async def seed_transactions(async_session: AsyncSession, seed_categories):
             "reconciliation_status": "matched",
             "reference_id": "tx_grocery_1",
             "bucket_tag": "bucket:groceries",
-            "account_tag": "account:amex-5678"
+            "account_tag": "account:amex-5678",
         },
         {
             "date": date(2025, 11, 10),
@@ -176,7 +166,7 @@ async def seed_transactions(async_session: AsyncSession, seed_categories):
             "reconciliation_status": "unreconciled",
             "reference_id": "tx_coffee_1",
             "bucket_tag": "bucket:dining",
-            "account_tag": "account:amex-5678"
+            "account_tag": "account:amex-5678",
         },
         {
             "date": date(2025, 11, 15),
@@ -189,7 +179,7 @@ async def seed_transactions(async_session: AsyncSession, seed_categories):
             "reconciliation_status": "unreconciled",
             "reference_id": "tx_shopping_1",
             "bucket_tag": "bucket:shopping",
-            "account_tag": "account:amex-5678"
+            "account_tag": "account:amex-5678",
         },
         {
             "date": date(2025, 10, 1),
@@ -201,7 +191,7 @@ async def seed_transactions(async_session: AsyncSession, seed_categories):
             "reconciliation_status": "matched",
             "reference_id": "tx_income_2",
             "bucket_tag": "bucket:income",
-            "account_tag": "account:bofa-1234"
+            "account_tag": "account:bofa-1234",
         },
         {
             "date": date(2025, 10, 10),
@@ -214,7 +204,7 @@ async def seed_transactions(async_session: AsyncSession, seed_categories):
             "reconciliation_status": "matched",
             "reference_id": "tx_shopping_2",
             "bucket_tag": "bucket:shopping",
-            "account_tag": "account:amex-5678"
+            "account_tag": "account:amex-5678",
         },
     ]
 

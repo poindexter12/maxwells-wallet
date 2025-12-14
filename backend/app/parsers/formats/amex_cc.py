@@ -18,7 +18,6 @@ from ..base import (
     AmountConfig,
     DateConfig,
     AmountSign,
-    ParsedTransaction,
 )
 from ..registry import ParserRegistry
 
@@ -52,27 +51,27 @@ class AmexCCParser(CSVFormatParser):
 
     # AMEX category mapping to our simplified categories
     CATEGORY_MAP = {
-        'restaurant': 'Dining & Coffee',
-        'bar & café': 'Dining & Coffee',
-        'merchandise': 'Shopping',
-        'retail': 'Shopping',
-        'wholesale': 'Shopping',
-        'entertainment': 'Entertainment',
-        'health care': 'Healthcare',
-        'education': 'Education',
-        'government': 'Transportation',
-        'toll': 'Transportation',
-        'computer': 'Subscriptions',
-        'internet': 'Subscriptions',
-        'telecom': 'Utilities',
-        'communications': 'Utilities',
+        "restaurant": "Dining & Coffee",
+        "bar & café": "Dining & Coffee",
+        "merchandise": "Shopping",
+        "retail": "Shopping",
+        "wholesale": "Shopping",
+        "entertainment": "Entertainment",
+        "health care": "Healthcare",
+        "education": "Education",
+        "government": "Transportation",
+        "toll": "Transportation",
+        "computer": "Subscriptions",
+        "internet": "Subscriptions",
+        "telecom": "Utilities",
+        "communications": "Utilities",
     }
 
     def can_parse(self, csv_content: str) -> Tuple[bool, float]:
         """Detect AMEX format by looking for 'Card Member' and 'Account #' columns."""
-        lines = csv_content.strip().split('\n')
+        lines = csv_content.strip().split("\n")
         for line in lines[:10]:
-            if 'Card Member' in line and 'Account #' in line:
+            if "Card Member" in line and "Account #" in line:
                 return True, 0.95
         return False, 0.0
 
@@ -83,8 +82,8 @@ class AmexCCParser(CSVFormatParser):
             return True
 
         # Skip payment rows
-        description = row.get('Description', '').strip()
-        if 'AUTOPAY PAYMENT' in description or 'THANK YOU' in description:
+        description = row.get("Description", "").strip()
+        if "AUTOPAY PAYMENT" in description or "THANK YOU" in description:
             return True
 
         return False
@@ -102,7 +101,7 @@ class AmexCCParser(CSVFormatParser):
             return ""
 
         # Take first part before multiple spaces or location/phone
-        parts = re.split(r'\s{2,}', description)
+        parts = re.split(r"\s{2,}", description)
         if parts:
             return parts[0].strip()
         return description[:50].strip()
@@ -121,7 +120,7 @@ class AmexCCParser(CSVFormatParser):
 
     def get_default_account_source(self, csv_content: str, row: Dict) -> str:
         """Build account source from account number."""
-        account_num = row.get('Account #', '').strip() if row else ''
+        account_num = row.get("Account #", "").strip() if row else ""
         if account_num:
             return f"AMEX{account_num}"
         return "AMEX"

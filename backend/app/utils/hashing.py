@@ -1,15 +1,12 @@
 """Content hashing utilities for transaction deduplication"""
+
 import hashlib
 from datetime import date as date_type
 from typing import Optional
 
 
 def compute_transaction_content_hash(
-    date: date_type,
-    amount: float,
-    description: str,
-    account_source: str,
-    include_account: bool = True
+    date: date_type, amount: float, description: str, account_source: str, include_account: bool = True
 ) -> str:
     """
     Compute SHA256 content hash for a transaction.
@@ -44,14 +41,11 @@ def compute_transaction_content_hash(
         hash_input = f"{date_str}|{amount_str}|{description_normalized}"
 
     # Compute SHA256 hash
-    hash_obj = hashlib.sha256(hash_input.encode('utf-8'))
+    hash_obj = hashlib.sha256(hash_input.encode("utf-8"))
     return hash_obj.hexdigest()
 
 
-def compute_transaction_hash_from_dict(
-    txn_data: dict,
-    include_account: bool = True
-) -> Optional[str]:
+def compute_transaction_hash_from_dict(txn_data: dict, include_account: bool = True) -> Optional[str]:
     """
     Compute content hash from a transaction dictionary.
 
@@ -67,11 +61,11 @@ def compute_transaction_hash_from_dict(
     """
     try:
         return compute_transaction_content_hash(
-            date=txn_data['date'],
-            amount=txn_data['amount'],
-            description=txn_data['description'],
-            account_source=txn_data['account_source'],
-            include_account=include_account
+            date=txn_data["date"],
+            amount=txn_data["amount"],
+            description=txn_data["description"],
+            account_source=txn_data["account_source"],
+            include_account=include_account,
         )
     except (KeyError, TypeError, AttributeError):
         return None
