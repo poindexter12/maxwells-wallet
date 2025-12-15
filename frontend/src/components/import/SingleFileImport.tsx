@@ -119,6 +119,7 @@ export function SingleFileImport({
                 value={accountSource}
                 onChange={(e) => setAccountSource(e.target.value)}
                 className={`w-full px-4 py-2 border rounded-md ${!accountSource ? 'border-yellow-400' : ''}`}
+                data-testid={TEST_IDS.IMPORT_ACCOUNT_INPUT}
                 data-chaos-target="import-account-input"
               />
             )}

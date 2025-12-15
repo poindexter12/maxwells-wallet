@@ -4,6 +4,7 @@
 export const IMPORT_IDS = {
   IMPORT_FILE_INPUT: 'import-file-input',
   IMPORT_ACCOUNT_SELECT: 'import-account-select',
+  IMPORT_ACCOUNT_INPUT: 'import-account-input',
   IMPORT_FORMAT_SELECT: 'import-format-select',
   IMPORT_PREVIEW_BUTTON: 'import-preview-button',
   IMPORT_CONFIRM_BUTTON: 'import-confirm-button',

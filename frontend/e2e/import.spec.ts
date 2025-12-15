@@ -20,11 +20,9 @@ test.describe('Import Flow @e2e', () => {
   test('shows account input area', async ({ page }) => {
     await page.goto('/import');
 
-    // Account select or input should be present (select if accounts exist, input if creating new)
+    // Account select (if accounts exist) or input (for new account) should be present
     const accountSelect = page.getByTestId('import-account-select');
-    const accountInput = page.locator('input[placeholder]').filter({ hasText: /./ }).or(
-      page.locator('input[type="text"]').first()
-    );
+    const accountInput = page.getByTestId('import-account-input');
 
     // At least one should be visible
     const hasAccountSelect = await accountSelect.count() > 0;
