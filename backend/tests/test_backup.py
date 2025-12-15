@@ -477,7 +477,8 @@ class TestBackupServiceGFSRetention:
             assert metadata.tier == "hourly"
             assert "hourly" in original_filename
 
-            # Make it 2 days old (should become "daily" tier)
+            # Make it 2 days old - will become "daily" or "weekly" depending on
+            # day of week (GFS promotes to higher tier when backup qualifies for multiple)
             manifest = service._load_manifest()
             manifest.backups[0].created_at = datetime.now(timezone.utc) - timedelta(days=2)
             service._save_manifest(manifest)
@@ -485,12 +486,13 @@ class TestBackupServiceGFSRetention:
             # Run cleanup to trigger tier promotion
             service.cleanup_old_backups()
 
-            # Check the backup was promoted and renamed
+            # Check the backup was promoted from hourly to a higher tier
             backup = service.get_backup(backup_id)
             assert backup is not None
-            assert backup.tier == "daily"
-            assert "daily" in backup.filename
-            assert f"wallet_daily_{backup_id}.db.gz" == backup.filename
+            # Should be promoted to at least daily (could be weekly depending on day)
+            assert backup.tier in ("daily", "weekly"), f"Expected daily or weekly, got {backup.tier}"
+            assert backup.tier in backup.filename
+            assert f"wallet_{backup.tier}_{backup_id}.db.gz" == backup.filename
 
             # Verify file was actually renamed on disk
             assert (Path(temp_backup_dir) / backup.filename).exists()
