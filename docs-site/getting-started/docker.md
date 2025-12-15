@@ -12,7 +12,7 @@ This starts both the frontend (port 3000) and backend (port 8000).
 
 ## Docker Compose
 
-The default `docker-compose.yml` configuration:
+The default `docker-compose.yaml` configuration:
 
 ```yaml
 services:
