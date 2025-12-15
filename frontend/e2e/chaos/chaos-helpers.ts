@@ -919,9 +919,19 @@ async function executeDemonAction(
       if (elements.length === 0) return null;
 
       const element = rng.pick(elements);
-      const text = await element.textContent();
-      await element.dblclick({ timeout: 2000 });
-      return `double-click: "${text?.trim().slice(0, 20)}"`;
+      try {
+        const text = await element.textContent();
+        await element.dblclick({ timeout: 2000 });
+        return `double-click: "${text?.trim().slice(0, 20)}"`;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        // Page/browser closed during aggressive action is expected in demon mode
+        if (msg.includes('closed') || msg.includes('destroyed') || msg.includes('navigation')) {
+          await page.waitForLoadState('domcontentloaded').catch(() => {});
+          return `double-click: (page recovered after close/navigation)`;
+        }
+        throw e;
+      }
     }
 
     case 'fuzz-input': {
@@ -972,13 +982,22 @@ async function executeDemonAction(
       if (inputs.length < 2) return null;
 
       const iterations = rng.int(5, 15);
-      for (let i = 0; i < iterations; i++) {
-        const el = rng.pick(inputs);
-        await el.focus().catch(() => {});
-        await page.keyboard.press('Tab');
+      try {
+        for (let i = 0; i < iterations; i++) {
+          const el = rng.pick(inputs);
+          await el.focus().catch(() => {});
+          await page.keyboard.press('Tab');
+        }
+        return `blur-focus-spam: ${iterations} tab cycles`;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        // Page/browser closed during aggressive action is expected in demon mode
+        if (msg.includes('closed') || msg.includes('destroyed') || msg.includes('navigation')) {
+          await page.waitForLoadState('domcontentloaded').catch(() => {});
+          return `blur-focus-spam: (page recovered after close/navigation)`;
+        }
+        throw e;
       }
-
-      return `blur-focus-spam: ${iterations} tab cycles`;
     }
 
     default:
