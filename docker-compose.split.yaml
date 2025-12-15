@@ -4,7 +4,7 @@
 # Use this for production or when you need to scale independently.
 #
 # Usage:
-#   docker compose -f docker-compose.split.yml up -d
+#   docker compose -f docker-compose.split.yaml up -d
 
 services:
   backend:

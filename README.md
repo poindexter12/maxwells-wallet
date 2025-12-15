@@ -58,20 +58,44 @@ See [CHANGELOG.md](CHANGELOG.md) for full release history.
 - **Credit Card Tracking**: Due dates, credit limits, available credit, utilization %
 - **Category Rules**: Automate categorization with pattern-based rules
 
-## Quick Start
+## Installation
 
 ### Docker (Recommended)
 
 ```bash
+# Quick start with Docker Compose
 docker compose up -d
 # Open http://localhost:3000
 ```
 
-Data persists in a Docker volume. For a custom location:
+Data persists in a Docker volume. For custom configurations, see below.
+
+#### Deployment Options
+
+| Compose File | Description | Use Case |
+|-------------|-------------|----------|
+| `docker-compose.yaml` | All-in-one container | Simple deployment (default) |
+| `docker-compose.split.yaml` | Separate frontend/backend | Scaling, microservices |
+| `docker-compose.demo.yaml` | Demo mode with sample data | Public demos, testing |
 
 ```bash
-docker run -d -p 3000:3000 -p 8000:8000 -v /path/to/data:/data maxwells-wallet
+# Split deployment (separate containers)
+docker compose -f docker-compose.split.yaml up -d
+
+# Demo mode (sample data, periodic resets)
+docker compose -f docker-compose.demo.yaml up -d
+docker compose -f docker-compose.demo.yaml run --rm maxwells-wallet demo-setup
 ```
+
+#### Custom Data Location
+
+```bash
+docker run -d -p 3000:3000 -p 3001:3001 \
+  -v /path/to/your/data:/data \
+  ghcr.io/poindexter12/maxwells-wallet
+```
+
+See [Installation Guide](docs/installation.md) for complete Docker configuration options.
 
 ### Development
 
