@@ -1090,10 +1090,10 @@ async function executeDemonAction(
     }
 
     case 'fuzz-input': {
-      // Exclude checkbox/radio - they can't be filled, only clicked
+      // Exclude checkbox/radio/number - they can't be filled with arbitrary text
       const inputs = await getVisibleElements(
         page,
-        'input:visible:not([type=file]):not([type=hidden]):not([type=checkbox]):not([type=radio]):not([readonly]), textarea:visible',
+        'input:visible:not([type=file]):not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=number]):not([readonly]), textarea:visible',
         excludeSelectors
       );
       if (inputs.length === 0) return null;
