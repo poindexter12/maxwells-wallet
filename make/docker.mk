@@ -34,7 +34,7 @@ docker-up: ## Start Docker container
 	@echo "$(GREEN)✓ Container started$(NC)"
 	@echo ""
 	@echo "Frontend: http://localhost:3000"
-	@echo "Backend:  http://localhost:8000"
+	@echo "Backend:  http://localhost:3001"
 
 docker-down: ## Stop Docker container
 	@echo "$(BLUE)Stopping Docker container...$(NC)"
