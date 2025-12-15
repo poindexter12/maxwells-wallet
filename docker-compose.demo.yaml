@@ -1,7 +1,7 @@
 # Maxwell's Wallet - Demo Mode
 #
-# Runs the app in demo mode with sample data and periodic resets.
-# Useful for public demos, testing, or showcasing the application.
+# Run a public demo instance with sample data and periodic resets.
+# Uses the published image with demo mode enabled.
 #
 # Usage:
 #   docker compose -f docker-compose.demo.yaml up -d
@@ -13,30 +13,20 @@
 
 services:
   maxwells-wallet:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        # Include pseudo locale for QA testing in demo
-        ENABLE_PSEUDO: true
+    image: ghcr.io/poindexter12/maxwells-wallet:latest
     ports:
       - "3000:3000"   # Frontend
       - "3001:3001"   # Backend API
     volumes:
-      # Persistent volume for demo data
       - demo-data:/data
     environment:
       - DATABASE_URL=sqlite+aiosqlite:////data/wallet.db
       # Demo mode settings
       - DEMO_MODE=true
       - DEMO_RESET_INTERVAL_HOURS=1
-      # Backup settings (demo backup is never deleted)
+      # Backup settings
       - BACKUP_DIR=/data/backups
       - BACKUP_RETENTION=5
-      # Observability
-      - OTEL_ENABLED=true
-      - OTEL_METRICS_ENABLED=true
-      - OTEL_LOG_FORMAT=json
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]

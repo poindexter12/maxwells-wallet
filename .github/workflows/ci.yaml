@@ -244,16 +244,16 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Cleanup any existing containers
-        run: docker compose down -v --remove-orphans 2>/dev/null || true
+        run: docker compose -f docker-compose.dev.yaml down -v --remove-orphans 2>/dev/null || true
 
       - name: Build all-in-one image
-        run: docker compose build
+        run: docker compose -f docker-compose.dev.yaml build
 
       - name: Test migrate command
         run: |
           # Run migrate in a fresh container (not detached)
           # -T disables pseudo-TTY allocation for cleaner CI output
-          docker compose run -T --rm maxwells-wallet migrate
+          docker compose -f docker-compose.dev.yaml run -T --rm maxwells-wallet migrate
 
       - name: Test seed command
         run: |
@@ -261,11 +261,11 @@ jobs:
           sleep 2
           # Run seed in a fresh container (not detached)
           # -T disables pseudo-TTY allocation for cleaner CI output
-          docker compose run -T --rm maxwells-wallet seed
+          docker compose -f docker-compose.dev.yaml run -T --rm maxwells-wallet seed
 
       - name: Start container and verify health
         run: |
-          docker compose up -d
+          docker compose -f docker-compose.dev.yaml up -d
           echo "Waiting for services to start..."
           sleep 15
 
@@ -290,14 +290,14 @@ jobs:
           done
 
           echo "Health checks failed"
-          docker compose logs
+          docker compose -f docker-compose.dev.yaml logs
           exit 1
 
       - name: Show logs on failure
         if: failure()
-        run: docker compose logs
+        run: docker compose -f docker-compose.dev.yaml logs
 
       - name: Cleanup
         if: always()
-        run: docker compose down -v --remove-orphans
+        run: docker compose -f docker-compose.dev.yaml down -v --remove-orphans
 

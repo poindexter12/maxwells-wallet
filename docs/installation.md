@@ -29,43 +29,56 @@ docker run -d -p 3000:3000 -p 3001:3001 \
 
 ## Docker Compose Deployment
 
-For production deployments, Docker Compose provides more flexibility.
+Docker Compose provides flexible deployment options.
 
-### Option 1: All-in-One Container (Recommended)
+### Option 1: Quick Start (Recommended)
 
-Single container running both frontend and backend:
+Pull and run the latest published image:
 
 ```bash
-git clone https://github.com/poindexter12/maxwells-wallet.git
-cd maxwells-wallet
 docker compose up -d
 ```
 
 This uses `docker-compose.yaml` which:
+- Pulls `ghcr.io/poindexter12/maxwells-wallet:latest`
 - Runs frontend (port 3000) and backend (port 3001) in one container
 - Persists data in a Docker volume
 - Auto-runs migrations on startup
-- Includes health checks
 
-### Option 2: Split Containers
+### Option 2: Build from Source
+
+For development or customization:
+
+```bash
+docker compose -f docker-compose.dev.yaml build
+docker compose -f docker-compose.dev.yaml up -d
+```
+
+This uses `docker-compose.dev.yaml` which:
+- Builds the image from local source code
+- Supports build args like `ENABLE_PSEUDO=true` for QA testing
+- Includes observability settings
+
+### Option 3: Split Containers
 
 Run frontend and backend as separate services for independent scaling:
 
 ```bash
+docker compose -f docker-compose.split.yaml build
 docker compose -f docker-compose.split.yaml up -d
 ```
 
 This uses `docker-compose.split.yaml` which:
-- Runs frontend and backend in separate containers
+- Builds frontend and backend from separate Dockerfiles
 - Backend includes health checks
 - Frontend waits for healthy backend before starting
 
-### Option 3: Demo Mode
+### Option 4: Demo Mode
 
 Run a public demo instance with sample data and periodic resets:
 
 ```bash
-# Start in demo mode
+# Start in demo mode (pulls from registry)
 docker compose -f docker-compose.demo.yaml up -d
 
 # First-time setup (seeds demo data and creates demo backup)
@@ -73,10 +86,10 @@ docker compose -f docker-compose.demo.yaml run --rm maxwells-wallet demo-setup
 ```
 
 This uses `docker-compose.demo.yaml` which:
+- Pulls the latest published image
 - Enables demo mode (restricts destructive operations)
 - Displays a "Demo Mode" banner in the UI
 - Automatically resets data to the demo snapshot hourly
-- Includes pseudo-locale for QA testing
 
 ### Customizing the Deployment
 
