@@ -8,7 +8,7 @@ Run Maxwell's Wallet using Docker for easy deployment.
 docker compose up -d
 ```
 
-This starts both the frontend (port 3000) and backend (port 8000).
+This starts both the frontend (port 3000) and backend (port 3001).
 
 ## Docker Compose
 
@@ -20,7 +20,7 @@ services:
     image: ghcr.io/poindexter12/maxwells-wallet:latest
     ports:
       - "3000:3000"
-      - "8000:8000"
+      - "3001:3001"
     volumes:
       - wallet-data:/data
 
@@ -34,7 +34,7 @@ To store data in a specific host directory:
 
 ```bash
 docker run -d \
-  -p 3000:3000 -p 8000:8000 \
+  -p 3000:3000 -p 3001:3001 \
   -v /path/to/your/data:/data \
   ghcr.io/poindexter12/maxwells-wallet
 ```
@@ -49,5 +49,5 @@ docker run -d \
 
 ```bash
 docker build -t maxwells-wallet .
-docker run -d -p 3000:3000 -p 8000:8000 maxwells-wallet
+docker run -d -p 3000:3000 -p 3001:3001 maxwells-wallet
 ```
