@@ -95,7 +95,7 @@ jobs:
           CI: true
 
       - name: Upload chaos test report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: chaos-report-${{ matrix.spec }}-${{ matrix.browser }}

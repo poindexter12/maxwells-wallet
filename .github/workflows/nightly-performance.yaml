@@ -41,7 +41,7 @@ jobs:
           OTEL_ENABLED: "false"
 
       - name: Upload performance results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: performance-results
