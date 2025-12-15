@@ -1,9 +1,12 @@
-# Maxwell's Wallet - Split Deployment
+# Maxwell's Wallet - Split Deployment (Build from Source)
 #
 # Runs frontend and backend as separate containers.
-# Use this for production or when you need to scale independently.
+# Use this for production deployments where you need to scale independently.
+#
+# Note: This builds from source. For quick start, use docker-compose.yaml instead.
 #
 # Usage:
+#   docker compose -f docker-compose.split.yaml build
 #   docker compose -f docker-compose.split.yaml up -d
 
 services:
@@ -14,18 +17,15 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - wallet-data:/app/data
+      - wallet-data:/data
       - ./samples:/app/samples:ro
     environment:
       - DATABASE_URL=sqlite+aiosqlite:///./data/wallet.db
-      # Observability (v0.8+)
       - OTEL_ENABLED=true
       - OTEL_METRICS_ENABLED=true
       - OTEL_TRACING_ENABLED=true
       - OTEL_LOG_FORMAT=json
       - OTEL_SLOW_QUERY_THRESHOLD_MS=100
-      # Optional: webhook for threshold alerts
-      # - OTEL_ALERT_WEBHOOK_URL=https://hooks.slack.com/...
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s

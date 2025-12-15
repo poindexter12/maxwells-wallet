@@ -1,54 +1,28 @@
 # Maxwell's Wallet - Docker Compose
 #
-# Start the app:
+# Quick start for end users - pulls the latest published image.
+#
+# Usage:
 #   docker compose up -d
+#   docker compose run --rm maxwells-wallet seed    # Optional: add sample data
 #
-# Seed with sample data:
-#   docker compose run --rm maxwells-wallet seed
-#
-# Run migrations only:
-#   docker compose run --rm maxwells-wallet migrate
+# For development (build from source), use docker-compose.dev.yaml instead.
 #
 # Access the app at http://localhost:3000
 # API available at http://localhost:3001
 
 services:
-  # All-in-One container (frontend + backend)
   maxwells-wallet:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        # Set ENABLE_PSEUDO=true in .env to include pseudo locale for QA testing
-        ENABLE_PSEUDO: ${ENABLE_PSEUDO:-false}
+    image: ghcr.io/poindexter12/maxwells-wallet:latest
     ports:
       - "3000:3000"   # Frontend
       - "3001:3001"   # Backend API
     volumes:
-      # External data storage - map to your preferred location
       - wallet-data:/data
-      # Optional: mount CSVs for import
-      # - ./my-data:/import:ro
     environment:
       - DATABASE_URL=sqlite+aiosqlite:////data/wallet.db
-      # Demo mode (v0.9+) - set DEMO_MODE=true in .env or shell
-      - DEMO_MODE=${DEMO_MODE:-false}
-      - DEMO_RESET_INTERVAL_HOURS=${DEMO_RESET_INTERVAL_HOURS:-1}
-      # Observability (v0.8+)
-      - OTEL_ENABLED=true
-      - OTEL_METRICS_ENABLED=true
-      - OTEL_TRACING_ENABLED=true
-      - OTEL_LOG_FORMAT=json
-      - OTEL_SLOW_QUERY_THRESHOLD_MS=100
-      # Optional: webhook for threshold alerts
-      # - OTEL_ALERT_WEBHOOK_URL=https://hooks.slack.com/...
     restart: unless-stopped
 
 volumes:
   wallet-data:
     driver: local
-    # To use a specific host path instead:
-    # driver_opts:
-    #   type: none
-    #   o: bind
-    #   device: /path/to/your/data

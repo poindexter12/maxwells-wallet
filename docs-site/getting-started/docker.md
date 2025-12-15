@@ -8,25 +8,15 @@ Run Maxwell's Wallet using Docker for easy deployment.
 docker compose up -d
 ```
 
-This starts both the frontend (port 3000) and backend (port 3001).
+This pulls the latest published image and starts both the frontend (port 3000) and backend (port 3001).
 
-## Docker Compose
+## Docker Compose Files
 
-The default `docker-compose.yaml` configuration:
-
-```yaml
-services:
-  app:
-    image: ghcr.io/poindexter12/maxwells-wallet:latest
-    ports:
-      - "3000:3000"
-      - "3001:3001"
-    volumes:
-      - wallet-data:/data
-
-volumes:
-  wallet-data:
-```
+| File | Description | Image Source |
+|------|-------------|--------------|
+| `docker-compose.yaml` | Quick start | Pulls from registry |
+| `docker-compose.dev.yaml` | Development/CI | Builds from source |
+| `docker-compose.demo.yaml` | Demo mode | Pulls from registry |
 
 ## Custom Data Location
 
@@ -44,10 +34,11 @@ docker run -d \
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `DATABASE_URL` | `sqlite:///data/wallet.db` | Database connection string |
+| `DEMO_MODE` | `false` | Enable demo mode restrictions |
 
-## Building Locally
+## Building from Source
 
 ```bash
-docker build -t maxwells-wallet .
-docker run -d -p 3000:3000 -p 3001:3001 maxwells-wallet
+docker compose -f docker-compose.dev.yaml build
+docker compose -f docker-compose.dev.yaml up -d
 ```

@@ -63,28 +63,30 @@ See [CHANGELOG.md](CHANGELOG.md) for full release history.
 ### Docker (Recommended)
 
 ```bash
-# Quick start with Docker Compose
+# Quick start - pulls latest published image
 docker compose up -d
 # Open http://localhost:3000
 ```
 
 Data persists in a Docker volume. For custom configurations, see below.
 
-#### Deployment Options
+#### Compose Files
 
-| Compose File | Description | Use Case |
-|-------------|-------------|----------|
-| `docker-compose.yaml` | All-in-one container | Simple deployment (default) |
-| `docker-compose.split.yaml` | Separate frontend/backend | Scaling, microservices |
-| `docker-compose.demo.yaml` | Demo mode with sample data | Public demos, testing |
+| Compose File | Description | Image Source |
+|-------------|-------------|--------------|
+| `docker-compose.yaml` | Quick start for end users | Pulls from registry |
+| `docker-compose.dev.yaml` | Development/CI builds | Builds from source |
+| `docker-compose.split.yaml` | Separate frontend/backend | Builds from source |
+| `docker-compose.demo.yaml` | Demo mode with resets | Pulls from registry |
 
 ```bash
-# Split deployment (separate containers)
-docker compose -f docker-compose.split.yaml up -d
-
 # Demo mode (sample data, periodic resets)
 docker compose -f docker-compose.demo.yaml up -d
 docker compose -f docker-compose.demo.yaml run --rm maxwells-wallet demo-setup
+
+# Build from source (development)
+docker compose -f docker-compose.dev.yaml build
+docker compose -f docker-compose.dev.yaml up -d
 ```
 
 #### Custom Data Location

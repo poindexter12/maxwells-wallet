@@ -1,0 +1,42 @@
+# Maxwell's Wallet - Development Docker Compose
+#
+# Builds from source for development and CI testing.
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yaml build
+#   docker compose -f docker-compose.dev.yaml up -d
+#   docker compose -f docker-compose.dev.yaml run --rm maxwells-wallet seed
+#
+# Build with pseudo-locale for i18n QA:
+#   ENABLE_PSEUDO=true docker compose -f docker-compose.dev.yaml build
+#
+# Access the app at http://localhost:3000
+# API available at http://localhost:3001
+
+services:
+  maxwells-wallet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        ENABLE_PSEUDO: ${ENABLE_PSEUDO:-false}
+    ports:
+      - "3000:3000"   # Frontend
+      - "3001:3001"   # Backend API
+    volumes:
+      - wallet-data:/data
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:////data/wallet.db
+      - DEMO_MODE=${DEMO_MODE:-false}
+      - DEMO_RESET_INTERVAL_HOURS=${DEMO_RESET_INTERVAL_HOURS:-1}
+      # Observability
+      - OTEL_ENABLED=true
+      - OTEL_METRICS_ENABLED=true
+      - OTEL_TRACING_ENABLED=true
+      - OTEL_LOG_FORMAT=json
+      - OTEL_SLOW_QUERY_THRESHOLD_MS=100
+    restart: unless-stopped
+
+volumes:
+  wallet-data:
+    driver: local
