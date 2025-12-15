@@ -59,6 +59,10 @@ export interface ChaosOptions {
   maxDelay?: number;
   timeout?: number;
   onAction?: (action: string, index: number) => void;
+  /** If true, log errors and continue testing instead of failing immediately */
+  continueOnError?: boolean;
+  /** Max recovery attempts before giving up (default: 3) */
+  maxRecoveryAttempts?: number;
 }
 
 export interface TimedChaosOptions {
@@ -70,6 +74,10 @@ export interface TimedChaosOptions {
   maxDelay?: number;
   timeout?: number;
   onAction?: (action: string, index: number) => void;
+  /** If true, log errors and continue testing instead of failing immediately */
+  continueOnError?: boolean;
+  /** Max recovery attempts before giving up (default: 3) */
+  maxRecoveryAttempts?: number;
 }
 
 export interface ChaosResult {
@@ -77,6 +85,8 @@ export interface ChaosResult {
   actionsPerformed: number;
   errors: string[];
   actions: string[];
+  /** Number of times page was recovered after errors */
+  recoveries: number;
 }
 
 const DEFAULT_ACTION_TYPES: ActionType[] = [
@@ -108,6 +118,36 @@ const DEFAULT_EXCLUDE_SELECTORS = [
 ];
 
 /**
+ * Attempt to recover the page after an error by reloading
+ * Returns true if recovery was successful
+ */
+async function attemptPageRecovery(
+  page: Page,
+  errorMsg: string,
+  recoveryAttempt: number,
+  maxAttempts: number
+): Promise<boolean> {
+  if (recoveryAttempt >= maxAttempts) {
+    console.log(`  💀 Max recovery attempts (${maxAttempts}) reached, giving up`);
+    return false;
+  }
+
+  console.log(`  🔄 Recovery attempt ${recoveryAttempt + 1}/${maxAttempts} after error: ${errorMsg.slice(0, 50)}...`);
+  try {
+    // Get current URL before reload
+    const currentUrl = page.url();
+    await page.reload({ waitUntil: 'domcontentloaded', timeout: 10000 });
+    await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+    console.log(`  ✅ Page recovered, continuing from ${currentUrl}`);
+    return true;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.log(`  ❌ Recovery failed: ${msg}`);
+    return false;
+  }
+}
+
+/**
  * Perform random actions on the page
  */
 export async function performRandomActions(
@@ -124,9 +164,13 @@ export async function performRandomActions(
   const minDelay = options.minDelay ?? 50;
   const maxDelay = options.maxDelay ?? 300;
   const timeout = options.timeout ?? 5000; // 5s for slow CI environments
+  const continueOnError = options.continueOnError ?? false;
+  const maxRecoveryAttempts = options.maxRecoveryAttempts ?? 3;
 
   const errors: string[] = [];
   const actionsLog: string[] = [];
+  let recoveries = 0;
+  let consecutiveRecoveryAttempts = 0;
 
   // Capture page errors
   const errorHandler = (error: Error) => {
@@ -136,7 +180,7 @@ export async function performRandomActions(
 
   const startTime = Date.now();
   console.log(`🐒 Chaos monkey starting with seed: ${seed} at ${new Date().toISOString()}`);
-  console.log(`  Config: ${options.actions} actions, delay ${minDelay}-${maxDelay}ms, timeout ${timeout}ms`);
+  console.log(`  Config: ${options.actions} actions, delay ${minDelay}-${maxDelay}ms, timeout ${timeout}ms, continueOnError: ${continueOnError}`);
 
   for (let i = 0; i < options.actions; i++) {
     const actionStart = Date.now();
@@ -157,15 +201,34 @@ export async function performRandomActions(
           excludeSelectors,
           timeout
         );
+        consecutiveRecoveryAttempts = 0; // Reset on success
       } catch (e) {
-        // Action failures (timeouts, etc.) indicate UI issues - fail the test
+        // Action failures (timeouts, etc.) indicate UI issues
         const msg = e instanceof Error ? e.message : String(e);
         const actionDuration = Date.now() - actionStart;
         const errorMsg = `[${actionType}] ${msg}`;
         actionsLog.push(`${i + 1}. [FAILED] ${actionType}: ${msg}`);
-        errors.push(errorMsg); // Add to errors so test fails
+        errors.push(errorMsg);
         console.log(`  [${i + 1}/${options.actions}] FAILED ${actionType}: ${msg} (${actionDuration}ms)`);
-        break; // Stop on action failure
+
+        if (continueOnError) {
+          // Try to recover and continue
+          const recovered = await attemptPageRecovery(page, msg, consecutiveRecoveryAttempts, maxRecoveryAttempts);
+          if (recovered) {
+            recoveries++;
+            consecutiveRecoveryAttempts = 0;
+            break; // Continue to next action
+          } else {
+            consecutiveRecoveryAttempts++;
+            if (consecutiveRecoveryAttempts >= maxRecoveryAttempts) {
+              console.log(`  💀 Too many consecutive failures, stopping`);
+              i = options.actions; // Force exit loop
+            }
+            break;
+          }
+        } else {
+          break; // Stop on action failure (original behavior)
+        }
       }
     }
 
@@ -179,8 +242,8 @@ export async function performRandomActions(
     // Random delay between actions
     await page.waitForTimeout(rng.int(minDelay, maxDelay));
 
-    // Early exit if we hit a crash
-    if (errors.length > 0) {
+    // Early exit if we hit a crash (only if not in continueOnError mode)
+    if (!continueOnError && errors.length > 0) {
       console.log(`🔥 Crash detected after action ${i + 1}`);
       break;
     }
@@ -190,13 +253,14 @@ export async function performRandomActions(
 
   const totalDuration = Date.now() - startTime;
   console.log(`🐒 Chaos monkey completed at ${new Date().toISOString()}`);
-  console.log(`  Total: ${actionsLog.length} actions in ${totalDuration}ms (${Math.round(totalDuration / actionsLog.length)}ms/action), Errors: ${errors.length}`);
+  console.log(`  Total: ${actionsLog.length} actions in ${totalDuration}ms (${Math.round(totalDuration / Math.max(1, actionsLog.length))}ms/action), Errors: ${errors.length}, Recoveries: ${recoveries}`);
 
   return {
     seed,
     actionsPerformed: actionsLog.length,
     errors,
     actions: actionsLog,
+    recoveries,
   };
 }
 
@@ -219,9 +283,13 @@ export async function performTimedRandomActions(
   const maxDelay = options.maxDelay ?? 300;
   const timeout = options.timeout ?? 5000;
   const durationMs = options.durationMs;
+  const continueOnError = options.continueOnError ?? false;
+  const maxRecoveryAttempts = options.maxRecoveryAttempts ?? 3;
 
   const errors: string[] = [];
   const actionsLog: string[] = [];
+  let recoveries = 0;
+  let consecutiveRecoveryAttempts = 0;
 
   const errorHandler = (error: Error) => {
     errors.push(error.message);
@@ -231,10 +299,13 @@ export async function performTimedRandomActions(
   const startTime = Date.now();
   const endTime = startTime + durationMs;
   console.log(`🐒 Timed chaos starting with seed: ${seed} at ${new Date().toISOString()}`);
-  console.log(`  Config: ${Math.round(durationMs / 1000)}s duration, delay ${minDelay}-${maxDelay}ms, timeout ${timeout}ms`);
+  console.log(`  Config: ${Math.round(durationMs / 1000)}s duration, delay ${minDelay}-${maxDelay}ms, timeout ${timeout}ms, continueOnError: ${continueOnError}`);
 
   let actionIndex = 0;
-  while (Date.now() < endTime && errors.length === 0) {
+  while (Date.now() < endTime) {
+    // In continueOnError mode, keep going even with errors
+    if (!continueOnError && errors.length > 0) break;
+
     const actionStart = Date.now();
     let actionDesc: string | null = null;
     let attempts = 0;
@@ -252,6 +323,7 @@ export async function performTimedRandomActions(
           excludeSelectors,
           timeout
         );
+        consecutiveRecoveryAttempts = 0; // Reset on success
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         const actionDuration = Date.now() - actionStart;
@@ -259,7 +331,25 @@ export async function performTimedRandomActions(
         actionsLog.push(`${actionIndex + 1}. [FAILED] ${actionType}: ${msg}`);
         errors.push(errorMsg);
         console.log(`  [${actionIndex + 1}] FAILED ${actionType}: ${msg} (${actionDuration}ms)`);
-        break;
+
+        if (continueOnError) {
+          // Try to recover and continue
+          const recovered = await attemptPageRecovery(page, msg, consecutiveRecoveryAttempts, maxRecoveryAttempts);
+          if (recovered) {
+            recoveries++;
+            consecutiveRecoveryAttempts = 0;
+            break; // Continue to next action
+          } else {
+            consecutiveRecoveryAttempts++;
+            if (consecutiveRecoveryAttempts >= maxRecoveryAttempts) {
+              console.log(`  💀 Too many consecutive failures, stopping`);
+              actionIndex = Number.MAX_SAFE_INTEGER; // Force exit main loop
+            }
+            break;
+          }
+        } else {
+          break; // Original behavior
+        }
       }
     }
 
@@ -282,13 +372,14 @@ export async function performTimedRandomActions(
 
   const totalDuration = Date.now() - startTime;
   console.log(`🐒 Timed chaos completed at ${new Date().toISOString()}`);
-  console.log(`  Total: ${actionsLog.length} actions in ${Math.round(totalDuration / 1000)}s (${Math.round(totalDuration / actionsLog.length)}ms/action), Errors: ${errors.length}`);
+  console.log(`  Total: ${actionsLog.length} actions in ${Math.round(totalDuration / 1000)}s (${Math.round(totalDuration / Math.max(1, actionsLog.length))}ms/action), Errors: ${errors.length}, Recoveries: ${recoveries}`);
 
   return {
     seed,
     actionsPerformed: actionsLog.length,
     errors,
     actions: actionsLog,
+    recoveries,
   };
 }
 
@@ -719,6 +810,10 @@ export interface DemonChaosOptions {
   actionTypes?: DemonActionType[];
   excludeSelectors?: string[];
   onAction?: (action: string, index: number) => void;
+  /** If true, log errors and continue testing instead of failing immediately */
+  continueOnError?: boolean;
+  /** Max recovery attempts before giving up (default: 3) */
+  maxRecoveryAttempts?: number;
 }
 
 export interface TimedDemonChaosOptions {
@@ -727,6 +822,10 @@ export interface TimedDemonChaosOptions {
   actionTypes?: DemonActionType[];
   excludeSelectors?: string[];
   onAction?: (action: string, index: number) => void;
+  /** If true, log errors and continue testing instead of failing immediately */
+  continueOnError?: boolean;
+  /** Max recovery attempts before giving up (default: 3) */
+  maxRecoveryAttempts?: number;
 }
 
 export interface DemonChaosResult {
@@ -734,6 +833,8 @@ export interface DemonChaosResult {
   actionsPerformed: number;
   errors: string[];
   actions: string[];
+  /** Number of times page was recovered after errors */
+  recoveries: number;
 }
 
 const DEFAULT_DEMON_ACTION_TYPES: DemonActionType[] = [
@@ -758,16 +859,20 @@ export async function performDemonActions(
     ...DEFAULT_EXCLUDE_SELECTORS,
     ...(options.excludeSelectors ?? []),
   ];
+  const continueOnError = options.continueOnError ?? false;
+  const maxRecoveryAttempts = options.maxRecoveryAttempts ?? 3;
 
   const errors: string[] = [];
   const actionsLog: string[] = [];
+  let recoveries = 0;
+  let consecutiveRecoveryAttempts = 0;
 
   const errorHandler = (error: Error) => {
     errors.push(error.message);
   };
   page.on('pageerror', errorHandler);
 
-  console.log(`😈 Demon chaos starting with seed: ${seed}`);
+  console.log(`😈 Demon chaos starting with seed: ${seed}, continueOnError: ${continueOnError}`);
 
   for (let i = 0; i < options.actions; i++) {
     const actionType = rng.pick(actionTypes);
@@ -780,12 +885,31 @@ export async function performDemonActions(
         rng,
         excludeSelectors
       );
+      consecutiveRecoveryAttempts = 0; // Reset on success
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       actionsLog.push(`${i + 1}. [FAILED] ${actionType}: ${msg}`);
       errors.push(`[${actionType}] ${msg}`);
       console.log(`  [${i + 1}/${options.actions}] FAILED ${actionType}: ${msg}`);
-      break;
+
+      if (continueOnError) {
+        // Try to recover and continue
+        const recovered = await attemptPageRecovery(page, msg, consecutiveRecoveryAttempts, maxRecoveryAttempts);
+        if (recovered) {
+          recoveries++;
+          consecutiveRecoveryAttempts = 0;
+          continue; // Continue to next action
+        } else {
+          consecutiveRecoveryAttempts++;
+          if (consecutiveRecoveryAttempts >= maxRecoveryAttempts) {
+            console.log(`  💀 Too many consecutive failures, stopping`);
+            break;
+          }
+          continue;
+        }
+      } else {
+        break; // Original behavior
+      }
     }
 
     if (actionDesc) {
@@ -795,18 +919,20 @@ export async function performDemonActions(
     }
 
     // No delays in demon mode - we're trying to break things!
-    if (errors.length > 0) break;
+    // Only exit early if not in continueOnError mode
+    if (!continueOnError && errors.length > 0) break;
   }
 
   page.off('pageerror', errorHandler);
 
-  console.log(`😈 Demon chaos completed: ${actionsLog.length} actions, ${errors.length} errors`);
+  console.log(`😈 Demon chaos completed: ${actionsLog.length} actions, ${errors.length} errors, ${recoveries} recoveries`);
 
   return {
     seed,
     actionsPerformed: actionsLog.length,
     errors,
     actions: actionsLog,
+    recoveries,
   };
 }
 
@@ -826,9 +952,13 @@ export async function performTimedDemonActions(
     ...(options.excludeSelectors ?? []),
   ];
   const durationMs = options.durationMs;
+  const continueOnError = options.continueOnError ?? false;
+  const maxRecoveryAttempts = options.maxRecoveryAttempts ?? 3;
 
   const errors: string[] = [];
   const actionsLog: string[] = [];
+  let recoveries = 0;
+  let consecutiveRecoveryAttempts = 0;
 
   const errorHandler = (error: Error) => {
     errors.push(error.message);
@@ -838,10 +968,13 @@ export async function performTimedDemonActions(
   const startTime = Date.now();
   const endTime = startTime + durationMs;
   console.log(`😈 Timed demon chaos starting with seed: ${seed} at ${new Date().toISOString()}`);
-  console.log(`  Config: ${Math.round(durationMs / 1000)}s duration`);
+  console.log(`  Config: ${Math.round(durationMs / 1000)}s duration, continueOnError: ${continueOnError}`);
 
   let actionIndex = 0;
-  while (Date.now() < endTime && errors.length === 0) {
+  while (Date.now() < endTime) {
+    // In continueOnError mode, keep going even with errors
+    if (!continueOnError && errors.length > 0) break;
+
     const actionType = rng.pick(actionTypes);
     let actionDesc: string | null = null;
 
@@ -852,12 +985,33 @@ export async function performTimedDemonActions(
         rng,
         excludeSelectors
       );
+      consecutiveRecoveryAttempts = 0; // Reset on success
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       actionsLog.push(`${actionIndex + 1}. [FAILED] ${actionType}: ${msg}`);
       errors.push(`[${actionType}] ${msg}`);
       console.log(`  [${actionIndex + 1}] FAILED ${actionType}: ${msg}`);
-      break;
+
+      if (continueOnError) {
+        // Try to recover and continue
+        const recovered = await attemptPageRecovery(page, msg, consecutiveRecoveryAttempts, maxRecoveryAttempts);
+        if (recovered) {
+          recoveries++;
+          consecutiveRecoveryAttempts = 0;
+          actionIndex++;
+          continue; // Continue to next action
+        } else {
+          consecutiveRecoveryAttempts++;
+          if (consecutiveRecoveryAttempts >= maxRecoveryAttempts) {
+            console.log(`  💀 Too many consecutive failures, stopping`);
+            break;
+          }
+          actionIndex++;
+          continue;
+        }
+      } else {
+        break; // Original behavior
+      }
     }
 
     if (actionDesc) {
@@ -878,13 +1032,14 @@ export async function performTimedDemonActions(
 
   const totalDuration = Date.now() - startTime;
   console.log(`😈 Timed demon chaos completed at ${new Date().toISOString()}`);
-  console.log(`  Total: ${actionsLog.length} actions in ${Math.round(totalDuration / 1000)}s, Errors: ${errors.length}`);
+  console.log(`  Total: ${actionsLog.length} actions in ${Math.round(totalDuration / 1000)}s, Errors: ${errors.length}, Recoveries: ${recoveries}`);
 
   return {
     seed,
     actionsPerformed: actionsLog.length,
     errors,
     actions: actionsLog,
+    recoveries,
   };
 }
 
@@ -1003,4 +1158,105 @@ async function executeDemonAction(
     default:
       return null;
   }
+}
+
+/**
+ * Format chaos test results as a GitHub issue body
+ * Use this to create automated bug reports from chaos test failures
+ */
+export function formatChaosResultAsIssueBody(
+  result: ChaosResult | DemonChaosResult,
+  testName: string,
+  page?: string
+): string {
+  const lines: string[] = [];
+
+  lines.push(`## Chaos Test Failure Report`);
+  lines.push('');
+  lines.push(`**Test:** ${testName}`);
+  lines.push(`**Seed:** ${result.seed} (use this to reproduce)`);
+  lines.push(`**Page:** ${page || 'Unknown'}`);
+  lines.push(`**Actions Performed:** ${result.actionsPerformed}`);
+  lines.push(`**Errors Found:** ${result.errors.length}`);
+  lines.push(`**Recoveries:** ${result.recoveries}`);
+  lines.push('');
+
+  if (result.errors.length > 0) {
+    lines.push(`### Errors (${result.errors.length})`);
+    lines.push('');
+    lines.push('```');
+    // Dedupe errors and show count
+    const errorCounts = new Map<string, number>();
+    for (const error of result.errors) {
+      const key = error.slice(0, 100); // Truncate for grouping
+      errorCounts.set(key, (errorCounts.get(key) || 0) + 1);
+    }
+    for (const [error, count] of errorCounts.entries()) {
+      lines.push(count > 1 ? `(x${count}) ${error}` : error);
+    }
+    lines.push('```');
+    lines.push('');
+  }
+
+  lines.push('### Last 10 Actions Before Failure');
+  lines.push('');
+  lines.push('```');
+  const lastActions = result.actions.slice(-10);
+  for (const action of lastActions) {
+    lines.push(action);
+  }
+  lines.push('```');
+  lines.push('');
+
+  lines.push('### Reproduction');
+  lines.push('');
+  lines.push('```bash');
+  lines.push(`# Run with the same seed to reproduce`);
+  lines.push(`CHAOS_SEED=${result.seed} npx playwright test chaos/ --grep "${testName}"`);
+  lines.push('```');
+  lines.push('');
+
+  lines.push('---');
+  lines.push('*This issue was auto-generated by chaos tests*');
+
+  return lines.join('\n');
+}
+
+/**
+ * Print a summary of all errors found during chaos testing
+ * Useful for CI output
+ */
+export function printChaosErrorSummary(
+  results: Array<{ name: string; result: ChaosResult | DemonChaosResult }>
+): void {
+  const totalErrors = results.reduce((sum, r) => sum + r.result.errors.length, 0);
+  const totalRecoveries = results.reduce((sum, r) => sum + r.result.recoveries, 0);
+
+  console.log('\n' + '='.repeat(60));
+  console.log('CHAOS TEST SUMMARY');
+  console.log('='.repeat(60));
+  console.log(`Total Tests: ${results.length}`);
+  console.log(`Total Errors: ${totalErrors}`);
+  console.log(`Total Recoveries: ${totalRecoveries}`);
+  console.log('');
+
+  for (const { name, result } of results) {
+    if (result.errors.length > 0) {
+      console.log(`\n❌ ${name} (seed: ${result.seed})`);
+      console.log(`   Actions: ${result.actionsPerformed}, Errors: ${result.errors.length}, Recoveries: ${result.recoveries}`);
+      console.log('   Errors:');
+      // Show first 3 unique errors
+      const uniqueErrors = [...new Set(result.errors)].slice(0, 3);
+      for (const error of uniqueErrors) {
+        console.log(`     - ${error.slice(0, 80)}${error.length > 80 ? '...' : ''}`);
+      }
+      if (result.errors.length > 3) {
+        console.log(`     ... and ${result.errors.length - 3} more`);
+      }
+    } else {
+      console.log(`✅ ${name} (seed: ${result.seed}) - ${result.actionsPerformed} actions, 0 errors`);
+    }
+  }
+
+  console.log('\n' + '='.repeat(60));
 }
