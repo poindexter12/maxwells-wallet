@@ -54,8 +54,19 @@ test.describe('Demon Chaos - Transactions Page @demon', () => {
         console.log('\n--- GitHub Issue Body ---');
         console.log(formatChaosResultAsIssueBody(result, `demon chaos (transactions) - ${actionCount} actions`, '/transactions'));
         console.log('--- End Issue Body ---\n');
-        // Page might be closed after chaos - screenshot is best-effort
-        await page.screenshot({ path: `test-results/demon-tx-${actionCount}-${seed}.png` }).catch(() => {});
+        // Try to recover page for screenshot - reload if page is closed
+        try {
+          await page.screenshot({ path: `test-results/demon-tx-${actionCount}-${seed}.png` });
+        } catch {
+          // Page closed - try to reload and capture post-recovery state
+          try {
+            await page.goto('/transactions', { timeout: 10000 });
+            await page.waitForLoadState('domcontentloaded', { timeout: 5000 });
+            await page.screenshot({ path: `test-results/demon-tx-${actionCount}-${seed}-recovered.png` });
+          } catch {
+            console.log('Could not capture screenshot - page unrecoverable');
+          }
+        }
       }
 
       expect(result.errors).toEqual([]);
@@ -100,8 +111,19 @@ test.describe('Demon Chaos - Import Page @demon', () => {
         console.log('\n--- GitHub Issue Body ---');
         console.log(formatChaosResultAsIssueBody(result, `demon chaos (import) - ${actionCount} actions`, '/import'));
         console.log('--- End Issue Body ---\n');
-        // Page might be closed after chaos - screenshot is best-effort
-        await page.screenshot({ path: `test-results/demon-import-${actionCount}-${seed}.png` }).catch(() => {});
+        // Try to recover page for screenshot - reload if page is closed
+        try {
+          await page.screenshot({ path: `test-results/demon-import-${actionCount}-${seed}.png` });
+        } catch {
+          // Page closed - try to reload and capture post-recovery state
+          try {
+            await page.goto('/import', { timeout: 10000 });
+            await page.waitForLoadState('domcontentloaded', { timeout: 5000 });
+            await page.screenshot({ path: `test-results/demon-import-${actionCount}-${seed}-recovered.png` });
+          } catch {
+            console.log('Could not capture screenshot - page unrecoverable');
+          }
+        }
       }
 
       expect(result.errors).toEqual([]);
