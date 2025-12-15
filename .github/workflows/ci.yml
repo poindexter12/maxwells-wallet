@@ -283,11 +283,15 @@ jobs:
       - name: Test Docker commands
         timeout-minutes: 2
         run: |
+          set +e  # Disable exit on error to handle timeout exit code
           # Use timeout to force-kill if compose run hangs after completion
           # The commands complete quickly but docker compose run doesn't exit cleanly
-          # Exit code 124 = timeout killed it (which is fine if output shows completion)
-          timeout 60 docker compose run -T --rm maxwells-wallet migrate; ec=$?; [ $ec -eq 0 ] || [ $ec -eq 124 ] || exit $ec
-          timeout 60 docker compose run -T --rm maxwells-wallet seed; ec=$?; [ $ec -eq 0 ] || [ $ec -eq 124 ] || exit $ec
+          timeout 60 docker compose run -T --rm maxwells-wallet migrate
+          ec=$?; if [ $ec -ne 0 ] && [ $ec -ne 124 ]; then echo "Migrate failed with $ec"; exit $ec; fi
+
+          timeout 60 docker compose run -T --rm maxwells-wallet seed
+          ec=$?; if [ $ec -ne 0 ] && [ $ec -ne 124 ]; then echo "Seed failed with $ec"; exit $ec; fi
+
           echo "Docker commands completed successfully"
 
       - name: Show logs on failure
