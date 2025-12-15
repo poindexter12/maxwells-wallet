@@ -20,14 +20,12 @@ test.describe('Import Flow @e2e', () => {
   test('shows account input area', async ({ page }) => {
     await page.goto('/import');
 
-    // Account select (if accounts exist) or input (for new account) should be present
-    const accountSelect = page.getByTestId('import-account-select');
-    const accountInput = page.getByTestId('import-account-input');
-
-    // At least one should be visible
-    const hasAccountSelect = await accountSelect.count() > 0;
-    const hasAccountInput = await accountInput.count() > 0;
-    expect(hasAccountSelect || hasAccountInput).toBeTruthy();
+    // Account select (if accounts exist) or input (for new account) should be visible
+    // Use combined locator with auto-retry to handle slower browser rendering (webkit)
+    const accountControl = page.locator(
+      '[data-testid="import-account-select"], [data-testid="import-account-input"]'
+    );
+    await expect(accountControl.first()).toBeVisible();
   });
 });
 
