@@ -1,6 +1,6 @@
 {
   "name": "maxwells-wallet-frontend",
-  "version": "0.9.1",
+  "version": "0.10.0-beta1",
   "private": true,
   "scripts": {
     "dev": "NODE_OPTIONS='--disable-warning=DEP0060' next dev",

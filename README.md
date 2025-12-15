@@ -12,22 +12,24 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 
 **[Documentation](https://docs.maxwellswallet.com)** · **[Requirements](docs/requirements/)**
 
-## What's New in v0.9
+## What's New in v0.10
 
-### Internationalization (i18n)
-- **Multi-language Support** - Complete i18n infrastructure with next-intl
-- **9 Locales** - English (US/UK), Spanish, French, Italian, Portuguese, German, Dutch, pseudo (l33t speak for QA)
-- **Full Translations** - All locales professionally translated (beta4)
-- **Crowdin Integration** - Translation management with CLI commands
-- **Structured Error Codes** - API errors include machine-readable codes for frontend translation
-- **Widget Translations** - All dashboard widgets fully translated
+### Demo Mode & Backup System
+- **Demo Mode** - Run public demo instances with restricted operations and auto-reset
+- **SQLite Backup/Restore** - Create, schedule, and manage database backups with GFS retention
+- **Backup UI** - New Admin tab for backup management with one-click restore
+- **Demo Setup** - Single command to initialize demo with sample data
 
-### Developer Experience
-- **Node.js 22 LTS** - Pinned via `.nvmrc` with auto-install support
-- **TypeScript Improvements** - Stricter types, removed `any` usage in widget components
-- **Translation Testing** - Automated tests ensure translation completeness
-- **Dependabot** - Automated dependency updates (beta4)
-- **Auto Migrations** - Database migrations run on startup (beta4)
+### Docker Improvements
+- **Simplified Deployment** - `docker compose up -d` pulls from registry (no build needed)
+- **Developer Compose** - Separate `docker-compose.dev.yaml` for building from source
+- **New Commands** - `seed`, `demo-setup`, `migrate` entrypoint commands
+- **Installation Guide** - Comprehensive documentation at `docs/installation.md`
+
+### Testing & Quality
+- **Chaos Testing** - Resilient error recovery with 3,000+ action stress tests
+- **Pre-commit Hooks** - Ruff linting enforced on commit
+- **CI Improvements** - Faster Docker smoke tests with proper timeout handling
 
 See [CHANGELOG.md](CHANGELOG.md) for full release history.
 
