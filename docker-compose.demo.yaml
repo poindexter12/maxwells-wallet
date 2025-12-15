@@ -1,0 +1,70 @@
+# Maxwell's Wallet - Demo Mode
+#
+# Runs the app in demo mode with sample data and periodic resets.
+# Useful for public demos, testing, or showcasing the application.
+#
+# Usage:
+#   docker compose -f docker-compose.demo.yaml up -d
+#
+# First-time setup (seeds demo data):
+#   docker compose -f docker-compose.demo.yaml run --rm maxwells-wallet demo-setup
+#
+# Access at http://localhost:3000
+
+services:
+  maxwells-wallet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Include pseudo locale for QA testing in demo
+        ENABLE_PSEUDO: true
+    ports:
+      - "3000:3000"   # Frontend
+      - "3001:3001"   # Backend API
+    volumes:
+      # Persistent volume for demo data
+      - demo-data:/data
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:////data/wallet.db
+      # Demo mode settings
+      - DEMO_MODE=true
+      - DEMO_RESET_INTERVAL_HOURS=1
+      # Backup settings (demo backup is never deleted)
+      - BACKUP_DIR=/data/backups
+      - BACKUP_RETENTION=5
+      # Observability
+      - OTEL_ENABLED=true
+      - OTEL_METRICS_ENABLED=true
+      - OTEL_LOG_FORMAT=json
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  demo-data:
+    driver: local
+
+# Demo Mode Features:
+#
+# When DEMO_MODE=true:
+#   - Destructive operations are blocked (purge, bulk delete, etc.)
+#   - Import operations are restricted
+#   - A "Demo Mode" banner appears in the UI
+#   - Data resets periodically to the demo backup
+#
+# Demo Reset Schedule:
+#   - Set DEMO_RESET_INTERVAL_HOURS to control reset frequency
+#   - Default: 1 hour
+#   - The app restores to the "demo backup" snapshot at each interval
+#
+# Initial Setup:
+#   Run `docker compose -f docker-compose.demo.yaml run --rm maxwells-wallet demo-setup`
+#   This will:
+#   1. Seed the database with sample transactions
+#   2. Create a demo backup snapshot
+#   3. Configure the reset schedule

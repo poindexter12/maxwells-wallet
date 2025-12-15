@@ -14,6 +14,7 @@ jobs:
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
       backend: ${{ steps.filter.outputs.backend }}
+      docker: ${{ steps.filter.outputs.docker }}
       translations-only: ${{ steps.filter.outputs.translations-only }}
     steps:
       - uses: actions/checkout@v6
@@ -25,6 +26,11 @@ jobs:
               - 'frontend/**'
             backend:
               - 'backend/**'
+            docker:
+              - 'Dockerfile'
+              - 'docker-compose*.yaml'
+              - 'frontend/Dockerfile'
+              - 'backend/Dockerfile'
             translations-only:
               - 'frontend/src/messages/**'
               - '!frontend/src/**/*.ts'
@@ -225,4 +231,67 @@ jobs:
           name: performance-results
           path: backend/test_perf.db
           retention-days: 7
+
+  docker:
+    name: Docker Build & Smoke Test
+    runs-on: ubuntu-latest
+    needs: changes
+    # Run on Dockerfile/compose changes, or main branch
+    if: needs.changes.outputs.docker == 'true' || github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build all-in-one image
+        run: docker compose build
+
+      - name: Start container
+        run: |
+          docker compose up -d
+          echo "Waiting for services to start..."
+          sleep 30
+
+      - name: Health check - Backend
+        run: |
+          for i in {1..10}; do
+            if curl -sf http://localhost:3001/health; then
+              echo "Backend is healthy"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying..."
+            sleep 5
+          done
+          echo "Backend health check failed"
+          docker compose logs
+          exit 1
+
+      - name: Health check - Frontend
+        run: |
+          for i in {1..10}; do
+            if curl -sf http://localhost:3000 > /dev/null; then
+              echo "Frontend is healthy"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying..."
+            sleep 5
+          done
+          echo "Frontend health check failed"
+          docker compose logs
+          exit 1
+
+      - name: Test Docker commands
+        run: |
+          # Test migrate command
+          docker compose run --rm maxwells-wallet migrate
+
+          # Test seed command
+          docker compose run --rm maxwells-wallet seed
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v
 
