@@ -236,6 +236,7 @@ jobs:
     name: Docker Build & Smoke Test
     runs-on: ubuntu-latest
     needs: changes
+    timeout-minutes: 30
     # Run on Dockerfile/compose changes, or main branch
     if: needs.changes.outputs.docker == 'true' || github.ref == 'refs/heads/main'
 
@@ -280,12 +281,13 @@ jobs:
           exit 1
 
       - name: Test Docker commands
+        timeout-minutes: 5
         run: |
-          # Test migrate command
-          docker compose run --rm maxwells-wallet migrate
+          # Test migrate command (-T disables pseudo-tty to prevent CI hangs)
+          docker compose run -T --rm maxwells-wallet migrate
 
           # Test seed command
-          docker compose run --rm maxwells-wallet seed
+          docker compose run -T --rm maxwells-wallet seed
 
       - name: Show logs on failure
         if: failure()
