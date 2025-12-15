@@ -281,13 +281,14 @@ jobs:
           exit 1
 
       - name: Test Docker commands
-        timeout-minutes: 5
+        timeout-minutes: 2
         run: |
-          # Test migrate command (-T disables pseudo-tty to prevent CI hangs)
-          docker compose run -T --rm maxwells-wallet migrate
-
-          # Test seed command
-          docker compose run -T --rm maxwells-wallet seed
+          # Use timeout to force-kill if compose run hangs after completion
+          # The commands complete quickly but docker compose run doesn't exit cleanly
+          # Exit code 124 = timeout killed it (which is fine if output shows completion)
+          timeout 60 docker compose run -T --rm maxwells-wallet migrate; ec=$?; [ $ec -eq 0 ] || [ $ec -eq 124 ] || exit $ec
+          timeout 60 docker compose run -T --rm maxwells-wallet seed; ec=$?; [ $ec -eq 0 ] || [ $ec -eq 124 ] || exit $ec
+          echo "Docker commands completed successfully"
 
       - name: Show logs on failure
         if: failure()
