@@ -5,6 +5,48 @@ All notable changes to Maxwell's Wallet will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0-beta1] - 2025-12-15
+
+### Demo Mode & Backup System - Major Feature
+
+This release introduces demo mode for public instances and a complete SQLite backup/restore system.
+
+### Added
+
+#### Demo Mode
+- **Demo Banner** - Prominent banner indicating demo instance with restricted operations
+- **Operation Restrictions** - Blocks imports, purge, and other destructive actions in demo mode
+- **Auto-Reset** - Configurable automatic data reset interval for demo instances
+- **Demo Setup Script** - One-command setup with sample data (`docker compose run --rm maxwells-wallet demo-setup`)
+- **Date Shifting** - Transaction dates automatically shift on reset to keep demo data fresh
+
+#### Backup & Restore
+- **SQLite Backup System** - Create, list, restore, and delete database backups
+- **GFS Tiered Retention** - Grandfather-Father-Son retention policy for backups
+- **Scheduled Backups** - Configurable automatic backup intervals (hourly, daily, weekly)
+- **Backup Management UI** - New "Backups" tab in Admin with full backup control
+- **Pre-Import Backups** - Optional automatic backup before batch imports
+
+#### Docker Improvements
+- **Simplified Compose Files** - `docker-compose.yaml` now pulls from registry (for end users)
+- **Development Compose** - `docker-compose.dev.yaml` for building from source
+- **New Entrypoint Commands** - `seed`, `demo-setup`, `migrate` commands
+- **Comprehensive Installation Guide** - Full documentation at `docs/installation.md`
+
+### Changed
+- **Docker Workflow** - End users use `docker compose up -d`, developers use `-f docker-compose.dev.yaml`
+- **Import UI in Demo** - Can view import interface but file uploads are blocked
+
+### Fixed
+- **Chaos Testing** - Resilient error recovery with continue-on-error mode
+- **E2E Tests** - Webkit timing issues resolved with proper Playwright assertions
+- **Seed Script** - Database engine properly disposed to prevent hanging
+- **CI Pipeline** - Multiple fixes for Docker smoke tests and timeout handling
+
+### Developer Experience
+- **Pre-commit Hooks** - Ruff linting enforced on commit
+- **Deterministic Tests** - Fixed flaky tier promotion test
+
 ## [0.9.1] - 2025-12-12
 
 ### Fixed

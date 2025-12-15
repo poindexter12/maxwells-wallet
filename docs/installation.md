@@ -107,7 +107,7 @@ services:
 | `DATABASE_URL` | `sqlite+aiosqlite:////data/wallet.db` | Database connection string |
 | `BACKEND_URL` | `http://localhost:3001` | Backend API URL (used by frontend) |
 
-### Demo Mode (v0.9+)
+### Demo Mode (v0.10+)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -132,7 +132,7 @@ docker compose run --rm maxwells-wallet demo-setup
 | `OTEL_SLOW_QUERY_THRESHOLD_MS` | `100` | Log queries slower than this |
 | `OTEL_ALERT_WEBHOOK_URL` | - | Webhook URL for threshold alerts |
 
-### Backup Configuration (v0.9+)
+### Backup Configuration (v0.10+)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
