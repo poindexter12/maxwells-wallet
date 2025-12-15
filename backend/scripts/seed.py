@@ -23,7 +23,7 @@ from datetime import date, datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import delete
 
-from app.database import async_session
+from app.database import async_session, engine
 from app.models import (
     Tag,
     Transaction,
@@ -555,6 +555,9 @@ async def seed_all(clear: bool = False):
     print("=" * 60)
     print("Seeding complete!")
     print("=" * 60)
+
+    # Dispose engine to close connection pool (prevents hanging in Docker)
+    await engine.dispose()
 
 
 def main():
