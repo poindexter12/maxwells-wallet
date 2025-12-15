@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { performDemonActions, ADVERSARIAL_PAYLOADS } from './chaos-helpers';
+import { performDemonActions, ADVERSARIAL_PAYLOADS, formatChaosResultAsIssueBody } from './chaos-helpers';
 
 /**
  * Demon Chaos Tests - Adversarial/Fuzz Testing
@@ -44,11 +44,16 @@ test.describe('Demon Chaos - Transactions Page @demon', () => {
           '[data-testid="purge-button"]',
           'nav a',
         ],
+        continueOnError: true, // Keep going to find all issues
+        maxRecoveryAttempts: 3,
       });
 
       if (result.errors.length > 0) {
-        console.log(`\n🔥 Demon chaos failed at ${actionCount} actions, seed: ${seed}`);
-        console.log('Actions:', result.actions);
+        console.log(`\n🔥 Demon chaos found ${result.errors.length} issues at ${actionCount} actions, seed: ${seed}`);
+        console.log('Recoveries:', result.recoveries);
+        console.log('\n--- GitHub Issue Body ---');
+        console.log(formatChaosResultAsIssueBody(result, `demon chaos (transactions) - ${actionCount} actions`, '/transactions'));
+        console.log('--- End Issue Body ---\n');
         await page.screenshot({ path: `test-results/demon-tx-${actionCount}-${seed}.png` });
       }
 
@@ -83,10 +88,16 @@ test.describe('Demon Chaos - Import Page @demon', () => {
           'input[type="file"]',
           'nav a',
         ],
+        continueOnError: true, // Keep going to find all issues
+        maxRecoveryAttempts: 3,
       });
 
       if (result.errors.length > 0) {
-        console.log(`\n🔥 Demon chaos failed at ${actionCount} actions, seed: ${seed}`);
+        console.log(`\n🔥 Demon chaos found ${result.errors.length} issues at ${actionCount} actions, seed: ${seed}`);
+        console.log('Recoveries:', result.recoveries);
+        console.log('\n--- GitHub Issue Body ---');
+        console.log(formatChaosResultAsIssueBody(result, `demon chaos (import) - ${actionCount} actions`, '/import'));
+        console.log('--- End Issue Body ---\n');
         await page.screenshot({ path: `test-results/demon-import-${actionCount}-${seed}.png` });
       }
 
