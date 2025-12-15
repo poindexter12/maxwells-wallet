@@ -243,56 +243,51 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Cleanup any existing containers
+        run: docker compose down -v --remove-orphans 2>/dev/null || true
+
       - name: Build all-in-one image
         run: docker compose build
 
-      - name: Start container
+      - name: Test migrate command
+        run: |
+          # Run migrate in a fresh container (not detached)
+          docker compose run --rm maxwells-wallet migrate
+
+      - name: Test seed command
+        run: |
+          # Run seed in a fresh container (not detached)
+          docker compose run --rm maxwells-wallet seed
+
+      - name: Start container and verify health
         run: |
           docker compose up -d
           echo "Waiting for services to start..."
-          sleep 30
+          sleep 15
 
-      - name: Health check - Backend
-        run: |
+          # Health check backend
           for i in {1..10}; do
             if curl -sf http://localhost:3001/health; then
               echo "Backend is healthy"
-              exit 0
+              break
             fi
-            echo "Attempt $i failed, retrying..."
-            sleep 5
+            echo "Backend attempt $i failed, retrying..."
+            sleep 3
           done
-          echo "Backend health check failed"
-          docker compose logs
-          exit 1
 
-      - name: Health check - Frontend
-        run: |
+          # Health check frontend
           for i in {1..10}; do
             if curl -sf http://localhost:3000 > /dev/null; then
               echo "Frontend is healthy"
               exit 0
             fi
-            echo "Attempt $i failed, retrying..."
-            sleep 5
+            echo "Frontend attempt $i failed, retrying..."
+            sleep 3
           done
-          echo "Frontend health check failed"
+
+          echo "Health checks failed"
           docker compose logs
           exit 1
-
-      - name: Test Docker commands
-        timeout-minutes: 2
-        run: |
-          set +e  # Disable exit on error to handle timeout exit code
-          # Use timeout to force-kill if compose run hangs after completion
-          # The commands complete quickly but docker compose run doesn't exit cleanly
-          timeout 60 docker compose run -T --rm maxwells-wallet migrate
-          ec=$?; if [ $ec -ne 0 ] && [ $ec -ne 124 ]; then echo "Migrate failed with $ec"; exit $ec; fi
-
-          timeout 60 docker compose run -T --rm maxwells-wallet seed
-          ec=$?; if [ $ec -ne 0 ] && [ $ec -ne 124 ]; then echo "Seed failed with $ec"; exit $ec; fi
-
-          echo "Docker commands completed successfully"
 
       - name: Show logs on failure
         if: failure()
@@ -300,5 +295,5 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: docker compose down -v
+        run: docker compose down -v --remove-orphans
 
