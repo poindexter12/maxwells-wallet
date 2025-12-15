@@ -252,12 +252,16 @@ jobs:
       - name: Test migrate command
         run: |
           # Run migrate in a fresh container (not detached)
-          docker compose run --rm maxwells-wallet migrate
+          # -T disables pseudo-TTY allocation for cleaner CI output
+          docker compose run -T --rm maxwells-wallet migrate
 
       - name: Test seed command
         run: |
+          # Small delay to ensure volume is fully released from migrate
+          sleep 2
           # Run seed in a fresh container (not detached)
-          docker compose run --rm maxwells-wallet seed
+          # -T disables pseudo-TTY allocation for cleaner CI output
+          docker compose run -T --rm maxwells-wallet seed
 
       - name: Start container and verify health
         run: |
