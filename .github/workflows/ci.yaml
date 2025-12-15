@@ -29,8 +29,6 @@ jobs:
             docker:
               - 'Dockerfile'
               - 'docker-compose*.yaml'
-              - 'frontend/Dockerfile'
-              - 'backend/Dockerfile'
             translations-only:
               - 'frontend/src/messages/**'
               - '!frontend/src/**/*.ts'

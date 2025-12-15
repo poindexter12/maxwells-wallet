@@ -59,21 +59,7 @@ This uses `docker-compose.dev.yaml` which:
 - Supports build args like `ENABLE_PSEUDO=true` for QA testing
 - Includes observability settings
 
-### Option 3: Split Containers
-
-Run frontend and backend as separate services for independent scaling:
-
-```bash
-docker compose -f docker-compose.split.yaml build
-docker compose -f docker-compose.split.yaml up -d
-```
-
-This uses `docker-compose.split.yaml` which:
-- Builds frontend and backend from separate Dockerfiles
-- Backend includes health checks
-- Frontend waits for healthy backend before starting
-
-### Option 4: Demo Mode
+### Option 3: Demo Mode
 
 Run a public demo instance with sample data and periodic resets:
 

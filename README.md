@@ -76,7 +76,6 @@ Data persists in a Docker volume. For custom configurations, see below.
 |-------------|-------------|--------------|
 | `docker-compose.yaml` | Quick start for end users | Pulls from registry |
 | `docker-compose.dev.yaml` | Development/CI builds | Builds from source |
-| `docker-compose.split.yaml` | Separate frontend/backend | Builds from source |
 | `docker-compose.demo.yaml` | Demo mode with resets | Pulls from registry |
 
 ```bash
