@@ -34,7 +34,7 @@ export function BucketPieChart({ widget: _widget, bucketData }: BucketPieChartPr
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip formatter={(value: number) => formatCurrency(value)} />
+            <Tooltip formatter={(value) => formatCurrency(value as number)} />
           </PieChart>
         </ResponsiveContainer>
       ) : (
