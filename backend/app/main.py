@@ -23,6 +23,7 @@ from app.routers import (
 from app.observability import setup_observability
 from app.services.scheduler import scheduler_service
 from app.middleware import add_demo_mode_middleware
+from app.version import get_version, get_version_info
 
 
 @asynccontextmanager
@@ -76,7 +77,7 @@ This API currently has no authentication. It's designed for single-user local de
 2. Categorize using tags at `/api/v1/transactions/{id}/tags`
 3. View insights at `/api/v1/reports/*`
     """,
-    version="0.9.0-beta4",
+    version=get_version(),
     lifespan=lifespan,
     openapi_tags=tags_metadata,
     docs_url="/docs",
@@ -123,7 +124,7 @@ async def root():
     """API root - returns version and links to documentation."""
     return {
         "name": "Maxwell's Wallet API",
-        "version": "0.9.0-beta4",
+        **get_version_info(),
         "docs": "/docs",
         "redoc": "/redoc",
         "openapi": "/openapi.json",

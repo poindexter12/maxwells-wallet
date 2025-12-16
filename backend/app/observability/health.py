@@ -5,12 +5,13 @@ Provides health status checks and metric calculations for the dashboard.
 """
 
 from typing import Literal
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.observability.metrics import (
     http_requests_active,
     registry,
 )
+from app.version import get_version, get_git_sha
 
 
 class DatabaseHealth(BaseModel):
@@ -26,7 +27,8 @@ class HealthStatus(BaseModel):
 
     status: Literal["healthy", "degraded", "unhealthy"]
     database: DatabaseHealth
-    version: str = "0.9.0-beta4"
+    version: str = Field(default_factory=get_version)
+    git_sha: str | None = Field(default_factory=get_git_sha)
 
 
 async def check_database() -> DatabaseHealth:
