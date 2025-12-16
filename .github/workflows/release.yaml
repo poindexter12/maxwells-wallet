@@ -59,7 +59,7 @@ jobs:
           name: v${{ steps.version.outputs.VERSION }}
           body: ${{ steps.changelog.outputs.NOTES }}
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.version.outputs.PRERELEASE == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -80,15 +80,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check if pre-release
+        id: prerelease
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          if [[ "$VERSION" =~ -(beta|rc|alpha) ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}
           tags: |
+            # Always: full version tag (e.g., 0.2.1 or 0.3.0-beta.1)
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
+            # Stable only: minor version tag (e.g., 0.2)
+            type=semver,pattern={{major}}.{{minor}},enable=${{ steps.prerelease.outputs.is_prerelease == 'false' }}
+            # Stable only: major version tag (e.g., 0)
+            type=semver,pattern={{major}},enable=${{ steps.prerelease.outputs.is_prerelease == 'false' }}
+            # Stable only: latest tag
+            type=raw,value=latest,enable=${{ steps.prerelease.outputs.is_prerelease == 'false' }}
+            # Pre-release only: beta tag
+            type=raw,value=beta,enable=${{ steps.prerelease.outputs.is_prerelease == 'true' }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
