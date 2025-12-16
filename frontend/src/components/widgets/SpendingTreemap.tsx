@@ -108,7 +108,7 @@ export function SpendingTreemap({ widget: _widget, data }: SpendingTreemapProps)
           }}
         >
           <Tooltip
-            formatter={(value: number) => formatCurrency(value)}
+            formatter={(value) => formatCurrency(value as number)}
             contentStyle={{
               backgroundColor: 'var(--tooltip-bg)',
               border: 'none',

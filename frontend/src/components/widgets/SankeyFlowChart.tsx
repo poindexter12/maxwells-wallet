@@ -82,7 +82,7 @@ export function SankeyFlowChart({ widget: _widget, data }: SankeyFlowChartProps)
           }}
         >
           <Tooltip
-            formatter={(value: number) => formatCurrency(value)}
+            formatter={(value) => formatCurrency(value as number)}
             contentStyle={{
               backgroundColor: 'var(--tooltip-bg)',
               border: 'none',
