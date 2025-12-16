@@ -1,0 +1,64 @@
+name: Devcontainer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.devcontainer/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.devcontainer/**'
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build & Test Devcontainer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install devcontainer CLI
+        run: npm install -g @devcontainers/cli
+
+      - name: Build devcontainer
+        run: devcontainer build --workspace-folder .
+
+      - name: Start devcontainer and run tests
+        run: |
+          # Start the container and capture container ID
+          RESULT=$(devcontainer up --workspace-folder . --id-label devcontainer-test=true)
+          echo "$RESULT"
+          CONTAINER_ID=$(echo "$RESULT" | grep -o '"containerId":"[^"]*"' | cut -d'"' -f4)
+          echo "Container ID: $CONTAINER_ID"
+
+          # Use docker exec directly since container might not stay discoverable by devcontainer exec
+          # Test Node.js version
+          echo "Testing Node.js..."
+          docker exec "$CONTAINER_ID" node --version | grep -q "v22" || (echo "Node.js v22 not found" && exit 1)
+
+          # Test Python version
+          echo "Testing Python..."
+          docker exec "$CONTAINER_ID" python --version | grep -q "3.11" || (echo "Python 3.11 not found" && exit 1)
+
+          # Test uv is installed
+          echo "Testing uv..."
+          docker exec "$CONTAINER_ID" bash -c 'export PATH="$HOME/.local/bin:$PATH" && uv --version' || (echo "uv not found" && exit 1)
+
+          # Test make is available
+          echo "Testing make..."
+          docker exec "$CONTAINER_ID" make --version || (echo "make not found" && exit 1)
+
+          # Test npm is available
+          echo "Testing npm..."
+          docker exec "$CONTAINER_ID" npm --version || (echo "npm not found" && exit 1)
+
+          echo "✅ All devcontainer tests passed!"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker ps -q --filter "label=devcontainer-test=true" | xargs -r docker stop
+          docker ps -aq --filter "label=devcontainer-test=true" | xargs -r docker rm

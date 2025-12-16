@@ -102,6 +102,14 @@ See [Installation Guide](docs/installation.md) for complete Docker configuration
 
 ### Development
 
+#### VS Code Devcontainer (Recommended)
+
+Open this repository in VS Code and click "Reopen in Container" when prompted. This provides a fully configured development environment with all dependencies pre-installed.
+
+[![Open in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/poindexter12/maxwells-wallet)
+
+#### Local Setup
+
 ```bash
 make setup    # First-time setup
 make dev      # Start servers
