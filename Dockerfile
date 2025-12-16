@@ -3,8 +3,10 @@
 
 FROM node:24-slim AS frontend-builder
 
-# Build arg to enable pseudo locale (set ENABLE_PSEUDO=true in .env or pass --build-arg)
+# Build args
 ARG ENABLE_PSEUDO=false
+ARG APP_VERSION=unknown
+ARG GIT_SHA
 
 WORKDIR /app/frontend
 
@@ -33,6 +35,10 @@ RUN echo "==> Building Next.js with NEXT_PUBLIC_ENABLE_PSEUDO=$ENABLE_PSEUDO" &&
 
 # Final stage: Python + Node runtime
 FROM python:3.12-slim
+
+# Re-declare build args for this stage
+ARG APP_VERSION=unknown
+ARG GIT_SHA
 
 # Install Node.js and system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -102,6 +108,8 @@ RUN mkdir -p /data
 # Environment variables
 ENV DATABASE_URL="sqlite+aiosqlite:////data/wallet.db"
 ENV PYTHONUNBUFFERED=1
+ENV APP_VERSION=$APP_VERSION
+ENV GIT_SHA=$GIT_SHA
 
 # Expose both ports
 EXPOSE 3000 3001
