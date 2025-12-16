@@ -22,6 +22,26 @@ frontend/           # Next.js app
 backend/            # FastAPI app
 ```
 
+## Development Environment
+
+### VS Code Devcontainer (Recommended)
+
+This repository includes a devcontainer configuration for VS Code. To use it:
+1. Open the repository in VS Code
+2. Click "Reopen in Container" when prompted (or use Command Palette → "Dev Containers: Reopen in Container")
+3. Wait for the container to build and `make setup` to complete
+
+The devcontainer provides:
+- Node.js 22 (frontend)
+- Python 3.11 + uv (backend)
+- SQLite (database)
+- Pre-configured VS Code extensions (Python, ESLint, Prettier, Tailwind CSS, Playwright, Ruff)
+- Automatic formatting on save
+
+### Local Setup (Alternative)
+
+If not using devcontainer, see the Development Commands section below for manual setup.
+
 ## Available Agent
 
 - **@techlead** (`.claude/agents/techlead.mdc`): Repo-aware technical lead. Reads `CLAUDE.md` and the per-topic skills in `.claude/skills/`, builds a short plan for non-trivial tasks, prefers `make` commands, and enforces the stack-specific skills.

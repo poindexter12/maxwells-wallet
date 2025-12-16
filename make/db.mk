@@ -15,7 +15,7 @@ db-seed: ## Seed database with sample data and default categories
 	@echo "$(BLUE)Seeding database...$(NC)"
 	@cd $(BACKEND_DIR) && \
 		. .venv/bin/activate && \
-		uv run python -m app.seed
+		uv run python -m scripts.seed
 	@echo "$(GREEN)✓ Database seeded$(NC)"
 
 db-reset: ## Reset database (delete and recreate)

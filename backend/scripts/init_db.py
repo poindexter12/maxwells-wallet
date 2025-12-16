@@ -31,7 +31,7 @@ from app.models import (  # noqa: F401
 
 async def init_db():
     """Create all tables from SQLModel metadata."""
-    database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./data/wallet.db")
+    database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./wallet.db")
     print(f"Initializing database: {database_url}")
 
     engine = create_async_engine(database_url, echo=False)
