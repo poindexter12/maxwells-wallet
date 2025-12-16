@@ -39,7 +39,7 @@ export function TrendsChart({ widget: _widget, data, isMonthlyScale: _isMonthlyS
           <XAxis dataKey="period" tickFormatter={formatPeriodLabel} />
           <YAxis tickFormatter={(value) => formatCompactCurrency(value)} />
           <Tooltip
-            formatter={(value: number) => formatCurrency(value)}
+            formatter={(value) => formatCurrency(value as number)}
             labelFormatter={(label) => isWeekly ? `Week ${label.split('-')[1]?.replace('W', '') || label}` : formatPeriodLabel(label)}
           />
           <Legend />
