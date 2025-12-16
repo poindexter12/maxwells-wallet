@@ -49,6 +49,7 @@ If not using devcontainer, see the Development Commands section below for manual
 - **@backend-lead** (`.claude/agents/backend-lead.mdc`): Leads backend/API work. Applies FastAPI, Python, and Postgres skills; prefers `make backend`/`make test-backend`; defaults to read/EXPLAIN posture for DB.
 - **@db-lead** (`.claude/agents/db-lead.mdc`): Leads database design/migrations/query review. Applies Postgres and DB-design skills; favors additive, reversible migrations and explicit EXPLAIN-before-write.
 - **@testlead** (`.claude/agents/testlead.mdc`): Leads testing strategy/implementation. Applies frontend, backend, and Python testing skills; prefers repo `make` test targets; keeps tests deterministic and isolated.
+- **@i18n-lead** (`.claude/agents/i18n-lead.mdc`): Leads internationalization work. Manages Crowdin workflow, enforces translation best practices. **Use this agent when adding/modifying translatable strings.**
 
 ## Development Commands
 
@@ -239,3 +240,30 @@ await page.locator(`[data-testid="${TEST_IDS.IMPORT_RESULT}"]`).click();
   1. Add `data-chaos-target="descriptive-name"` to interactive elements (buttons, links, inputs, selects)
   2. For destructive actions, use `data-chaos-exclude` instead
   3. Test locally: `npx playwright test chaos/ --headed` to see chaos tests in action
+
+### Internationalization (i18n)
+
+**IMPORTANT:** Use the `@i18n-lead` agent when working with translations.
+
+#### Golden Rule
+- **Only edit `en-US.json`** - All other locale files are managed by Crowdin
+- Never directly edit `de-DE.json`, `fr-FR.json`, `es-ES.json`, etc.
+
+#### Adding New Strings
+1. Add English strings to `frontend/src/messages/en-US.json`
+2. Commit and push to main
+3. Crowdin auto-syncs and creates translation PR when ready
+4. See `docs/i18n-workflow.md` for full workflow
+
+#### Make Commands
+```bash
+make translate-upload      # Push source strings to Crowdin
+make translate-download    # Pull translations from Crowdin
+make translate-status      # Check translation progress
+make translate-pseudo      # Generate pseudo-locale for testing
+```
+
+#### String Keys
+Use dot notation: `section.subsection.key`
+- Good: `admin.backups.createButton`, `transactions.filter.dateRange`
+- Bad: `btn1`, `text`, `label`
