@@ -14,10 +14,14 @@ fi
 echo "📦 Installing dependencies..."
 make install
 
+# Create data directory for SQLite database
+mkdir -p backend/data
+
 # Initialize database directly from models (not migrations)
 # This works for fresh databases; existing users should run `make db-upgrade`
 echo "📦 Initializing database..."
-cd backend && uv run python -m scripts.init_db && cd ..
+cd backend && uv run python -m scripts.init_db
+cd ..
 
 # Seed with sample data
 echo "📦 Seeding database..."
