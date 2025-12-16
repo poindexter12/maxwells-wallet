@@ -382,6 +382,6 @@ const demonResult = await performTimedDemonActions(page, {
 
 ## CI Integration
 
-Tests run in GitHub Actions on every PR. See `.github/workflows/ci.yml`.
+Tests run in GitHub Actions on every PR. See `.github/workflows/ci.yaml`.
 
 Browsers are installed with: `npx playwright install --with-deps chromium`

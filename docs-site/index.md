@@ -2,7 +2,7 @@
 
 Personal finance tracker with CSV import, smart categorization, and spending trend analysis.
 
-[![CI](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yml/badge.svg)](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yml)
+[![CI](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yaml/badge.svg)](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yaml)
 [![Release](https://img.shields.io/github/v/release/poindexter12/maxwells-wallet?label=release)](https://github.com/poindexter12/maxwells-wallet/releases)
 
 ## What's New in v0.9

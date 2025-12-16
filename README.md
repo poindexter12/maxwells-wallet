@@ -1,6 +1,6 @@
 # Maxwell's Wallet
 
-[![CI](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yml/badge.svg)](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yml)
+[![CI](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yaml/badge.svg)](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/poindexter12/maxwells-wallet/graph/badge.svg)](https://codecov.io/gh/poindexter12/maxwells-wallet)
 [![Release](https://img.shields.io/github/v/release/poindexter12/maxwells-wallet?label=release)](https://github.com/poindexter12/maxwells-wallet/releases)
 [![Python](https://img.shields.io/badge/python-3.11+-3776ab?logo=python&logoColor=white)](https://www.python.org/)

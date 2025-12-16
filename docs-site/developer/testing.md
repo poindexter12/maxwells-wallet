@@ -147,6 +147,6 @@ open backend/htmlcov/index.html
 
 Tests run automatically on every push and pull request via GitHub Actions:
 
-- **CI Workflow** (`.github/workflows/ci.yml`): Runs backend tests with coverage
+- **CI Workflow** (`.github/workflows/ci.yaml`): Runs backend tests with coverage
 - Coverage results are uploaded to Codecov
 - PRs show coverage diff in comments
