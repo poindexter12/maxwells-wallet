@@ -1,5 +1,8 @@
 tsconfig.tsbuildinfo
 
+# Next.js auto-generated (changes based on dev vs build)
+next-env.d.ts
+
 # Playwright
 /test-results/
 /playwright-report/
