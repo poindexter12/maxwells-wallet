@@ -25,28 +25,32 @@ jobs:
 
       - name: Start devcontainer and run tests
         run: |
-          # Start the container in the background
-          devcontainer up --workspace-folder . --id-label devcontainer-test=true
+          # Start the container and capture container ID
+          RESULT=$(devcontainer up --workspace-folder . --id-label devcontainer-test=true)
+          echo "$RESULT"
+          CONTAINER_ID=$(echo "$RESULT" | grep -o '"containerId":"[^"]*"' | cut -d'"' -f4)
+          echo "Container ID: $CONTAINER_ID"
 
+          # Use docker exec directly since container might not stay discoverable by devcontainer exec
           # Test Node.js version
           echo "Testing Node.js..."
-          devcontainer exec --workspace-folder . node --version | grep -q "v22" || (echo "Node.js v22 not found" && exit 1)
+          docker exec "$CONTAINER_ID" node --version | grep -q "v22" || (echo "Node.js v22 not found" && exit 1)
 
           # Test Python version
           echo "Testing Python..."
-          devcontainer exec --workspace-folder . python --version | grep -q "3.11" || (echo "Python 3.11 not found" && exit 1)
+          docker exec "$CONTAINER_ID" python --version | grep -q "3.11" || (echo "Python 3.11 not found" && exit 1)
 
           # Test uv is installed
           echo "Testing uv..."
-          devcontainer exec --workspace-folder . uv --version || (echo "uv not found" && exit 1)
+          docker exec "$CONTAINER_ID" bash -c 'export PATH="$HOME/.local/bin:$PATH" && uv --version' || (echo "uv not found" && exit 1)
 
           # Test make is available
           echo "Testing make..."
-          devcontainer exec --workspace-folder . make --version || (echo "make not found" && exit 1)
+          docker exec "$CONTAINER_ID" make --version || (echo "make not found" && exit 1)
 
           # Test npm is available
           echo "Testing npm..."
-          devcontainer exec --workspace-folder . npm --version || (echo "npm not found" && exit 1)
+          docker exec "$CONTAINER_ID" npm --version || (echo "npm not found" && exit 1)
 
           echo "✅ All devcontainer tests passed!"
 
