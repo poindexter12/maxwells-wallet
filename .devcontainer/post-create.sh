@@ -10,9 +10,18 @@ if ! command -v uv &> /dev/null; then
     export PATH="$HOME/.local/bin:$PATH"
 fi
 
-# Run the standard setup
-echo "📦 Running make setup..."
-make setup
+# Install dependencies
+echo "📦 Installing dependencies..."
+make install
+
+# Initialize database directly from models (not migrations)
+# This works for fresh databases; existing users should run `make db-upgrade`
+echo "📦 Initializing database..."
+cd backend && uv run python -m scripts.init_db && cd ..
+
+# Seed with sample data
+echo "📦 Seeding database..."
+make db-seed
 
 echo ""
 echo "✅ Development environment ready!"
