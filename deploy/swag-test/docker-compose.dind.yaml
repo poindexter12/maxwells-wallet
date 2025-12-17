@@ -1,0 +1,57 @@
+# Docker-in-Docker SWAG Demo Test Environment
+#
+# Runs a complete isolated Docker environment inside Docker,
+# then deploys SWAG + Maxwell's Wallet (demo mode) inside.
+# Simulates LXC deployment with nested Docker.
+#
+# Usage:
+#   cd deploy/swag-test
+#   docker compose -f docker-compose.dind.yaml up -d
+#
+#   # Shell into DinD to interact with inner Docker:
+#   docker exec -it dind-swag-test sh
+#   docker ps  # see SWAG + app running inside
+#
+#   # Access at http://localhost:8080
+#
+# Demo mode resets data every hour.
+
+services:
+  dind:
+    image: docker:27-dind
+    container_name: dind-swag-test
+    privileged: true
+    environment:
+      - DOCKER_TLS_CERTDIR=  # Disable TLS for simplicity in testing
+    volumes:
+      # Mount compose files and configs into DinD
+      - ./docker-compose.yaml:/workspace/docker-compose.yaml:ro
+      - ./swag:/workspace/swag:ro
+      # Persist DinD's docker data
+      - dind-data:/var/lib/docker
+    ports:
+      - "8080:8080"   # SWAG HTTP
+      - "8443:8443"   # SWAG HTTPS
+    entrypoint: |
+      sh -c '
+        # Start Docker daemon
+        dockerd-entrypoint.sh &
+
+        # Wait for Docker to be ready
+        echo "Waiting for Docker daemon..."
+        while ! docker info >/dev/null 2>&1; do
+          sleep 1
+        done
+        echo "Docker daemon ready!"
+
+        # Deploy the stack
+        cd /workspace
+        docker compose up -d
+
+        # Keep container running and tail logs
+        echo "Stack deployed! Tailing logs..."
+        docker compose logs -f
+      '
+
+volumes:
+  dind-data:

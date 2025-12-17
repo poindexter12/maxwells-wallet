@@ -74,3 +74,4 @@ site/
 
 # Backup files
 backend/data/backups/
+deploy/swag-test/.env

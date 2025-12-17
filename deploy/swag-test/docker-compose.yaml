@@ -1,0 +1,88 @@
+# SWAG Demo Deployment
+#
+# Maxwell's Wallet behind SWAG reverse proxy in demo mode.
+# Resets to sample data every hour.
+#
+# Usage:
+#   cd deploy/swag-test
+#   docker compose up -d
+#   # Access at http://localhost:8080
+#
+# For DinD testing (full isolation), use: docker-compose.dind.yaml
+
+services:
+  # SWAG - Secure Web Application Gateway (nginx-based reverse proxy)
+  swag:
+    image: lscr.io/linuxserver/swag:latest
+    container_name: swag
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      # For local testing, we skip SSL cert generation
+      - VALIDATION=http
+      - URL=localhost
+      - SUBDOMAINS=
+      - STAGING=true
+      - ONLY_SUBDOMAINS=false
+    volumes:
+      - ./swag/nginx.conf:/config/nginx/site-confs/default.conf:ro
+      - swag-config:/config
+    ports:
+      - "8888:80"
+      - "8443:443"
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Maxwell's Wallet application (Demo Mode)
+  app:
+    # Use local build for ARM64 (Apple Silicon) or pull image for x86
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: maxwells-wallet:local
+    container_name: maxwells-wallet
+    volumes:
+      - wallet-data:/data
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:////data/wallet.db
+      # Demo mode - resets every hour with sample data
+      - DEMO_MODE=true
+      - DEMO_RESET_INTERVAL_HOURS=1
+      # Backup settings
+      - BACKUP_DIR=/data/backups
+      - BACKUP_RETENTION=5
+    # Not exposing ports directly - accessed through SWAG
+    expose:
+      - "3000"
+      - "3001"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Cloudflare Tunnel (optional - for external access)
+  # Create tunnel at: https://one.dash.cloudflare.com/
+  # Set CLOUDFLARE_TUNNEL_TOKEN in .env file
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      - swag
+    restart: unless-stopped
+    profiles:
+      - cloudflare  # Only starts with: docker compose --profile cloudflare up -d
+
+volumes:
+  swag-config:
+  wallet-data:
