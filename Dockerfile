@@ -147,17 +147,18 @@ asyncio.run(create_tables())
 
 case "${1:-run}" in
   run)
-    # Initialize database
-    if [ ! -f /data/wallet.db ]; then
-        # Demo mode: auto-seed with demo data
-        if [ "${DEMO_MODE:-false}" = "true" ]; then
-            echo "Demo mode detected - setting up demo data..."
-            init_database
-            python -m scripts.setup_demo
-        else
-            init_database
-        fi
+    # Demo mode: always reset to fresh data on startup
+    if [ "${DEMO_MODE:-false}" = "true" ]; then
+        echo "Demo mode detected - resetting to fresh demo data..."
+        # Remove existing database to ensure clean state
+        rm -f /data/wallet.db
+        init_database
+        python -m scripts.setup_demo
+    elif [ ! -f /data/wallet.db ]; then
+        # First run: initialize database
+        init_database
     else
+        # Existing database: run migrations
         echo "Running migrations..."
         alembic upgrade head
     fi
