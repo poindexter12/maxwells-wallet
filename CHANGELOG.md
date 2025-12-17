@@ -5,6 +5,20 @@ All notable changes to Maxwell's Wallet will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0-beta2] - 2025-12-16
+
+### Added
+- **Version Info in Containers** - Docker images now include version and git SHA, exposed via `/health` endpoint
+- **VS Code Devcontainer** - Full development environment with pre-configured extensions
+
+### Changed
+- **Container Tagging Strategy** - Proper semver tags: stable releases get `latest`/major/minor, betas only get `beta` tag
+- **CI Dev Builds** - Every passing main build pushes `:dev` tag to ghcr.io
+- **Demo Mode Startup** - Always resets to fresh data on container start (transactions relative to today)
+
+### Fixed
+- **Stale Version Numbers** - Version now read dynamically from pyproject.toml or build args
+
 ## [0.10.0-beta1] - 2025-12-15
 
 ### Demo Mode & Backup System - Major Feature
