@@ -68,7 +68,7 @@ export default function SetupPage() {
   const displayError = localError
     ? t(`setup.${localError}` as Parameters<typeof t>[0])
     : error
-      ? t(`errors.${error}` as Parameters<typeof t>[0], {}, { fallback: error })
+      ? t(`errors.${error}` as Parameters<typeof t>[0])
       : null
 
   return (

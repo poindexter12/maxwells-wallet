@@ -49,7 +49,7 @@ export default function LoginPage() {
     )
   }
 
-  const errorMessage = error ? t(`errors.${error}` as Parameters<typeof t>[0], {}, { fallback: error }) : null
+  const errorMessage = error ? t(`errors.${error}` as Parameters<typeof t>[0]) : null
 
   return (
     <div className="w-full max-w-md px-4">
