@@ -347,6 +347,8 @@
       "overview": "crwdns2008:0crwdne2008:0",
       "imports": "crwdns2010:0crwdne2010:0",
       "health": "crwdns2012:0crwdne2012:0",
+      "backups": "crwdns2814:0crwdne2814:0",
+      "security": "crwdns2870:0crwdne2870:0",
       "buckets": "crwdns2014:0crwdne2014:0",
       "accounts": "crwdns2016:0crwdne2016:0",
       "occasions": "crwdns2018:0crwdne2018:0",
@@ -863,5 +865,81 @@
     "clear": "crwdns2782:0crwdne2782:0",
     "openCalendar": "crwdns2784:0crwdne2784:0",
     "selectDate": "crwdns2786:0crwdne2786:0"
+  },
+  "demo": {
+    "banner": "crwdns2816:0crwdne2816:0",
+    "featureDisabled": "crwdns2818:0crwdne2818:0"
+  },
+  "backup": {
+    "title": "crwdns2820:0crwdne2820:0",
+    "description": "crwdns2822:0crwdne2822:0",
+    "createBackup": "crwdns2824:0crwdne2824:0",
+    "restoreBackup": "crwdns2826:0crwdne2826:0",
+    "deleteBackup": "crwdns2828:0crwdne2828:0",
+    "noBackups": "crwdns2830:0crwdne2830:0",
+    "backupCreated": "crwdns2832:0crwdne2832:0",
+    "backupRestored": "crwdns2834:0crwdne2834:0",
+    "backupDeleted": "crwdns2836:0crwdne2836:0",
+    "confirmRestore": "crwdns2838:0crwdne2838:0",
+    "confirmDelete": "crwdns2840:0crwdne2840:0",
+    "schedule": {
+      "title": "crwdns2842:0crwdne2842:0",
+      "enabled": "crwdns2844:0crwdne2844:0",
+      "interval": "crwdns2846:0crwdne2846:0",
+      "nextBackup": "crwdns2848:0crwdne2848:0",
+      "retentionHelp": "crwdns2850:0crwdne2850:0",
+      "demoResetInterval": "crwdns2852:0crwdne2852:0",
+      "intervals": {
+        "hour": "crwdns2854:0crwdne2854:0",
+        "day": "crwdns2856:0crwdne2856:0",
+        "week": "crwdns2858:0crwdne2858:0"
+      }
+    },
+    "fields": {
+      "description": "crwdns2860:0crwdne2860:0",
+      "created": "crwdns2862:0crwdne2862:0",
+      "size": "crwdns2864:0crwdne2864:0",
+      "source": "crwdns2866:0crwdne2866:0",
+      "demoBackup": "crwdns2868:0crwdne2868:0"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "crwdns2872:0crwdne2872:0",
+      "subtitle": "crwdns2874:0crwdne2874:0",
+      "username": "crwdns2876:0crwdne2876:0",
+      "password": "crwdns2878:0crwdne2878:0",
+      "submit": "crwdns2880:0crwdne2880:0",
+      "forgotPassword": "crwdns2882:0crwdne2882:0"
+    },
+    "setup": {
+      "title": "crwdns2884:0crwdne2884:0",
+      "subtitle": "crwdns2886:0crwdne2886:0",
+      "username": "crwdns2888:0crwdne2888:0",
+      "password": "crwdns2890:0crwdne2890:0",
+      "confirmPassword": "crwdns2892:0crwdne2892:0",
+      "submit": "crwdns2894:0crwdne2894:0",
+      "passwordMismatch": "crwdns2896:0crwdne2896:0",
+      "passwordTooShort": "crwdns2898:0crwdne2898:0"
+    },
+    "changePassword": {
+      "title": "crwdns2900:0crwdne2900:0",
+      "currentPassword": "crwdns2902:0crwdne2902:0",
+      "newPassword": "crwdns2904:0crwdne2904:0",
+      "confirmPassword": "crwdns2906:0crwdne2906:0",
+      "submit": "crwdns2908:0crwdne2908:0",
+      "success": "crwdns2910:0crwdne2910:0",
+      "passwordMismatch": "crwdns2912:0crwdne2912:0",
+      "passwordTooShort": "crwdns2914:0crwdne2914:0"
+    },
+    "logout": "crwdns2916:0crwdne2916:0",
+    "errors": {
+      "INVALID_CREDENTIALS": "crwdns2918:0crwdne2918:0",
+      "NOT_AUTHENTICATED": "crwdns2920:0crwdne2920:0",
+      "SETUP_ALREADY_COMPLETE": "crwdns2922:0crwdne2922:0",
+      "INVALID_PASSWORD": "crwdns2924:0crwdne2924:0",
+      "LOGIN_FAILED": "crwdns2926:0crwdne2926:0",
+      "SETUP_FAILED": "crwdns2928:0crwdne2928:0"
+    }
   }
 }
