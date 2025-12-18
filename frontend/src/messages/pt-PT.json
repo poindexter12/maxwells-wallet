@@ -348,7 +348,7 @@
       "imports": "Importações",
       "health": "Saúde",
       "backups": "Cópias",
-      "security": "Security",
+      "security": "Segurança",
       "buckets": "Rubricas",
       "accounts": "Contas",
       "occasions": "Ocasiões",
@@ -905,41 +905,41 @@
   },
   "auth": {
     "login": {
-      "title": "Sign In",
-      "subtitle": "Welcome back to Maxwell's Wallet",
-      "username": "Username",
-      "password": "Password",
-      "submit": "Sign In",
-      "forgotPassword": "Forgot your password? Use the CLI to reset it."
+      "title": "Entrar",
+      "subtitle": "Bem-vindo de volta ao Maxwell's Wallet",
+      "username": "Nome de usuário",
+      "password": "Senha",
+      "submit": "Entrar",
+      "forgotPassword": "Esqueceu sua senha? Use a CLI para redefini-la."
     },
     "setup": {
-      "title": "Welcome to Maxwell's Wallet",
-      "subtitle": "Create your account to get started",
-      "username": "Username",
-      "password": "Password",
-      "confirmPassword": "Confirm Password",
-      "submit": "Create Account",
-      "passwordMismatch": "Passwords do not match",
-      "passwordTooShort": "Password must be at least 4 characters"
+      "title": "Bem-vindo ao Maxwell's Wallet",
+      "subtitle": "Crie sua conta para começar",
+      "username": "Nome de usuário",
+      "password": "Senha",
+      "confirmPassword": "Confirmar Senha",
+      "submit": "Criar Conta",
+      "passwordMismatch": "As senhas não coincidem",
+      "passwordTooShort": "A senha deve ter pelo menos 4 caracteres"
     },
     "changePassword": {
-      "title": "Change Password",
-      "currentPassword": "Current Password",
-      "newPassword": "New Password",
-      "confirmPassword": "Confirm New Password",
-      "submit": "Change Password",
-      "success": "Password changed successfully",
-      "passwordMismatch": "Passwords do not match",
-      "passwordTooShort": "Password must be at least 4 characters"
+      "title": "Alterar Senha",
+      "currentPassword": "Senha Atual",
+      "newPassword": "Nova Senha",
+      "confirmPassword": "Confirmar Nova Senha",
+      "submit": "Alterar Senha",
+      "success": "Senha alterada com sucesso",
+      "passwordMismatch": "As senhas não coincidem",
+      "passwordTooShort": "A senha deve ter pelo menos 4 caracteres"
     },
-    "logout": "Sign Out",
+    "logout": "Sair",
     "errors": {
-      "INVALID_CREDENTIALS": "Invalid username or password",
-      "NOT_AUTHENTICATED": "Please sign in to continue",
-      "SETUP_ALREADY_COMPLETE": "Account already exists. Please sign in.",
-      "INVALID_PASSWORD": "Current password is incorrect",
-      "LOGIN_FAILED": "Login failed. Please try again.",
-      "SETUP_FAILED": "Setup failed. Please try again."
+      "INVALID_CREDENTIALS": "Nome de usuário ou senha inválidos",
+      "NOT_AUTHENTICATED": "Por favor, faça login para continuar",
+      "SETUP_ALREADY_COMPLETE": "Conta já existe. Por favor, faça login.",
+      "INVALID_PASSWORD": "A senha atual está incorreta",
+      "LOGIN_FAILED": "Login falhou. Por favor, tente novamente.",
+      "SETUP_FAILED": "Configuração falhou. Por favor, tente novamente."
     }
   }
 }
