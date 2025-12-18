@@ -19,6 +19,7 @@ from app.routers import (
     dashboards,
     test,
     settings,
+    auth,
 )
 from app.observability import setup_observability
 from app.services.scheduler import scheduler_service
@@ -53,6 +54,7 @@ tags_metadata = [
     {"name": "admin", "description": "Administrative operations and data management"},
     {"name": "test", "description": "Test utilities (seeding, clearing) - dev only"},
     {"name": "settings", "description": "Application settings including i18n preferences"},
+    {"name": "auth", "description": "Authentication (login, setup, password management)"},
 ]
 
 app = FastAPI(
@@ -69,7 +71,7 @@ Personal finance tracker API with support for:
 
 ## Authentication
 
-This API currently has no authentication. It's designed for single-user local deployment.
+Single-user authentication with JWT tokens. On first run, create a user via `/api/v1/auth/setup`.
 
 ## Getting Started
 
@@ -117,6 +119,7 @@ app.include_router(dashboard.router)
 app.include_router(dashboards.router)
 app.include_router(test.router)
 app.include_router(settings.router)
+app.include_router(auth.router)
 
 
 @app.get("/", tags=["health"])

@@ -633,3 +633,39 @@ class AppSettingsUpdate(SQLModel):
     """Schema for updating app settings"""
 
     language: Optional[LanguagePreference] = None
+
+
+# ============================================================================
+# Authentication
+# ============================================================================
+
+
+class User(BaseModel, table=True):
+    """User account for authentication (single-user for now)"""
+
+    __tablename__ = "users"
+
+    username: str = Field(unique=True, index=True)
+    password_hash: str
+
+
+class UserCreate(SQLModel):
+    """Schema for creating a user"""
+
+    username: str
+    password: str
+
+
+class UserResponse(SQLModel):
+    """Schema for user response (no password)"""
+
+    id: int
+    username: str
+    created_at: datetime
+
+
+class PasswordChange(SQLModel):
+    """Schema for changing password"""
+
+    current_password: str
+    new_password: str

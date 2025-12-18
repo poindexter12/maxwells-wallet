@@ -192,6 +192,22 @@ case "${1:-run}" in
     echo "Demo setup complete."
     exit 0
     ;;
+  reset-password)
+    if [ -z "$2" ] || [ -z "$3" ]; then
+        echo "Usage: reset-password <username> <new_password>"
+        echo ""
+        echo "Example:"
+        echo "  docker compose exec app reset-password admin newpassword123"
+        echo "  docker compose run --rm app reset-password admin newpassword123"
+        exit 1
+    fi
+    if [ ! -f /data/wallet.db ]; then
+        echo "Error: Database not initialized. Run the app first to create a user."
+        exit 1
+    fi
+    python -m scripts.reset_password "$2" "$3"
+    exit $?
+    ;;
   shell)
     exec /bin/bash
     ;;
@@ -208,19 +224,21 @@ case "${1:-run}" in
   help)
     echo "Maxwell's Wallet Docker Commands:"
     echo ""
-    echo "  run          Start the application (default)"
-    echo "  migrate      Run database migrations only"
-    echo "  seed         Seed database with sample data"
-    echo "  demo-setup   Set up demo mode (seed + create demo backup)"
-    echo "  shell        Open a bash shell"
-    echo "  backend-only Run backend API only (no frontend)"
-    echo "  help         Show this help message"
+    echo "  run            Start the application (default)"
+    echo "  migrate        Run database migrations only"
+    echo "  seed           Seed database with sample data"
+    echo "  demo-setup     Set up demo mode (seed + create demo backup)"
+    echo "  reset-password Reset a user's password"
+    echo "  shell          Open a bash shell"
+    echo "  backend-only   Run backend API only (no frontend)"
+    echo "  help           Show this help message"
     echo ""
     echo "Examples:"
     echo "  docker compose up -d"
-    echo "  docker compose run --rm maxwells-wallet seed"
-    echo "  docker compose run --rm maxwells-wallet demo-setup"
-    echo "  docker compose run -it --rm maxwells-wallet shell"
+    echo "  docker compose run --rm app seed"
+    echo "  docker compose run --rm app demo-setup"
+    echo "  docker compose exec app reset-password <username> <newpassword>"
+    echo "  docker compose run -it --rm app shell"
     ;;
   *)
     echo "Unknown command: $1"

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Providers } from '@/components/Providers'
+import { ProtectedProviders } from '@/components/ProtectedProviders'
 import { NavBar } from '@/components/NavBar'
 import { DemoBanner } from '@/components/DemoBanner'
 import './globals.css'
@@ -17,13 +17,13 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="ledger" suppressHydrationWarning>
       <body className="bg-theme min-h-screen">
-        <Providers>
+        <ProtectedProviders>
           <DemoBanner />
           <NavBar />
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {children}
           </main>
-        </Providers>
+        </ProtectedProviders>
       </body>
     </html>
   )

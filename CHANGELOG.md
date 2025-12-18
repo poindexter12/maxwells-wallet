@@ -5,6 +5,23 @@ All notable changes to Maxwell's Wallet will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+#### Authentication
+- **Single-User Auth** - Password-protected access with bcrypt hashing and JWT tokens
+- **First-Run Setup** - `/setup` page for initial account creation (redirected automatically)
+- **Login Flow** - `/login` page with automatic redirect when unauthenticated
+- **Password Change** - New Security tab in Admin for changing password
+- **Password Reset CLI** - `reset-password` Docker command for emergency access
+- **Auth Status API** - `/api/v1/auth/status` returns `{initialized, authenticated}` state
+- **Protected Routes** - All app routes require authentication; auth pages have separate layout
+- **27 Auth Tests** - Full test coverage for auth utilities, endpoints, and workflows
+
+### Changed
+- **bcrypt Pinned** - Pinned to 4.x for passlib compatibility
+
 ## [0.10.0-beta2] - 2025-12-16
 
 ### Added
