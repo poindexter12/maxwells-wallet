@@ -14,6 +14,11 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 
 ## What's New in v0.10
 
+### Authentication
+- **Single-User Auth** - Password-protected access with JWT tokens
+- **First-Run Setup** - Guided account creation on first launch
+- **Password Management** - Change password in Admin, CLI reset for emergencies
+
 ### Demo Mode & Backup System
 - **Demo Mode** - Run public demo instances with restricted operations and auto-reset
 - **SQLite Backup/Restore** - Create, schedule, and manage database backups with GFS retention
@@ -23,7 +28,7 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 ### Docker Improvements
 - **Simplified Deployment** - `docker compose up -d` pulls from registry (no build needed)
 - **Developer Compose** - Separate `docker-compose.dev.yaml` for building from source
-- **New Commands** - `seed`, `demo-setup`, `migrate` entrypoint commands
+- **New Commands** - `seed`, `demo-setup`, `migrate`, `reset-password` entrypoint commands
 - **Installation Guide** - Comprehensive documentation at `docs/installation.md`
 
 ### Testing & Quality
@@ -59,6 +64,43 @@ See [CHANGELOG.md](CHANGELOG.md) for full release history.
 - **Multi-Account Support**: Checking, savings, and credit card accounts
 - **Credit Card Tracking**: Due dates, credit limits, available credit, utilization %
 - **Category Rules**: Automate categorization with pattern-based rules
+
+### Security
+- **Single-User Authentication**: Password-protected access
+- **JWT Tokens**: Secure session management with configurable expiry
+- **Password Management**: Change in UI or reset via CLI
+
+## Authentication
+
+On first launch, you'll be prompted to create an account. After setup, all access requires authentication.
+
+### First-Run Setup
+1. Navigate to the app - you'll be redirected to `/setup`
+2. Create your username and password
+3. You're automatically logged in
+
+### Password Reset (CLI)
+
+If you forget your password, use the CLI to reset it:
+
+```bash
+# Running container
+docker compose exec app reset-password <username> <new_password>
+
+# Or start a new container
+docker compose run --rm app reset-password <username> <new_password>
+```
+
+### Configuration
+
+Set `SECRET_KEY` in production for JWT signing (defaults to dev key):
+
+```bash
+docker run -d -p 3000:3000 -p 3001:3001 \
+  -e SECRET_KEY="your-secure-random-string" \
+  -v /path/to/data:/data \
+  ghcr.io/poindexter12/maxwells-wallet
+```
 
 ## Installation
 

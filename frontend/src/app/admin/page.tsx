@@ -8,6 +8,7 @@ import { OverviewTab } from '@/components/admin/OverviewTab'
 import { ImportsTab } from '@/components/admin/ImportsTab'
 import { HealthTab } from '@/components/admin/HealthTab'
 import { BackupsTab } from '@/components/admin/BackupsTab'
+import { PasswordChangeTab } from '@/components/admin/PasswordChangeTab'
 import { TagsTab } from '@/components/admin/TagsTab'
 import { CreateTagModal, EditTagModal } from '@/components/admin/TagModal'
 import {
@@ -312,6 +313,18 @@ export default function AdminPage() {
           >
             {t('tabs.backups')}
           </button>
+          <button
+            data-testid="admin-tab-security"
+            data-chaos-target="admin-tab-security"
+            onClick={() => setActiveTab('security')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'security'
+                ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
+                : 'border-transparent text-theme-muted hover:text-theme hover:border-[var(--color-border-strong)]'
+            }`}
+          >
+            {t('tabs.security')}
+          </button>
           {TAG_TABS.map((tab) => (
             <button
               key={tab.id}
@@ -353,6 +366,8 @@ export default function AdminPage() {
       {activeTab === 'health' && <HealthTab />}
 
       {activeTab === 'backups' && <BackupsTab />}
+
+      {activeTab === 'security' && <PasswordChangeTab />}
 
       {currentTagTab && (
         <TagsTab

@@ -4,12 +4,21 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { useAuth } from '@/contexts/AuthContext'
 
 export function NavBar() {
   const pathname = usePathname()
+  const router = useRouter()
   const t = useTranslations('nav')
+  const tAuth = useTranslations('auth')
+  const { user, logout } = useAuth()
+
+  function handleLogout() {
+    logout()
+    router.push('/login')
+  }
 
   // Helper to determine if a link is active
   function isActive(href: string): boolean {
@@ -57,6 +66,15 @@ export function NavBar() {
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
             <ThemeSwitcher />
+            {user && (
+              <button
+                onClick={handleLogout}
+                className="nav-link px-3 py-1 text-sm hover:text-red-600 dark:hover:text-red-400"
+                data-testid="logout-button"
+              >
+                {tAuth('logout')}
+              </button>
+            )}
           </div>
         </div>
       </div>

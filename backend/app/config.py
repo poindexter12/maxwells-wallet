@@ -28,5 +28,9 @@ class AppSettings(BaseSettings):
     auto_backup_enabled: bool = False  # Enable automatic backups
     auto_backup_interval_hours: int = 24  # How often to run automatic backups
 
+    # Authentication settings
+    secret_key: str = "change-me-in-production-use-a-long-random-string"
+    token_expire_hours: int = 24 * 7  # 1 week default
+
 
 settings = AppSettings()

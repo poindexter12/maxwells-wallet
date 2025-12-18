@@ -83,6 +83,15 @@ class ErrorCode(str, Enum):
     VALIDATION_ERROR = "VALIDATION_ERROR"
     INVALID_REGEX = "INVALID_REGEX"
 
+    # Authentication errors
+    INVALID_CREDENTIALS = "INVALID_CREDENTIALS"
+    USER_NOT_FOUND = "USER_NOT_FOUND"
+    USER_ALREADY_EXISTS = "USER_ALREADY_EXISTS"
+    NOT_AUTHENTICATED = "NOT_AUTHENTICATED"
+    INVALID_TOKEN = "INVALID_TOKEN"
+    SETUP_ALREADY_COMPLETE = "SETUP_ALREADY_COMPLETE"
+    INVALID_PASSWORD = "INVALID_PASSWORD"
+
 
 class AppException(HTTPException):
     """Application exception with structured error response.
@@ -131,3 +140,8 @@ def bad_request(error_code: ErrorCode, message: Optional[str] = None, **context:
 def conflict(error_code: ErrorCode, message: Optional[str] = None, **context: Any) -> AppException:
     """Create a 409 Conflict exception."""
     return AppException(409, error_code, message, context if context else None)
+
+
+def unauthorized(error_code: ErrorCode, message: Optional[str] = None, **context: Any) -> AppException:
+    """Create a 401 Unauthorized exception."""
+    return AppException(401, error_code, message, context if context else None)
