@@ -114,6 +114,7 @@ async def setup_first_user(
     await session.refresh(user)
 
     # Return token for auto-login
+    assert user.id is not None  # Set by database after commit
     token = create_access_token(user.id)
     return LoginResponse(
         token=token,
@@ -134,6 +135,7 @@ async def login(
     if user is None or not verify_password(data.password, user.password_hash):
         raise unauthorized(ErrorCode.INVALID_CREDENTIALS)
 
+    assert user.id is not None  # User exists, so id is set
     token = create_access_token(user.id)
     return LoginResponse(
         token=token,

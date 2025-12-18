@@ -3,10 +3,10 @@ Authentication utilities for password hashing and JWT tokens.
 """
 
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, cast
 
-from jose import jwt, JWTError
-from passlib.context import CryptContext
+from jose import jwt, JWTError  # type: ignore[import-untyped]
+from passlib.context import CryptContext  # type: ignore[import-untyped]
 
 from app.config import settings
 
@@ -19,12 +19,12 @@ ALGORITHM = "HS256"
 
 def hash_password(password: str) -> str:
     """Hash a password using bcrypt."""
-    return pwd_context.hash(password)
+    return cast(str, pwd_context.hash(password))
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    return cast(bool, pwd_context.verify(plain_password, hashed_password))
 
 
 def create_access_token(user_id: int) -> str:
@@ -34,7 +34,7 @@ def create_access_token(user_id: int) -> str:
         "sub": str(user_id),
         "exp": expire,
     }
-    return jwt.encode(to_encode, settings.secret_key, algorithm=ALGORITHM)
+    return cast(str, jwt.encode(to_encode, settings.secret_key, algorithm=ALGORITHM))
 
 
 def verify_token(token: str) -> Optional[int]:

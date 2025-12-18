@@ -4,13 +4,23 @@ import { NavBar } from './NavBar'
 
 // Mock next/navigation
 const mockPathname = vi.fn()
+const mockPush = vi.fn()
 vi.mock('next/navigation', () => ({
   usePathname: () => mockPathname(),
+  useRouter: () => ({ push: mockPush }),
 }))
 
 // Mock ThemeSwitcher to simplify NavBar tests
 vi.mock('@/components/ThemeSwitcher', () => ({
   ThemeSwitcher: () => <div data-testid="theme-switcher">Theme Switcher</div>,
+}))
+
+// Mock AuthContext
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: { id: 1, username: 'testuser' },
+    logout: vi.fn(),
+  }),
 }))
 
 describe('NavBar', () => {
