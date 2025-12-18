@@ -348,7 +348,7 @@
       "imports": "Imports",
       "health": "Gezondheid",
       "backups": "Back-ups",
-      "security": "Security",
+      "security": "Beveiliging",
       "buckets": "Potten",
       "accounts": "Rekeningen",
       "occasions": "Gebeurtenissen",
@@ -905,41 +905,41 @@
   },
   "auth": {
     "login": {
-      "title": "Sign In",
-      "subtitle": "Welcome back to Maxwell's Wallet",
-      "username": "Username",
-      "password": "Password",
-      "submit": "Sign In",
-      "forgotPassword": "Forgot your password? Use the CLI to reset it."
+      "title": "Aanmelden",
+      "subtitle": "Welkom terug bij Maxwell's Wallet",
+      "username": "Gebruikersnaam",
+      "password": "Wachtwoord",
+      "submit": "Aanmelden",
+      "forgotPassword": "Wachtwoord vergeten? Gebruik de CLI om het opnieuw in te stellen."
     },
     "setup": {
-      "title": "Welcome to Maxwell's Wallet",
-      "subtitle": "Create your account to get started",
-      "username": "Username",
-      "password": "Password",
-      "confirmPassword": "Confirm Password",
-      "submit": "Create Account",
-      "passwordMismatch": "Passwords do not match",
-      "passwordTooShort": "Password must be at least 4 characters"
+      "title": "Welkom bij Maxwell's Wallet",
+      "subtitle": "Maak uw account aan om aan de slag te gaan",
+      "username": "Gebruikersnaam",
+      "password": "Wachtwoord",
+      "confirmPassword": "Bevestig wachtwoord",
+      "submit": "Account aanmaken",
+      "passwordMismatch": "Wachtwoorden komen niet overeen",
+      "passwordTooShort": "Wachtwoord moet minstens 4 tekens bevatten"
     },
     "changePassword": {
-      "title": "Change Password",
-      "currentPassword": "Current Password",
-      "newPassword": "New Password",
-      "confirmPassword": "Confirm New Password",
-      "submit": "Change Password",
-      "success": "Password changed successfully",
-      "passwordMismatch": "Passwords do not match",
-      "passwordTooShort": "Password must be at least 4 characters"
+      "title": "Wachtwoord wijzigen",
+      "currentPassword": "Huidig wachtwoord",
+      "newPassword": "Nieuw wachtwoord",
+      "confirmPassword": "Bevestig nieuw wachtwoord",
+      "submit": "Wachtwoord wijzigen",
+      "success": "Wachtwoord succesvol gewijzigd",
+      "passwordMismatch": "Wachtwoorden komen niet overeen",
+      "passwordTooShort": "Wachtwoord moet minstens 4 tekens bevatten"
     },
-    "logout": "Sign Out",
+    "logout": "Uitloggen",
     "errors": {
-      "INVALID_CREDENTIALS": "Invalid username or password",
-      "NOT_AUTHENTICATED": "Please sign in to continue",
-      "SETUP_ALREADY_COMPLETE": "Account already exists. Please sign in.",
-      "INVALID_PASSWORD": "Current password is incorrect",
-      "LOGIN_FAILED": "Login failed. Please try again.",
-      "SETUP_FAILED": "Setup failed. Please try again."
+      "INVALID_CREDENTIALS": "Ongeldige gebruikersnaam of wachtwoord",
+      "NOT_AUTHENTICATED": "Gelieve in te loggen om verder te gaan",
+      "SETUP_ALREADY_COMPLETE": "Account bestaat al. Gelieve in te loggen.",
+      "INVALID_PASSWORD": "Huidig wachtwoord is onjuist",
+      "LOGIN_FAILED": "Inloggen mislukt. Probeer opnieuw.",
+      "SETUP_FAILED": "Installatie mislukt. Probeer opnieuw."
     }
   }
 }
