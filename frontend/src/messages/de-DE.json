@@ -348,7 +348,7 @@
       "imports": "Importe",
       "health": "Systemzustand",
       "backups": "Sicherungen",
-      "security": "Security",
+      "security": "Sicherheit",
       "buckets": "Kategorien",
       "accounts": "Konten",
       "occasions": "Anlässe",
@@ -905,41 +905,41 @@
   },
   "auth": {
     "login": {
-      "title": "Sign In",
-      "subtitle": "Welcome back to Maxwell's Wallet",
-      "username": "Username",
-      "password": "Password",
-      "submit": "Sign In",
-      "forgotPassword": "Forgot your password? Use the CLI to reset it."
+      "title": "Anmelden",
+      "subtitle": "Willkommen zurück bei Maxwell's Wallet",
+      "username": "Benutzername",
+      "password": "Passwort",
+      "submit": "Anmelden",
+      "forgotPassword": "Passwort vergessen? Verwenden Sie die CLI, um es zurückzusetzen."
     },
     "setup": {
-      "title": "Welcome to Maxwell's Wallet",
-      "subtitle": "Create your account to get started",
-      "username": "Username",
-      "password": "Password",
-      "confirmPassword": "Confirm Password",
-      "submit": "Create Account",
-      "passwordMismatch": "Passwords do not match",
-      "passwordTooShort": "Password must be at least 4 characters"
+      "title": "Willkommen bei Maxwell's Wallet",
+      "subtitle": "Erstellen Sie Ihr Konto, um zu beginnen",
+      "username": "Benutzername",
+      "password": "Passwort",
+      "confirmPassword": "Passwort bestätigen",
+      "submit": "Konto erstellen",
+      "passwordMismatch": "Passwörter stimmen nicht überein",
+      "passwordTooShort": "Passwort muss mindestens 4 Zeichen haben"
     },
     "changePassword": {
-      "title": "Change Password",
-      "currentPassword": "Current Password",
-      "newPassword": "New Password",
-      "confirmPassword": "Confirm New Password",
-      "submit": "Change Password",
-      "success": "Password changed successfully",
-      "passwordMismatch": "Passwords do not match",
-      "passwordTooShort": "Password must be at least 4 characters"
+      "title": "Passwort ändern",
+      "currentPassword": "Aktuelles Passwort",
+      "newPassword": "Neues Passwort",
+      "confirmPassword": "Neues Passwort bestätigen",
+      "submit": "Passwort ändern",
+      "success": "Passwort erfolgreich geändert",
+      "passwordMismatch": "Passwörter stimmen nicht überein",
+      "passwordTooShort": "Passwort muss mindestens 4 Zeichen haben"
     },
-    "logout": "Sign Out",
+    "logout": "Abmelden",
     "errors": {
-      "INVALID_CREDENTIALS": "Invalid username or password",
-      "NOT_AUTHENTICATED": "Please sign in to continue",
-      "SETUP_ALREADY_COMPLETE": "Account already exists. Please sign in.",
-      "INVALID_PASSWORD": "Current password is incorrect",
-      "LOGIN_FAILED": "Login failed. Please try again.",
-      "SETUP_FAILED": "Setup failed. Please try again."
+      "INVALID_CREDENTIALS": "Ungültiger Benutzername oder Passwort",
+      "NOT_AUTHENTICATED": "Bitte melden Sie sich an, um fortzufahren",
+      "SETUP_ALREADY_COMPLETE": "Konto bereits vorhanden. Bitte melden Sie sich an.",
+      "INVALID_PASSWORD": "Aktuelles Passwort ist falsch",
+      "LOGIN_FAILED": "Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+      "SETUP_FAILED": "Einrichtung fehlgeschlagen. Bitte versuchen Sie es erneut."
     }
   }
 }
