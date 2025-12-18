@@ -32,7 +32,7 @@
 - **Observability**: OpenTelemetry, Prometheus
 
 ### Development Tools
-- **Frontend Package Manager**: pnpm
+- **Frontend Package Manager**: npm
 - **Backend Package Manager**: uv
 - **Build System**: Makefile
 - **Version Control**: Git
@@ -393,7 +393,7 @@ async rewrites() {
   return [
     {
       source: '/api/:path*',
-      destination: 'http://localhost:8000/api/:path*',
+      destination: 'http://localhost:3001/api/:path*',
     },
   ]
 }

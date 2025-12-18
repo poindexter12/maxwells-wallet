@@ -39,7 +39,7 @@ OTEL_ALERT_WEBHOOK_URL=https://hooks.slack.com/services/...
 Prometheus metrics are exposed at `/metrics`:
 
 ```bash
-curl http://localhost:8000/metrics
+curl http://localhost:3001/metrics
 ```
 
 ### Available Metrics
@@ -57,7 +57,7 @@ curl http://localhost:8000/metrics
 scrape_configs:
   - job_name: 'maxwells-wallet'
     static_configs:
-      - targets: ['localhost:8000']
+      - targets: ['localhost:3001']
     metrics_path: /metrics
 ```
 

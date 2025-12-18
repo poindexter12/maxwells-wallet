@@ -184,9 +184,9 @@ The frontend communicates with the backend via REST API:
 ```
 Frontend (localhost:3000)
     ↓
-Next.js API Proxy (/api/* → localhost:8000/api/*)
+Next.js API Proxy (/api/* → localhost:3001/api/*)
     ↓
-FastAPI Backend (localhost:8000)
+FastAPI Backend (localhost:3001)
     ↓
 SQLite Database (wallet.db)
 ```

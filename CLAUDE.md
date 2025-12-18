@@ -122,8 +122,9 @@ npm run build
 ## Typical Workflow
 
 1. Use `make` targets for setup, dev, tests, and migrations (see commands above).
-2. Run backend (`uv run uvicorn ...`) and frontend (`pnpm dev`) servers for local development.
-3. Iterate by editing code/config directly.
+2. Run backend (`uv run uvicorn ...`) and frontend (`npm run dev`) servers for local development.
+3. On first run, create a user account when prompted at `/setup`.
+4. Iterate by editing code/config directly.
 
 ## Release Checklist
 
