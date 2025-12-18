@@ -347,12 +347,13 @@
       "overview": "Vue d'ensemble",
       "imports": "Imports",
       "health": "Santé",
+      "backups": "Sauvegardes",
+      "security": "Security",
       "buckets": "Catégories",
       "accounts": "Comptes",
       "occasions": "Occasions",
       "expenses": "Types de dépenses",
-      "allTags": "Tous les tags",
-      "backups": "Sauvegardes"
+      "allTags": "Tous les tags"
     },
     "overview": {
       "stats": {
@@ -895,11 +896,50 @@
       }
     },
     "fields": {
-      "description": "Libellé",
+      "description": "Description",
       "created": "Créé",
       "size": "Taille",
       "source": "Origine",
       "demoBackup": "Sauvegarde Démo"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Sign In",
+      "subtitle": "Welcome back to Maxwell's Wallet",
+      "username": "Username",
+      "password": "Password",
+      "submit": "Sign In",
+      "forgotPassword": "Forgot your password? Use the CLI to reset it."
+    },
+    "setup": {
+      "title": "Welcome to Maxwell's Wallet",
+      "subtitle": "Create your account to get started",
+      "username": "Username",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "submit": "Create Account",
+      "passwordMismatch": "Passwords do not match",
+      "passwordTooShort": "Password must be at least 4 characters"
+    },
+    "changePassword": {
+      "title": "Change Password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "submit": "Change Password",
+      "success": "Password changed successfully",
+      "passwordMismatch": "Passwords do not match",
+      "passwordTooShort": "Password must be at least 4 characters"
+    },
+    "logout": "Sign Out",
+    "errors": {
+      "INVALID_CREDENTIALS": "Invalid username or password",
+      "NOT_AUTHENTICATED": "Please sign in to continue",
+      "SETUP_ALREADY_COMPLETE": "Account already exists. Please sign in.",
+      "INVALID_PASSWORD": "Current password is incorrect",
+      "LOGIN_FAILED": "Login failed. Please try again.",
+      "SETUP_FAILED": "Setup failed. Please try again."
     }
   }
 }
