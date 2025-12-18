@@ -347,12 +347,13 @@
       "overview": "Visão geral",
       "imports": "Importações",
       "health": "Saúde",
+      "backups": "Cópias",
+      "security": "Security",
       "buckets": "Rubricas",
       "accounts": "Contas",
       "occasions": "Ocasiões",
       "expenses": "Tipos de despesa",
-      "allTags": "Todas as etiquetas",
-      "backups": "Cópias"
+      "allTags": "Todas as etiquetas"
     },
     "overview": {
       "stats": {
@@ -870,7 +871,7 @@
     "featureDisabled": "Esta funcionalidade está desativada no modo demo."
   },
   "backup": {
-    "title": "Cópias de Segurança",
+    "title": "Cópias",
     "description": "Criar e restaurar cópias de segurança da base de dados.",
     "createBackup": "Criar Cópia",
     "restoreBackup": "Restaurar",
@@ -900,6 +901,45 @@
       "size": "Tamanho",
       "source": "Origem",
       "demoBackup": "Cópia Demo"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Sign In",
+      "subtitle": "Welcome back to Maxwell's Wallet",
+      "username": "Username",
+      "password": "Password",
+      "submit": "Sign In",
+      "forgotPassword": "Forgot your password? Use the CLI to reset it."
+    },
+    "setup": {
+      "title": "Welcome to Maxwell's Wallet",
+      "subtitle": "Create your account to get started",
+      "username": "Username",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "submit": "Create Account",
+      "passwordMismatch": "Passwords do not match",
+      "passwordTooShort": "Password must be at least 4 characters"
+    },
+    "changePassword": {
+      "title": "Change Password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "submit": "Change Password",
+      "success": "Password changed successfully",
+      "passwordMismatch": "Passwords do not match",
+      "passwordTooShort": "Password must be at least 4 characters"
+    },
+    "logout": "Sign Out",
+    "errors": {
+      "INVALID_CREDENTIALS": "Invalid username or password",
+      "NOT_AUTHENTICATED": "Please sign in to continue",
+      "SETUP_ALREADY_COMPLETE": "Account already exists. Please sign in.",
+      "INVALID_PASSWORD": "Current password is incorrect",
+      "LOGIN_FAILED": "Login failed. Please try again.",
+      "SETUP_FAILED": "Setup failed. Please try again."
     }
   }
 }
