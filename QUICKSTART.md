@@ -7,7 +7,7 @@ Install these first if you don't have them:
 ```bash
 # Check if you have them
 python3 --version  # Need 3.11+
-node --version     # Need 18+
+node --version     # Need 22+ (use `nvm install` to auto-install)
 npm --version      # Comes with Node.js
 uv --version       # If not: curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
@@ -36,6 +36,8 @@ make dev
 
 Then open: **http://localhost:3000**
 
+On first run, you'll be prompted to create a username and password.
+
 The app will have sample data from your BOFA and AMEX CSVs already loaded.
 
 ## Stop Development
@@ -44,9 +46,9 @@ Press `Ctrl+C` to stop both servers.
 
 ## What's Running?
 
-- **Backend API**: http://localhost:8000 (FastAPI)
 - **Frontend**: http://localhost:3000 (Next.js)
-- **API Docs**: http://localhost:8000/docs (Swagger UI)
+- **Backend API**: http://localhost:3001 (FastAPI)
+- **API Docs**: http://localhost:3001/docs (Swagger UI)
 
 ## Common Tasks
 
@@ -123,4 +125,5 @@ make status
 ## Next Steps
 
 - Check `README.md` for full documentation
-- Check `MAKEFILE_GUIDE.md` for all Makefile commands
+- Check `docs/MAKEFILE.md` for all Makefile commands
+- Run `make help` to see available commands

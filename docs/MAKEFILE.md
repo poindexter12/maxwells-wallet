@@ -47,8 +47,8 @@ Install Node.js dependencies using `npm`.
 
 ### `make dev`
 Start both backend and frontend servers in parallel.
-- Backend: http://localhost:8000
 - Frontend: http://localhost:3000
+- Backend: http://localhost:3001
 
 ### `make backend`
 Start only the backend FastAPI server with hot reload.

@@ -61,7 +61,7 @@ Or from the repo root:
 make backend
 ```
 
-The API will be available at `http://localhost:8000`
+The API will be available at `http://localhost:3001`
 
 ### Database Migrations
 
@@ -78,9 +78,9 @@ uv run alembic upgrade head
 ## API Documentation
 
 Once running, visit:
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
-- Prometheus Metrics: `http://localhost:8000/metrics`
+- Swagger UI: `http://localhost:3001/docs`
+- ReDoc: `http://localhost:3001/redoc`
+- Prometheus Metrics: `http://localhost:3001/metrics`
 
 ## Observability
 

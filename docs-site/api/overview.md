@@ -6,9 +6,9 @@ Maxwell's Wallet provides a RESTful API built with FastAPI.
 
 When running locally, interactive API documentation is available at:
 
-- **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
-- **OpenAPI JSON**: [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json)
+- **Swagger UI**: [http://localhost:3001/docs](http://localhost:3001/docs)
+- **ReDoc**: [http://localhost:3001/redoc](http://localhost:3001/redoc)
+- **OpenAPI JSON**: [http://localhost:3001/openapi.json](http://localhost:3001/openapi.json)
 
 ## Base URL
 
@@ -16,7 +16,9 @@ All API endpoints are prefixed with `/api/v1/`.
 
 ## Authentication
 
-The API currently has no authentication. It's designed for single-user local deployment.
+The API uses JWT-based authentication. On first run, you'll create a user account. All API requests require a valid Bearer token in the Authorization header.
+
+See the [Authentication](/api/auth) section for login endpoints and token management.
 
 ## Endpoint Groups
 

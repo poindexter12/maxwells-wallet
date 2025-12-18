@@ -183,4 +183,4 @@ See [GitHub Discussions - Ideas](https://github.com/poindexter12/maxwells-wallet
 
 ## License
 
-Private prototype - not for redistribution
+[MIT License](LICENSE) - see LICENSE file for details.

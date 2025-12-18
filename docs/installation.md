@@ -107,6 +107,22 @@ services:
 | `DATABASE_URL` | `sqlite+aiosqlite:////data/wallet.db` | Database connection string |
 | `BACKEND_URL` | `http://localhost:3001` | Backend API URL (used by frontend) |
 
+### Authentication (v0.10+)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SECRET_KEY` | `change-me-in-production` | JWT signing key (**set in production!**) |
+| `TOKEN_EXPIRE_HOURS` | `24` | JWT token expiry in hours |
+
+**Important**: Always set `SECRET_KEY` to a secure random string in production:
+
+```bash
+docker run -d -p 3000:3000 -p 3001:3001 \
+  -e SECRET_KEY="$(openssl rand -hex 32)" \
+  -v wallet-data:/data \
+  ghcr.io/poindexter12/maxwells-wallet:latest
+```
+
 ### Demo Mode (v0.10+)
 
 | Variable | Default | Description |
@@ -170,6 +186,9 @@ docker compose run --rm maxwells-wallet seed
 
 # Set up demo mode (seed + create demo backup)
 docker compose run --rm maxwells-wallet demo-setup
+
+# Reset a user's password (if locked out)
+docker compose run --rm maxwells-wallet reset-password <username> <new_password>
 
 # Run backend only (no frontend)
 docker compose run --rm maxwells-wallet backend-only
