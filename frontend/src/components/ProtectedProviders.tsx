@@ -2,11 +2,12 @@
 
 import { ReactNode, useEffect, useState } from 'react'
 import { NextIntlClientProvider } from 'next-intl'
-import { AuthProvider } from '@/contexts/AuthContext'
+import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { DashboardProvider } from '@/contexts/DashboardContext'
 import { DemoModeProvider } from '@/contexts/DemoModeContext'
 import { defaultLocale, Locale, isValidLocale } from '@/i18n'
 import universal from '@/messages/universal.json'
+import { useRouter } from 'next/navigation'
 
 // Deep merge objects (universal strings override locale strings)
 function deepMerge(base: Record<string, unknown>, override: Record<string, unknown>): Record<string, unknown> {
@@ -36,7 +37,42 @@ async function loadMessages(locale: string): Promise<Record<string, unknown>> {
   }
 }
 
-export function Providers({ children }: { children: ReactNode }) {
+function AuthGuardInner({ children }: { children: ReactNode }) {
+  const router = useRouter()
+  const { isAuthenticated, isInitialized, loading } = useAuth()
+
+  useEffect(() => {
+    if (!loading) {
+      if (!isInitialized) {
+        router.replace('/setup')
+      } else if (!isAuthenticated) {
+        router.replace('/login')
+      }
+    }
+  }, [loading, isInitialized, isAuthenticated, router])
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-gray-500">Loading...</div>
+      </div>
+    )
+  }
+
+  // Don't render protected content until authenticated
+  if (!isInitialized || !isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-gray-500">Redirecting...</div>
+      </div>
+    )
+  }
+
+  return <>{children}</>
+}
+
+export function ProtectedProviders({ children }: { children: ReactNode }) {
   const [locale, setLocale] = useState<Locale>(defaultLocale)
   const [messages, setMessages] = useState<Record<string, unknown> | null>(null)
   const [demoMode, setDemoMode] = useState(false)
@@ -87,11 +123,13 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
       <NextIntlClientProvider locale={locale} messages={messages}>
-        <DemoModeProvider isDemoMode={demoMode} message={demoMessage}>
-          <DashboardProvider>
-            {children}
-          </DashboardProvider>
-        </DemoModeProvider>
+        <AuthGuardInner>
+          <DemoModeProvider isDemoMode={demoMode} message={demoMessage}>
+            <DashboardProvider>
+              {children}
+            </DashboardProvider>
+          </DemoModeProvider>
+        </AuthGuardInner>
       </NextIntlClientProvider>
     </AuthProvider>
   )

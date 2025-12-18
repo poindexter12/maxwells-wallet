@@ -43,7 +43,7 @@ export interface TagWithUsage extends Tag {
   usage_count?: number
 }
 
-export type AdminTab = 'overview' | 'imports' | 'health' | 'backups' | 'all-tags' | 'buckets' | 'accounts' | 'occasions' | 'expense-types'
+export type AdminTab = 'overview' | 'imports' | 'health' | 'backups' | 'security' | 'all-tags' | 'buckets' | 'accounts' | 'occasions' | 'expense-types'
 
 // Backup types
 export interface BackupMetadata {
