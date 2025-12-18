@@ -887,7 +887,7 @@
       "enabled": "Enable automatic backups",
       "interval": "Backup interval",
       "nextBackup": "Next backup",
-      "retentionHelp": "Oldest backups are deleted automatically",
+      "retentionHelp": "Keeps hourly backups for 24h, daily for 7 days, weekly for 4 weeks, monthly for 1 year",
       "demoResetInterval": "Demo reset interval",
       "intervals": {
         "hour": "1 hour",
