@@ -868,7 +868,7 @@
   },
   "demo": {
     "banner": "Modalità Demo - I dati vengono reimpostati periodicamente. Alcune funzionalità sono disabilitate.",
-    "loginBanner": "Demo Mode - Login with username \"maxwell\" and password \"wallet\"",
+    "loginBanner": "Modalità Demo - Accedi con nome utente \"maxwell\" e password \"wallet\"",
     "featureDisabled": "Questa funzionalità è disabilitata in modalità demo."
   },
   "backup": {
