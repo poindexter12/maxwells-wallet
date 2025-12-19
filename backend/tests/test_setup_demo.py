@@ -157,3 +157,31 @@ class TestSetupDemoScript:
         demo_backups = [b for b in manifest["backups"] if b.get("is_demo_backup")]
         assert len(demo_backups) == 1, "Expected exactly one demo backup"
         assert demo_backups[0]["source"] == "demo_seed"
+
+    def test_setup_demo_creates_demo_user(self, demo_db):
+        """Test that setup_demo creates the demo user (maxwell/wallet)."""
+        db_path, backup_dir = demo_db
+
+        result = subprocess.run(
+            [sys.executable, "-m", "scripts.setup_demo"],
+            cwd=Path(__file__).parent.parent,
+            env={
+                "DATABASE_URL": f"sqlite+aiosqlite:///{db_path}",
+                "BACKUP_DIR": str(backup_dir),
+                "PATH": "",
+            },
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
+        assert result.returncode == 0, f"Script failed with: {result.stderr}"
+
+        # Verify demo user was created
+        conn = sqlite3.connect(db_path)
+        cursor = conn.execute("SELECT username FROM users WHERE username = 'maxwell'")
+        user = cursor.fetchone()
+        conn.close()
+
+        assert user is not None, "Demo user 'maxwell' was not created"
+        assert user[0] == "maxwell"

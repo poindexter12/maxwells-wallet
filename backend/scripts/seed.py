@@ -21,7 +21,7 @@ import argparse
 from datetime import date, datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 
 from app.database import async_session, engine
 from app.models import (
@@ -35,7 +35,15 @@ from app.models import (
     DateRangeType,
     TagRule,
     ReconciliationStatus,
+    User,
 )
+from app.utils.auth import hash_password
+
+# Demo user credentials
+DEMO_USER = {
+    "username": "maxwell",
+    "password": "wallet",
+}
 
 
 # ============================================================================
@@ -194,19 +202,77 @@ async def clear_data(session: AsyncSession):
     await session.execute(delete(TagRule))
     await session.execute(delete(Transaction))
     await session.execute(delete(Tag))
+    await session.execute(delete(User))
 
     await session.commit()
     print("Data cleared.")
+
+
+async def seed_demo_user(session: AsyncSession):
+    """Create demo user if not exists."""
+    print("Seeding demo user...")
+
+    # Check if user already exists
+    result = await session.execute(
+        select(User).where(User.username == DEMO_USER["username"])
+    )
+    existing = result.scalar_one_or_none()
+
+    if existing:
+        print(f"Demo user '{DEMO_USER['username']}' already exists, skipping.")
+        return
+
+    user = User(
+        username=DEMO_USER["username"],
+        password_hash=hash_password(DEMO_USER["password"]),
+    )
+    session.add(user)
+    await session.commit()
+    print(f"Created demo user: {DEMO_USER['username']} / {DEMO_USER['password']}")
+
+
+async def get_or_create_tag(
+    session: AsyncSession,
+    namespace: str,
+    value: str,
+    description: str,
+    sort_order: int,
+    color: str | None = None,
+    due_day: int | None = None,
+    credit_limit: float | None = None,
+) -> Tag:
+    """Get existing tag or create new one."""
+    result = await session.execute(
+        select(Tag).where(Tag.namespace == namespace, Tag.value == value)
+    )
+    existing = result.scalar_one_or_none()
+    if existing:
+        return existing
+
+    tag = Tag(
+        namespace=namespace,
+        value=value,
+        description=description,
+        sort_order=sort_order,
+        color=color,
+        due_day=due_day,
+        credit_limit=credit_limit,
+    )
+    session.add(tag)
+    await session.flush()
+    return tag
 
 
 async def seed_tags(session: AsyncSession) -> dict:
     """Create account, bucket, and occasion tags. Returns tag lookup dict."""
     print("Seeding tags...")
     tag_lookup = {}
+    created_count = {"account": 0, "bucket": 0, "occasion": 0}
 
     # Account tags
     for i, account in enumerate(ACCOUNTS):
-        tag = Tag(
+        tag = await get_or_create_tag(
+            session,
             namespace="account",
             value=account["value"],
             description=account["description"],
@@ -215,38 +281,40 @@ async def seed_tags(session: AsyncSession) -> dict:
             due_day=account["due_day"],
             credit_limit=account["credit_limit"],
         )
-        session.add(tag)
-        await session.flush()
         tag_lookup[f"account:{account['value']}"] = tag.id
+        if tag.created_at == tag.updated_at:  # New tag
+            created_count["account"] += 1
 
     # Bucket tags
     for i, bucket in enumerate(BUCKET_TAGS):
-        tag = Tag(
+        tag = await get_or_create_tag(
+            session,
             namespace="bucket",
             value=bucket["value"],
             description=bucket["description"],
             sort_order=i,
             color=bucket["color"],
         )
-        session.add(tag)
-        await session.flush()
         tag_lookup[f"bucket:{bucket['value']}"] = tag.id
+        if tag.created_at == tag.updated_at:  # New tag
+            created_count["bucket"] += 1
 
     # Occasion tags
     for i, occasion in enumerate(OCCASION_TAGS):
-        tag = Tag(
+        tag = await get_or_create_tag(
+            session,
             namespace="occasion",
             value=occasion["value"],
             description=occasion["description"],
             sort_order=i,
             color=occasion["color"],
         )
-        session.add(tag)
-        await session.flush()
         tag_lookup[f"occasion:{occasion['value']}"] = tag.id
+        if tag.created_at == tag.updated_at:  # New tag
+            created_count["occasion"] += 1
 
     await session.commit()
-    print(f"Created {len(ACCOUNTS)} account tags, {len(BUCKET_TAGS)} bucket tags, {len(OCCASION_TAGS)} occasion tags.")
+    print(f"Tags: {created_count['account']} account, {created_count['bucket']} bucket, {created_count['occasion']} occasion (skipped existing).")
     return tag_lookup
 
 
@@ -546,6 +614,7 @@ async def seed_all(clear: bool = False):
         if clear:
             await clear_data(session)
 
+        await seed_demo_user(session)
         tag_lookup = await seed_tags(session)
         await seed_transactions(session, tag_lookup, num_transactions=500)
         await seed_budgets(session)

@@ -17,7 +17,15 @@ docker: docker-build docker-up ## Build and start Docker container (dev)
 
 docker-with-pseudo: docker-build-pseudo docker-up ## Build and start Docker with pseudo locale for i18n QA
 
-docker-with-demo: docker-demo-up docker-demo-seed ## Start Docker in demo mode with sample data
+docker-with-demo: docker-build ## Build and start Docker in demo mode (builds from source)
+	@echo "$(BLUE)Starting Docker container in demo mode...$(NC)"
+	DEMO_MODE=true $(COMPOSE_DEV) up -d
+	@echo "$(GREEN)✓ Container started in demo mode$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Demo mode enabled - data resets on restart$(NC)"
+	@echo "Frontend: http://localhost:3000"
+	@echo "Backend:  http://localhost:3001"
+	@echo "Login: maxwell / wallet"
 
 docker-build-pseudo: ## Build Docker image with pseudo locale enabled (no cache)
 	@echo "$(BLUE)Building Docker image with pseudo locale (no cache)...$(NC)"
@@ -68,8 +76,8 @@ docker-migrate: ## Run database migrations in Docker
 	$(COMPOSE_DEV) run --rm maxwells-wallet migrate
 	@echo "$(GREEN)✓ Migrations complete$(NC)"
 
-docker-demo-up: ## Start Docker container in demo mode (pulls from registry)
-	@echo "$(BLUE)Starting Docker container in demo mode...$(NC)"
+docker-demo-up: ## Start demo from registry image (CI/prod only, requires published image)
+	@echo "$(BLUE)Starting Docker container in demo mode (from registry)...$(NC)"
 	$(COMPOSE_DEMO) up -d
 	@echo "$(GREEN)✓ Container started in demo mode$(NC)"
 	@echo ""
@@ -77,7 +85,7 @@ docker-demo-up: ## Start Docker container in demo mode (pulls from registry)
 	@echo "Frontend: http://localhost:3000"
 	@echo "Backend:  http://localhost:3001"
 
-docker-demo-seed: ## Seed demo data and create demo backup
+docker-demo-seed: ## Seed demo data (for registry image)
 	@echo "$(BLUE)Setting up demo data...$(NC)"
 	$(COMPOSE_DEMO) run --rm maxwells-wallet demo-setup
 	@echo "$(GREEN)✓ Demo data seeded$(NC)"

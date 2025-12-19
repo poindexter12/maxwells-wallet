@@ -24,6 +24,7 @@ from app.database import async_session
 from app.services.backup import backup_service
 from scripts.seed import (
     clear_data,
+    seed_demo_user,
     seed_tags,
     seed_transactions,
     seed_budgets,
@@ -43,6 +44,7 @@ async def setup_demo():
     print("Step 1: Seeding database with demo data...")
     async with async_session() as session:
         await clear_data(session)
+        await seed_demo_user(session)
         tag_lookup = await seed_tags(session)
         await seed_transactions(session, tag_lookup, num_transactions=500)
         await seed_budgets(session)

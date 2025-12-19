@@ -17,13 +17,12 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Add account_tag_id FK to transactions table
-    # SQLite doesn't support ADD CONSTRAINT, so add column and index only
-    op.add_column('transactions', sa.Column('account_tag_id', sa.Integer(), nullable=True))
-    op.create_index(op.f('ix_transactions_account_tag_id'), 'transactions', ['account_tag_id'], unique=False)
-    # FK constraint enforced at ORM level for SQLite; real FK would be added for Postgres
+    # NOTE: This migration is now a no-op because:
+    # 1. transactions table is created in root migration 1b7c2fce9b4b with account_tag_id column
+    # The migration is kept for schema version history
+    pass
 
 
 def downgrade() -> None:
-    op.drop_index(op.f('ix_transactions_account_tag_id'), table_name='transactions')
-    op.drop_column('transactions', 'account_tag_id')
+    # No-op - see upgrade() comment
+    pass
