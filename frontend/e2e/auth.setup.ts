@@ -5,7 +5,7 @@
  * Uses API-based authentication to avoid UI dependencies, then creates
  * a storage state file that includes the auth token in localStorage.
  */
-import { test as setup, expect } from '@playwright/test';
+import { test as setup } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
