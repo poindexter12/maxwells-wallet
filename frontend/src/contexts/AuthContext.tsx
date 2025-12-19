@@ -35,6 +35,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const TOKEN_KEY = 'auth_token'
 
+// Cookie helpers for middleware access
+function setCookie(name: string, value: string, days: number = 7) {
+  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString()
+  document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax`
+}
+
+function deleteCookie(name: string) {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -51,8 +61,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (typeof window === 'undefined') return
     if (token) {
       localStorage.setItem(TOKEN_KEY, token)
+      setCookie(TOKEN_KEY, token) // Also set cookie for middleware
     } else {
       localStorage.removeItem(TOKEN_KEY)
+      deleteCookie(TOKEN_KEY) // Also clear cookie
     }
   }, [])
 
