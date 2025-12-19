@@ -88,6 +88,14 @@ jobs:
           path: frontend/playwright-report/
           retention-days: 7
 
+      - name: Upload auth debug screenshots
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: auth-debug-${{ matrix.browser }}
+          path: frontend/e2e/.auth/
+          retention-days: 7
+
   create-issue:
     name: Create Issue on Failure
     runs-on: ubuntu-latest
