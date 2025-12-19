@@ -64,9 +64,15 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Install Playwright browser
+      - name: Install Playwright browsers
         working-directory: frontend
-        run: npx playwright install --with-deps ${{ matrix.browser }}
+        run: |
+          # Install the browser for this matrix job
+          npx playwright install --with-deps ${{ matrix.browser }}
+          # Setup project always uses chromium, so install it for all jobs
+          if [ "${{ matrix.browser }}" != "chromium" ]; then
+            npx playwright install chromium
+          fi
 
       - name: Run E2E tests
         working-directory: frontend
