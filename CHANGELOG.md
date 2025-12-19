@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.10.0-beta4] - 2025-12-19
+## [0.10.0-beta5] - 2025-12-19
 
 ### Added
 - **Demo Banner on Login** - Shows demo credentials (maxwell/wallet) on login page in demo mode
@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Route Groups** - Restructured frontend into `(auth)` and `(main)` route groups for separate layouts
+- **Makefile Help** - Grouped targets by category for better discoverability
+- **i18n Tests** - Removed locale key existence tests (Crowdin manages translations)
 
 ## [0.10.0-beta3] - 2025-12-18
 
