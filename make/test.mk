@@ -5,6 +5,7 @@
 .PHONY: test-backend test-unit test-coverage test-reports test-tags test-import test-budgets
 .PHONY: test-e2e-install test-e2e test-e2e-headed test-e2e-debug test-e2e-import test-e2e-full
 .PHONY: test-perf test-perf-quick test-perf-verbose
+.PHONY: test-chaos test-chaos-headed
 .PHONY: test-all lint-frontend
 .PHONY: lint lint-backend vulture dead-code typecheck quality security-audit
 
@@ -106,6 +107,20 @@ test-e2e-full: ## Run full workflow E2E tests (slow)
 		unset VIRTUAL_ENV && \
 		.venv/bin/python -m pytest tests/e2e/test_full_workflow.py -v --tb=short
 	@echo "$(GREEN)✓ Full workflow E2E tests complete$(NC)"
+
+test-chaos: ## Run chaos/monkey tests (requires 'make dev' running)
+	@echo "$(BLUE)Running chaos tests...$(NC)"
+	@echo "$(YELLOW)Checking if servers are running...$(NC)"
+	@curl -s http://localhost:3001/health >/dev/null 2>&1 || { echo "$(RED)Backend not running. Start with: make dev$(NC)"; exit 1; }
+	@curl -s http://localhost:3000 >/dev/null 2>&1 || { echo "$(RED)Frontend not running. Start with: make dev$(NC)"; exit 1; }
+	@echo "$(GREEN)Servers detected, running chaos tests...$(NC)"
+	@cd $(FRONTEND_DIR) && SKIP_MIGRATIONS=1 npx playwright test chaos/ --reporter=line
+	@echo "$(GREEN)✓ Chaos tests complete$(NC)"
+
+test-chaos-headed: ## Run chaos tests with visible browser
+	@echo "$(BLUE)Running chaos tests (headed mode)...$(NC)"
+	@cd $(FRONTEND_DIR) && SKIP_MIGRATIONS=1 npx playwright test chaos/ --headed --reporter=line
+	@echo "$(GREEN)✓ Chaos tests complete$(NC)"
 
 test-all: test-backend test-e2e ## Run all tests (unit + E2E)
 
