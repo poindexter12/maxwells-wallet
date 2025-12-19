@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, forwardRef } from 'react'
+import { memo, forwardRef, useRef, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { useFormat } from '@/hooks/useFormat'
 import { SplitTransaction } from '@/components/SplitTransaction'
@@ -48,6 +48,20 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
   const tFields = useTranslations('fields')
   const { formatCurrency, formatDateShort } = useFormat()
   const nonBucketAccountTags = txn.tags?.filter(t => t.namespace !== 'bucket' && t.namespace !== 'account') || []
+
+  // Guard against double-click on + tag button (chaos test found this causes issues)
+  const lastAddTagClick = useRef<number>(0)
+  const handleStartAddTag = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const now = Date.now()
+    // Debounce rapid clicks (ignore clicks within 300ms of each other)
+    if (now - lastAddTagClick.current < 300) {
+      return
+    }
+    lastAddTagClick.current = now
+    onStartAddTag(txn.id)
+  }, [onStartAddTag, txn.id])
 
   // Convert snake_case status to camelCase for translation lookup
   const statusKey = txn.reconciliation_status?.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase()) || 'unreconciled'
@@ -181,7 +195,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
               </div>
             ) : (
               <button
-                onClick={() => onStartAddTag(txn.id)}
+                onClick={handleStartAddTag}
                 className="text-xs text-blue-500 hover:text-blue-700 whitespace-nowrap flex-shrink-0"
                 title={tCommon('add')}
               >
@@ -319,7 +333,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
               })}
 
               <button
-                onClick={() => onStartAddTag(txn.id)}
+                onClick={handleStartAddTag}
                 className="text-xs text-blue-500 hover:text-blue-700"
               >
                 + tag
