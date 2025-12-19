@@ -7,24 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.10.0-beta5] - 2025-12-19
+## [0.10.0] - 2025-12-19
 
-### Added
-- **Demo Banner on Login** - Shows demo credentials (maxwell/wallet) on login page in demo mode
-- **Demo User Creation** - Demo setup now creates demo user automatically
+### Authentication - Major Feature
 
-### Fixed
-- **Fresh Install Auth Flow** - Fixed redirect loop on fresh database installs
-- **Demo Mode Docker** - `make docker-with-demo` now builds from source (ARM64 compatible)
-- **Migration Chain** - Fixed Alembic migration conflicts for fresh installs
-- **Seed Script Idempotency** - Seed script now safely handles re-runs with get_or_create pattern
-
-### Changed
-- **Route Groups** - Restructured frontend into `(auth)` and `(main)` route groups for separate layouts
-- **Makefile Help** - Grouped targets by category for better discoverability
-- **i18n Tests** - Removed locale key existence tests (Crowdin manages translations)
-
-## [0.10.0-beta3] - 2025-12-18
+This release adds single-user authentication with password protection.
 
 ### Added
 
@@ -38,33 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Protected Routes** - All app routes require authentication; auth pages have separate layout
 - **27 Auth Tests** - Full test coverage for auth utilities, endpoints, and workflows
 
-### Changed
-- **bcrypt Pinned** - Pinned to 4.x for passlib compatibility
-
-## [0.10.0-beta2] - 2025-12-16
-
-### Added
-- **Version Info in Containers** - Docker images now include version and git SHA, exposed via `/health` endpoint
-- **VS Code Devcontainer** - Full development environment with pre-configured extensions
-
-### Changed
-- **Container Tagging Strategy** - Proper semver tags: stable releases get `latest`/major/minor, betas only get `beta` tag
-- **CI Dev Builds** - Every passing main build pushes `:dev` tag to ghcr.io
-- **Demo Mode Startup** - Always resets to fresh data on container start (transactions relative to today)
-
-### Fixed
-- **Stale Version Numbers** - Version now read dynamically from pyproject.toml or build args
-
-## [0.10.0-beta1] - 2025-12-15
-
-### Demo Mode & Backup System - Major Feature
-
-This release introduces demo mode for public instances and a complete SQLite backup/restore system.
-
-### Added
-
-#### Demo Mode
+#### Demo Mode & Backup System
 - **Demo Banner** - Prominent banner indicating demo instance with restricted operations
+- **Demo Banner on Login** - Shows demo credentials (maxwell/wallet) on login page in demo mode
+- **Demo User Creation** - Demo setup now creates demo user automatically
 - **Operation Restrictions** - Blocks imports, purge, and other destructive actions in demo mode
 - **Auto-Reset** - Configurable automatic data reset interval for demo instances
 - **Demo Setup Script** - One-command setup with sample data (`docker compose run --rm maxwells-wallet demo-setup`)
@@ -82,12 +46,27 @@ This release introduces demo mode for public instances and a complete SQLite bac
 - **Development Compose** - `docker-compose.dev.yaml` for building from source
 - **New Entrypoint Commands** - `seed`, `demo-setup`, `migrate` commands
 - **Comprehensive Installation Guide** - Full documentation at `docs/installation.md`
+- **Version Info in Containers** - Docker images now include version and git SHA, exposed via `/health` endpoint
+- **VS Code Devcontainer** - Full development environment with pre-configured extensions
 
 ### Changed
+- **Route Groups** - Restructured frontend into `(auth)` and `(main)` route groups for separate layouts
 - **Docker Workflow** - End users use `docker compose up -d`, developers use `-f docker-compose.dev.yaml`
+- **Container Tagging Strategy** - Proper semver tags: stable releases get `latest`/major/minor, betas only get `beta` tag
+- **CI Dev Builds** - Every passing main build pushes `:dev` tag to ghcr.io
+- **Demo Mode Startup** - Always resets to fresh data on container start (transactions relative to today)
 - **Import UI in Demo** - Can view import interface but file uploads are blocked
+- **Makefile Help** - Grouped targets by category for better discoverability
+- **i18n Tests** - Removed locale key existence tests (Crowdin manages translations)
+- **bcrypt Pinned** - Pinned to 4.x for passlib compatibility
 
 ### Fixed
+- **Fresh Install Auth Flow** - Fixed redirect loop on fresh database installs
+- **Demo Mode Docker** - `make docker-with-demo` now builds from source (ARM64 compatible)
+- **Migration Chain** - Fixed Alembic migration conflicts for fresh installs
+- **Seed Script Idempotency** - Seed script now safely handles re-runs with get_or_create pattern
+- **Stale Version Numbers** - Version now read dynamically from pyproject.toml or build args
+- **DatePicker Accessibility** - Added proper `aria-controls` attribute for combobox role
 - **Chaos Testing** - Resilient error recovery with continue-on-error mode
 - **E2E Tests** - Webkit timing issues resolved with proper Playwright assertions
 - **Seed Script** - Database engine properly disposed to prevent hanging
