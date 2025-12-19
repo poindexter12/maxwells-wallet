@@ -1,21 +1,26 @@
 /**
  * Global setup for E2E tests.
- * Creates a test user and logs in, saving the auth state for all tests.
+ * Creates a test user and saves auth state for all tests.
  */
-import { chromium, type FullConfig } from '@playwright/test';
+import { type FullConfig } from '@playwright/test';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const TEST_USER = {
   username: 'testuser',
   password: 'testpass123',
 };
 
+const TOKEN_KEY = 'maxwells-wallet-token';
+
 async function globalSetup(config: FullConfig) {
-  const baseURL = config.projects[0].use.baseURL || 'http://localhost:3000';
   const backendURL = 'http://localhost:3001';
 
   // Check auth status
   const statusRes = await fetch(`${backendURL}/api/v1/auth/status`);
   const status = await statusRes.json();
+
+  let token: string;
 
   if (!status.initialized) {
     // First run - create the test user via setup endpoint
@@ -29,29 +34,51 @@ async function globalSetup(config: FullConfig) {
       throw new Error(`Failed to create test user: ${await setupRes.text()}`);
     }
 
+    const setupData = await setupRes.json();
+    token = setupData.token;
     console.log('Created test user for E2E tests');
+  } else {
+    // User exists - login to get token
+    const loginRes = await fetch(`${backendURL}/api/v1/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(TEST_USER),
+    });
+
+    if (!loginRes.ok) {
+      throw new Error(`Failed to login test user: ${await loginRes.text()}`);
+    }
+
+    const loginData = await loginRes.json();
+    token = loginData.token;
+    console.log('Logged in test user for E2E tests');
   }
 
-  // Login and save storage state
-  const browser = await chromium.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
+  // Create storage state file with the token in localStorage
+  const authDir = path.join(__dirname, '.auth');
+  if (!fs.existsSync(authDir)) {
+    fs.mkdirSync(authDir, { recursive: true });
+  }
 
-  // Navigate to login
-  await page.goto(`${baseURL}/login`);
+  const storageState = {
+    cookies: [],
+    origins: [
+      {
+        origin: 'http://localhost:3000',
+        localStorage: [
+          {
+            name: TOKEN_KEY,
+            value: token,
+          },
+        ],
+      },
+    ],
+  };
 
-  // Fill login form
-  await page.fill('[data-testid="login-username"]', TEST_USER.username);
-  await page.fill('[data-testid="login-password"]', TEST_USER.password);
-  await page.click('[data-testid="login-submit"]');
-
-  // Wait for redirect to dashboard
-  await page.waitForURL('/', { timeout: 10000 });
-
-  // Save storage state (includes cookies and localStorage with JWT)
-  await context.storageState({ path: './e2e/.auth/user.json' });
-
-  await browser.close();
+  fs.writeFileSync(
+    path.join(authDir, 'user.json'),
+    JSON.stringify(storageState, null, 2)
+  );
 
   console.log('E2E auth setup complete');
 }
