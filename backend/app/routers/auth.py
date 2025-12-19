@@ -168,3 +168,36 @@ async def change_password(
     await session.commit()
 
     return {"message": "Password changed successfully"}
+
+
+@router.delete("/test-reset")
+async def test_reset_users(
+    confirm: str,
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    ⚠️ TEST ONLY: Delete all users to simulate fresh install.
+
+    This endpoint is for E2E testing of fresh install scenarios.
+    Pass confirm='RESET_USERS' to confirm.
+    """
+    import os
+
+    # Only allow in test/development environments
+    env = os.environ.get("ENV", "development")
+    if env not in ("test", "development"):
+        raise bad_request(ErrorCode.OPERATION_NOT_ALLOWED, "Only available in test environment")
+
+    if confirm != "RESET_USERS":
+        raise bad_request(ErrorCode.CONFIRMATION_REQUIRED, "Must pass confirm='RESET_USERS'")
+
+    # Delete all users
+    result = await session.execute(select(User))
+    users = result.scalars().all()
+    count = len(users)
+    for user in users:
+        await session.delete(user)
+
+    await session.commit()
+
+    return {"deleted_users": count, "message": "All users deleted - app is now uninitialized"}
