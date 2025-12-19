@@ -72,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true)
       const token = getToken()
+      console.log('[AuthContext] Checking auth status, hasToken:', !!token)
 
       // Check status endpoint
       const statusRes = await fetch('/api/v1/auth/status', {
@@ -79,10 +80,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
       if (!statusRes.ok) {
+        console.error('[AuthContext] Auth status failed:', statusRes.status)
         throw new Error('Failed to check auth status')
       }
 
       const status: AuthStatus = await statusRes.json()
+      console.log('[AuthContext] Auth status:', status)
       setIsInitialized(status.initialized)
       setIsAuthenticated(status.authenticated)
 
@@ -106,8 +109,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setError(null)
     } catch (err) {
+      console.error('[AuthContext] Auth check error:', err)
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
+      console.log('[AuthContext] Auth check complete')
       setLoading(false)
     }
   }, [getToken, setToken])

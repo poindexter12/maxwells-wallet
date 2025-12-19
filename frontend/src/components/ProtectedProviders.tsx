@@ -41,11 +41,15 @@ function AuthGuardInner({ children }: { children: ReactNode }) {
   const router = useRouter()
   const { isAuthenticated, isInitialized, loading } = useAuth()
 
+  console.log('[AuthGuard] State:', { loading, isInitialized, isAuthenticated })
+
   useEffect(() => {
     if (!loading) {
       if (!isInitialized) {
+        console.log('[AuthGuard] Not initialized, redirecting to /setup')
         router.replace('/setup')
       } else if (!isAuthenticated) {
+        console.log('[AuthGuard] Not authenticated, redirecting to /login')
         router.replace('/login')
       }
     }
