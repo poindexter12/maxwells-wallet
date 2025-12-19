@@ -1121,22 +1121,7 @@ async function executeDemonAction(
       }
       if (elements.length === 0) return null;
 
-      // Filter to elements with actual text content (skip icon-only buttons)
-      // Icon buttons often have problematic double-click behavior (toggle, state change)
-      const textElements: typeof elements = [];
-      for (const el of elements) {
-        try {
-          const text = await el.textContent();
-          if (text && text.trim().length > 0) {
-            textElements.push(el);
-          }
-        } catch {
-          // Element may have become stale, skip it
-        }
-      }
-      if (textElements.length === 0) return null;
-
-      const element = rng.pick(textElements);
+      const element = rng.pick(elements);
       try {
         const text = await element.textContent();
         await element.dblclick({ timeout: 2000 });

@@ -1,8 +1,9 @@
 'use client'
 
-import { memo, forwardRef, useRef, useCallback } from 'react'
+import { memo, forwardRef, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { useFormat } from '@/hooks/useFormat'
+import { useDebouncedClick, createDebouncedHandler } from '@/hooks/useDebouncedClick'
 import { SplitTransaction } from '@/components/SplitTransaction'
 import { TransactionRowProps, getBucketBorderColor } from './types'
 
@@ -49,19 +50,15 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
   const { formatCurrency, formatDateShort } = useFormat()
   const nonBucketAccountTags = txn.tags?.filter(t => t.namespace !== 'bucket' && t.namespace !== 'account') || []
 
-  // Guard against double-click on + tag button (chaos test found this causes issues)
-  const lastAddTagClick = useRef<number>(0)
-  const handleStartAddTag = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const now = Date.now()
-    // Debounce rapid clicks (ignore clicks within 300ms of each other)
-    if (now - lastAddTagClick.current < 300) {
-      return
-    }
-    lastAddTagClick.current = now
-    onStartAddTag(txn.id)
-  }, [onStartAddTag, txn.id])
+  // Debounce handlers for buttons that change UI state on click
+  const handleStartAddTag = useDebouncedClick(
+    useCallback((e: React.MouseEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      onStartAddTag(txn.id)
+    }, [onStartAddTag, txn.id]),
+    150
+  )
 
   // Convert snake_case status to camelCase for translation lookup
   const statusKey = txn.reconciliation_status?.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase()) || 'unreconciled'
@@ -227,7 +224,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
                 >
                   {displayText}
                   <button
-                    onClick={() => onRemoveTag(txn.id, tag.full)}
+                    onClick={createDebouncedHandler(() => onRemoveTag(txn.id, tag.full), tag)}
                     className="hover:text-purple-900 ml-0.5"
                   >
                     ×
@@ -327,7 +324,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
                     className="inline-flex items-center gap-0.5 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] text-purple-700"
                   >
                     {displayText}
-                    <button onClick={() => onRemoveTag(txn.id, tag.full)} className="hover:text-purple-900">×</button>
+                    <button onClick={createDebouncedHandler(() => onRemoveTag(txn.id, tag.full), tag)} className="hover:text-purple-900">×</button>
                   </span>
                 )
               })}
