@@ -1079,7 +1079,17 @@ async function executeDemonAction(
 ): Promise<string | null> {
   switch (actionType) {
     case 'rapid-click': {
-      const buttons = await getVisibleElements(page, 'button:visible', excludeSelectors);
+      let buttons: Awaited<ReturnType<typeof getVisibleElements>>;
+      try {
+        buttons = await getVisibleElements(page, 'button:visible', excludeSelectors);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes('closed') || msg.includes('destroyed')) {
+          await page.waitForLoadState('domcontentloaded').catch(() => {});
+          return `rapid-click: (page recovered before start)`;
+        }
+        throw e;
+      }
       if (buttons.length === 0) return null;
 
       const button = rng.pick(buttons);
@@ -1094,14 +1104,39 @@ async function executeDemonAction(
     }
 
     case 'double-click': {
-      const elements = await getVisibleElements(
-        page,
-        'button:visible, a:visible, [role="button"]:visible',
-        excludeSelectors
-      );
+      let elements: Awaited<ReturnType<typeof getVisibleElements>>;
+      try {
+        elements = await getVisibleElements(
+          page,
+          'button:visible, a:visible, [role="button"]:visible',
+          excludeSelectors
+        );
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes('closed') || msg.includes('destroyed')) {
+          await page.waitForLoadState('domcontentloaded').catch(() => {});
+          return `double-click: (page recovered before start)`;
+        }
+        throw e;
+      }
       if (elements.length === 0) return null;
 
-      const element = rng.pick(elements);
+      // Filter to elements with actual text content (skip icon-only buttons)
+      // Icon buttons often have problematic double-click behavior (toggle, state change)
+      const textElements: typeof elements = [];
+      for (const el of elements) {
+        try {
+          const text = await el.textContent();
+          if (text && text.trim().length > 0) {
+            textElements.push(el);
+          }
+        } catch {
+          // Element may have become stale, skip it
+        }
+      }
+      if (textElements.length === 0) return null;
+
+      const element = rng.pick(textElements);
       try {
         const text = await element.textContent();
         await element.dblclick({ timeout: 2000 });
@@ -1119,11 +1154,21 @@ async function executeDemonAction(
 
     case 'fuzz-input': {
       // Exclude checkbox/radio/number - they can't be filled with arbitrary text
-      const inputs = await getVisibleElements(
-        page,
-        'input:visible:not([type=file]):not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=number]):not([readonly]), textarea:visible',
-        excludeSelectors
-      );
+      let inputs: Awaited<ReturnType<typeof getVisibleElements>>;
+      try {
+        inputs = await getVisibleElements(
+          page,
+          'input:visible:not([type=file]):not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=number]):not([readonly]), textarea:visible',
+          excludeSelectors
+        );
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes('closed') || msg.includes('destroyed')) {
+          await page.waitForLoadState('domcontentloaded').catch(() => {});
+          return `fuzz-input: (page recovered before start)`;
+        }
+        throw e;
+      }
       if (inputs.length === 0) return null;
 
       const input = rng.pick(inputs);
@@ -1138,11 +1183,21 @@ async function executeDemonAction(
     }
 
     case 'paste-bomb': {
-      const inputs = await getVisibleElements(
-        page,
-        'input:visible:not([type=file]):not([type=hidden]):not([readonly]), textarea:visible',
-        excludeSelectors
-      );
+      let inputs: Awaited<ReturnType<typeof getVisibleElements>>;
+      try {
+        inputs = await getVisibleElements(
+          page,
+          'input:visible:not([type=file]):not([type=hidden]):not([readonly]), textarea:visible',
+          excludeSelectors
+        );
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes('closed') || msg.includes('destroyed')) {
+          await page.waitForLoadState('domcontentloaded').catch(() => {});
+          return `paste-bomb: (page recovered before start)`;
+        }
+        throw e;
+      }
       if (inputs.length === 0) return null;
 
       const input = rng.pick(inputs);
@@ -1157,11 +1212,22 @@ async function executeDemonAction(
     }
 
     case 'blur-focus-spam': {
-      const inputs = await getVisibleElements(
-        page,
-        'input:visible:not([type=file]):not([type=hidden]), textarea:visible, select:visible, button:visible',
-        excludeSelectors
-      );
+      let inputs: Awaited<ReturnType<typeof getVisibleElements>>;
+      try {
+        inputs = await getVisibleElements(
+          page,
+          'input:visible:not([type=file]):not([type=hidden]), textarea:visible, select:visible, button:visible',
+          excludeSelectors
+        );
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        // Page may have been closed by previous demon action
+        if (msg.includes('closed') || msg.includes('destroyed')) {
+          await page.waitForLoadState('domcontentloaded').catch(() => {});
+          return `blur-focus-spam: (page recovered before start)`;
+        }
+        throw e;
+      }
       if (inputs.length < 2) return null;
 
       const iterations = rng.int(5, 15);
