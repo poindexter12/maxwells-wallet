@@ -99,6 +99,7 @@ const MIN_TRANSLATION_PERCENT = 100
 // Keys that are pending translation (recently added to en-US.json, awaiting Crowdin sync)
 // Remove keys from this list once translations are available
 const PENDING_TRANSLATION_KEYS = new Set([
+  'demo.loginBanner',
   'admin.tabs.security',
   'auth.login.title',
   'auth.login.subtitle',
