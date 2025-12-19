@@ -43,12 +43,34 @@ export BLUE GREEN YELLOW RED NC BACKEND_DIR FRONTEND_DIR
 .PHONY: help setup install install-backend install-frontend
 
 help: ## Show this help message
-	@echo "$(BLUE)Maxwell's Wallet - Personal Finance Tracker$(NC)"
+	@echo "$(BLUE)Maxwell's Wallet$(NC) - Personal Finance Tracker"
 	@echo ""
-	@echo "$(GREEN)Available targets:$(NC)"
-	@grep -hE '^[a-zA-Z0-9_-]+:.*## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*## "}; {printf "  $(YELLOW)%-20s$(NC) %s\n", $$1, $$2}'
+	@echo "$(GREEN)Setup & Install$(NC)"
+	@grep -hE '^(setup|install)[a-zA-Z0-9_-]*:.*## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  $(YELLOW)%-22s$(NC) %s\n", $$1, $$2}'
 	@echo ""
-	@echo "$(GREEN)Documentation:$(NC) See docs/MAKEFILE.md for detailed usage"
+	@echo "$(GREEN)Development$(NC)"
+	@grep -hE '^(dev|backend|frontend|build-frontend):.*## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  $(YELLOW)%-22s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(GREEN)Database$(NC)"
+	@grep -hE '^db-[a-zA-Z0-9_-]+:.*## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  $(YELLOW)%-22s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(GREEN)Testing$(NC)"
+	@grep -hE '^test-[a-zA-Z0-9_-]+:.*## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  $(YELLOW)%-22s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(GREEN)Docker$(NC)"
+	@grep -hE '^docker[a-zA-Z0-9_-]*:.*## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  $(YELLOW)%-22s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(GREEN)Release$(NC)"
+	@grep -hE '^release[a-zA-Z0-9_-]*:.*## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  $(YELLOW)%-22s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(GREEN)i18n / Translation$(NC)"
+	@grep -hE '^translate-[a-zA-Z0-9_-]+:.*## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  $(YELLOW)%-22s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(GREEN)Quality & Linting$(NC)"
+	@grep -hE '^(lint|quality|typecheck|vulture|dead-code|security)[a-zA-Z0-9_-]*:.*## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  $(YELLOW)%-22s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(GREEN)Utilities$(NC)"
+	@grep -hE '^(clean|status|info|check|demo-setup|data-)[a-zA-Z0-9_-]*:.*## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  $(YELLOW)%-22s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 
 setup: ## First-time setup (install dependencies + seed database)
