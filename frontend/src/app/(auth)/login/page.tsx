@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/AuthContext'
+import { TEST_IDS } from '@/test-ids'
 
 export default function LoginPage() {
   const t = useTranslations('auth')
@@ -86,7 +87,7 @@ export default function LoginPage() {
               autoComplete="username"
               autoFocus
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
-              data-testid="login-username"
+              data-testid={TEST_IDS.LOGIN_USERNAME}
             />
           </div>
 
@@ -105,7 +106,7 @@ export default function LoginPage() {
               required
               autoComplete="current-password"
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
-              data-testid="login-password"
+              data-testid={TEST_IDS.LOGIN_PASSWORD}
             />
           </div>
 
@@ -113,7 +114,7 @@ export default function LoginPage() {
             type="submit"
             disabled={submitting || !username || !password}
             className="w-full py-2 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-md shadow-sm transition-colors"
-            data-testid="login-submit"
+            data-testid={TEST_IDS.LOGIN_SUBMIT}
           >
             {submitting ? '...' : t('login.submit')}
           </button>
