@@ -868,6 +868,7 @@
   },
   "demo": {
     "banner": "crwdns2816:0crwdne2816:0",
+    "loginBanner": "crwdns2930:0crwdne2930:0",
     "featureDisabled": "crwdns2818:0crwdne2818:0"
   },
   "backup": {
