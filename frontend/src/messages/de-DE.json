@@ -868,6 +868,7 @@
   },
   "demo": {
     "banner": "Demo-Modus - Daten werden regelmäßig zurückgesetzt. Einige Funktionen sind deaktiviert.",
+    "loginBanner": "Demo Mode - Login with username \"maxwell\" and password \"wallet\"",
     "featureDisabled": "Diese Funktion ist im Demo-Modus deaktiviert."
   },
   "backup": {
