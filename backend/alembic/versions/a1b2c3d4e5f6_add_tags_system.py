@@ -35,42 +35,27 @@ DEFAULT_BUCKET_TAGS = [
 
 
 def upgrade() -> None:
-    # 1. Create tags table
-    op.create_table(
-        'tags',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('created_at', sa.DateTime(), nullable=False, default=datetime.utcnow),
-        sa.Column('updated_at', sa.DateTime(), nullable=False, default=datetime.utcnow),
-        sa.Column('namespace', sa.String(), nullable=False),
-        sa.Column('value', sa.String(), nullable=False),
-        sa.Column('description', sa.String(), nullable=True),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index('ix_tags_namespace', 'tags', ['namespace'], unique=False)
-    op.create_index('ix_tags_value', 'tags', ['value'], unique=False)
-    op.create_index('ix_tags_namespace_value', 'tags', ['namespace', 'value'], unique=True)
+    # NOTE: tags and transaction_tags tables are now created in root migration 1b7c2fce9b4b
+    # This migration only adds the unique index and seeds default data
 
-    # 2. Create transaction_tags junction table
-    op.create_table(
-        'transaction_tags',
-        sa.Column('transaction_id', sa.Integer(), nullable=False),
-        sa.Column('tag_id', sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(['transaction_id'], ['transactions.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['tag_id'], ['tags.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('transaction_id', 'tag_id')
-    )
+    # 1. Add unique index on namespace+value (may not exist yet)
+    try:
+        op.create_index('ix_tags_namespace_value', 'tags', ['namespace', 'value'], unique=True)
+    except Exception:
+        pass  # Index might already exist
 
-    # 3. Seed default bucket tags
+    # 2. Seed default bucket tags
     conn = op.get_bind()
     now = datetime.utcnow().isoformat()
 
-    for namespace, value, description in DEFAULT_BUCKET_TAGS:
+    for idx, (namespace, value, description) in enumerate(DEFAULT_BUCKET_TAGS):
         conn.execute(
             sa.text(
-                "INSERT INTO tags (created_at, updated_at, namespace, value, description) "
-                "VALUES (:created_at, :updated_at, :namespace, :value, :description)"
+                "INSERT INTO tags (created_at, updated_at, namespace, value, description, sort_order, color) "
+                "VALUES (:created_at, :updated_at, :namespace, :value, :description, :sort_order, :color)"
             ),
-            {"created_at": now, "updated_at": now, "namespace": namespace, "value": value, "description": description}
+            {"created_at": now, "updated_at": now, "namespace": namespace, "value": value,
+             "description": description, "sort_order": idx, "color": None}
         )
 
     # 4. Migrate existing transaction categories to bucket tags
@@ -80,16 +65,19 @@ def upgrade() -> None:
 
     # Create bucket tags for any categories not in our defaults
     default_values = {t[1] for t in DEFAULT_BUCKET_TAGS}
+    extra_sort_order = len(DEFAULT_BUCKET_TAGS)
     for cat in existing_categories:
         cat_lower = cat.lower().replace(" ", "-")
         if cat_lower not in default_values:
             conn.execute(
                 sa.text(
-                    "INSERT INTO tags (created_at, updated_at, namespace, value, description) "
-                    "VALUES (:created_at, :updated_at, 'bucket', :value, :description)"
+                    "INSERT INTO tags (created_at, updated_at, namespace, value, description, sort_order, color) "
+                    "VALUES (:created_at, :updated_at, 'bucket', :value, :description, :sort_order, :color)"
                 ),
-                {"created_at": now, "updated_at": now, "value": cat_lower, "description": f"Migrated from category: {cat}"}
+                {"created_at": now, "updated_at": now, "value": cat_lower,
+                 "description": f"Migrated from category: {cat}", "sort_order": extra_sort_order, "color": None}
             )
+            extra_sort_order += 1
 
     # 5. Link transactions to their bucket tags
     # For each transaction with a category, create a transaction_tag entry
@@ -117,11 +105,16 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Drop junction table first (depends on tags)
-    op.drop_table('transaction_tags')
+    # NOTE: tags and transaction_tags tables are dropped by root migration downgrade
+    # This migration only drops the unique index it created and removes seeded data
+    conn = op.get_bind()
 
-    # Drop indexes and tags table
-    op.drop_index('ix_tags_namespace_value', table_name='tags')
-    op.drop_index('ix_tags_value', table_name='tags')
-    op.drop_index('ix_tags_namespace', table_name='tags')
-    op.drop_table('tags')
+    # Remove the seeded bucket tags and their transaction links
+    conn.execute(sa.text("DELETE FROM transaction_tags WHERE tag_id IN (SELECT id FROM tags WHERE namespace = 'bucket')"))
+    conn.execute(sa.text("DELETE FROM tags WHERE namespace = 'bucket'"))
+
+    # Drop the unique index
+    try:
+        op.drop_index('ix_tags_namespace_value', table_name='tags')
+    except Exception:
+        pass  # Index might not exist

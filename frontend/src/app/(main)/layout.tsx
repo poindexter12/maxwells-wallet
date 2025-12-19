@@ -2,14 +2,14 @@ import type { Metadata } from 'next'
 import { ProtectedProviders } from '@/components/ProtectedProviders'
 import { NavBar } from '@/components/NavBar'
 import { DemoBanner } from '@/components/DemoBanner'
-import './globals.css'
+import '../globals.css'
 
 export const metadata: Metadata = {
   title: "Maxwell's Wallet - Personal Finance Tracker",
   description: 'Personal finance tracker with CSV import, smart tagging, and spending trend analysis.',
 }
 
-export default function RootLayout({
+export default function MainLayout({
   children,
 }: {
   children: React.ReactNode
