@@ -15,10 +15,15 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? 'github' : 'html',
 
+  /* Global setup creates test user and logs in */
+  globalSetup: './e2e/global-setup.ts',
+
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    /* Use saved auth state from global setup */
+    storageState: './e2e/.auth/user.json',
   },
 
   projects: [
