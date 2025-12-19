@@ -868,6 +868,7 @@
   },
   "demo": {
     "banner": "Demo-modus - Gegevens worden periodiek gereset. Sommige functies zijn uitgeschakeld.",
+    "loginBanner": "Demo Mode - Login with username \"maxwell\" and password \"wallet\"",
     "featureDisabled": "Deze functie is uitgeschakeld in demo-modus."
   },
   "backup": {
