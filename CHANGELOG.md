@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0-beta4] - 2025-12-19
+
+### Added
+- **Demo Banner on Login** - Shows demo credentials (maxwell/wallet) on login page in demo mode
+- **Demo User Creation** - Demo setup now creates demo user automatically
+
+### Fixed
+- **Fresh Install Auth Flow** - Fixed redirect loop on fresh database installs
+- **Demo Mode Docker** - `make docker-with-demo` now builds from source (ARM64 compatible)
+- **Migration Chain** - Fixed Alembic migration conflicts for fresh installs
+- **Seed Script Idempotency** - Seed script now safely handles re-runs with get_or_create pattern
+
+### Changed
+- **Route Groups** - Restructured frontend into `(auth)` and `(main)` route groups for separate layouts
+
 ## [0.10.0-beta3] - 2025-12-18
 
 ### Added

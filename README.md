@@ -124,8 +124,8 @@ Data persists in a Docker volume. For custom configurations, see below.
 
 ```bash
 # Demo mode (sample data, periodic resets)
-docker compose -f docker-compose.demo.yaml up -d
-docker compose -f docker-compose.demo.yaml run --rm maxwells-wallet demo-setup
+make docker-with-demo
+# Login: maxwell / wallet
 
 # Build from source (development)
 docker compose -f docker-compose.dev.yaml build

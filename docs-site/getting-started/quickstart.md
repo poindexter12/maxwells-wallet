@@ -34,10 +34,20 @@ make dev
 
 ## First Steps
 
-1. **Import transactions**: Go to the Import page and upload a CSV, QIF, or QFX file
-2. **Categorize**: Assign bucket tags to organize your spending
-3. **Set budgets**: Create spending limits on the Budgets page
-4. **Review insights**: Check the Dashboard for anomalies and trends
+1. **Create account**: On first launch, you'll be redirected to `/setup` to create your username and password
+2. **Import transactions**: Go to the Import page and upload a CSV, QIF, or QFX file
+3. **Categorize**: Assign bucket tags to organize your spending
+4. **Set budgets**: Create spending limits on the Budgets page
+5. **Review insights**: Check the Dashboard for anomalies and trends
+
+## Demo Mode
+
+Try Maxwell's Wallet without setting up your own data:
+
+```bash
+make docker-with-demo
+# Login: maxwell / wallet
+```
 
 ## Supported Import Formats
 
