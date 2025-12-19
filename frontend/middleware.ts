@@ -37,8 +37,8 @@ export async function middleware(request: NextRequest) {
 
   try {
     const res = await fetch(`${backendUrl}/api/v1/auth/status`, {
-      // Short timeout to prevent blocking
-      signal: AbortSignal.timeout(3000),
+      // Short timeout to prevent blocking page load
+      signal: AbortSignal.timeout(5000),
     })
 
     if (res.ok) {
@@ -46,12 +46,17 @@ export async function middleware(request: NextRequest) {
 
       // ONLY handle fresh install case - redirect to setup if not initialized
       if (!status.initialized) {
+        console.log('[Middleware] App not initialized, redirecting to /setup')
         return NextResponse.redirect(new URL('/setup', request.url))
       }
+      console.log('[Middleware] App initialized, proceeding to client-side auth')
+    } else {
+      console.error('[Middleware] Auth status returned non-OK:', res.status)
     }
   } catch (error) {
     // On error (backend down, timeout, etc.), let client-side handle it
-    console.error('Middleware auth check failed:', error)
+    // This prevents blocking the app if backend is temporarily unavailable
+    console.error('[Middleware] Auth check failed (backend may be starting):', error)
   }
 
   // For all other cases (initialized app), let client-side handle auth
