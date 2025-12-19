@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useId } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { DayPicker } from 'react-day-picker'
 import { format, parse, isValid } from 'date-fns'
@@ -70,6 +70,7 @@ export function DatePicker({
 }: DatePickerProps) {
   const locale = useLocale()
   const t = useTranslations('datePicker')
+  const dialogId = useId()
   const [isOpen, setIsOpen] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const containerRef = useRef<HTMLDivElement>(null)
@@ -186,6 +187,7 @@ export function DatePicker({
           aria-label={title || placeholder}
           aria-expanded={isOpen}
           aria-haspopup="dialog"
+          aria-controls={isOpen ? dialogId : undefined}
           aria-autocomplete="none"
         />
         {inputValue && (
@@ -212,6 +214,7 @@ export function DatePicker({
 
       {isOpen && (
         <div
+          id={dialogId}
           className="absolute z-50 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-2"
           role="dialog"
           aria-label={t('selectDate', { defaultValue: 'Select date' })}
