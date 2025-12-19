@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/AuthContext'
+import { TEST_IDS } from '@/test-ids'
 
 export default function SetupPage() {
   const t = useTranslations('auth')
@@ -106,7 +107,7 @@ export default function SetupPage() {
               autoComplete="username"
               autoFocus
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
-              data-testid="setup-username"
+              data-testid={TEST_IDS.SETUP_USERNAME}
             />
           </div>
 
@@ -125,7 +126,7 @@ export default function SetupPage() {
               required
               autoComplete="new-password"
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
-              data-testid="setup-password"
+              data-testid={TEST_IDS.SETUP_PASSWORD}
             />
           </div>
 
@@ -144,7 +145,7 @@ export default function SetupPage() {
               required
               autoComplete="new-password"
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
-              data-testid="setup-confirm-password"
+              data-testid={TEST_IDS.SETUP_CONFIRM_PASSWORD}
             />
           </div>
 
@@ -152,7 +153,7 @@ export default function SetupPage() {
             type="submit"
             disabled={submitting || !username || !password || !confirmPassword}
             className="w-full py-2 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-md shadow-sm transition-colors"
-            data-testid="setup-submit"
+            data-testid={TEST_IDS.SETUP_SUBMIT}
           >
             {submitting ? '...' : t('setup.submit')}
           </button>
