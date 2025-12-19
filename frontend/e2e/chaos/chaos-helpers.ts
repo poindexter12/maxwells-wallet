@@ -172,9 +172,16 @@ export async function performRandomActions(
   let recoveries = 0;
   let consecutiveRecoveryAttempts = 0;
 
-  // Capture page errors
+  // Capture page errors (filter out browser-specific non-critical warnings)
   const errorHandler = (error: Error) => {
-    errors.push(error.message);
+    const msg = error.message;
+    // Skip WebKit-specific CORS warnings that aren't actual app errors
+    // These occur in WebKit due to stricter access control checks
+    if (msg.includes('due to access control checks') ||
+        msg.includes('__nextjs_original-stack-frames')) {
+      return;
+    }
+    errors.push(msg);
   };
   page.on('pageerror', errorHandler);
 
@@ -291,8 +298,15 @@ export async function performTimedRandomActions(
   let recoveries = 0;
   let consecutiveRecoveryAttempts = 0;
 
+  // Capture page errors (filter out browser-specific non-critical warnings)
   const errorHandler = (error: Error) => {
-    errors.push(error.message);
+    const msg = error.message;
+    // Skip WebKit-specific CORS warnings that aren't actual app errors
+    if (msg.includes('due to access control checks') ||
+        msg.includes('__nextjs_original-stack-frames')) {
+      return;
+    }
+    errors.push(msg);
   };
   page.on('pageerror', errorHandler);
 
@@ -867,8 +881,15 @@ export async function performDemonActions(
   let recoveries = 0;
   let consecutiveRecoveryAttempts = 0;
 
+  // Capture page errors (filter out browser-specific non-critical warnings)
   const errorHandler = (error: Error) => {
-    errors.push(error.message);
+    const msg = error.message;
+    // Skip WebKit-specific CORS warnings that aren't actual app errors
+    if (msg.includes('due to access control checks') ||
+        msg.includes('__nextjs_original-stack-frames')) {
+      return;
+    }
+    errors.push(msg);
   };
   page.on('pageerror', errorHandler);
 
@@ -960,8 +981,15 @@ export async function performTimedDemonActions(
   let recoveries = 0;
   let consecutiveRecoveryAttempts = 0;
 
+  // Capture page errors (filter out browser-specific non-critical warnings)
   const errorHandler = (error: Error) => {
-    errors.push(error.message);
+    const msg = error.message;
+    // Skip WebKit-specific CORS warnings that aren't actual app errors
+    if (msg.includes('due to access control checks') ||
+        msg.includes('__nextjs_original-stack-frames')) {
+      return;
+    }
+    errors.push(msg);
   };
   page.on('pageerror', errorHandler);
 
