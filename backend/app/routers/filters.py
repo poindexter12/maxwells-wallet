@@ -1,14 +1,15 @@
 """Saved filters router for managing saved search filters/views."""
 
 from fastapi import APIRouter, Depends, Query
-from sqlmodel import select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 import json
 
 from app.database import get_session
-from app.models import SavedFilter, SavedFilterCreate, SavedFilterUpdate, Transaction, ReconciliationStatus
+from app.orm import ReconciliationStatus, SavedFilter, Transaction
+from app.schemas import SavedFilterCreate, SavedFilterUpdate, TransactionResponse
 from app.routers.transactions import build_transaction_filter_query
 from app.errors import ErrorCode, not_found
 from pydantic import BaseModel
@@ -173,7 +174,7 @@ async def delete_filter(filter_id: int, session: AsyncSession = Depends(get_sess
     await session.commit()
 
 
-@router.post("/{filter_id}/apply", response_model=List[Transaction])
+@router.post("/{filter_id}/apply", response_model=List[TransactionResponse])
 async def apply_filter(
     filter_id: int,
     skip: int = Query(0, ge=0),

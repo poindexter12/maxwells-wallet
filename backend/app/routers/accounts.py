@@ -5,14 +5,14 @@ Provides account summary with balances, due dates, and credit limits.
 """
 
 from fastapi import APIRouter, Depends
-from sqlmodel import select, func
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from datetime import date, timedelta
 from pydantic import BaseModel
 
 from app.database import get_session
-from app.models import Tag, Transaction
+from app.orm import Tag, Transaction
 from app.errors import ErrorCode, not_found, bad_request
 
 router = APIRouter(prefix="/api/v1/accounts", tags=["accounts"])

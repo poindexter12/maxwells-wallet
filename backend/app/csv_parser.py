@@ -180,8 +180,10 @@ def parse_csv(
     # Determine which parser to use
     format_type: ImportFormatType
     if format_hint is not None and format_hint != ImportFormatType.unknown:
-        parser = ParserRegistry.get_parser(format_hint.value)
-        format_type = format_hint
+        # Handle both enum and string values
+        format_key = format_hint.value if hasattr(format_hint, 'value') else format_hint
+        parser = ParserRegistry.get_parser(format_key)
+        format_type = format_hint if isinstance(format_hint, ImportFormatType) else ImportFormatType(format_hint)
     else:
         parser, confidence = ParserRegistry.detect_format(csv_content)
         if parser:

@@ -1,7 +1,7 @@
 """Transfer detection and management router"""
 
 from fastapi import APIRouter, Depends
-from sqlmodel import select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from datetime import datetime
@@ -9,7 +9,7 @@ from pydantic import BaseModel
 import re
 
 from app.database import get_session
-from app.models import Transaction
+from app.orm import Transaction
 from app.errors import ErrorCode, not_found, bad_request
 
 

@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from sqlmodel import SQLModel
+from app.orm import Base
 from sqlalchemy.ext.asyncio import create_async_engine
 
 
@@ -28,10 +28,10 @@ def demo_db(tmp_path: Path):
 
     async def create_tables():
         engine = create_async_engine(f"sqlite+aiosqlite:///{db_path}")
-        from app import models  # noqa: F401
+        import app.orm  # noqa: F401 - Register all models with Base.metadata
 
         async with engine.begin() as conn:
-            await conn.run_sync(SQLModel.metadata.create_all)
+            await conn.run_sync(Base.metadata.create_all)
         await engine.dispose()
 
     # Run in a fresh event loop to avoid conflicts with pytest-asyncio
