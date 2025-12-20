@@ -4,11 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func
 from typing import List, Optional
 from datetime import datetime
-from pydantic import BaseModel
-
 from app.database import get_session
 from app.orm import Tag, TransactionTag, Transaction
-from app.schemas import TagCreate, TagUpdate, TagResponse, TagOrderItem, TagOrderUpdate
+from app.schemas import TagCreate, TagUpdate, TagResponse, TagOrderUpdate
 from app.errors import ErrorCode, not_found, bad_request
 
 router = APIRouter(prefix="/api/v1/tags", tags=["tags"])

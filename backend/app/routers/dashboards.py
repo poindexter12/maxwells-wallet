@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 from app.database import get_session
 from app.orm import Dashboard, DashboardWidget, DateRangeType
-from app.schemas import DashboardCreate, DashboardUpdate, DashboardWidgetCreate, DashboardResponse, DashboardWidgetResponse
+from app.schemas import DashboardCreate, DashboardUpdate, DashboardWidgetCreate, DashboardWidgetResponse
 from app.errors import ErrorCode, not_found, bad_request
 
 

@@ -9,7 +9,7 @@ import json
 
 from app.database import get_session
 from app.orm import ReconciliationStatus, SavedFilter, Transaction
-from app.schemas import SavedFilterCreate, SavedFilterUpdate, SavedFilterResponse, TransactionResponse
+from app.schemas import SavedFilterCreate, SavedFilterUpdate, TransactionResponse
 from app.routers.transactions import build_transaction_filter_query
 from app.errors import ErrorCode, not_found
 from pydantic import BaseModel
