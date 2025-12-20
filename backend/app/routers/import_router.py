@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, List, Dict, Any, Sequence
+from typing import Optional, List, Dict, Any
 from datetime import datetime, date
 from pydantic import BaseModel as PydanticBaseModel
 
