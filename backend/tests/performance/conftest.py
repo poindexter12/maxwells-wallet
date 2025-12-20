@@ -21,7 +21,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlmodel import SQLModel
+from app.orm import Base
 
 from app.database import get_session
 from app.main import app
@@ -125,7 +125,7 @@ async def perf_engine():
             future=True,
         )
         async with _engine_cache.begin() as conn:
-            await conn.run_sync(SQLModel.metadata.create_all)
+            await conn.run_sync(Base.metadata.create_all)
 
     yield _engine_cache
 
@@ -459,7 +459,7 @@ async def stress_engine():
             future=True,
         )
         async with _stress_engine_cache.begin() as conn:
-            await conn.run_sync(SQLModel.metadata.create_all)
+            await conn.run_sync(Base.metadata.create_all)
 
     yield _stress_engine_cache
 

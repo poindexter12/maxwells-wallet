@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, Query
-from sqlmodel import select, func, and_
+from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from datetime import datetime, date
 from calendar import monthrange
 
 from app.database import get_session
-from app.models import Budget, BudgetCreate, BudgetUpdate, BudgetPeriod, Transaction, Tag, TransactionTag
+from app.orm import Budget, BudgetPeriod, Tag, Transaction, TransactionTag
+from app.schemas import BudgetCreate, BudgetUpdate, BudgetResponse
 from app.errors import ErrorCode, not_found, bad_request
 
 router = APIRouter(prefix="/api/v1/budgets", tags=["budgets"])
@@ -20,7 +21,7 @@ def parse_tag_string(tag_str: str) -> tuple[str, str]:
     return namespace, value
 
 
-@router.get("/", response_model=List[Budget])
+@router.get("/", response_model=List[BudgetResponse])
 async def list_budgets(session: AsyncSession = Depends(get_session)):
     """List all budgets"""
     result = await session.execute(select(Budget).order_by(Budget.tag))
@@ -28,7 +29,7 @@ async def list_budgets(session: AsyncSession = Depends(get_session)):
     return budgets
 
 
-@router.get("/{budget_id}", response_model=Budget)
+@router.get("/{budget_id}", response_model=BudgetResponse)
 async def get_budget(budget_id: int, session: AsyncSession = Depends(get_session)):
     """Get a single budget by ID"""
     result = await session.execute(select(Budget).where(Budget.id == budget_id))
@@ -38,7 +39,7 @@ async def get_budget(budget_id: int, session: AsyncSession = Depends(get_session
     return budget
 
 
-@router.post("/", response_model=Budget, status_code=201)
+@router.post("/", response_model=BudgetResponse, status_code=201)
 async def create_budget(budget: BudgetCreate, session: AsyncSession = Depends(get_session)):
     """Create a new budget"""
     # Validate tag format
@@ -65,7 +66,7 @@ async def create_budget(budget: BudgetCreate, session: AsyncSession = Depends(ge
     return db_budget
 
 
-@router.patch("/{budget_id}", response_model=Budget)
+@router.patch("/{budget_id}", response_model=BudgetResponse)
 async def update_budget(budget_id: int, budget: BudgetUpdate, session: AsyncSession = Depends(get_session)):
     """Update a budget"""
     result = await session.execute(select(Budget).where(Budget.id == budget_id))

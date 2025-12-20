@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query
-from sqlmodel import select, and_
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func
 from typing import List, Optional
@@ -7,22 +7,14 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from app.database import get_session
-from app.models import Tag, TagCreate, TagUpdate, TransactionTag, Transaction
+from app.orm import Tag, TransactionTag, Transaction
+from app.schemas import TagCreate, TagUpdate, TagResponse, TagOrderItem, TagOrderUpdate
 from app.errors import ErrorCode, not_found, bad_request
 
 router = APIRouter(prefix="/api/v1/tags", tags=["tags"])
 
 
-class TagOrderItem(BaseModel):
-    id: int
-    sort_order: int
-
-
-class TagOrderUpdate(BaseModel):
-    tags: List[TagOrderItem]
-
-
-@router.get("/", response_model=List[Tag])
+@router.get("/", response_model=List[TagResponse])
 async def list_tags(
     namespace: Optional[str] = Query(None, description="Filter by namespace (e.g., 'bucket', 'occasion')"),
     session: AsyncSession = Depends(get_session),
@@ -38,14 +30,14 @@ async def list_tags(
     return tags
 
 
-@router.get("/buckets", response_model=List[Tag])
+@router.get("/buckets", response_model=List[TagResponse])
 async def list_buckets(session: AsyncSession = Depends(get_session)):
     """List all bucket tags (convenience endpoint for UI bucket dropdowns)"""
     result = await session.execute(select(Tag).where(Tag.namespace == "bucket").order_by(Tag.sort_order, Tag.value))
     return result.scalars().all()
 
 
-@router.get("/{tag_id}", response_model=Tag)
+@router.get("/{tag_id}", response_model=TagResponse)
 async def get_tag(tag_id: int, session: AsyncSession = Depends(get_session)):
     """Get a single tag by ID"""
     result = await session.execute(select(Tag).where(Tag.id == tag_id))
@@ -55,7 +47,7 @@ async def get_tag(tag_id: int, session: AsyncSession = Depends(get_session)):
     return tag
 
 
-@router.get("/by-name/{namespace}/{value}", response_model=Tag)
+@router.get("/by-name/{namespace}/{value}", response_model=TagResponse)
 async def get_tag_by_name(namespace: str, value: str, session: AsyncSession = Depends(get_session)):
     """Get a tag by namespace and value"""
     result = await session.execute(select(Tag).where(and_(Tag.namespace == namespace, Tag.value == value)))
@@ -65,7 +57,7 @@ async def get_tag_by_name(namespace: str, value: str, session: AsyncSession = De
     return tag
 
 
-@router.post("/", response_model=Tag, status_code=201)
+@router.post("/", response_model=TagResponse, status_code=201)
 async def create_tag(tag: TagCreate, session: AsyncSession = Depends(get_session)):
     """Create a new tag"""
     # Check if tag with this namespace:value already exists
@@ -81,7 +73,7 @@ async def create_tag(tag: TagCreate, session: AsyncSession = Depends(get_session
     return db_tag
 
 
-@router.patch("/{tag_id}", response_model=Tag)
+@router.patch("/{tag_id}", response_model=TagResponse)
 async def update_tag(tag_id: int, tag: TagUpdate, session: AsyncSession = Depends(get_session)):
     """Update a tag's value and/or description"""
     result = await session.execute(select(Tag).where(Tag.id == tag_id))

@@ -6,21 +6,15 @@ Each dashboard can have its own set of widgets.
 """
 
 from fastapi import APIRouter, Depends
-from sqlmodel import select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Dict, Any, Optional
 from datetime import datetime, date, timedelta
 from pydantic import BaseModel
 
 from app.database import get_session
-from app.models import (
-    Dashboard,
-    DashboardCreate,
-    DashboardUpdate,
-    DashboardWidget,
-    DashboardWidgetCreate,
-    DateRangeType,
-)
+from app.orm import Dashboard, DashboardWidget, DateRangeType
+from app.schemas import DashboardCreate, DashboardUpdate, DashboardWidgetCreate, DashboardResponse, DashboardWidgetResponse
 from app.errors import ErrorCode, not_found, bad_request
 
 
@@ -424,7 +418,7 @@ async def reorder_dashboards(order: List[dict], session: AsyncSession = Depends(
 # Widget endpoints scoped under dashboards
 
 
-@router.get("/{dashboard_id}/widgets", response_model=List[DashboardWidget])
+@router.get("/{dashboard_id}/widgets", response_model=List[DashboardWidgetResponse])
 async def list_dashboard_widgets(dashboard_id: int, session: AsyncSession = Depends(get_session)):
     """Get all widgets for a dashboard, initializing defaults if needed."""
     # Verify dashboard exists
@@ -441,7 +435,7 @@ async def list_dashboard_widgets(dashboard_id: int, session: AsyncSession = Depe
     return widgets
 
 
-@router.post("/{dashboard_id}/widgets", response_model=DashboardWidget, status_code=201)
+@router.post("/{dashboard_id}/widgets", response_model=DashboardWidgetResponse, status_code=201)
 async def create_dashboard_widget(
     dashboard_id: int, widget: DashboardWidgetCreate, session: AsyncSession = Depends(get_session)
 ):

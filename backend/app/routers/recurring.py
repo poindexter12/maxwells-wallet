@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query
-from sqlmodel import select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional, Tuple
 from datetime import datetime, date, timedelta
@@ -7,14 +7,8 @@ from collections import defaultdict
 import statistics
 
 from app.database import get_session
-from app.models import (
-    RecurringPattern,
-    RecurringPatternCreate,
-    RecurringPatternUpdate,
-    RecurringFrequency,
-    RecurringStatus,
-    Transaction,
-)
+from app.orm import RecurringFrequency, RecurringPattern, RecurringStatus, Transaction
+from app.schemas import RecurringPatternCreate, RecurringPatternUpdate, RecurringPatternResponse
 from app.errors import ErrorCode, not_found
 
 router = APIRouter(prefix="/api/v1/recurring", tags=["recurring"])
@@ -52,7 +46,7 @@ def detect_frequency(intervals: List[int]) -> Tuple[Optional[RecurringFrequency]
     return None, 0.0
 
 
-@router.get("/", response_model=List[RecurringPattern])
+@router.get("/", response_model=List[RecurringPatternResponse])
 async def list_recurring_patterns(
     status: Optional[RecurringStatus] = None, session: AsyncSession = Depends(get_session)
 ):
@@ -67,7 +61,7 @@ async def list_recurring_patterns(
     return patterns
 
 
-@router.post("/", response_model=RecurringPattern, status_code=201)
+@router.post("/", response_model=RecurringPatternResponse, status_code=201)
 async def create_recurring_pattern(pattern: RecurringPatternCreate, session: AsyncSession = Depends(get_session)):
     """Manually create a recurring pattern"""
     db_pattern = RecurringPattern(**pattern.model_dump())
@@ -77,7 +71,7 @@ async def create_recurring_pattern(pattern: RecurringPatternCreate, session: Asy
     return db_pattern
 
 
-@router.patch("/{pattern_id}", response_model=RecurringPattern)
+@router.patch("/{pattern_id}", response_model=RecurringPatternResponse)
 async def update_recurring_pattern(
     pattern_id: int, pattern: RecurringPatternUpdate, session: AsyncSession = Depends(get_session)
 ):
@@ -286,7 +280,7 @@ async def get_missing_recurring(
     return {"count": len(missing), "missing": missing}
 
 
-@router.get("/{pattern_id}", response_model=RecurringPattern)
+@router.get("/{pattern_id}", response_model=RecurringPatternResponse)
 async def get_recurring_pattern(pattern_id: int, session: AsyncSession = Depends(get_session)):
     """Get a single recurring pattern by ID"""
     result = await session.execute(select(RecurringPattern).where(RecurringPattern.id == pattern_id))

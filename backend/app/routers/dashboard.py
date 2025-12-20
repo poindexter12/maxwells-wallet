@@ -7,13 +7,14 @@ For multi-dashboard support, use /api/v1/dashboards/* endpoints.
 """
 
 from fastapi import APIRouter, Depends
-from sqlmodel import select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from datetime import datetime
 
 from app.database import get_session
-from app.models import Dashboard, DashboardWidget, DashboardWidgetCreate, DashboardWidgetUpdate, DashboardLayoutUpdate
+from app.orm import Dashboard, DashboardWidget
+from app.schemas import DashboardLayoutUpdate, DashboardWidgetCreate, DashboardWidgetUpdate, DashboardWidgetResponse, DashboardResponse
 from app.errors import ErrorCode, not_found, bad_request
 
 
@@ -57,7 +58,7 @@ DEFAULT_WIDGETS = [
 ]
 
 
-@router.get("/widgets", response_model=List[DashboardWidget])
+@router.get("/widgets", response_model=List[DashboardWidgetResponse])
 async def list_widgets(session: AsyncSession = Depends(get_session)):
     """Get all dashboard widgets for the default dashboard, ordered by position.
 
@@ -73,7 +74,7 @@ async def list_widgets(session: AsyncSession = Depends(get_session)):
     return widgets
 
 
-@router.get("/widgets/{widget_id}", response_model=DashboardWidget)
+@router.get("/widgets/{widget_id}", response_model=DashboardWidgetResponse)
 async def get_widget(widget_id: int, session: AsyncSession = Depends(get_session)):
     """Get a single widget by ID."""
     result = await session.execute(select(DashboardWidget).where(DashboardWidget.id == widget_id))
@@ -83,7 +84,7 @@ async def get_widget(widget_id: int, session: AsyncSession = Depends(get_session
     return widget
 
 
-@router.post("/widgets", response_model=DashboardWidget, status_code=201)
+@router.post("/widgets", response_model=DashboardWidgetResponse, status_code=201)
 async def create_widget(widget: DashboardWidgetCreate, session: AsyncSession = Depends(get_session)):
     """Create a new dashboard widget on the default dashboard."""
     dashboard_id = widget.dashboard_id or await get_default_dashboard_id(session)
@@ -94,7 +95,7 @@ async def create_widget(widget: DashboardWidgetCreate, session: AsyncSession = D
     return db_widget
 
 
-@router.patch("/widgets/{widget_id}", response_model=DashboardWidget)
+@router.patch("/widgets/{widget_id}", response_model=DashboardWidgetResponse)
 async def update_widget(widget_id: int, widget: DashboardWidgetUpdate, session: AsyncSession = Depends(get_session)):
     """Update a widget's settings."""
     result = await session.execute(select(DashboardWidget).where(DashboardWidget.id == widget_id))
@@ -123,7 +124,7 @@ async def delete_widget(widget_id: int, session: AsyncSession = Depends(get_sess
     await session.commit()
 
 
-@router.put("/layout", response_model=List[DashboardWidget])
+@router.put("/layout", response_model=List[DashboardWidgetResponse])
 async def update_layout(layout: DashboardLayoutUpdate, session: AsyncSession = Depends(get_session)):
     """Update widget positions (for drag-and-drop reordering).
 
@@ -155,7 +156,7 @@ async def update_layout(layout: DashboardLayoutUpdate, session: AsyncSession = D
     return result.scalars().all()
 
 
-@router.post("/reset", response_model=List[DashboardWidget])
+@router.post("/reset", response_model=List[DashboardWidgetResponse])
 async def reset_dashboard(session: AsyncSession = Depends(get_session)):
     """Reset default dashboard to default widget configuration.
 
@@ -198,7 +199,7 @@ async def toggle_widget_visibility(widget_id: int, session: AsyncSession = Depen
     return {"id": widget.id, "is_visible": widget.is_visible}
 
 
-@router.post("/widgets/{widget_id}/duplicate", response_model=DashboardWidget, status_code=201)
+@router.post("/widgets/{widget_id}/duplicate", response_model=DashboardWidgetResponse, status_code=201)
 async def duplicate_widget(widget_id: int, session: AsyncSession = Depends(get_session)):
     """Duplicate a widget with a new position at the end.
 
