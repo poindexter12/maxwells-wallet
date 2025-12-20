@@ -320,7 +320,7 @@
     "dbDuplicates": "Duplicados en BD",
     "batchDuplicates": "Duplicados en Lote",
     "selectAccount": "-- Seleccionar Cuenta --",
-    "accountPlaceholder": "ej., Santander-Corriente, BBVA-12345",
+    "accountPlaceholder": "e.g., BOFA-Checking, AMEX-53004",
     "orTypeNew": "o escribe nuevo",
     "existing": "Existente",
     "new": "Nuevo",
