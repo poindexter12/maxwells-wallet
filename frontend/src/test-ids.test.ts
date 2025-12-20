@@ -54,7 +54,8 @@ describe('test-ids', () => {
     }
   });
 
-  describe('TEST_IDS usage validation', () => {
+  // These tests scan the filesystem and can be slow
+  describe('TEST_IDS usage validation', { timeout: 30000 }, () => {
     // Get all TEST_IDS references from source files (excluding test files and test-ids definition)
     const getTestIdReferencesFromSource = (): Set<string> => {
       const frontendDir = path.resolve(__dirname, '..');
