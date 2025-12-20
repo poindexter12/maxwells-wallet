@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Sequence
 from datetime import datetime, date
 from pydantic import BaseModel as PydanticBaseModel
 
@@ -88,7 +88,7 @@ async def apply_bucket_tag(session: AsyncSession, transaction_id: int, bucket_va
 async def get_merchant_aliases(session: AsyncSession) -> List[MerchantAlias]:
     """Get all merchant aliases ordered by priority (highest first)"""
     result = await session.execute(select(MerchantAlias).order_by(MerchantAlias.priority.desc()))
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
 def apply_merchant_alias(description: str, aliases: List[MerchantAlias]) -> Optional[str]:
@@ -154,7 +154,7 @@ async def preview_import(
 
     Use this to review before calling `/confirm` to actually import.
     """
-    if not is_valid_import_file(file.filename):
+    if not file.filename or not is_valid_import_file(file.filename):
         raise bad_request(
             ErrorCode.IMPORT_UNSUPPORTED_FORMAT,
             f"Unsupported file type. Supported formats: {', '.join(SUPPORTED_EXTENSIONS)}",
@@ -167,10 +167,10 @@ async def preview_import(
 
     # Check for saved import format preference
     if not format_hint and account_source:
-        result = await session.execute(select(ImportFormat).where(ImportFormat.account_source == account_source))
-        saved_format = result.scalar_one_or_none()
+        fmt_result = await session.execute(select(ImportFormat).where(ImportFormat.account_source == account_source))
+        saved_format = fmt_result.scalar_one_or_none()
         if saved_format:
-            format_hint = saved_format.format_type
+            format_hint = ImportFormatType(saved_format.format_type)
 
     # Parse CSV
     transactions, detected_format = parse_csv(csv_content, account_source, format_hint)
@@ -180,11 +180,11 @@ async def preview_import(
     all_txns_result = await session.execute(select(Transaction).where(Transaction.category.isnot(None)))
     all_txns = all_txns_result.scalars().all()
     # Convert old category format to bucket tag format for user history
-    user_history = {}
-    for txn in all_txns:
-        if txn.merchant and txn.category:
-            merchant = txn.merchant.lower()
-            bucket_value = txn.category.lower().replace(" ", "-").replace("&", "and")
+    user_history: Dict[str, str] = {}
+    for db_txn in all_txns:
+        if db_txn.merchant and db_txn.category:
+            merchant = db_txn.merchant.lower()
+            bucket_value = db_txn.category.lower().replace(" ", "-").replace("&", "and")
             user_history[merchant] = f"bucket:{bucket_value}"
 
     # Add bucket tag suggestions to each transaction
@@ -230,7 +230,7 @@ async def confirm_import(
     Duplicates are detected by content hash (date + amount + description + account).
     Merchant aliases are applied automatically during import.
     """
-    if not is_valid_import_file(file.filename):
+    if not file.filename or not is_valid_import_file(file.filename):
         raise bad_request(
             ErrorCode.IMPORT_UNSUPPORTED_FORMAT,
             f"Unsupported file type. Supported formats: {', '.join(SUPPORTED_EXTENSIONS)}",
@@ -249,11 +249,11 @@ async def confirm_import(
     # Build user history for bucket tag suggestions
     all_txns_result = await session.execute(select(Transaction).where(Transaction.category.isnot(None)))
     all_txns = all_txns_result.scalars().all()
-    user_history = {}
-    for txn in all_txns:
-        if txn.merchant and txn.category:
-            merchant = txn.merchant.lower()
-            bucket_value = txn.category.lower().replace(" ", "-").replace("&", "and")
+    user_history: Dict[str, str] = {}
+    for db_txn in all_txns:
+        if db_txn.merchant and db_txn.category:
+            merchant = db_txn.merchant.lower()
+            bucket_value = db_txn.category.lower().replace(" ", "-").replace("&", "and")
             user_history[merchant] = f"bucket:{bucket_value}"
 
     # Load merchant aliases for normalization
@@ -393,8 +393,8 @@ async def confirm_import(
     # Save import format preference if requested
     if save_format and account_source:
         # Check if format already exists
-        result = await session.execute(select(ImportFormat).where(ImportFormat.account_source == account_source))
-        existing_format = result.scalar_one_or_none()
+        fmt_result = await session.execute(select(ImportFormat).where(ImportFormat.account_source == account_source))
+        existing_format = fmt_result.scalar_one_or_none()
 
         if existing_format:
             existing_format.format_type = format_type
@@ -405,7 +405,7 @@ async def confirm_import(
 
     await session.commit()
 
-    response = {
+    response: Dict[str, Any] = {
         "imported": imported_count,
         "duplicates": duplicate_count,
         "skipped": skipped_count,
@@ -492,7 +492,7 @@ async def batch_upload_preview(files: List[UploadFile] = File(...), session: Asy
 
     # Validate all files have supported extensions
     for file in files:
-        if not is_valid_import_file(file.filename):
+        if not file.filename or not is_valid_import_file(file.filename):
             raise bad_request(
                 ErrorCode.IMPORT_UNSUPPORTED_FORMAT,
                 f"File {file.filename} has unsupported format. Supported: {', '.join(SUPPORTED_EXTENSIONS)}",
@@ -507,11 +507,11 @@ async def batch_upload_preview(files: List[UploadFile] = File(...), session: Asy
     # Build user history for bucket tag suggestions
     all_txns_result = await session.execute(select(Transaction).where(Transaction.category.isnot(None)))
     all_txns = all_txns_result.scalars().all()
-    user_history = {}
-    for txn in all_txns:
-        if txn.merchant and txn.category:
-            merchant = txn.merchant.lower()
-            bucket_value = txn.category.lower().replace(" ", "-").replace("&", "and")
+    user_history: Dict[str, str] = {}
+    for db_txn in all_txns:
+        if db_txn.merchant and db_txn.category:
+            merchant = db_txn.merchant.lower()
+            bucket_value = db_txn.category.lower().replace(" ", "-").replace("&", "and")
             user_history[merchant] = f"bucket:{bucket_value}"
 
     # Process each file
@@ -520,13 +520,16 @@ async def batch_upload_preview(files: List[UploadFile] = File(...), session: Asy
         content = await file.read()
         csv_content = content.decode("utf-8")
 
+        # file.filename validated above
+        filename = file.filename or ""
+
         # Try to infer account_source from filename if possible
         # e.g., "BOFA-Checking-2024.csv" -> "BOFA-Checking"
         account_source = None
-        filename_lower = file.filename.lower()
+        filename_lower = filename.lower()
         if "bofa" in filename_lower or "bank-of-america" in filename_lower:
             # Extract account info from filename (strip any supported extension)
-            base_filename = file.filename
+            base_filename = filename
             for ext in SUPPORTED_EXTENSIONS:
                 if base_filename.lower().endswith(ext):
                     base_filename = base_filename[: -len(ext)]
@@ -536,12 +539,12 @@ async def batch_upload_preview(files: List[UploadFile] = File(...), session: Asy
                 account_source = "-".join(parts[:2])
 
         # Check for saved import format preference
-        format_hint = None
+        format_hint: Optional[ImportFormatType] = None
         if account_source:
-            result = await session.execute(select(ImportFormat).where(ImportFormat.account_source == account_source))
-            saved_format = result.scalar_one_or_none()
+            fmt_result = await session.execute(select(ImportFormat).where(ImportFormat.account_source == account_source))
+            saved_format = fmt_result.scalar_one_or_none()
             if saved_format:
-                format_hint = saved_format.format_type
+                format_hint = ImportFormatType(saved_format.format_type)
 
         # Parse CSV
         transactions, detected_format = parse_csv(csv_content, account_source, format_hint)
@@ -604,7 +607,7 @@ async def batch_upload_preview(files: List[UploadFile] = File(...), session: Asy
 
         # Create preview
         preview = BatchFilePreview(
-            filename=file.filename,
+            filename=filename,
             account_source=account_source,
             detected_format=detected_format,
             transaction_count=len(transactions),
@@ -653,11 +656,11 @@ async def batch_confirm_import(
     # Build user history for bucket tag suggestions
     all_txns_result = await session.execute(select(Transaction).where(Transaction.category.isnot(None)))
     all_txns = all_txns_result.scalars().all()
-    user_history = {}
-    for txn in all_txns:
-        if txn.merchant and txn.category:
-            merchant = txn.merchant.lower()
-            bucket_value = txn.category.lower().replace(" ", "-").replace("&", "and")
+    user_history: Dict[str, str] = {}
+    for db_txn in all_txns:
+        if db_txn.merchant and db_txn.category:
+            merchant = db_txn.merchant.lower()
+            bucket_value = db_txn.category.lower().replace(" ", "-").replace("&", "and")
             user_history[merchant] = f"bucket:{bucket_value}"
 
     # Load merchant aliases for normalization
@@ -818,10 +821,10 @@ async def batch_confirm_import(
 
         # Save format preference if requested
         if request_obj.save_format and file_info.account_source:
-            result = await session.execute(
+            fmt_result = await session.execute(
                 select(ImportFormat).where(ImportFormat.account_source == file_info.account_source)
             )
-            existing_format = result.scalar_one_or_none()
+            existing_format = fmt_result.scalar_one_or_none()
 
             if existing_format:
                 existing_format.format_type = file_info.format_type
@@ -898,7 +901,7 @@ async def analyze_csv_file(
     - **detected_format**: Auto-detected file format (if recognized)
     - **format_confidence**: Confidence score for detected format (0-1)
     """
-    if not file.filename.lower().endswith(".csv"):
+    if not file.filename or not file.filename.lower().endswith(".csv"):
         raise bad_request(
             ErrorCode.IMPORT_UNSUPPORTED_FORMAT, "Only CSV files can be analyzed for custom format creation"
         )
@@ -913,10 +916,12 @@ async def analyze_csv_file(
     row_count = max(0, len(lines) - 1 - skip_rows)  # Subtract header and skipped rows
 
     # Try to detect known format
-    detected_format = None
-    format_confidence = None
+    detected_format: Optional[str] = None
+    format_confidence: Optional[float] = None
     try:
-        detected_format, format_confidence = detect_format(csv_content)
+        detected_format_str, confidence_str = detect_format(csv_content)
+        detected_format = detected_format_str
+        format_confidence = float(confidence_str) if confidence_str else None
     except Exception:
         pass  # Format detection failed, leave as None
 
@@ -964,7 +969,7 @@ async def auto_detect_csv_format_endpoint(
     - **matched_config**: Saved config that matches this file's header signature (if any)
     - **header_signature**: Computed signature for this file's headers
     """
-    if not file.filename.lower().endswith(".csv"):
+    if not file.filename or not file.filename.lower().endswith(".csv"):
         raise bad_request(ErrorCode.IMPORT_UNSUPPORTED_FORMAT, "Only CSV files can be auto-detected")
 
     content = await file.read()
@@ -973,7 +978,7 @@ async def auto_detect_csv_format_endpoint(
     # Step 1: Find the header row
     header_result = find_header_row(csv_content)
     skip_rows = 0
-    headers = []
+    headers: List[str] = []
     if header_result:
         skip_rows, headers = header_result
 
@@ -1040,7 +1045,7 @@ async def preview_custom_import(
     - **total_amount**: Sum of all transaction amounts
     - **errors**: Any parsing errors encountered
     """
-    if not file.filename.lower().endswith(".csv"):
+    if not file.filename or not file.filename.lower().endswith(".csv"):
         raise bad_request(ErrorCode.IMPORT_UNSUPPORTED_FORMAT, "Custom format preview only supports CSV files")
 
     content = await file.read()
@@ -1065,11 +1070,11 @@ async def preview_custom_import(
     # Add bucket tag suggestions
     all_txns_result = await session.execute(select(Transaction).where(Transaction.category.isnot(None)))
     all_txns = all_txns_result.scalars().all()
-    user_history = {}
-    for txn in all_txns:
-        if txn.merchant and txn.category:
-            merchant = txn.merchant.lower()
-            bucket_value = txn.category.lower().replace(" ", "-").replace("&", "and")
+    user_history: Dict[str, str] = {}
+    for db_txn in all_txns:
+        if db_txn.merchant and db_txn.category:
+            merchant = db_txn.merchant.lower()
+            bucket_value = db_txn.category.lower().replace(" ", "-").replace("&", "and")
             user_history[merchant] = f"bucket:{bucket_value}"
 
     for txn in transactions:
@@ -1111,7 +1116,7 @@ async def confirm_custom_import(
     - **config_saved**: Whether the config was saved for future use
     - **import_session_id**: ID for tracking this import batch
     """
-    if not file.filename.lower().endswith(".csv"):
+    if not file.filename or not file.filename.lower().endswith(".csv"):
         raise bad_request(ErrorCode.IMPORT_UNSUPPORTED_FORMAT, "Custom format import only supports CSV files")
 
     content = await file.read()
@@ -1136,11 +1141,11 @@ async def confirm_custom_import(
     # Build user history for bucket tag suggestions
     all_txns_result = await session.execute(select(Transaction).where(Transaction.category.isnot(None)))
     all_txns = all_txns_result.scalars().all()
-    user_history = {}
-    for txn in all_txns:
-        if txn.merchant and txn.category:
-            merchant = txn.merchant.lower()
-            bucket_value = txn.category.lower().replace(" ", "-").replace("&", "and")
+    user_history: Dict[str, str] = {}
+    for db_txn in all_txns:
+        if db_txn.merchant and db_txn.category:
+            merchant = db_txn.merchant.lower()
+            bucket_value = db_txn.category.lower().replace(" ", "-").replace("&", "and")
             user_history[merchant] = f"bucket:{bucket_value}"
 
     # Load merchant aliases for normalization
@@ -1267,8 +1272,8 @@ async def confirm_custom_import(
     config_saved = False
     if save_config:
         # Check if config with same name exists
-        result = await session.execute(select(CustomFormatConfig).where(CustomFormatConfig.name == config.name))
-        existing_config = result.scalar_one_or_none()
+        config_result = await session.execute(select(CustomFormatConfig).where(CustomFormatConfig.name == config.name))
+        existing_config = config_result.scalar_one_or_none()
 
         if existing_config:
             # Update existing config
@@ -1292,7 +1297,7 @@ async def confirm_custom_import(
 
     await session.commit()
 
-    response = {
+    response: Dict[str, Any] = {
         "imported": imported_count,
         "duplicates": duplicate_count,
         "config_saved": config_saved,

@@ -9,7 +9,7 @@ When DEMO_MODE is enabled, this middleware blocks:
 """
 
 import re
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, cast
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -68,7 +68,7 @@ class DemoModeMiddleware(BaseHTTPMiddleware):
         """
         # Skip if demo mode is not enabled
         if not settings.demo_mode:
-            return await call_next(request)
+            return cast(Response, await call_next(request))
 
         # Check if this endpoint is blocked
         method = request.method
@@ -88,7 +88,7 @@ class DemoModeMiddleware(BaseHTTPMiddleware):
                     },
                 )
 
-        return await call_next(request)
+        return cast(Response, await call_next(request))
 
 
 def add_demo_mode_middleware(app: "FastAPI") -> None:

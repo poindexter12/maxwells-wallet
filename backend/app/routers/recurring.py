@@ -239,7 +239,7 @@ async def get_upcoming_recurring(
             )
 
     # Sort by expected date
-    upcoming.sort(key=lambda x: x["expected_date"])
+    upcoming.sort(key=lambda x: x["expected_date"] or "")
 
     return {"count": len(upcoming), "upcoming": upcoming}
 
@@ -275,7 +275,7 @@ async def get_missing_recurring(
             )
 
     # Sort by days overdue (most overdue first)
-    missing.sort(key=lambda x: x["days_overdue"], reverse=True)
+    missing.sort(key=lambda x: x["days_overdue"] or 0, reverse=True)
 
     return {"count": len(missing), "missing": missing}
 

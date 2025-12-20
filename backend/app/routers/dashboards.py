@@ -113,12 +113,13 @@ class DashboardResponse(BaseModel):
 
 def dashboard_to_response(dashboard: Dashboard) -> DashboardResponse:
     """Convert Dashboard model to response with calculated date range."""
-    date_range = calculate_date_range(dashboard.date_range_type)
+    range_type = DateRangeType(dashboard.date_range_type)
+    date_range = calculate_date_range(range_type)
     return DashboardResponse(
         id=dashboard.id,
         name=dashboard.name,
         description=dashboard.description,
-        date_range_type=dashboard.date_range_type,
+        date_range_type=range_type,
         date_range=DateRange(**date_range),
         is_default=dashboard.is_default,
         position=dashboard.position,

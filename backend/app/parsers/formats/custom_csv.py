@@ -15,7 +15,7 @@ import json
 import re
 from dataclasses import dataclass, field, fields
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from ..base import (
     AmountConfig,
@@ -130,7 +130,7 @@ class CustomCsvConfig:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API responses."""
-        return json.loads(self.to_json())
+        return cast(Dict[str, Any], json.loads(self.to_json()))
 
 
 class CustomCsvParser(CSVFormatParser):
@@ -564,7 +564,7 @@ def _analyze_column(header: str, samples: List[str]) -> Dict[str, Any]:
     category_keywords = ["category", "classification", "expense type", "spending category", "expense category"]
     account_keywords = ["account", "card", "member", "cardholder"]
 
-    hint = {"likely_type": "unknown", "confidence": 0.0}
+    hint: Dict[str, Any] = {"likely_type": "unknown", "confidence": 0.0}
 
     # Check header keywords
     # Check ID first (must be exact or "transaction id")
@@ -602,7 +602,7 @@ def _analyze_column(header: str, samples: List[str]) -> Dict[str, Any]:
         elif any(kw in header_lower for kw in ["settlement", "effective", "cleared", "processed", "value"]):
             hint["confidence"] = 0.95  # Strong match for settlement date
         else:
-            hint["confidence"] = max(hint.get("confidence", 0), 0.85)
+            hint["confidence"] = max(float(hint.get("confidence", 0)), 0.85)
 
     # Try to detect amount format from sample data
     # This runs if keyword suggested "amount" OR if still "unknown"
@@ -622,7 +622,7 @@ def _analyze_column(header: str, samples: List[str]) -> Dict[str, Any]:
             amount_settings = detect_amount_format(samples)
             hint["likely_type"] = "amount"
             hint["detected_settings"] = amount_settings
-            hint["confidence"] = max(hint.get("confidence", 0), 0.8)
+            hint["confidence"] = max(float(hint.get("confidence", 0)), 0.8)
         elif hint["likely_type"] == "amount" and non_empty:
             # Keyword suggested "amount" but data is NOT numeric
             # Downgrade to "unknown" - data should drive the decision
@@ -642,7 +642,7 @@ def _analyze_column(header: str, samples: List[str]) -> Dict[str, Any]:
 
             # If mostly non-numeric and varied, boost confidence
             if numeric_ratio < 0.3 and unique_ratio > 0.3:
-                hint["confidence"] = max(hint.get("confidence", 0), 0.85)
+                hint["confidence"] = max(float(hint.get("confidence", 0)), 0.85)
 
     # If still unknown, analyze text characteristics for description detection
     if hint["likely_type"] == "unknown":
@@ -669,7 +669,7 @@ def suggest_config(headers: List[str], column_hints: Dict[str, Any]) -> Dict[str
 
     Returns a dict that can be used to create a CustomCsvConfig.
     """
-    config = {
+    config: Dict[str, Any] = {
         "name": "Custom CSV Format",
         "account_source": "Custom",
         "date_column": None,
@@ -821,7 +821,7 @@ def find_header_row(csv_content: str) -> Optional[Tuple[int, List[str]]]:
         "member",
     }
 
-    best_score = 0
+    best_score: float = 0
     best_row = None
     best_headers = None
 
@@ -840,7 +840,7 @@ def find_header_row(csv_content: str) -> Optional[Tuple[int, List[str]]]:
             continue
 
         # Score this row as a potential header
-        score = 0
+        score: float = 0
 
         # Check for header keywords
         for cell in row:
@@ -888,7 +888,7 @@ def find_header_row(csv_content: str) -> Optional[Tuple[int, List[str]]]:
             best_row = i
             best_headers = row
 
-    if best_row is not None and best_score > 3:
+    if best_row is not None and best_headers is not None and best_score > 3:
         return (best_row, best_headers)
 
     return None

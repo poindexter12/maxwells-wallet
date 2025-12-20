@@ -184,6 +184,8 @@ class CSVFormatParser(ABC):
 
         Default: Skips rows with empty date or amount.
         """
+        if self.column_mapping is None:
+            return True
         date_col = self.column_mapping.date_column
         amount_col = self.column_mapping.amount_column
         date_val = row.get(date_col, "").strip() if date_col else ""
@@ -293,6 +295,9 @@ class CSVFormatParser(ABC):
         Uses declarative configuration + hooks for customization.
         Most parsers won't need to override this method.
         """
+        if self.column_mapping is None:
+            raise ValueError("column_mapping must be set before parsing")
+
         transactions = []
 
         # Preprocess content (handle header rows, etc.)

@@ -144,7 +144,7 @@ async def get_account(account_source: str, session: AsyncSession = Depends(get_s
     """Get summary for a specific account."""
     # Get balance for this account
     balance_query = select(
-        func.sum(Transaction.amount).label("balance"), func.count(Transaction.id).label("count")
+        func.sum(Transaction.amount).label("balance"), func.count(Transaction.id).label("txn_count")
     ).where(
         Transaction.account_source == account_source,
         Transaction.is_transfer == False,  # noqa: E712
@@ -153,10 +153,11 @@ async def get_account(account_source: str, session: AsyncSession = Depends(get_s
     result = await session.execute(balance_query)
     row = result.one_or_none()
 
-    if not row or row.count == 0:
+    if not row or row.txn_count == 0:
         raise not_found(ErrorCode.ACCOUNT_NOT_FOUND, account_source=account_source)
 
-    balance, count = row.balance, row.count
+    balance: float = row.balance or 0.0
+    txn_count: int = row.txn_count or 0
 
     # Get tag metadata
     tag_result = await session.execute(
@@ -176,8 +177,8 @@ async def get_account(account_source: str, session: AsyncSession = Depends(get_s
 
     return AccountSummary(
         account=account_source,
-        balance=balance or 0.0,
-        transaction_count=count,
+        balance=balance,
+        transaction_count=txn_count,
         due_day=due_day,
         next_due_date=next_due,
         credit_limit=credit_limit,

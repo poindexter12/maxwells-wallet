@@ -110,7 +110,7 @@ async def delete_tag(tag_id: int, session: AsyncSession = Depends(get_session)):
     usage_result = await session.execute(
         select(func.count()).select_from(TransactionTag).where(TransactionTag.tag_id == tag_id)
     )
-    usage_count = usage_result.scalar()
+    usage_count = usage_result.scalar() or 0
     if usage_count > 0:
         raise bad_request(ErrorCode.TAG_IN_USE, count=usage_count)
 

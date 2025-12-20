@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, List
+from typing import Any, DefaultDict, Dict, Optional, List, cast
 from datetime import date, timedelta
 from collections import defaultdict
 import calendar
@@ -164,30 +164,30 @@ async def monthly_summary(
     net = total_income - total_expenses
 
     # Group by legacy category
-    category_breakdown = defaultdict(lambda: {"amount": 0, "count": 0})
+    category_breakdown: DefaultDict[str, Dict[str, float]] = defaultdict(lambda: {"amount": 0.0, "count": 0.0})
     for txn in transactions:
         cat = txn.category or "Uncategorized"
         category_breakdown[cat]["amount"] += abs(txn.amount) if txn.amount < 0 else 0
         category_breakdown[cat]["count"] += 1
 
     # Sort by amount
-    category_breakdown = dict(sorted(category_breakdown.items(), key=lambda x: x[1]["amount"], reverse=True))
+    sorted_category_breakdown = dict(sorted(category_breakdown.items(), key=lambda x: x[1]["amount"], reverse=True))
 
     # Group by bucket tag (new tag system)
     txn_ids = [txn.id for txn in transactions]
     txn_tags = await get_transaction_tags(session, txn_ids)
 
-    bucket_breakdown = defaultdict(lambda: {"amount": 0, "count": 0})
+    bucket_breakdown: DefaultDict[str, Dict[str, float]] = defaultdict(lambda: {"amount": 0.0, "count": 0.0})
     for txn in transactions:
         bucket = txn_tags.get(txn.id, "Untagged")
         bucket_breakdown[bucket]["amount"] += abs(txn.amount) if txn.amount < 0 else 0
         bucket_breakdown[bucket]["count"] += 1
 
     # Sort by amount
-    bucket_breakdown = dict(sorted(bucket_breakdown.items(), key=lambda x: x[1]["amount"], reverse=True))
+    sorted_bucket_breakdown = dict(sorted(bucket_breakdown.items(), key=lambda x: x[1]["amount"], reverse=True))
 
     # Top merchants
-    merchant_totals = defaultdict(float)
+    merchant_totals: DefaultDict[str, float] = defaultdict(float)
     for txn in transactions:
         if txn.merchant and txn.amount < 0:
             merchant_totals[txn.merchant] += abs(txn.amount)
@@ -201,8 +201,8 @@ async def monthly_summary(
         "total_expenses": total_expenses,
         "net": net,
         "transaction_count": len(transactions),
-        "category_breakdown": category_breakdown,
-        "bucket_breakdown": bucket_breakdown,
+        "category_breakdown": sorted_category_breakdown,
+        "bucket_breakdown": sorted_bucket_breakdown,
         "top_merchants": [{"merchant": m, "amount": a} for m, a in top_merchants],
     }
 
@@ -251,9 +251,9 @@ async def annual_summary(
     net = total_income - total_expenses
 
     # Monthly breakdown
-    monthly_breakdown = {}
+    monthly_breakdown: Dict[int, Dict[str, float]] = {}
     for month_num in range(1, 13):
-        monthly_breakdown[month_num] = {"income": 0, "expenses": 0, "net": 0, "count": 0}
+        monthly_breakdown[month_num] = {"income": 0.0, "expenses": 0.0, "net": 0.0, "count": 0.0}
 
     for txn in transactions:
         month = txn.date.month
@@ -270,16 +270,16 @@ async def annual_summary(
     txn_ids = [txn.id for txn in transactions]
     txn_tags = await get_transaction_tags(session, txn_ids)
 
-    bucket_breakdown = defaultdict(lambda: {"amount": 0, "count": 0})
+    bucket_breakdown_dd: DefaultDict[str, Dict[str, float]] = defaultdict(lambda: {"amount": 0.0, "count": 0.0})
     for txn in transactions:
         bucket = txn_tags.get(txn.id, "Untagged")
-        bucket_breakdown[bucket]["amount"] += abs(txn.amount) if txn.amount < 0 else 0
-        bucket_breakdown[bucket]["count"] += 1
+        bucket_breakdown_dd[bucket]["amount"] += abs(txn.amount) if txn.amount < 0 else 0
+        bucket_breakdown_dd[bucket]["count"] += 1
 
-    bucket_breakdown = dict(sorted(bucket_breakdown.items(), key=lambda x: x[1]["amount"], reverse=True))
+    bucket_breakdown = dict(sorted(bucket_breakdown_dd.items(), key=lambda x: x[1]["amount"], reverse=True))
 
     # Top merchants
-    merchant_totals = defaultdict(float)
+    merchant_totals: DefaultDict[str, float] = defaultdict(float)
     for txn in transactions:
         if txn.merchant and txn.amount < 0:
             merchant_totals[txn.merchant] += abs(txn.amount)
@@ -352,7 +352,7 @@ async def spending_trends(
 
     if group_by == "month":
         # Group by month
-        monthly_data = defaultdict(lambda: {"income": 0, "expenses": 0, "net": 0})
+        monthly_data: DefaultDict[str, Dict[str, float]] = defaultdict(lambda: {"income": 0.0, "expenses": 0.0, "net": 0.0})
 
         for txn in transactions:
             month_key = f"{txn.date.year}-{txn.date.month:02d}"
@@ -366,7 +366,7 @@ async def spending_trends(
 
     elif group_by == "week":
         # Group by ISO week
-        weekly_data = defaultdict(lambda: {"income": 0, "expenses": 0, "net": 0})
+        weekly_data: DefaultDict[str, Dict[str, float]] = defaultdict(lambda: {"income": 0.0, "expenses": 0.0, "net": 0.0})
 
         for txn in transactions:
             # ISO week: YYYY-Www format
@@ -382,7 +382,7 @@ async def spending_trends(
 
     elif group_by == "category":
         # Group by category over time
-        category_monthly = defaultdict(lambda: defaultdict(float))
+        category_monthly: DefaultDict[str, DefaultDict[str, float]] = defaultdict(lambda: defaultdict(float))
 
         for txn in transactions:
             if txn.amount < 0:  # Only expenses
@@ -401,7 +401,7 @@ async def spending_trends(
 
     elif group_by == "account":
         # Group by account over time
-        account_monthly = defaultdict(lambda: defaultdict(lambda: {"income": 0, "expenses": 0}))
+        account_monthly: DefaultDict[str, DefaultDict[str, Dict[str, float]]] = defaultdict(lambda: defaultdict(lambda: {"income": 0.0, "expenses": 0.0}))
 
         for txn in transactions:
             month_key = f"{txn.date.year}-{txn.date.month:02d}"
@@ -424,7 +424,7 @@ async def spending_trends(
         txn_ids = [txn.id for txn in transactions]
         txn_tags = await get_transaction_tags(session, txn_ids)
 
-        tag_monthly = defaultdict(lambda: defaultdict(float))
+        tag_monthly: DefaultDict[str, DefaultDict[str, float]] = defaultdict(lambda: defaultdict(float))
 
         for txn in transactions:
             if txn.amount < 0:  # Only expenses
@@ -500,7 +500,7 @@ async def top_merchants(
     transactions = await apply_transaction_filters(transactions, session, buckets=buckets, accounts=accounts)
 
     # Aggregate by merchant
-    merchant_totals = defaultdict(lambda: {"amount": 0, "count": 0})
+    merchant_totals: DefaultDict[str, Dict[str, float]] = defaultdict(lambda: {"amount": 0.0, "count": 0.0})
     for txn in transactions:
         if txn.merchant:
             merchant_totals[txn.merchant]["amount"] += abs(txn.amount)
@@ -521,7 +521,7 @@ async def account_summary(session: AsyncSession = Depends(get_session)):
     result = await session.execute(select(Transaction).where(Transaction.is_transfer.is_(False)))
     transactions = result.scalars().all()
 
-    account_data = defaultdict(lambda: {"income": 0, "expenses": 0, "net": 0, "count": 0})
+    account_data: DefaultDict[str, Dict[str, float]] = defaultdict(lambda: {"income": 0.0, "expenses": 0.0, "net": 0.0, "count": 0.0})
 
     for txn in transactions:
         if txn.amount > 0:
@@ -556,7 +556,7 @@ async def bucket_summary(
     txn_ids = [txn.id for txn in transactions]
     txn_tags = await get_transaction_tags(session, txn_ids)
 
-    bucket_data = defaultdict(lambda: {"income": 0, "expenses": 0, "net": 0, "count": 0})
+    bucket_data: DefaultDict[str, Dict[str, float]] = defaultdict(lambda: {"income": 0.0, "expenses": 0.0, "net": 0.0, "count": 0.0})
 
     for txn in transactions:
         bucket = txn_tags.get(txn.id, "Untagged")
@@ -623,13 +623,13 @@ async def month_over_month_comparison(
         total_expenses = abs(sum(txn.amount for txn in transactions if txn.amount < 0))
 
         # Legacy category breakdown
-        category_totals = defaultdict(float)
+        category_totals: DefaultDict[str, float] = defaultdict(float)
         for txn in transactions:
             if txn.amount < 0 and txn.category:
                 category_totals[txn.category] += abs(txn.amount)
 
         # Bucket tag breakdown
-        bucket_totals = defaultdict(float)
+        bucket_totals: DefaultDict[str, float] = defaultdict(float)
         for txn in transactions:
             if txn.amount < 0:
                 bucket = txn_tags.get(txn.id, "Untagged")
@@ -891,7 +891,7 @@ async def detect_anomalies(
     )
     baseline_transactions = baseline_result.scalars().all()
 
-    anomalies = {"large_transactions": [], "new_merchants": [], "unusual_categories": [], "unusual_buckets": []}
+    anomalies: Dict[str, List[Dict[str, Any]]] = {"large_transactions": [], "new_merchants": [], "unusual_categories": [], "unusual_buckets": []}
 
     # Get bucket tags for all transactions
     all_txn_ids = [txn.id for txn in current_transactions] + [txn.id for txn in baseline_transactions]
@@ -946,7 +946,7 @@ async def detect_anomalies(
 
     # 3. Detect unusual category spending
     # Calculate average monthly spending per category from baseline
-    baseline_months = defaultdict(lambda: defaultdict(float))
+    baseline_months: DefaultDict[str, DefaultDict[str, float]] = defaultdict(lambda: defaultdict(float))
     for txn in baseline_transactions:
         if txn.amount < 0 and txn.category:
             month_key = f"{txn.date.year}-{txn.date.month:02d}"
@@ -959,7 +959,7 @@ async def detect_anomalies(
             category_averages[cat].append(amount)
 
     # Current month category totals
-    current_category_totals = defaultdict(float)
+    current_category_totals: DefaultDict[str, float] = defaultdict(float)
     for txn in current_transactions:
         if txn.amount < 0 and txn.category:
             current_category_totals[txn.category] += abs(txn.amount)
@@ -987,7 +987,7 @@ async def detect_anomalies(
 
     # 4. Detect unusual bucket spending
     # Calculate average monthly spending per bucket from baseline
-    baseline_bucket_months = defaultdict(lambda: defaultdict(float))
+    baseline_bucket_months: DefaultDict[str, DefaultDict[str, float]] = defaultdict(lambda: defaultdict(float))
     for txn in baseline_transactions:
         if txn.amount < 0:
             month_key = f"{txn.date.year}-{txn.date.month:02d}"
@@ -1001,7 +1001,7 @@ async def detect_anomalies(
             bucket_averages[bucket].append(amount)
 
     # Current month bucket totals
-    current_bucket_totals = defaultdict(float)
+    current_bucket_totals: DefaultDict[str, float] = defaultdict(float)
     for txn in current_transactions:
         if txn.amount < 0:
             bucket = all_txn_tags.get(txn.id, "Untagged")
@@ -1108,13 +1108,13 @@ async def sankey_flow(
     txn_tags = await get_transaction_tags(session, txn_ids)
 
     # Build nodes and links
-    nodes = []
-    node_index = {}
-    links = []
+    nodes: List[Dict[str, str]] = []
+    node_index: Dict[str, int] = {}
+    links: List[Dict[str, Any]] = []
 
     # Track flows
-    income_to_account = defaultdict(float)  # "Income" -> account_source
-    account_to_bucket = defaultdict(lambda: defaultdict(float))  # account_source -> bucket
+    income_to_account: DefaultDict[str, float] = defaultdict(float)  # "Income" -> account_source
+    account_to_bucket: DefaultDict[str, DefaultDict[str, float]] = defaultdict(lambda: defaultdict(float))  # account_source -> bucket
 
     for txn in transactions:
         account = txn.account_source or "Unknown"
@@ -1146,9 +1146,9 @@ async def sankey_flow(
         links.append({"source": income_idx, "target": account_idx, "value": round(amount, 2)})
 
     # Add bucket nodes and expense links
-    for account, buckets in account_to_bucket.items():
+    for account, bucket_amounts in account_to_bucket.items():
         account_idx = get_node_index(account, "account")
-        for bucket, amount in buckets.items():
+        for bucket, amount in bucket_amounts.items():
             bucket_idx = get_node_index(bucket.capitalize(), "bucket")
             links.append({"source": account_idx, "target": bucket_idx, "value": round(amount, 2)})
 
@@ -1204,7 +1204,7 @@ async def treemap_data(
     txn_tags = await get_transaction_tags(session, txn_ids)
 
     # Build hierarchy: bucket -> merchant -> amount
-    hierarchy = defaultdict(lambda: defaultdict(float))
+    hierarchy: DefaultDict[str, DefaultDict[str, float]] = defaultdict(lambda: defaultdict(float))
 
     for txn in transactions:
         bucket = txn_tags.get(txn.id, "Uncategorized")
@@ -1212,13 +1212,13 @@ async def treemap_data(
         hierarchy[bucket][merchant] += abs(txn.amount)
 
     # Convert to treemap format
-    children = []
-    for bucket, merchants in hierarchy.items():
-        bucket_children = [
+    children: List[Dict[str, Any]] = []
+    for bucket, merchant_amounts in hierarchy.items():
+        bucket_children: List[Dict[str, Any]] = [
             {"name": merchant, "value": round(amount, 2)}
-            for merchant, amount in sorted(merchants.items(), key=lambda x: -x[1])
+            for merchant, amount in sorted(merchant_amounts.items(), key=lambda x: -x[1])
         ]
-        bucket_total = sum(m["value"] for m in bucket_children)
+        bucket_total = sum(cast(float, m["value"]) for m in bucket_children)
         children.append(
             {
                 "name": bucket.capitalize(),
@@ -1271,15 +1271,15 @@ async def spending_heatmap(
             transactions, session, buckets=buckets, accounts=accounts, merchants=merchants
         )
 
-        daily_spending = defaultdict(float)
-        daily_count = defaultdict(int)
+        daily_spending: DefaultDict[int, float] = defaultdict(float)
+        daily_count: DefaultDict[int, int] = defaultdict(int)
 
         for txn in transactions:
             day = txn.date.day
             daily_spending[day] += abs(txn.amount)
             daily_count[day] += 1
 
-        days = []
+        days: List[Dict[str, Any]] = []
         max_spending = max(daily_spending.values()) if daily_spending else 0
 
         for day in range(1, last_day + 1):
@@ -1324,8 +1324,8 @@ async def spending_heatmap(
             transactions, session, buckets=buckets, accounts=accounts, merchants=merchants
         )
 
-        monthly_spending = defaultdict(float)
-        monthly_count = defaultdict(int)
+        monthly_spending: DefaultDict[int, float] = defaultdict(float)
+        monthly_count: DefaultDict[int, int] = defaultdict(int)
 
         for txn in transactions:
             m = txn.date.month
@@ -1356,7 +1356,7 @@ async def spending_heatmap(
                 }
             )
 
-    total_spending = sum(d["amount"] for d in days)
+    total_spending = sum(float(d["amount"]) for d in days)
 
     if month is not None:
         # Monthly summary
@@ -1364,7 +1364,7 @@ async def spending_heatmap(
             "total_spending": round(total_spending, 2),
             "max_daily": round(max_spending, 2),
             "avg_daily": round(total_spending / last_day, 2) if days else 0,
-            "days_with_spending": len([d for d in days if d["amount"] > 0]),
+            "days_with_spending": len([d for d in days if float(d["amount"]) > 0]),
         }
     else:
         # Yearly summary
@@ -1372,7 +1372,7 @@ async def spending_heatmap(
             "total_spending": round(total_spending, 2),
             "max_monthly": round(max_spending, 2),
             "avg_monthly": round(total_spending / 12, 2) if days else 0,
-            "months_with_spending": len([d for d in days if d["amount"] > 0]),
+            "months_with_spending": len([d for d in days if float(d["amount"]) > 0]),
         }
 
     return {"year": year, "month": month, "days": days, "summary": summary}
