@@ -74,7 +74,15 @@ test.describe('Dashboard Tab Switching Chaos @chaos', () => {
     }
 
     const errors: string[] = [];
-    page.on('pageerror', (err) => errors.push(err.message));
+    // Filter out WebKit-specific CORS warnings that aren't actual app errors
+    page.on('pageerror', (err) => {
+      const msg = err.message;
+      if (msg.includes('due to access control checks') ||
+          msg.includes('__nextjs_original-stack-frames')) {
+        return;
+      }
+      errors.push(msg);
+    });
 
     // 5 rounds: switch tab, do 8 actions
     for (let round = 0; round < 5; round++) {

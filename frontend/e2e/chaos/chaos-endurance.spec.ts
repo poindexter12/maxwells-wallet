@@ -269,7 +269,15 @@ test.describe('Page-Cycling Endurance @endurance @endurance-medium', () => {
     const errors: string[] = [];
     const pageVisits: Record<string, number> = {};
 
-    page.on('pageerror', (err) => errors.push(err.message));
+    // Filter out WebKit-specific CORS warnings that aren't actual app errors
+    page.on('pageerror', (err) => {
+      const msg = err.message;
+      if (msg.includes('due to access control checks') ||
+          msg.includes('__nextjs_original-stack-frames')) {
+        return;
+      }
+      errors.push(msg);
+    });
 
     console.log(`\n🚀 Page cycling endurance starting, seed: ${seed}`);
 
