@@ -123,20 +123,20 @@ cd /app/backend
 
 init_database() {
     echo "Initializing database schema..."
-    # Create tables via SQLModel metadata (not alembic migrations)
+    # Create tables via SQLAlchemy Base metadata
     python -c "
 import asyncio
-from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import create_async_engine
 import os
-# Import all models to register them
-from app.models import *
+# Import Base and all models to register them
+from app.orm import Base
+import app.orm  # noqa: F401 - registers all models
 
 async def create_tables():
     DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite+aiosqlite:////data/wallet.db')
     engine = create_async_engine(DATABASE_URL)
     async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
+        await conn.run_sync(Base.metadata.create_all)
     await engine.dispose()
 
 asyncio.run(create_tables())
