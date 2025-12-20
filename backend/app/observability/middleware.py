@@ -5,7 +5,7 @@ Wraps all HTTP requests to measure duration and record metrics.
 """
 
 import time
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, cast
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -42,18 +42,18 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         """
         # Skip metrics for excluded paths
         if request.url.path in EXCLUDED_PATHS:
-            return await call_next(request)
+            return cast(Response, await call_next(request))
 
         # Skip if metrics disabled
         if not get_metrics_enabled():
-            return await call_next(request)
+            return cast(Response, await call_next(request))
 
         # Track active requests
         http_requests_active.inc()
         start_time = time.perf_counter()
 
         try:
-            response = await call_next(request)
+            response = cast(Response, await call_next(request))
             duration = time.perf_counter() - start_time
 
             # Record metrics

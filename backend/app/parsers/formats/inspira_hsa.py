@@ -11,7 +11,7 @@ Format characteristics:
 - Expense Category can be "Medical" which maps to Healthcare
 """
 
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from ..base import (
     CSVFormatParser,
@@ -69,9 +69,9 @@ class InspiraHSAParser(CSVFormatParser):
         # The row handling for fallback is done in the parse method override
         return super().parse_date(date_str)
 
-    def extract_merchant(self, row: Dict, description: str) -> str:
+    def extract_merchant(self, row: Dict[str, Any], description: str) -> str:
         """Extract merchant from description or transaction type."""
-        trans_type = row.get("Transaction Type", "").strip()
+        trans_type = str(row.get("Transaction Type", "")).strip()
 
         if description and description.split():
             return description.split()[0]

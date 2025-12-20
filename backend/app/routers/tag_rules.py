@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import Any, Dict, List
 from datetime import datetime
 
 from app.database import get_session
@@ -41,8 +41,10 @@ def match_rule(transaction: Transaction, rule: TagRule) -> bool:
             amount_match = rule.amount_min <= amount <= rule.amount_max
         elif rule.amount_min is not None:
             amount_match = amount >= rule.amount_min
-        else:  # amount_max is not None
+        elif rule.amount_max is not None:
             amount_match = amount <= rule.amount_max
+        else:
+            amount_match = True  # unreachable, but satisfies mypy
         matches.append(amount_match)
 
     # Check account source
@@ -268,7 +270,7 @@ async def apply_rules(session: AsyncSession = Depends(get_session)):
     transactions = txn_result.scalars().all()
 
     applied_count = 0
-    rule_stats = {}
+    rule_stats: Dict[int, Dict[str, Any]] = {}
 
     for txn in transactions:
         # Check current bucket tag

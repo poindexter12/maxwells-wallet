@@ -5,8 +5,9 @@ Provides automatic instrumentation for FastAPI and SQLAlchemy,
 plus decorators for adding custom spans to business logic.
 """
 
+import asyncio
 from functools import wraps
-from typing import TYPE_CHECKING, Callable, TypeVar, ParamSpec
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
 
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
@@ -18,10 +19,6 @@ from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 if TYPE_CHECKING:
     from fastapi import FastAPI
     from app.observability.config import ObservabilitySettings
-
-# Type variables for decorator
-P = ParamSpec("P")
-T = TypeVar("T")
 
 # Global tracer - initialized during setup
 _tracer: trace.Tracer | None = None
@@ -90,13 +87,23 @@ def get_tracer() -> trace.Tracer:
     return _tracer
 
 
-def traced(span_name: str | None = None) -> Callable[[Callable[P, T]], Callable[P, T]]:
+# TypeVar for decorated function - preserves exact callable signature
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def traced(span_name: str | None = None) -> Callable[[F], F]:
     """
     Decorator to add a custom span to a function.
+
+    Works with both sync and async functions. The return type is preserved.
 
     Usage:
         @traced("import.preview")
         async def preview_import(...):
+            ...
+
+        @traced("sync.operation")
+        def sync_operation(...):
             ...
 
     Args:
@@ -106,11 +113,11 @@ def traced(span_name: str | None = None) -> Callable[[Callable[P, T]], Callable[
         Decorated function with tracing
     """
 
-    def decorator(func: Callable[P, T]) -> Callable[P, T]:
+    def decorator(func: F) -> F:
         name = span_name or func.__name__
 
         @wraps(func)
-        async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             tracer = get_tracer()
             with tracer.start_as_current_span(name) as span:
                 span.set_attribute("function", func.__name__)
@@ -124,7 +131,7 @@ def traced(span_name: str | None = None) -> Callable[[Callable[P, T]], Callable[
                     raise
 
         @wraps(func)
-        def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             tracer = get_tracer()
             with tracer.start_as_current_span(name) as span:
                 span.set_attribute("function", func.__name__)
@@ -137,12 +144,9 @@ def traced(span_name: str | None = None) -> Callable[[Callable[P, T]], Callable[
                     span.set_status(trace.StatusCode.ERROR, str(e))
                     raise
 
-        # Check if function is async
-        import asyncio
-
         if asyncio.iscoroutinefunction(func):
-            return async_wrapper
-        return sync_wrapper
+            return async_wrapper  # type: ignore[return-value]
+        return sync_wrapper  # type: ignore[return-value]
 
     return decorator
 
