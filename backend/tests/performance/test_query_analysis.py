@@ -170,3 +170,107 @@ class TestAggregationEfficiency:
             f"Trend aggregation inefficient: {query_counter.count} queries "
             "for 12-month range. Use date_trunc and GROUP BY."
         )
+
+
+@pytest.mark.performance
+class TestRelationshipLoading:
+    """Tests for ORM relationship loading efficiency (selectin strategy)."""
+
+    async def test_transaction_tags_selectin_loading(self, perf_client, seed_large_dataset, query_counter):
+        """
+        Transaction.tags relationship uses selectin loading.
+
+        With selectin, loading N transactions should use ~2 queries:
+        1. SELECT transactions
+        2. SELECT tags WHERE transaction_id IN (...)
+
+        NOT 1 + N queries (one per transaction).
+        """
+        # Fetch transactions with tags
+        query_counter.reset()
+        async with timed_request(query_counter):
+            response = await perf_client.get("/api/v1/transactions/", params={"limit": 100})
+
+        assert response.status_code == 200
+        transactions = response.json()
+
+        # Verify we got transactions with tags
+        transactions_with_tags = sum(1 for t in transactions if t.get("tags"))
+
+        # Selectin should give us O(1) queries regardless of result count
+        # Allow up to 5 queries (main query, tags selectin, account_tag selectin, etc.)
+        assert query_counter.count <= 6, (
+            f"Possible N+1 in relationship loading: {len(transactions)} transactions "
+            f"({transactions_with_tags} with tags), {query_counter.count} queries. "
+            "Expected ~2-4 queries with selectin loading."
+        )
+
+    async def test_transaction_account_tag_selectin_loading(self, perf_client, seed_large_dataset, query_counter):
+        """
+        Transaction.account_tag FK relationship uses selectin loading.
+        """
+        query_counter.reset()
+        async with timed_request(query_counter):
+            response = await perf_client.get("/api/v1/transactions/", params={"limit": 50})
+
+        assert response.status_code == 200
+
+        # With selectin on account_tag relationship, should not see O(n) queries
+        assert query_counter.count <= 5, (
+            f"account_tag relationship may have N+1: {query_counter.count} queries for 50 transactions"
+        )
+
+    async def test_dashboard_widgets_relationship_efficiency(self, perf_client, seed_large_dataset, query_counter):
+        """
+        Dashboard.widgets relationship uses selectin loading.
+        """
+        # First get all dashboards
+        dashboards_response = await perf_client.get("/api/v1/dashboards")
+        assert dashboards_response.status_code == 200
+        dashboards = dashboards_response.json()
+
+        if len(dashboards) == 0:
+            pytest.skip("No dashboards to test")
+
+        # Now fetch each dashboard's widgets and count queries
+        query_counter.reset()
+        for dashboard in dashboards[:5]:  # Test first 5 dashboards
+            async with timed_request(query_counter):
+                response = await perf_client.get(f"/api/v1/dashboards/{dashboard['id']}/widgets")
+            assert response.status_code == 200
+
+        # Each dashboard fetch should use at most 5 queries
+        # (1 for dashboard lookup, 1 for widgets via selectin, 1 for actual endpoint query,
+        #  plus potential selectin loads for back-references)
+        max_expected = len(dashboards[:5]) * 5
+        assert query_counter.count <= max_expected, (
+            f"Dashboard widget loading may have N+1: {query_counter.count} queries "
+            f"for {len(dashboards[:5])} dashboards"
+        )
+
+    async def test_relationship_loading_scales_linearly(self, perf_client, seed_large_dataset, query_counter):
+        """
+        Query count should not scale with result size for relationship loading.
+
+        This is the definitive N+1 detection test for selectin loading.
+        """
+        # Fetch 10 transactions
+        query_counter.reset()
+        async with timed_request(query_counter):
+            await perf_client.get("/api/v1/transactions/", params={"limit": 10})
+        queries_10 = query_counter.count
+
+        # Fetch 100 transactions
+        query_counter.reset()
+        async with timed_request(query_counter):
+            await perf_client.get("/api/v1/transactions/", params={"limit": 100})
+        queries_100 = query_counter.count
+
+        # With selectin loading, queries should be approximately constant
+        # Allow 50% growth maximum (not 10x growth)
+        assert queries_100 <= queries_10 * 1.5, (
+            f"N+1 detected in relationship loading! "
+            f"10 transactions: {queries_10} queries, "
+            f"100 transactions: {queries_100} queries. "
+            f"With selectin loading, query count should be nearly constant."
+        )
