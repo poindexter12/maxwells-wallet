@@ -28,7 +28,15 @@ test.describe('Application-Wide Roaming Chaos @chaos', () => {
       const errors: string[] = [];
       const pagesVisited = new Set<string>();
 
-      page.on('pageerror', (err) => errors.push(err.message));
+      // Filter out WebKit-specific CORS warnings that aren't actual app errors
+      page.on('pageerror', (err) => {
+        const msg = err.message;
+        if (msg.includes('due to access control checks') ||
+            msg.includes('__nextjs_original-stack-frames')) {
+          return;
+        }
+        errors.push(msg);
+      });
 
       console.log(`\n🐒 Roaming chaos starting with seed: ${seed}`);
 
@@ -107,7 +115,15 @@ test.describe('Multi-Page Journey Chaos - Fibonacci @chaos', () => {
       const seed = baseSeed + index;
       const errors: string[] = [];
 
-      page.on('pageerror', (err) => errors.push(err.message));
+      // Filter out WebKit-specific CORS warnings that aren't actual app errors
+      page.on('pageerror', (err) => {
+        const msg = err.message;
+        if (msg.includes('due to access control checks') ||
+            msg.includes('__nextjs_original-stack-frames')) {
+          return;
+        }
+        errors.push(msg);
+      });
 
       console.log(`\n🚀 Journey: ${actionsPerPage} actions × ${pages.length} pages = ${totalActions} total`);
 
