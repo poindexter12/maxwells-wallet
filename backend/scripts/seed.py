@@ -45,6 +45,12 @@ DEMO_USER = {
     "password": "wallet",
 }
 
+# E2E test user credentials (used by auth.setup.ts)
+E2E_TEST_USER = {
+    "username": "testuser",
+    "password": "testpass123",
+}
+
 
 # ============================================================================
 # Configuration
@@ -209,26 +215,30 @@ async def clear_data(session: AsyncSession):
 
 
 async def seed_demo_user(session: AsyncSession):
-    """Create demo user if not exists."""
-    print("Seeding demo user...")
+    """Create demo user and E2E test user if they don't exist."""
+    print("Seeding users...")
 
-    # Check if user already exists
-    result = await session.execute(
-        select(User).where(User.username == DEMO_USER["username"])
-    )
-    existing = result.scalar_one_or_none()
+    users_to_create = [DEMO_USER, E2E_TEST_USER]
 
-    if existing:
-        print(f"Demo user '{DEMO_USER['username']}' already exists, skipping.")
-        return
+    for user_config in users_to_create:
+        # Check if user already exists
+        result = await session.execute(
+            select(User).where(User.username == user_config["username"])
+        )
+        existing = result.scalar_one_or_none()
 
-    user = User(
-        username=DEMO_USER["username"],
-        password_hash=hash_password(DEMO_USER["password"]),
-    )
-    session.add(user)
+        if existing:
+            print(f"User '{user_config['username']}' already exists, skipping.")
+            continue
+
+        user = User(
+            username=user_config["username"],
+            password_hash=hash_password(user_config["password"]),
+        )
+        session.add(user)
+        print(f"Created user: {user_config['username']} / {user_config['password']}")
+
     await session.commit()
-    print(f"Created demo user: {DEMO_USER['username']} / {DEMO_USER['password']}")
 
 
 async def get_or_create_tag(
