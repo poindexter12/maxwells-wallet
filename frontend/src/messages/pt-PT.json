@@ -320,7 +320,7 @@
     "dbDuplicates": "Duplicados BD",
     "batchDuplicates": "Duplicados lote",
     "selectAccount": "-- Selecionar conta --",
-    "accountPlaceholder": "ex. CGD-Ordem, Millennium-12345",
+    "accountPlaceholder": "e.g., BOFA-Checking, AMEX-53004",
     "orTypeNew": "ou escreva novo",
     "existing": "Existente",
     "new": "Novo",
