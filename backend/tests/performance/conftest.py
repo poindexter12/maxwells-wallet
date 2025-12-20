@@ -422,7 +422,6 @@ async def seed_large_dataset(perf_session_factory) -> dict[str, Any]:
             widget = DashboardWidget(
                 dashboard_id=dashboard.id,
                 widget_type=wtype,
-                title=f"Test {wtype.title()}",
                 position=i,
                 width="half" if wtype != "summary" else "full",
                 is_visible=True,
@@ -724,7 +723,6 @@ async def seed_stress_dataset(stress_session_factory) -> dict[str, Any]:
             widget = DashboardWidget(
                 dashboard_id=dashboard.id,
                 widget_type=wtype,
-                title=f"Test {wtype.title()}",
                 position=i,
                 width="half" if wtype != "summary" else "full",
                 is_visible=True,
