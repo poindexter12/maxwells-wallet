@@ -2,12 +2,13 @@
 
 from typing import Optional
 from fastapi import APIRouter, Depends, Request, Body
-from sqlmodel import select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
 from app.database import get_session
-from app.models import AppSettings, AppSettingsUpdate, LanguagePreference
+from app.orm import AppSettings, LanguagePreference
+from app.schemas import AppSettingsUpdate
 from app.config import settings as app_config
 from app.services.scheduler import scheduler_service, SchedulerSettings
 
@@ -92,14 +93,15 @@ async def get_settings(request: Request, session: AsyncSession = Depends(get_ses
         await session.refresh(settings)
 
     # Resolve effective locale based on preference
-    if settings.language == LanguagePreference.browser:
+    # language is stored as a string, so compare with enum value
+    if settings.language == LanguagePreference.browser.value:
         accept_lang = request.headers.get("Accept-Language", "")
         effective_locale = parse_accept_language(accept_lang)
     else:
-        effective_locale = settings.language.value
+        effective_locale = settings.language  # Already a string
 
     response = {
-        "language": settings.language.value,
+        "language": settings.language,  # Already a string
         "effective_locale": effective_locale,
         "supported_locales": SUPPORTED_LOCALES,
         "demo_mode": app_config.demo_mode,
@@ -134,7 +136,7 @@ async def update_settings(updates: AppSettingsUpdate, session: AsyncSession = De
     await session.commit()
     await session.refresh(settings)
 
-    return {"language": settings.language.value, "updated_at": settings.updated_at.isoformat()}
+    return {"language": settings.language, "updated_at": settings.updated_at.isoformat()}
 
 
 @router.get("/backup", response_model=SchedulerSettings)

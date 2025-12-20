@@ -1,14 +1,15 @@
 """Merchant aliases router for normalizing merchant names"""
 
 from fastapi import APIRouter, Depends, Query
-from sqlmodel import select, func
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from datetime import datetime
 import re
 
 from app.database import get_session
-from app.models import MerchantAlias, MerchantAliasCreate, MerchantAliasUpdate, MerchantAliasMatchType, Transaction
+from app.orm import MerchantAlias, MerchantAliasMatchType, Transaction
+from app.schemas import MerchantAliasCreate, MerchantAliasUpdate, MerchantAliasResponse
 from app.errors import ErrorCode, not_found, bad_request
 
 
@@ -56,14 +57,14 @@ async def list_merchants(limit: int = Query(100, ge=1, le=500), session: AsyncSe
     }
 
 
-@router.get("/aliases", response_model=List[MerchantAlias])
+@router.get("/aliases", response_model=List[MerchantAliasResponse])
 async def list_aliases(session: AsyncSession = Depends(get_session)):
     """List all merchant aliases, ordered by priority (highest first)"""
     result = await session.execute(select(MerchantAlias).order_by(MerchantAlias.priority.desc()))
     return result.scalars().all()
 
 
-@router.get("/aliases/{alias_id}", response_model=MerchantAlias)
+@router.get("/aliases/{alias_id}", response_model=MerchantAliasResponse)
 async def get_alias(alias_id: int, session: AsyncSession = Depends(get_session)):
     """Get a single merchant alias by ID"""
     result = await session.execute(select(MerchantAlias).where(MerchantAlias.id == alias_id))
@@ -73,7 +74,7 @@ async def get_alias(alias_id: int, session: AsyncSession = Depends(get_session))
     return alias
 
 
-@router.post("/aliases", response_model=MerchantAlias, status_code=201)
+@router.post("/aliases", response_model=MerchantAliasResponse, status_code=201)
 async def create_alias(alias: MerchantAliasCreate, session: AsyncSession = Depends(get_session)):
     """Create a new merchant alias"""
     # Validate regex pattern if match_type is regex
@@ -100,7 +101,7 @@ async def create_alias(alias: MerchantAliasCreate, session: AsyncSession = Depen
     return db_alias
 
 
-@router.patch("/aliases/{alias_id}", response_model=MerchantAlias)
+@router.patch("/aliases/{alias_id}", response_model=MerchantAliasResponse)
 async def update_alias(alias_id: int, alias: MerchantAliasUpdate, session: AsyncSession = Depends(get_session)):
     """Update a merchant alias"""
     result = await session.execute(select(MerchantAlias).where(MerchantAlias.id == alias_id))

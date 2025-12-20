@@ -7,11 +7,12 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Header
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select
+from sqlalchemy import select
 
 from app.database import get_session
 from app.errors import ErrorCode, bad_request, conflict, unauthorized
-from app.models import User, UserCreate, UserResponse, PasswordChange
+from app.orm import User
+from app.schemas import UserCreate, UserResponse, PasswordChange
 from app.utils.auth import hash_password, verify_password, create_access_token, verify_token
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])

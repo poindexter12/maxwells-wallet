@@ -2,7 +2,6 @@
 
 import pytest
 import asyncio
-from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from httpx import AsyncClient, ASGITransport
@@ -16,7 +15,7 @@ os.environ["OTEL_METRICS_ENABLED"] = "false"
 
 from app.main import app
 from app.database import get_session
-from app.models import Transaction, Tag, TransactionTag
+from app.orm import Base, Transaction, Tag, TransactionTag
 
 
 # Use in-memory SQLite for tests
@@ -37,7 +36,7 @@ async def async_engine():
     engine = create_async_engine(TEST_DATABASE_URL, echo=False, connect_args={"check_same_thread": False})
 
     async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
+        await conn.run_sync(Base.metadata.create_all)
 
     yield engine
 
@@ -123,7 +122,7 @@ async def seed_categories(async_session: AsyncSession, seed_tags):
 async def seed_transactions(async_session: AsyncSession, seed_categories):
     """Seed sample transactions with tags and account_tag_id FK"""
     from datetime import date
-    from sqlmodel import select
+    from sqlalchemy import select
 
     # Get tag IDs for linking
     tags_result = await async_session.execute(select(Tag))

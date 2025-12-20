@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query
-from sqlmodel import select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func
 from typing import List, Optional
@@ -7,21 +7,20 @@ from datetime import date, datetime
 import re
 
 from app.database import get_session
-from app.models import (
-    Transaction,
+from app.orm import Transaction, Tag, TransactionTag, ReconciliationStatus
+from app.schemas import (
     TransactionCreate,
     TransactionUpdate,
-    ReconciliationStatus,
-    Tag,
-    TransactionTag,
+    TransactionResponse,
     SplitItem,
     TransactionSplits,
     TransactionSplitResponse,
+    PaginatedTransactions,
 )
 from app.utils.hashing import compute_transaction_content_hash
 from app.utils.pagination import encode_cursor, decode_cursor
 from app.errors import ErrorCode, not_found, bad_request
-from sqlmodel import and_
+from sqlalchemy import and_
 from pydantic import BaseModel
 
 
@@ -32,14 +31,6 @@ class AddTagRequest(BaseModel):
 class AddTagWithAmountRequest(BaseModel):
     tag: str  # namespace:value format
     amount: Optional[float] = None  # Split amount
-
-
-class PaginatedTransactions(BaseModel):
-    """Response model for cursor-paginated transactions."""
-
-    items: List[Transaction]
-    next_cursor: Optional[str] = None
-    has_more: bool = False
 
 
 router = APIRouter(prefix="/api/v1/transactions", tags=["transactions"])
@@ -303,7 +294,7 @@ async def list_transactions_paginated(
     return PaginatedTransactions(items=transactions, next_cursor=next_cursor, has_more=has_more)
 
 
-@router.get("/", response_model=List[Transaction])
+@router.get("/", response_model=List[TransactionResponse])
 async def list_transactions(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
@@ -368,7 +359,7 @@ async def list_transactions(
     return transactions
 
 
-@router.get("/{transaction_id}", response_model=Transaction)
+@router.get("/{transaction_id}", response_model=TransactionResponse)
 async def get_transaction(transaction_id: int, session: AsyncSession = Depends(get_session)):
     """Get a single transaction by ID"""
     result = await session.execute(select(Transaction).where(Transaction.id == transaction_id))
@@ -378,7 +369,7 @@ async def get_transaction(transaction_id: int, session: AsyncSession = Depends(g
     return transaction
 
 
-@router.post("/", response_model=Transaction, status_code=201)
+@router.post("/", response_model=TransactionResponse, status_code=201)
 async def create_transaction(transaction: TransactionCreate, session: AsyncSession = Depends(get_session)):
     """Create a new transaction"""
     db_transaction = Transaction(**transaction.model_dump())
@@ -399,7 +390,7 @@ async def create_transaction(transaction: TransactionCreate, session: AsyncSessi
     return db_transaction
 
 
-@router.patch("/{transaction_id}", response_model=Transaction)
+@router.patch("/{transaction_id}", response_model=TransactionResponse)
 async def update_transaction(
     transaction_id: int, transaction: TransactionUpdate, session: AsyncSession = Depends(get_session)
 ):
@@ -808,7 +799,7 @@ async def export_transactions_csv(
                 txn.description or "",
                 txn.account_source or "",
                 txn.category or "",
-                txn.reconciliation_status.value if txn.reconciliation_status else "",
+                txn.reconciliation_status or "",  # Already a string
                 txn.notes or "",
                 "Yes" if txn.is_transfer else "No",
                 txn.reference_id or "",

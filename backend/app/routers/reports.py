@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query
-from sqlmodel import select, func, and_
+from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
 from datetime import date, timedelta
@@ -8,7 +8,7 @@ import calendar
 import statistics
 
 from app.database import get_session
-from app.models import Transaction, Tag, TransactionTag
+from app.orm import Tag, Transaction, TransactionTag
 
 router = APIRouter(prefix="/api/v1/reports", tags=["reports"])
 

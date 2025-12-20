@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends
-from sqlmodel import select, and_
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from datetime import datetime
 
 from app.database import get_session
-from app.models import TagRule, TagRuleCreate, TagRuleUpdate, Transaction, Tag, TransactionTag
+from app.orm import Tag, TagRule, Transaction, TransactionTag
+from app.schemas import TagRuleCreate, TagRuleUpdate, TagRuleResponse
 from app.errors import ErrorCode, not_found, bad_request
 
 router = APIRouter(prefix="/api/v1/tag-rules", tags=["tag-rules"])
@@ -68,7 +69,7 @@ def parse_tag_string(tag_str: str) -> tuple[str, str]:
     return namespace, value
 
 
-@router.get("/", response_model=List[TagRule])
+@router.get("/", response_model=List[TagRuleResponse])
 async def list_rules(session: AsyncSession = Depends(get_session)):
     """List all tag rules ordered by priority (highest first)"""
     result = await session.execute(select(TagRule).order_by(TagRule.priority.desc(), TagRule.created_at))
@@ -76,7 +77,7 @@ async def list_rules(session: AsyncSession = Depends(get_session)):
     return rules
 
 
-@router.get("/{rule_id}", response_model=TagRule)
+@router.get("/{rule_id}", response_model=TagRuleResponse)
 async def get_rule(rule_id: int, session: AsyncSession = Depends(get_session)):
     """Get a single tag rule by ID"""
     result = await session.execute(select(TagRule).where(TagRule.id == rule_id))
@@ -86,7 +87,7 @@ async def get_rule(rule_id: int, session: AsyncSession = Depends(get_session)):
     return rule
 
 
-@router.post("/", response_model=TagRule, status_code=201)
+@router.post("/", response_model=TagRuleResponse, status_code=201)
 async def create_rule(rule: TagRuleCreate, session: AsyncSession = Depends(get_session)):
     """Create a new tag rule"""
     # Validate tag format
@@ -119,7 +120,7 @@ async def create_rule(rule: TagRuleCreate, session: AsyncSession = Depends(get_s
     return db_rule
 
 
-@router.patch("/{rule_id}", response_model=TagRule)
+@router.patch("/{rule_id}", response_model=TagRuleResponse)
 async def update_rule(rule_id: int, rule: TagRuleUpdate, session: AsyncSession = Depends(get_session)):
     """Update a tag rule"""
     result = await session.execute(select(TagRule).where(TagRule.id == rule_id))
