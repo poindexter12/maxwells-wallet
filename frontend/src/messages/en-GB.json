@@ -320,7 +320,7 @@
     "dbDuplicates": "DB Duplicates",
     "batchDuplicates": "Batch Duplicates",
     "selectAccount": "-- Select Account --",
-    "accountPlaceholder": "e.g., HSBC-Current, Barclays-12345",
+    "accountPlaceholder": "e.g., BOFA-Checking, AMEX-53004",
     "orTypeNew": "or type new",
     "existing": "Existing",
     "new": "New",
