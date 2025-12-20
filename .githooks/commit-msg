@@ -1,0 +1,36 @@
+#!/bin/bash
+# Block AI assistant branding in commit messages
+# Install: git config core.hooksPath .githooks
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+ERRORS=""
+
+# Check for Claude Code branding
+if echo "$COMMIT_MSG" | grep -qiE "Generated with \[Claude"; then
+    ERRORS="${ERRORS}\n  - 'Generated with [Claude Code]' link"
+fi
+
+if echo "$COMMIT_MSG" | grep -qi "claude\.com/claude-code"; then
+    ERRORS="${ERRORS}\n  - claude.com/claude-code URL"
+fi
+
+# Check for Co-Authored-By Claude/Anthropic
+if echo "$COMMIT_MSG" | grep -qiE "Co-Authored-By:.*Claude"; then
+    ERRORS="${ERRORS}\n  - Co-Authored-By with Claude"
+fi
+
+if echo "$COMMIT_MSG" | grep -qiE "Co-Authored-By:.*anthropic"; then
+    ERRORS="${ERRORS}\n  - Co-Authored-By with anthropic"
+fi
+
+if [ -n "$ERRORS" ]; then
+    echo "ERROR: Commit message contains AI branding that should be removed:"
+    echo -e "$ERRORS"
+    echo ""
+    echo "Please edit your commit message to remove these patterns."
+    exit 1
+fi
+
+exit 0
