@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import noload
 from typing import Any, DefaultDict, Dict, Optional, List, cast
 from datetime import date, timedelta
 from collections import defaultdict
@@ -231,10 +232,13 @@ async def annual_summary(
     end_date = date(year + 1, 1, 1)
 
     # Get all transactions for the year (excluding transfers)
+    # Use noload('*') to skip eager loading of relationships - we fetch tags separately
     result = await session.execute(
-        select(Transaction).where(
+        select(Transaction)
+        .where(
             Transaction.date >= start_date, Transaction.date < end_date, Transaction.is_transfer.is_(False)
         )
+        .options(noload("*"))
     )
     transactions = list(result.scalars().all())
 
@@ -334,6 +338,7 @@ async def spending_trends(
     Transfers are excluded from all calculations.
     """
     # Get transactions in date range (excluding transfers)
+    # Use noload('*') to skip eager loading of relationships
     result = await session.execute(
         select(Transaction)
         .where(
@@ -342,6 +347,7 @@ async def spending_trends(
             Transaction.is_transfer.is_(False),  # Exclude transfers
         )
         .order_by(Transaction.date)
+        .options(noload("*"))
     )
     transactions = list(result.scalars().all())
 
@@ -486,10 +492,15 @@ async def top_merchants(
             start_date = date(2000, 1, 1)
 
     # Get transactions (excluding transfers)
-    query = select(Transaction).where(
-        Transaction.date >= start_date,
-        Transaction.amount < 0,  # Only expenses
-        Transaction.is_transfer.is_(False),  # Exclude transfers
+    # Use noload('*') to skip eager loading of relationships
+    query = (
+        select(Transaction)
+        .where(
+            Transaction.date >= start_date,
+            Transaction.amount < 0,  # Only expenses
+            Transaction.is_transfer.is_(False),  # Exclude transfers
+        )
+        .options(noload("*"))
     )
     if end_date:
         query = query.where(Transaction.date < end_date)
@@ -518,7 +529,11 @@ async def top_merchants(
 @router.get("/account-summary")
 async def account_summary(session: AsyncSession = Depends(get_session)):
     """Get summary by account"""
-    result = await session.execute(select(Transaction).where(Transaction.is_transfer.is_(False)))
+    result = await session.execute(
+        select(Transaction)
+        .where(Transaction.is_transfer.is_(False))
+        .options(noload("*"))
+    )
     transactions = result.scalars().all()
 
     account_data: DefaultDict[str, Dict[str, float]] = defaultdict(lambda: {"income": 0.0, "expenses": 0.0, "net": 0.0, "count": 0.0})
