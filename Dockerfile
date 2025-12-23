@@ -10,9 +10,10 @@ ARG GIT_SHA
 
 WORKDIR /app/frontend
 
-# Install dependencies
+# Install production dependencies only (skip devDependencies like crowdin-context-harvester
+# which pulls vscode-ripgrep that downloads binaries from GitHub CDN - often flaky)
 COPY frontend/package.json frontend/package-lock.json* ./
-RUN npm ci
+RUN npm ci --omit=dev
 
 # Copy frontend source and build
 COPY frontend/ ./
