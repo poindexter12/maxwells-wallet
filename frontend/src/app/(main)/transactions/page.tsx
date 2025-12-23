@@ -9,6 +9,7 @@ import { DatePicker } from '@/components/DatePicker'
 import { VirtualTransactionList } from '@/components/transactions'
 import { TEST_IDS } from '@/test-ids'
 import { useFormat } from '@/hooks/useFormat'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 
 interface Tag {
   id: number
@@ -115,6 +116,13 @@ function TransactionsContent() {
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
+  // AbortController for cancelling in-flight requests when filters change rapidly
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  // Debounce filters to prevent rapid API calls (e.g., from rapid button clicks)
+  // Using JSON.stringify to create a stable string for comparison
+  const debouncedFilters = useDebouncedValue(JSON.stringify(filters), 150)
+
   // Initialize filters from URL params on mount and when URL changes
   // Using searchParams.toString() ensures we detect all URL param changes
   const searchParamsString = searchParams.toString()
@@ -170,7 +178,6 @@ function TransactionsContent() {
     fetchAccountTags()
     fetchOccasionTags()
     fetchLargeThreshold()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Fetch reference data once on mount
 
   // Fetch the dynamic large transaction threshold from anomaly detection
@@ -191,13 +198,29 @@ function TransactionsContent() {
     }
   }
 
-  // Fetch transactions when filters are initialized or change
+  // Fetch transactions when filters are initialized or change (debounced)
   useEffect(() => {
     if (filtersInitialized) {
-      fetchTransactions()
+      // Cancel any in-flight request before starting a new one
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+
+      // Create new AbortController for this request
+      const controller = new AbortController()
+      abortControllerRef.current = controller
+
+      fetchTransactions(controller.signal)
+    }
+
+    // Cleanup: abort request if component unmounts or filters change
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtersInitialized, filters]) // Refetch when filters change
+  }, [filtersInitialized, debouncedFilters]) // Refetch when debounced filters change
 
   async function fetchOccasionTags() {
     try {
@@ -299,17 +322,27 @@ function TransactionsContent() {
   }
 
   // Initial fetch (resets list) - uses cursor pagination
-  async function fetchTransactions() {
+  async function fetchTransactions(signal?: AbortSignal) {
     setLoading(true)
     try {
       const params = buildFilterParams()
       params.append('limit', PAGE_SIZE.toString())
       // No cursor for initial fetch
 
-      const res = await fetch(`/api/v1/transactions/paginated?${params.toString()}`)
+      const res = await fetch(`/api/v1/transactions/paginated?${params.toString()}`, { signal })
+
+      // Check if aborted before processing response
+      if (signal?.aborted) return
+
       const data = await res.json()
 
+      // Check again after parsing JSON
+      if (signal?.aborted) return
+
       const transactionsWithTags = await fetchTransactionsWithTags(data.items || [])
+
+      // Final check before setting state
+      if (signal?.aborted) return
 
       setTransactions(transactionsWithTags)
       setNextCursor(data.next_cursor || null)
@@ -319,6 +352,10 @@ function TransactionsContent() {
       // Also fetch total count
       fetchTotalCount()
     } catch (error) {
+      // Ignore abort errors - they're expected when cancelling requests
+      if (error instanceof Error && error.name === 'AbortError') {
+        return
+      }
       console.error('Error fetching transactions:', error)
       setLoading(false)
     }
