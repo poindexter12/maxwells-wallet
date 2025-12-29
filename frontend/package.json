@@ -14,7 +14,7 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@swc/helpers": "^0.5.17",
+    "@swc/helpers": "^0.5.18",
     "@tailwindcss/postcss": "^4.1.18",
     "@tanstack/react-virtual": "^3.13.12",
     "date-fns": "^4.1.0",
@@ -43,8 +43,8 @@
     "crowdin-context-harvester": "^0.8.1",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.1",
-    "jsdom": "^27.2.0",
-    "msw": "^2.12.4",
+    "jsdom": "^27.4.0",
+    "msw": "^2.12.7",
     "postcss": "^8.5.6",
     "pseudo-localization": "^3.1.1",
     "tailwindcss": "^4.1.18",
