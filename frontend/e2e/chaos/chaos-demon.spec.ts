@@ -22,9 +22,7 @@ test.describe('Demon Chaos - Transactions Page @demon', () => {
 
   for (const [index, actionCount] of DEMON_ROUNDS.entries()) {
     test(`demon chaos (transactions) - ${actionCount} actions`, async ({ page }) => {
-      // Demon tests need generous timeouts - rapid-fire actions can cause page unresponsiveness
-      // Formula: 60s base + 1.5s per action (vs 30s + 0.5s for regular chaos)
-      test.setTimeout(60000 + actionCount * 1500);
+      test.setTimeout(30000 + actionCount * 500);
 
       await page.goto('/transactions');
       await page.waitForLoadState('networkidle');
@@ -86,8 +84,7 @@ test.describe('Demon Chaos - Import Page @demon', () => {
 
   for (const [index, actionCount] of DEMON_ROUNDS.entries()) {
     test(`demon chaos (import) - ${actionCount} actions`, async ({ page }) => {
-      // Demon tests need generous timeouts - rapid-fire actions can cause page unresponsiveness
-      test.setTimeout(60000 + actionCount * 1500);
+      test.setTimeout(30000 + actionCount * 500);
 
       await page.goto('/import');
       await page.waitForLoadState('networkidle');
