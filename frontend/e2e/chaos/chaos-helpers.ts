@@ -939,7 +939,10 @@ export async function performDemonActions(
       options.onAction?.(actionDesc, i);
     }
 
-    // No delays in demon mode - we're trying to break things!
+    // Minimal delay to let page stabilize between aggressive actions
+    // Without this, DOM queries pile up and cause test timeouts on complex pages
+    await page.waitForTimeout(50);
+
     // Only exit early if not in continueOnError mode
     if (!continueOnError && errors.length > 0) break;
   }
@@ -1053,7 +1056,9 @@ export async function performTimedDemonActions(
     }
 
     actionIndex++;
-    // No delays in demon mode - we're aggressively trying to break things
+
+    // Minimal delay to let page stabilize between aggressive actions
+    await page.waitForTimeout(50);
   }
 
   page.off('pageerror', errorHandler);
