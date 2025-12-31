@@ -25,6 +25,7 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: 3  # One job per runner to prevent resource exhaustion
       matrix:
         spec:
           - dashboard
