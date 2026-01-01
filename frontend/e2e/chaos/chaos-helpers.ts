@@ -941,13 +941,23 @@ export async function performDemonActions(
 
     // Minimal delay to let page stabilize between aggressive actions
     // Without this, DOM queries pile up and cause test timeouts on complex pages
-    await page.waitForTimeout(50);
+    try {
+      await page.waitForTimeout(50);
+    } catch {
+      // Page might be closed due to browser crash - exit gracefully
+      console.log('  ⚠️ Page closed during stabilization - browser may have crashed');
+      break;
+    }
 
     // Only exit early if not in continueOnError mode
     if (!continueOnError && errors.length > 0) break;
   }
 
-  page.off('pageerror', errorHandler);
+  try {
+    page.off('pageerror', errorHandler);
+  } catch {
+    // Page might be closed - handler cleanup not needed
+  }
 
   console.log(`😈 Demon chaos completed: ${actionsLog.length} actions, ${errors.length} errors, ${recoveries} recoveries`);
 
@@ -1058,10 +1068,20 @@ export async function performTimedDemonActions(
     actionIndex++;
 
     // Minimal delay to let page stabilize between aggressive actions
-    await page.waitForTimeout(50);
+    try {
+      await page.waitForTimeout(50);
+    } catch {
+      // Page might be closed due to browser crash - exit gracefully
+      console.log('  ⚠️ Page closed during stabilization - browser may have crashed');
+      break;
+    }
   }
 
-  page.off('pageerror', errorHandler);
+  try {
+    page.off('pageerror', errorHandler);
+  } catch {
+    // Page might be closed - handler cleanup not needed
+  }
 
   const totalDuration = Date.now() - startTime;
   console.log(`😈 Timed demon chaos completed at ${new Date().toISOString()}`);
