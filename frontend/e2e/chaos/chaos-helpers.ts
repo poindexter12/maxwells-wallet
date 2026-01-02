@@ -127,6 +127,12 @@ async function attemptPageRecovery(
   recoveryAttempt: number,
   maxAttempts: number
 ): Promise<boolean> {
+  // Quickly check if page is closed - no point attempting recovery
+  if (page.isClosed()) {
+    console.log(`  💀 Page/browser is closed, cannot recover`);
+    return false;
+  }
+
   if (recoveryAttempt >= maxAttempts) {
     console.log(`  💀 Max recovery attempts (${maxAttempts}) reached, giving up`);
     return false;
@@ -896,6 +902,12 @@ export async function performDemonActions(
   console.log(`😈 Demon chaos starting with seed: ${seed}, continueOnError: ${continueOnError}`);
 
   for (let i = 0; i < options.actions; i++) {
+    // Check if page/browser is gone before attempting action
+    if (page.isClosed()) {
+      console.log(`  💀 Page/browser closed, stopping demon chaos`);
+      break;
+    }
+
     const actionType = rng.pick(actionTypes);
     let actionDesc: string | null = null;
 
@@ -1013,6 +1025,12 @@ export async function performTimedDemonActions(
 
   let actionIndex = 0;
   while (Date.now() < endTime) {
+    // Check if page/browser is gone before attempting action
+    if (page.isClosed()) {
+      console.log(`  💀 Page/browser closed, stopping demon chaos`);
+      break;
+    }
+
     // In continueOnError mode, keep going even with errors
     if (!continueOnError && errors.length > 0) break;
 
