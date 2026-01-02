@@ -1114,167 +1114,86 @@ export async function performTimedDemonActions(
   };
 }
 
+/**
+ * Get random coordinates within the viewport, avoiding edges
+ * This simulates where a real user might click on the screen
+ */
+async function getRandomViewportCoords(
+  page: Page,
+  rng: SeededRandom
+): Promise<{ x: number; y: number }> {
+  const viewport = page.viewportSize() || { width: 1280, height: 720 };
+  // Avoid edges (nav bars, scrollbars) - use inner 80% of viewport
+  const margin = 0.1;
+  const x = Math.floor(viewport.width * margin + rng.next() * viewport.width * (1 - 2 * margin));
+  const y = Math.floor(viewport.height * margin + rng.next() * viewport.height * (1 - 2 * margin));
+  return { x, y };
+}
+
+/**
+ * Execute a demon action using viewport-based interactions
+ *
+ * This simulates an aggressive/chaotic user who clicks randomly on the screen,
+ * types garbage, and generally causes mayhem. Unlike DOM-based queries,
+ * this approach is fast because it doesn't need to enumerate elements.
+ */
 async function executeDemonAction(
   page: Page,
   actionType: DemonActionType,
   rng: SeededRandom,
-  excludeSelectors: string[]
+  _excludeSelectors: string[] // No longer used - viewport clicks don't need exclusions
 ): Promise<string | null> {
   switch (actionType) {
     case 'rapid-click': {
-      let buttons: Awaited<ReturnType<typeof getVisibleElements>>;
-      try {
-        buttons = await getVisibleElements(page, 'button:visible', excludeSelectors);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        if (msg.includes('closed') || msg.includes('destroyed')) {
-          await page.waitForLoadState('domcontentloaded').catch(() => {});
-          return `rapid-click: (page recovered before start)`;
-        }
-        throw e;
-      }
-      if (buttons.length === 0) return null;
-
-      const button = rng.pick(buttons);
-      const text = await button.textContent();
+      // Click rapidly at a random spot on the screen
+      const { x, y } = await getRandomViewportCoords(page, rng);
       const clicks = rng.int(3, 10);
 
-      // Rapid fire clicks with no wait
       for (let i = 0; i < clicks; i++) {
-        await button.click({ force: true, timeout: 1000 }).catch(() => {});
+        await page.mouse.click(x, y, { delay: 10 }).catch(() => {});
       }
-      return `rapid-click: "${text?.trim().slice(0, 20)}" x${clicks}`;
+      return `rapid-click: (${x},${y}) x${clicks}`;
     }
 
     case 'double-click': {
-      let elements: Awaited<ReturnType<typeof getVisibleElements>>;
-      try {
-        elements = await getVisibleElements(
-          page,
-          'button:visible, a:visible, [role="button"]:visible',
-          excludeSelectors
-        );
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        if (msg.includes('closed') || msg.includes('destroyed')) {
-          await page.waitForLoadState('domcontentloaded').catch(() => {});
-          return `double-click: (page recovered before start)`;
-        }
-        throw e;
-      }
-      if (elements.length === 0) return null;
-
-      const element = rng.pick(elements);
-      try {
-        const text = await element.textContent();
-        await element.dblclick({ timeout: 2000 });
-        return `double-click: "${text?.trim().slice(0, 20)}"`;
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        // Page/browser closed during aggressive action is expected in demon mode
-        if (msg.includes('closed') || msg.includes('destroyed') || msg.includes('navigation')) {
-          await page.waitForLoadState('domcontentloaded').catch(() => {});
-          return `double-click: (page recovered after close/navigation)`;
-        }
-        throw e;
-      }
+      // Double-click at a random spot
+      const { x, y } = await getRandomViewportCoords(page, rng);
+      await page.mouse.dblclick(x, y).catch(() => {});
+      return `double-click: (${x},${y})`;
     }
 
     case 'fuzz-input': {
-      // Exclude checkbox/radio/number - they can't be filled with arbitrary text
-      let inputs: Awaited<ReturnType<typeof getVisibleElements>>;
-      try {
-        inputs = await getVisibleElements(
-          page,
-          'input:visible:not([type=file]):not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=number]):not([readonly]), textarea:visible',
-          excludeSelectors
-        );
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        if (msg.includes('closed') || msg.includes('destroyed')) {
-          await page.waitForLoadState('domcontentloaded').catch(() => {});
-          return `fuzz-input: (page recovered before start)`;
-        }
-        throw e;
-      }
-      if (inputs.length === 0) return null;
+      // Click somewhere to potentially focus an input, then type garbage
+      const { x, y } = await getRandomViewportCoords(page, rng);
+      await page.mouse.click(x, y).catch(() => {});
 
-      const input = rng.pick(inputs);
       const payload = generateAdversarialInput(rng);
-      const name = await input.getAttribute('name') || await input.getAttribute('placeholder') || 'unknown';
+      // Type into whatever has focus
+      await page.keyboard.type(payload, { delay: 5 }).catch(() => {});
+      // Try pressing Enter
+      await page.keyboard.press('Enter').catch(() => {});
 
-      await input.fill(payload);
-      // Also try pressing Enter to submit
-      await input.press('Enter').catch(() => {});
-
-      return `fuzz-input[${name}]: "${payload.slice(0, 30)}${payload.length > 30 ? '...' : ''}"`;
+      return `fuzz-input: (${x},${y}) "${payload.slice(0, 20)}${payload.length > 20 ? '...' : ''}"`;
     }
 
     case 'paste-bomb': {
-      let inputs: Awaited<ReturnType<typeof getVisibleElements>>;
-      try {
-        inputs = await getVisibleElements(
-          page,
-          'input:visible:not([type=file]):not([type=hidden]):not([readonly]), textarea:visible',
-          excludeSelectors
-        );
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        if (msg.includes('closed') || msg.includes('destroyed')) {
-          await page.waitForLoadState('domcontentloaded').catch(() => {});
-          return `paste-bomb: (page recovered before start)`;
-        }
-        throw e;
-      }
-      if (inputs.length === 0) return null;
+      // Click somewhere, then paste a huge string
+      const { x, y } = await getRandomViewportCoords(page, rng);
+      await page.mouse.click(x, y).catch(() => {});
 
-      const input = rng.pick(inputs);
       const bomb = 'X'.repeat(rng.int(1000, 10000));
-      const name = await input.getAttribute('name') || 'unknown';
+      await page.keyboard.insertText(bomb).catch(() => {});
 
-      await input.focus();
-      // Paste via keyboard
-      await page.keyboard.insertText(bomb);
-
-      return `paste-bomb[${name}]: ${bomb.length} chars`;
+      return `paste-bomb: (${x},${y}) ${bomb.length} chars`;
     }
 
     case 'blur-focus-spam': {
-      let inputs: Awaited<ReturnType<typeof getVisibleElements>>;
-      try {
-        inputs = await getVisibleElements(
-          page,
-          'input:visible:not([type=file]):not([type=hidden]), textarea:visible, select:visible, button:visible',
-          excludeSelectors
-        );
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        // Page may have been closed by previous demon action
-        if (msg.includes('closed') || msg.includes('destroyed')) {
-          await page.waitForLoadState('domcontentloaded').catch(() => {});
-          return `blur-focus-spam: (page recovered before start)`;
-        }
-        throw e;
-      }
-      if (inputs.length < 2) return null;
-
+      // Just mash Tab key repeatedly - no need to find elements first
       const iterations = rng.int(5, 15);
-      try {
-        for (let i = 0; i < iterations; i++) {
-          const el = rng.pick(inputs);
-          await el.focus().catch(() => {});
-          await page.keyboard.press('Tab');
-        }
-        return `blur-focus-spam: ${iterations} tab cycles`;
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        // Page/browser closed during aggressive action is expected in demon mode
-        if (msg.includes('closed') || msg.includes('destroyed') || msg.includes('navigation')) {
-          await page.waitForLoadState('domcontentloaded').catch(() => {});
-          return `blur-focus-spam: (page recovered after close/navigation)`;
-        }
-        throw e;
+      for (let i = 0; i < iterations; i++) {
+        await page.keyboard.press('Tab').catch(() => {});
       }
+      return `blur-focus-spam: ${iterations} tabs`;
     }
 
     default:
