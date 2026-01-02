@@ -71,10 +71,12 @@ test.describe('Demon Chaos - Transactions Page @demon', () => {
 
       // Demon tests are exploratory - browser crashes are expected and logged above.
       // Only fail on actual React application errors, not browser-level crashes.
-      // Page might be closed - skip this check if so
-      await expect(
-        page.locator('text=Application error: a client-side exception has occurred')
-      ).not.toBeVisible().catch(() => {});
+      // Skip if page is closed - no point checking a crashed browser
+      if (!page.isClosed()) {
+        await expect(
+          page.locator('text=Application error: a client-side exception has occurred')
+        ).not.toBeVisible().catch(() => {});
+      }
     });
   }
 });
@@ -129,10 +131,12 @@ test.describe('Demon Chaos - Import Page @demon', () => {
 
       // Demon tests are exploratory - browser crashes are expected and logged above.
       // Only fail on actual React application errors, not browser-level crashes.
-      // Page might be closed - skip this check if so
-      await expect(
-        page.locator('text=Application error: a client-side exception has occurred')
-      ).not.toBeVisible().catch(() => {});
+      // Skip if page is closed - no point checking a crashed browser
+      if (!page.isClosed()) {
+        await expect(
+          page.locator('text=Application error: a client-side exception has occurred')
+        ).not.toBeVisible().catch(() => {});
+      }
     });
   }
 });
