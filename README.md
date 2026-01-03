@@ -12,29 +12,15 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 
 **[Documentation](https://docs.maxwellswallet.com)** · **[Requirements](docs/requirements/)**
 
-## What's New in v0.10
+## What's New in v0.11
 
-### Authentication
-- **Single-User Auth** - Password-protected access with JWT tokens
-- **First-Run Setup** - Guided account creation on first launch
-- **Password Management** - Change password in Admin, CLI reset for emergencies
+### SQLAlchemy 2.0 Migration
+- **ORM Upgrade** - Migrated from SQLModel to SQLAlchemy 2.0 + Pydantic for improved type safety and performance
 
-### Demo Mode & Backup System
-- **Demo Mode** - Run public demo instances with restricted operations and auto-reset
-- **SQLite Backup/Restore** - Create, schedule, and manage database backups with GFS retention
-- **Backup UI** - New Admin tab for backup management with one-click restore
-- **Demo Setup** - Single command to initialize demo with sample data
-
-### Docker Improvements
-- **Simplified Deployment** - `docker compose up -d` pulls from registry (no build needed)
-- **Developer Compose** - Separate `docker-compose.dev.yaml` for building from source
-- **New Commands** - `seed`, `demo-setup`, `migrate`, `reset-password` entrypoint commands
-- **Installation Guide** - Comprehensive documentation at `docs/installation.md`
-
-### Testing & Quality
-- **Chaos Testing** - Resilient error recovery with 3,000+ action stress tests
-- **Pre-commit Hooks** - Ruff linting enforced on commit
-- **CI Improvements** - Faster Docker smoke tests with proper timeout handling
+### Performance & Stability
+- **Transactions Page** - Debouncing and request cancellation prevent UI lag during rapid filtering
+- **Chaos Tests** - Viewport-based demon mode interactions for reliable stress testing
+- **Docker Builds** - Skip devDependencies to avoid flaky downloads
 
 See [CHANGELOG.md](CHANGELOG.md) for full release history.
 

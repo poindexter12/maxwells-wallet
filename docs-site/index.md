@@ -5,20 +5,22 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 [![CI](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yaml/badge.svg)](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yaml)
 [![Release](https://img.shields.io/github/v/release/poindexter12/maxwells-wallet?label=release)](https://github.com/poindexter12/maxwells-wallet/releases)
 
-## What's New in v0.9
+## What's New in v0.11
 
-### Internationalization
-- **9 Locales** - Full translation support: en-US, en-GB, es-ES, fr-FR, it-IT, pt-PT, de-DE, nl-NL, plus pseudo-locale for QA
-- **Custom DatePicker** - i18n-aware date picker with locale-specific formats (MM/dd/yyyy for US, dd/MM/yyyy for EU)
-- **Structured Error Codes** - Machine-readable error codes for future i18n of error messages
+### SQLAlchemy 2.0 Migration
+- **ORM Upgrade** - Migrated from SQLModel to SQLAlchemy 2.0 + Pydantic for improved type safety and performance
 
-### v0.8 Highlights
-- **Observability** - OpenTelemetry tracing, Prometheus metrics, health dashboard, alerting
-- **Virtual Scrolling** - Smooth handling of 50k+ transactions with cursor pagination
+### Performance & Stability
+- **Transactions Page** - Debouncing and request cancellation prevent UI lag
+- **Chaos Tests** - Viewport-based demon mode for reliable stress testing
 
-### v0.7 Highlights
-- **CSV Auto-Detection** - Automatically detect bank CSV formats on import
-- **E2E Testing** - Full Playwright test suite
+### v0.10 Highlights
+- **Single-User Auth** - Password protection with JWT tokens and first-run setup
+- **Demo Mode** - Public demo instances with restricted operations and auto-reset
+- **Backup System** - SQLite backup/restore with GFS retention and scheduled backups
+
+### v0.9 Highlights
+- **9 Locales** - Full i18n support with locale-aware date and currency formatting
 
 ## Features
 

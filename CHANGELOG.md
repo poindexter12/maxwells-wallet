@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-01-03
+
+### Changed
+- **ORM Migration** - Migrated from SQLModel to SQLAlchemy 2.0 + Pydantic for improved type safety and performance
+
+### Fixed
+- **Transactions Page Performance** - Added debouncing and request cancellation to prevent UI lag during rapid filtering
+- **Chaos Test Stability** - Refactored demon mode to use viewport-based interactions, fixing timeouts and browser hangs
+- **Docker Build Reliability** - Skip devDependencies to avoid flaky vscode-ripgrep downloads
+- **Dependency Updates** - Updated bcrypt constraint to support v5.x, frontend dependency updates
+
 ## [0.10.0] - 2025-12-19
 
 ### Authentication - Major Feature
