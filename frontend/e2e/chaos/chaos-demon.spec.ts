@@ -17,6 +17,10 @@ import { performDemonActions, ADVERSARIAL_PAYLOADS, formatChaosResultAsIssueBody
 
 const DEMON_ROUNDS = [8, 13, 21, 34];
 
+// Disable retries for demon tests - crashes are findings, not flakes.
+// With deterministic seeds, retrying would just replay the same crash-inducing payload.
+test.describe.configure({ retries: 0 });
+
 test.describe('Demon Chaos - Transactions Page @demon', () => {
   const baseSeed = 66666;
 

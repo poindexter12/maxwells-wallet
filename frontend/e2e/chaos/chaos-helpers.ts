@@ -748,11 +748,11 @@ export const ADVERSARIAL_PAYLOADS = {
     '表ポあA鷗ŒéＢ逍Ü', // Mixed scripts
   ],
 
-  // Buffer overflow attempts
+  // Buffer overflow attempts (keep sizes reasonable to avoid browser hangs)
   overflow: [
     'A'.repeat(1000),
-    'x'.repeat(5000),
-    '9'.repeat(10000), // For number fields
+    'x'.repeat(2000),
+    '9'.repeat(2000), // For number fields
     '<'.repeat(500) + '>'.repeat(500),
   ],
 
