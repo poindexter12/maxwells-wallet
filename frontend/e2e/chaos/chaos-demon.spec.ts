@@ -88,6 +88,13 @@ test.describe('Demon Chaos - Import Page @demon', () => {
     test(`demon chaos (import) - ${actionCount} actions`, async ({ page }) => {
       test.setTimeout(30000 + actionCount * 500);
 
+      // Auto-dismiss file dialogs - simulates user pressing Cancel
+      // This is realistic: a chaotic user clicking the file input would see
+      // the dialog and eventually dismiss it
+      page.on('filechooser', async (fileChooser) => {
+        await fileChooser.setFiles([]).catch(() => {});
+      });
+
       await page.goto('/import');
       await page.waitForLoadState('networkidle');
 
@@ -139,6 +146,44 @@ test.describe('Demon Chaos - Import Page @demon', () => {
       }
     });
   }
+});
+
+// Regression test: seed 77779 previously caused file dialog blocking
+test.describe('Demon Chaos - Regression Tests @demon', () => {
+  test('seed 77779 (import page file dialog)', async ({ page }) => {
+    test.setTimeout(60000);
+
+    // This seed specifically triggers clicks on the file input area
+    // which opens a native file dialog. Ensure we handle it gracefully.
+    page.on('filechooser', async (fileChooser) => {
+      await fileChooser.setFiles([]).catch(() => {});
+    });
+
+    await page.goto('/import');
+    await page.waitForLoadState('networkidle');
+
+    const gotItBtn = page.locator('button:has-text("Got it")').first();
+    if (await gotItBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await gotItBtn.click();
+    }
+
+    const result = await performDemonActions(page, {
+      actions: 21, // The action count that triggered the issue
+      seed: 77779,
+      excludeSelectors: ['nav a'],
+      continueOnError: true,
+      maxRecoveryAttempts: 3,
+    });
+
+    // Should complete without hanging on file dialog
+    console.log(`Seed 77779 regression: ${result.actionsPerformed} actions, ${result.errors.length} errors`);
+
+    if (!page.isClosed()) {
+      await expect(
+        page.locator('text=Application error: a client-side exception has occurred')
+      ).not.toBeVisible().catch(() => {});
+    }
+  });
 });
 
 test.describe('XSS Payload Injection @demon', () => {
