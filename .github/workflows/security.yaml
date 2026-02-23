@@ -78,11 +78,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nvd-
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7
+        with:
+          version: latest
+
       - name: Generate requirements.txt for Python scanning
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          export PATH="$HOME/.local/bin:$PATH"
-          uv pip compile backend/pyproject.toml -o backend/requirements.txt
+        run: uv pip compile backend/pyproject.toml -o backend/requirements.txt
 
       - name: Run OWASP Dependency-Check scan
         timeout-minutes: 12
