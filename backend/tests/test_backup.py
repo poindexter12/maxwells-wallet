@@ -8,6 +8,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 
+from freezegun import freeze_time
+
 from app.services.backup import BackupService, BackupMetadata, BackupManifest
 
 
@@ -461,8 +463,13 @@ class TestBackupServiceGFSRetention:
             backups = service.list_backups()
             assert len(backups) == 10
 
+    @freeze_time("2025-01-15 12:00:00", tz_offset=0)
     def test_tier_promotion_renames_files(self, temp_backup_dir, temp_db_file):
-        """Test that backups get renamed when promoted to higher tiers."""
+        """Test that backups get renamed when promoted to higher tiers.
+
+        Freezes time to mid-month to prevent a 2-day-old backup from crossing
+        a month boundary and being promoted to 'monthly' instead of 'daily'/'weekly'.
+        """
         with patch("app.services.backup.settings") as mock_settings:
             mock_settings.backup_dir = temp_backup_dir
 
@@ -477,8 +484,9 @@ class TestBackupServiceGFSRetention:
             assert metadata.tier == "hourly"
             assert "hourly" in original_filename
 
-            # Make it 2 days old - will become "daily" or "weekly" depending on
-            # day of week (GFS promotes to higher tier when backup qualifies for multiple)
+            # Make it 2 days old (Jan 13) - stays in same month as "now" (Jan 15),
+            # so monthly tier (which looks at December and earlier) won't capture it.
+            # Will become "daily" or "weekly" depending on day of week.
             manifest = service._load_manifest()
             manifest.backups[0].created_at = datetime.now(timezone.utc) - timedelta(days=2)
             service._save_manifest(manifest)

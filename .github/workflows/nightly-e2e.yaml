@@ -63,6 +63,11 @@ jobs:
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci
+        env:
+          # vscode-ripgrep (via crowdin-context-harvester) downloads a binary
+          # from GitHub releases during postinstall. Without a token, concurrent
+          # matrix jobs can hit GitHub API rate limits (403).
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Playwright browsers
         working-directory: frontend

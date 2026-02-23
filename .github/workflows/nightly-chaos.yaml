@@ -78,15 +78,49 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: frontend
-        run: npm ci
+        run: |
+          for attempt in 1 2 3; do
+            echo "npm ci attempt $attempt of 3..."
+            if npm ci; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "npm ci failed after 3 attempts"
+              exit 1
+            fi
+            echo "Retrying in 15s..."
+            sleep 15
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Playwright browser (${{ matrix.browser }})
         working-directory: frontend
         run: |
-          npx playwright install --with-deps ${{ matrix.browser }}
+          for attempt in 1 2 3; do
+            echo "Playwright install attempt $attempt of 3..."
+            if npx playwright install --with-deps ${{ matrix.browser }}; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Playwright install failed after 3 attempts"
+              exit 1
+            fi
+            echo "Retrying in 15s..."
+            sleep 15
+          done
           # Setup project always uses chromium, so install it for all jobs
           if [ "${{ matrix.browser }}" != "chromium" ]; then
-            npx playwright install chromium
+            for attempt in 1 2 3; do
+              if npx playwright install chromium; then
+                break
+              fi
+              if [ "$attempt" -eq 3 ]; then
+                echo "Chromium install failed after 3 attempts"
+                exit 1
+              fi
+              sleep 15
+            done
           fi
 
       - name: Run chaos tests (${{ matrix.spec }})
