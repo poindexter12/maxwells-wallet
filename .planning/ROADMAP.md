@@ -30,10 +30,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Semgrep findings appear in GitHub Security tab with unique category identifier (no SARIF conflicts)
   4. All third-party Actions are pinned to commit SHAs following repo convention
   5. Semgrep scans complete successfully without blocking PR checks (continue-on-error: true)
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] TBD during planning
+- [ ] 01-01-PLAN.md — Create security.yaml reusable workflow with Semgrep SAST and wire into CI/nightly
 
 ### Phase 2: SCA & Repository Health
 **Goal**: Developers see dependency vulnerabilities from OWASP Dependency-Check and repository security posture score from OpenSSF Scorecard in GitHub Security tab
@@ -98,7 +98,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & SAST | 0/TBD | Not started | - |
+| 1. Foundation & SAST | 0/1 | Planning complete | - |
 | 2. SCA & Repository Health | 0/TBD | Not started | - |
 | 3. Container Scanning | 0/TBD | Not started | - |
 | 4. DAST | 0/TBD | Not started | - |
