@@ -1,0 +1,55 @@
+name: Security Scans
+
+on:
+  workflow_call:
+    inputs:
+      scan-mode:
+        description: 'Scan mode: diff (PR changes only) or full (entire codebase)'
+        type: string
+        required: false
+        default: 'full'
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    name: Semgrep SAST
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    continue-on-error: true
+    container:
+      image: semgrep/semgrep:latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Run Semgrep SAST scan
+        run: |
+          if semgrep scan --config auto --sarif --output semgrep.sarif .; then
+            scan_status="success"
+            icon="✅"
+          else
+            scan_status="completed with findings"
+            icon="⚠️"
+          fi
+
+          echo "## Semgrep SAST Scan" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "$icon Scan $scan_status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -s semgrep.sarif ]; then
+            finding_count=$(grep -o '"results"' semgrep.sarif | head -1 || echo "")
+            echo "Findings uploaded to Security tab" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
