@@ -1,0 +1,16 @@
+# Lock files — auto-generated, never hand-edited
+frontend/package-lock.json  linguist-generated
+backend/uv.lock             linguist-generated
+data/uv.lock                linguist-generated
+package-lock.json           linguist-generated
+
+# Crowdin-managed translations — only en-US.json is hand-edited
+frontend/src/messages/de-DE.json      linguist-generated
+frontend/src/messages/en-GB.json      linguist-generated
+frontend/src/messages/es-ES.json      linguist-generated
+frontend/src/messages/fr-FR.json      linguist-generated
+frontend/src/messages/it-IT.json      linguist-generated
+frontend/src/messages/nl-NL.json      linguist-generated
+frontend/src/messages/pt-PT.json      linguist-generated
+frontend/src/messages/aa-ER.json      linguist-generated
+frontend/src/messages/universal.json  linguist-generated
