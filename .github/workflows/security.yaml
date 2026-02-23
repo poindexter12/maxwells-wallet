@@ -57,7 +57,6 @@ jobs:
   dependency-check:
     name: OWASP Dependency-Check
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     permissions:
       security-events: write
       contents: read
@@ -86,6 +85,7 @@ jobs:
           uv pip compile backend/pyproject.toml -o backend/requirements.txt
 
       - name: Run OWASP Dependency-Check scan
+        timeout-minutes: 12
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
