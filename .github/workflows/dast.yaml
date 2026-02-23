@@ -1,0 +1,90 @@
+name: DAST
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dast:
+    name: OWASP ZAP Baseline Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Build and start application
+        run: docker compose -f docker-compose.dev.yaml up -d --build
+
+      - name: Wait for application health
+        run: |
+          echo "Waiting for services to start..."
+          sleep 15
+
+          # Health check backend
+          for i in {1..10}; do
+            if curl -sf http://localhost:3001/health; then
+              echo "Backend is healthy"
+              break
+            fi
+            echo "Backend attempt $i failed, retrying..."
+            sleep 3
+          done
+
+          # Health check frontend
+          for i in {1..10}; do
+            if curl -sf http://localhost:3000 > /dev/null; then
+              echo "Frontend is healthy"
+              break
+            fi
+            echo "Frontend attempt $i failed, retrying..."
+            sleep 3
+          done
+
+      - name: Show logs if health check failed
+        if: failure()
+        run: |
+          echo "Health checks failed, showing logs:"
+          docker compose -f docker-compose.dev.yaml logs
+          exit 1
+
+      - name: Run ZAP baseline scan
+        uses: zaproxy/action-baseline@6c5a007541891231cd9e0ddec25d4f25c59c9874 # v0.15.0
+        with:
+          target: 'http://localhost:3000'
+          allow_issue_writing: false
+          artifact_name: 'zap-scan'
+          fail_action: false
+          cmd_options: '-J zap-report.json'
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
+        if: always()
+        with:
+          sarif_file: zap-report.json
+          category: zap
+
+      - name: Upload ZAP reports as artifacts
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4
+        if: always()
+        with:
+          name: zap-reports
+          path: |
+            zap-report.json
+            report_html.html
+            report_md.md
+          retention-days: 30
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.dev.yaml down -v --remove-orphans
