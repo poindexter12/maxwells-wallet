@@ -1,15 +1,12 @@
 name: Nightly Code Quality
-
-on:
+true:
   schedule:
-    # Run at 3am UTC every day
-    - cron: '0 3 * * *'
-  workflow_dispatch:
-
+  - cron: 0 3 * * *
+  workflow_dispatch: null
 permissions:
   contents: read
   issues: write
-
+  security-events: write
 jobs:
   security-audit:
     name: Security Audit (pip-audit)
@@ -17,237 +14,109 @@ jobs:
     defaults:
       run:
         working-directory: backend
-
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb # v7
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        run: uv python install 3.11
-
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Run pip-audit (security scan)
-        id: audit
-        run: |
-          echo "## Security Audit" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          if uv run pip-audit 2>&1 | tee audit-output.txt; then
-            echo "✅ No known vulnerabilities found!" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ Vulnerabilities detected:" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            cat audit-output.txt >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            exit 1
-          fi
-
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Install uv
+      uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb
+      with:
+        version: latest
+    - name: Set up Python
+      run: uv python install 3.11
+    - name: Install dependencies
+      run: uv sync
+    - name: Run pip-audit (security scan)
+      id: audit
+      run: "echo \"## Security Audit\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\n\nif uv run pip-audit 2>&1 | tee audit-output.txt; then\n  echo \"\u2705 No known vulnerabilities found!\" >> $GITHUB_STEP_SUMMARY\nelse\n  echo \"\u26A0\uFE0F Vulnerabilities detected:\" >> $GITHUB_STEP_SUMMARY\n  echo '```' >> $GITHUB_STEP_SUMMARY\n  cat audit-output.txt >> $GITHUB_STEP_SUMMARY\n  echo '```' >> $GITHUB_STEP_SUMMARY\n  exit 1\nfi\n"
   dead-code-analysis:
     name: Dead Code Analysis (Vulture)
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
-
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb # v7
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        run: uv python install 3.11
-
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Run Vulture (dead code detection)
-        id: vulture
-        run: |
-          echo "## Dead Code Analysis" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          output=$(uv run vulture app/ --min-confidence 80 2>&1) || true
-
-          if [ -z "$output" ]; then
-            echo "✅ No dead code detected!" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ Potential dead code found:" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "$output" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            exit 1
-          fi
-
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Install uv
+      uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb
+      with:
+        version: latest
+    - name: Set up Python
+      run: uv python install 3.11
+    - name: Install dependencies
+      run: uv sync
+    - name: Run Vulture (dead code detection)
+      id: vulture
+      run: "echo \"## Dead Code Analysis\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\n\noutput=$(uv run vulture app/ --min-confidence 80 2>&1) || true\n\nif [ -z \"$output\" ]; then\n  echo \"\u2705 No dead code detected!\" >> $GITHUB_STEP_SUMMARY\nelse\n  echo \"\u26A0\uFE0F Potential dead code found:\" >> $GITHUB_STEP_SUMMARY\n  echo \"\" >> $GITHUB_STEP_SUMMARY\n  echo '```' >> $GITHUB_STEP_SUMMARY\n  echo \"$output\" >> $GITHUB_STEP_SUMMARY\n  echo '```' >> $GITHUB_STEP_SUMMARY\n  exit 1\nfi\n"
   code-quality:
     name: Code Quality Checks
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
-
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb # v7
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        run: uv python install 3.11
-
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Run Ruff (linting)
-        run: |
-          echo "## Linting (Ruff)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          if uv run ruff check . 2>&1 | tee ruff-output.txt; then
-            echo "✅ No linting issues!" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ Linting issues found:" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            cat ruff-output.txt >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          fi
-        continue-on-error: true
-
-      - name: Run MyPy (type checking)
-        run: |
-          echo "## Type Checking (MyPy)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          if uv run mypy app --ignore-missing-imports 2>&1 | tee mypy-output.txt; then
-            echo "✅ No type errors!" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ Type issues found:" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            cat mypy-output.txt >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          fi
-        continue-on-error: true
-
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Install uv
+      uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb
+      with:
+        version: latest
+    - name: Set up Python
+      run: uv python install 3.11
+    - name: Install dependencies
+      run: uv sync
+    - name: Run Ruff (linting)
+      run: "echo \"## Linting (Ruff)\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\n\nif uv run ruff check . 2>&1 | tee ruff-output.txt; then\n  echo \"\u2705 No linting issues!\" >> $GITHUB_STEP_SUMMARY\nelse\n  echo \"\u26A0\uFE0F Linting issues found:\" >> $GITHUB_STEP_SUMMARY\n  echo '```' >> $GITHUB_STEP_SUMMARY\n  cat ruff-output.txt >> $GITHUB_STEP_SUMMARY\n  echo '```' >> $GITHUB_STEP_SUMMARY\nfi\n"
+      continue-on-error: true
+    - name: Run MyPy (type checking)
+      run: "echo \"## Type Checking (MyPy)\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\n\nif uv run mypy app --ignore-missing-imports 2>&1 | tee mypy-output.txt; then\n  echo \"\u2705 No type errors!\" >> $GITHUB_STEP_SUMMARY\nelse\n  echo \"\u26A0\uFE0F Type issues found:\" >> $GITHUB_STEP_SUMMARY\n  echo '```' >> $GITHUB_STEP_SUMMARY\n  cat mypy-output.txt >> $GITHUB_STEP_SUMMARY\n  echo '```' >> $GITHUB_STEP_SUMMARY\nfi\n"
+      continue-on-error: true
   coverage-check:
     name: Coverage Threshold Check
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
-
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb # v7
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        run: uv python install 3.11
-
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Run tests with coverage
-        run: |
-          uv run pytest tests/ --cov=app --cov-report=term --cov-fail-under=85 --ignore=tests/e2e -q
-
-          echo "## Coverage Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Coverage meets 85% threshold" >> $GITHUB_STEP_SUMMARY
-
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Install uv
+      uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb
+      with:
+        version: latest
+    - name: Set up Python
+      run: uv python install 3.11
+    - name: Install dependencies
+      run: uv sync
+    - name: Run tests with coverage
+      run: "uv run pytest tests/ --cov=app --cov-report=term --cov-fail-under=85 --ignore=tests/e2e -q\n\necho \"## Coverage Report\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\necho \"\u2705 Coverage meets 85% threshold\" >> $GITHUB_STEP_SUMMARY\n"
+  security-scans:
+    name: Security Scans (Full)
+    uses: ./.github/workflows/security.yaml
+    permissions:
+      security-events: write
+      contents: read
+    with:
+      scan-mode: full
   create-issues:
     name: Create Issues for Failures
     runs-on: ubuntu-latest
-    needs: [security-audit, dead-code-analysis, code-quality, coverage-check]
+    needs:
+    - security-audit
+    - dead-code-analysis
+    - code-quality
+    - coverage-check
     if: always() && contains(needs.*.result, 'failure')
-
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-      - name: Create issue for security vulnerabilities
-        if: needs.security-audit.result == 'failure'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          existing=$(gh issue list --label "security" --state open --json number --jq 'length')
-          if [ "$existing" -gt 0 ]; then
-            echo "Security issue already exists, skipping"
-            exit 0
-          fi
-
-          gh issue create \
-            --title "🔒 Security: Vulnerabilities detected in dependencies" \
-            --label "security,automated" \
-            --body "## Security Audit Failed
-
-          The nightly security audit detected vulnerabilities in project dependencies.
-
-          **Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-          ### Next Steps
-          1. Review the vulnerabilities in the workflow run
-          2. Update affected packages: \`uv lock --upgrade-package <package>\`
-          3. If no fix available, assess risk and document in code"
-
-      - name: Create issue for dead code
-        if: needs.dead-code-analysis.result == 'failure'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          existing=$(gh issue list --label "dead-code" --state open --json number --jq 'length')
-          if [ "$existing" -gt 0 ]; then
-            echo "Dead code issue already exists, skipping"
-            exit 0
-          fi
-
-          gh issue create \
-            --title "🧹 Cleanup: Dead code detected" \
-            --label "dead-code,automated,chore" \
-            --body "## Dead Code Analysis Failed
-
-          The nightly dead code analysis (Vulture) found potentially unused code.
-
-          **Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-          ### Next Steps
-          1. Review each item - some may be false positives (e.g., used via reflection)
-          2. Remove confirmed dead code
-          3. Add to vulture whitelist if intentionally unused"
-
-      - name: Create issue for coverage drop
-        if: needs.coverage-check.result == 'failure'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          existing=$(gh issue list --label "coverage" --state open --json number --jq 'length')
-          if [ "$existing" -gt 0 ]; then
-            echo "Coverage issue already exists, skipping"
-            exit 0
-          fi
-
-          gh issue create \
-            --title "📉 Coverage: Below 85% threshold" \
-            --label "coverage,automated,testing" \
-            --body "## Coverage Check Failed
-
-          The nightly coverage check found that test coverage has dropped below the 85% threshold.
-
-          **Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-          ### Next Steps
-          1. Check the workflow run for detailed coverage report
-          2. Identify untested code paths
-          3. Add tests to restore coverage above 85%"
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Create issue for security vulnerabilities
+      if: needs.security-audit.result == 'failure'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: "existing=$(gh issue list --label \"security\" --state open --json number --jq 'length')\nif [ \"$existing\" -gt 0 ]; then\n  echo \"Security issue already exists, skipping\"\n  exit 0\nfi\n\ngh issue create \\\n  --title \"\U0001F512 Security: Vulnerabilities detected in dependencies\" \\\n  --label \"security,automated\" \\\n  --body \"## Security Audit Failed\n\nThe nightly security audit detected vulnerabilities in project dependencies.\n\n**Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n\n### Next Steps\n1. Review the vulnerabilities in the workflow run\n2. Update affected packages: \\`uv lock --upgrade-package <package>\\`\n3. If no fix available, assess risk and document in code\"\n"
+    - name: Create issue for dead code
+      if: needs.dead-code-analysis.result == 'failure'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: "existing=$(gh issue list --label \"dead-code\" --state open --json number --jq 'length')\nif [ \"$existing\" -gt 0 ]; then\n  echo \"Dead code issue already exists, skipping\"\n  exit 0\nfi\n\ngh issue create \\\n  --title \"\U0001F9F9 Cleanup: Dead code detected\" \\\n  --label \"dead-code,automated,chore\" \\\n  --body \"## Dead Code Analysis Failed\n\nThe nightly dead code analysis (Vulture) found potentially unused code.\n\n**Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n\n### Next Steps\n1. Review each item - some may be false positives (e.g., used via reflection)\n2. Remove confirmed dead code\n3. Add to vulture whitelist if intentionally unused\"\n"
+    - name: Create issue for coverage drop
+      if: needs.coverage-check.result == 'failure'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: "existing=$(gh issue list --label \"coverage\" --state open --json number --jq 'length')\nif [ \"$existing\" -gt 0 ]; then\n  echo \"Coverage issue already exists, skipping\"\n  exit 0\nfi\n\ngh issue create \\\n  --title \"\U0001F4C9 Coverage: Below 85% threshold\" \\\n  --label \"coverage,automated,testing\" \\\n  --body \"## Coverage Check Failed\n\nThe nightly coverage check found that test coverage has dropped below the 85% threshold.\n\n**Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n\n### Next Steps\n1. Check the workflow run for detailed coverage report\n2. Identify untested code paths\n3. Add tests to restore coverage above 85%\"\n"

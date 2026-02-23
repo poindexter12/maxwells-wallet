@@ -1,16 +1,15 @@
 name: CI
-
-on:
+true:
   push:
-    branches: [main]
+    branches:
+    - main
   pull_request:
-    branches: [main]
-
+    branches:
+    - main
 permissions:
   contents: read
-
+  security-events: write
 jobs:
-  # Detect what changed to optimize CI
   changes:
     name: Detect Changes
     runs-on: ubuntu-latest
@@ -20,24 +19,19 @@ jobs:
       docker: ${{ steps.filter.outputs.docker }}
       translations-only: ${{ steps.filter.outputs.translations-only }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
-        id: filter
-        with:
-          filters: |
-            frontend:
-              - 'frontend/**'
-            backend:
-              - 'backend/**'
-            docker:
-              - 'Dockerfile'
-              - 'docker-compose*.yaml'
-            translations-only:
-              - 'frontend/src/messages/**'
-              - '!frontend/src/**/*.ts'
-              - '!frontend/src/**/*.tsx'
-              - '!backend/**'
-
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36
+      id: filter
+      with:
+        filters: "frontend:\n  - 'frontend/**'\nbackend:\n  - 'backend/**'\ndocker:\n  - 'Dockerfile'\n  - 'docker-compose*.yaml'\ntranslations-only:\n  - 'frontend/src/messages/**'\n  - '!frontend/src/**/*.ts'\n  - '!frontend/src/**/*.tsx'\n  - '!backend/**'\n"
+  security:
+    name: Security Scans
+    uses: ./.github/workflows/security.yaml
+    permissions:
+      security-events: write
+      contents: read
+    with:
+      scan-mode: diff
   frontend:
     name: Frontend Build & Test
     runs-on: ubuntu-latest
@@ -46,34 +40,26 @@ jobs:
     defaults:
       run:
         working-directory: frontend
-
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
-        with:
-          node-version: '24'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Generate pseudo-locale for i18n tests
-        run: node scripts/generate-pseudo-locale.mjs
-
-      - name: Run linter
-        run: npm run lint
-
-      - name: Run tests
-        run: npm run test:run
-
-      - name: Build
-        run: npm run build
-
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Setup Node.js
+      uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
+      with:
+        node-version: '24'
+        cache: npm
+        cache-dependency-path: frontend/package-lock.json
+    - name: Install dependencies
+      run: npm ci
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Generate pseudo-locale for i18n tests
+      run: node scripts/generate-pseudo-locale.mjs
+    - name: Run linter
+      run: npm run lint
+    - name: Run tests
+      run: npm run test:run
+    - name: Build
+      run: npm run build
   backend:
     name: Backend Build & Test
     runs-on: ubuntu-latest
@@ -82,265 +68,215 @@ jobs:
     defaults:
       run:
         working-directory: backend
-
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb # v7
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        run: uv python install 3.11
-
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Run linter (ruff)
-        run: uv run ruff check .
-
-      - name: Check for dead code (vulture)
-        run: uv run vulture app
-
-      - name: Run type checker (mypy)
-        run: uv run mypy app
-
-      - name: Run tests with coverage
-        run: uv run pytest tests/ -v --cov=app --cov-report=xml --cov-report=term-missing --ignore=tests/e2e --ignore=tests/performance
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
-        with:
-          files: ./backend/coverage.xml
-          fail_ci_if_error: false
-          verbose: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Install uv
+      uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb
+      with:
+        version: latest
+    - name: Set up Python
+      run: uv python install 3.11
+    - name: Install dependencies
+      run: uv sync
+    - name: Run linter (ruff)
+      run: uv run ruff check .
+    - name: Check for dead code (vulture)
+      run: uv run vulture app
+    - name: Run type checker (mypy)
+      run: uv run mypy app
+    - name: Run tests with coverage
+      run: uv run pytest tests/ -v --cov=app --cov-report=xml --cov-report=term-missing --ignore=tests/e2e --ignore=tests/performance
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+      with:
+        files: ./backend/coverage.xml
+        fail_ci_if_error: false
+        verbose: true
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
-    needs: [changes, frontend, backend]
-    # Skip E2E for translation-only changes
-    if: |
-      always() &&
-      needs.changes.outputs.translations-only != 'true' &&
-      (needs.frontend.result == 'success' || needs.frontend.result == 'skipped') &&
-      (needs.backend.result == 'success' || needs.backend.result == 'skipped')
+    needs:
+    - changes
+    - frontend
+    - backend
+    if: 'always() &&
 
+      needs.changes.outputs.translations-only != ''true'' &&
+
+      (needs.frontend.result == ''success'' || needs.frontend.result == ''skipped'') &&
+
+      (needs.backend.result == ''success'' || needs.backend.result == ''skipped'')
+
+      '
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
-        with:
-          node-version: '24'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb # v7
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        run: uv python install 3.11
-
-      - name: Install backend dependencies
-        working-directory: backend
-        run: uv sync
-
-      - name: Create data directory
-        working-directory: backend
-        run: mkdir -p data
-
-      # For E2E tests, create schema directly from models (skip migrations)
-      # This avoids migration ordering issues and gives us a clean schema
-      - name: Initialize database schema
-        working-directory: backend
-        run: uv run python -m scripts.init_db
-        env:
-          DATABASE_URL: "sqlite+aiosqlite:///./data/wallet.db"
-
-      - name: Seed database
-        working-directory: backend
-        run: uv run python -m scripts.seed
-        env:
-          DATABASE_URL: "sqlite+aiosqlite:///./data/wallet.db"
-
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm ci
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Playwright browsers
-        working-directory: frontend
-        run: npx playwright install --with-deps chromium
-
-      - name: Run E2E tests
-        working-directory: frontend
-        run: npx playwright test --grep "@e2e" --project=chromium
-        env:
-          CI: true
-
-      - name: Upload Playwright report
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
-        if: failure()
-        with:
-          name: playwright-report
-          path: frontend/playwright-report/
-          retention-days: 7
-
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Setup Node.js
+      uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
+      with:
+        node-version: '24'
+        cache: npm
+        cache-dependency-path: frontend/package-lock.json
+    - name: Install uv
+      uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb
+      with:
+        version: latest
+    - name: Set up Python
+      run: uv python install 3.11
+    - name: Install backend dependencies
+      working-directory: backend
+      run: uv sync
+    - name: Create data directory
+      working-directory: backend
+      run: mkdir -p data
+    - name: Initialize database schema
+      working-directory: backend
+      run: uv run python -m scripts.init_db
+      env:
+        DATABASE_URL: sqlite+aiosqlite:///./data/wallet.db
+    - name: Seed database
+      working-directory: backend
+      run: uv run python -m scripts.seed
+      env:
+        DATABASE_URL: sqlite+aiosqlite:///./data/wallet.db
+    - name: Install frontend dependencies
+      working-directory: frontend
+      run: npm ci
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Install Playwright browsers
+      working-directory: frontend
+      run: npx playwright install --with-deps chromium
+    - name: Run E2E tests
+      working-directory: frontend
+      run: npx playwright test --grep "@e2e" --project=chromium
+      env:
+        CI: true
+    - name: Upload Playwright report
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      if: failure()
+      with:
+        name: playwright-report
+        path: frontend/playwright-report/
+        retention-days: 7
   performance:
     name: Performance Tests
     runs-on: ubuntu-latest
-    needs: [changes, backend]
-    # Skip performance tests for translation-only or frontend-only changes
-    if: |
-      always() &&
-      needs.changes.outputs.backend == 'true' &&
-      needs.backend.result == 'success'
+    needs:
+    - changes
+    - backend
+    if: 'always() &&
 
+      needs.changes.outputs.backend == ''true'' &&
+
+      needs.backend.result == ''success''
+
+      '
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb # v7
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        run: uv python install 3.11
-
-      - name: Install backend dependencies
-        working-directory: backend
-        run: uv sync
-
-      - name: Run performance tests
-        working-directory: backend
-        run: |
-          uv run pytest tests/performance -v -m performance --tb=short
-
-          echo "## Performance Tests" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Performance tests completed" >> $GITHUB_STEP_SUMMARY
-        env:
-          OTEL_ENABLED: "false"
-
-      - name: Upload performance results
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
-        if: always()
-        with:
-          name: performance-results
-          path: backend/test_perf.db
-          retention-days: 7
-
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Install uv
+      uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb
+      with:
+        version: latest
+    - name: Set up Python
+      run: uv python install 3.11
+    - name: Install backend dependencies
+      working-directory: backend
+      run: uv sync
+    - name: Run performance tests
+      working-directory: backend
+      run: "uv run pytest tests/performance -v -m performance --tb=short\n\necho \"## Performance Tests\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\necho \"\u2705 Performance tests completed\" >> $GITHUB_STEP_SUMMARY\n"
+      env:
+        OTEL_ENABLED: 'false'
+    - name: Upload performance results
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      if: always()
+      with:
+        name: performance-results
+        path: backend/test_perf.db
+        retention-days: 7
   docker:
     name: Docker Build & Smoke Test
     runs-on: ubuntu-latest
-    needs: [changes, frontend, backend, e2e]
+    needs:
+    - changes
+    - frontend
+    - backend
+    - e2e
     timeout-minutes: 30
-    # Run on Dockerfile/compose changes, or main branch (after other tests pass)
-    if: |
-      always() &&
-      (needs.changes.outputs.docker == 'true' || github.ref == 'refs/heads/main') &&
-      (needs.frontend.result == 'success' || needs.frontend.result == 'skipped') &&
-      (needs.backend.result == 'success' || needs.backend.result == 'skipped') &&
-      (needs.e2e.result == 'success' || needs.e2e.result == 'skipped')
+    if: 'always() &&
+
+      (needs.changes.outputs.docker == ''true'' || github.ref == ''refs/heads/main'') &&
+
+      (needs.frontend.result == ''success'' || needs.frontend.result == ''skipped'') &&
+
+      (needs.backend.result == ''success'' || needs.backend.result == ''skipped'') &&
+
+      (needs.e2e.result == ''success'' || needs.e2e.result == ''skipped'')
+
+      '
     permissions:
       contents: read
       packages: write
-
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: ${{ github.repository }}
-
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Cleanup any existing containers
+      run: docker compose -f docker-compose.dev.yaml down -v --remove-orphans 2>/dev/null || true
+    - name: Build all-in-one image
+      run: docker compose -f docker-compose.dev.yaml build
+    - name: Test migrate command
+      run: '# Run migrate in a fresh container (not detached)
 
-      - name: Cleanup any existing containers
-        run: docker compose -f docker-compose.dev.yaml down -v --remove-orphans 2>/dev/null || true
+        # -T disables pseudo-TTY allocation for cleaner CI output
 
-      - name: Build all-in-one image
-        run: docker compose -f docker-compose.dev.yaml build
+        docker compose -f docker-compose.dev.yaml run -T --rm maxwells-wallet migrate
 
-      - name: Test migrate command
-        run: |
-          # Run migrate in a fresh container (not detached)
-          # -T disables pseudo-TTY allocation for cleaner CI output
-          docker compose -f docker-compose.dev.yaml run -T --rm maxwells-wallet migrate
+        '
+    - name: Test seed command
+      run: '# Small delay to ensure volume is fully released from migrate
 
-      - name: Test seed command
-        run: |
-          # Small delay to ensure volume is fully released from migrate
-          sleep 2
-          # Run seed in a fresh container (not detached)
-          # -T disables pseudo-TTY allocation for cleaner CI output
-          docker compose -f docker-compose.dev.yaml run -T --rm maxwells-wallet seed
+        sleep 2
 
-      - name: Start container and verify health
-        run: |
-          docker compose -f docker-compose.dev.yaml up -d
-          echo "Waiting for services to start..."
-          sleep 15
+        # Run seed in a fresh container (not detached)
 
-          # Health check backend
-          for i in {1..10}; do
-            if curl -sf http://localhost:3001/health; then
-              echo "Backend is healthy"
-              break
-            fi
-            echo "Backend attempt $i failed, retrying..."
-            sleep 3
-          done
+        # -T disables pseudo-TTY allocation for cleaner CI output
 
-          # Health check frontend
-          for i in {1..10}; do
-            if curl -sf http://localhost:3000 > /dev/null; then
-              echo "Frontend is healthy"
-              exit 0
-            fi
-            echo "Frontend attempt $i failed, retrying..."
-            sleep 3
-          done
+        docker compose -f docker-compose.dev.yaml run -T --rm maxwells-wallet seed
 
-          echo "Health checks failed"
-          docker compose -f docker-compose.dev.yaml logs
-          exit 1
+        '
+    - name: Start container and verify health
+      run: "docker compose -f docker-compose.dev.yaml up -d\necho \"Waiting for services to start...\"\nsleep 15\n\n# Health check backend\nfor i in {1..10}; do\n  if curl -sf http://localhost:3001/health; then\n    echo \"Backend is healthy\"\n    break\n  fi\n  echo \"Backend attempt $i failed, retrying...\"\n  sleep 3\ndone\n\n# Health check frontend\nfor i in {1..10}; do\n  if curl -sf http://localhost:3000 > /dev/null; then\n    echo \"Frontend is healthy\"\n    exit 0\n  fi\n  echo \"Frontend attempt $i failed, retrying...\"\n  sleep 3\ndone\n\necho \"Health checks failed\"\ndocker compose -f docker-compose.dev.yaml logs\nexit 1\n"
+    - name: Show logs on failure
+      if: failure()
+      run: docker compose -f docker-compose.dev.yaml logs
+    - name: Cleanup smoke test
+      if: always()
+      run: docker compose -f docker-compose.dev.yaml down -v --remove-orphans
+    - name: Set up Docker Buildx
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+    - name: Log in to GitHub Container Registry
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build and push dev tag
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
+      with:
+        context: .
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev
+        build-args: 'APP_VERSION=dev
 
-      - name: Show logs on failure
-        if: failure()
-        run: docker compose -f docker-compose.dev.yaml logs
+          GIT_SHA=${{ github.sha }}
 
-      - name: Cleanup smoke test
-        if: always()
-        run: docker compose -f docker-compose.dev.yaml down -v --remove-orphans
-
-      # Push dev tag on main branch after smoke test passes
-      - name: Set up Docker Buildx
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-
-      - name: Log in to GitHub Container Registry
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push dev tag
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
-        with:
-          context: .
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev
-          build-args: |
-            APP_VERSION=dev
-            GIT_SHA=${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
+          '
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
