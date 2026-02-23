@@ -17,10 +17,12 @@ Security scanning tools run automatically in CI and produce visible, actionable 
 - ✓ GitHub Actions pinned to SHAs for supply chain security — existing
 - ✓ CI pipeline with change detection, frontend/backend/e2e/performance/docker jobs — existing
 - ✓ Production Dockerfile builds and pushes to GHCR on main — existing
+- ✓ SAST scanning via Semgrep on PRs and pushes to main — Phase 1
+- ✓ Reusable security.yaml workflow callable from ci.yaml and nightly.yaml — Phase 1
+- ✓ SARIF upload to GitHub Security tab with unique category convention — Phase 1
 
 ### Active
 
-- [ ] SAST scanning via Semgrep on PRs and pushes to main
 - [ ] Repo security posture scoring via OpenSSF Scorecard on pushes to main
 - [ ] SCA dependency scanning via OWASP Dependency-Check on pushes to main
 - [ ] Container image scanning via Trivy against production Dockerfile
@@ -54,11 +56,13 @@ Security scanning tools run automatically in CI and produce visible, actionable 
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Semgrep `auto` ruleset | Auto-detects languages and applies relevant community rules — good starting point before custom rules | — Pending |
+| Semgrep `auto` ruleset | Auto-detects languages and applies relevant community rules — good starting point before custom rules | ✓ Shipped Phase 1 |
+| Native Semgrep Docker container | Direct control over CLI flags; semgrep-action wrapper deprecated | ✓ Shipped Phase 1 |
+| Reusable security.yaml workflow | Single definition called by ci.yaml and nightly.yaml; DRY pattern for adding tools | ✓ Shipped Phase 1 |
 | OWASP Dep-Check alongside Dependabot | Different databases (NVD vs GitHub Advisory) catch different vulnerabilities — additive coverage | — Pending |
 | Trivy for container scanning | Lightweight, well-maintained, covers OS packages + app dependencies in container images | — Pending |
 | ZAP baseline (passive) scan | Passive scan is safe, fast, and doesn't require auth configuration — good first pass | — Pending |
 | Cut DefectDojo from milestone | Overhead of standing up Django + Postgres + Celery not justified until multiple projects need aggregation | ✓ Good |
 
 ---
-*Last updated: 2026-02-23 after initialization*
+*Last updated: 2026-02-23 after Phase 1*
