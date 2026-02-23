@@ -14,10 +14,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation & SAST** - Establish SARIF workflows and Semgrep code scanning (completed 2026-02-23)
 - [x] **Phase 2: SCA & Repository Health** - Dependency scanning and OpenSSF Scorecard integration (completed 2026-02-23)
-- [ ] **Phase 3: Container Scanning** - Trivy image vulnerability detection
-- [ ] **Phase 4: DAST** - OWASP ZAP baseline scanning against running application
-- [ ] **Phase 5: Documentation** - README updates for tooling and findings interpretation
-- [ ] **Phase 6: Formal Verification Sweep** - Create VERIFICATION.md for Phases 2-5 (gap closure)
+- [x] **Phase 3: Container Scanning** - Trivy image vulnerability detection (completed 2026-02-23)
+- [x] **Phase 4: DAST** - OWASP ZAP baseline scanning against running application (completed 2026-02-23)
+- [x] **Phase 5: Documentation** - README updates for tooling and findings interpretation (completed 2026-02-23)
+- [x] **Phase 6: Formal Verification Sweep** - Create VERIFICATION.md for Phases 2-5 (completed 2026-02-23)
 
 ## Phase Details
 
@@ -61,10 +61,10 @@ Plans:
   2. Trivy detects vulnerabilities in both OS packages and application dependencies within the image
   3. Trivy findings appear in GitHub Security tab with unique category identifier
   4. Docker images are pushed to GHCR regardless of Trivy findings (non-blocking scan)
-**Plans**: 1 plan
+**Plans**: 1/1 plans complete
 
 Plans:
-- [ ] 03-01-PLAN.md — Add Trivy container scan to docker job in ci.yaml with SARIF upload
+- [x] 03-01-PLAN.md — Add Trivy container scan to docker job in ci.yaml with SARIF upload
 
 ### Phase 4: DAST
 **Goal**: Running application is scanned for runtime vulnerabilities via OWASP ZAP baseline scan in ephemeral CI environment
@@ -75,10 +75,10 @@ Plans:
   2. OWASP ZAP baseline (passive) scan runs against the ephemeral app instance
   3. ZAP produces HTML and Markdown reports uploaded as CI artifacts for review
   4. ZAP scan completes successfully without blocking workflow (informational only)
-**Plans**: 1 plan
+**Plans**: 1/1 plans complete
 
 Plans:
-- [ ] 04-01-PLAN.md — Create dast.yaml workflow with Docker Compose orchestration and ZAP baseline scan
+- [x] 04-01-PLAN.md — Create dast.yaml workflow with Docker Compose orchestration and ZAP baseline scan
 
 ### Phase 5: Documentation
 **Goal**: Developers and stakeholders understand what security tooling runs, where to find findings, and how to interpret results
@@ -88,10 +88,10 @@ Plans:
   1. README documents all five security tools (Semgrep, Dependency-Check, Trivy, Scorecard, ZAP) with brief descriptions
   2. README explains how to access and interpret findings in GitHub Security tab
   3. Documentation is accurate and reflects the actual workflow implementations from Phases 1-4
-**Plans**: 1 plan
+**Plans**: 1/1 plans complete
 
 Plans:
-- [ ] 05-01-PLAN.md — Add Security Tools section to README documenting all five scanning tools with access instructions
+- [x] 05-01-PLAN.md — Add Security Tools section to README documenting all five scanning tools with access instructions
 
 ### Phase 6: Formal Verification Sweep
 **Goal**: All 28 v1 requirements formally verified with VERIFICATION.md artifacts, closing procedural gaps from milestone audit
@@ -104,10 +104,10 @@ Plans:
   3. Phase 4 has VERIFICATION.md confirming DAST requirements satisfied
   4. Phase 5 has VERIFICATION.md confirming Documentation requirements satisfied
   5. All 28 v1 requirements have 3-source verification (VERIFICATION.md + SUMMARY + REQUIREMENTS.md)
-**Plans**: 1 plan
+**Plans**: 1/1 plans complete
 
 Plans:
-- [ ] 06-01-PLAN.md — Create VERIFICATION.md for Phases 2-5 with file:line evidence for all 18 requirements
+- [x] 06-01-PLAN.md — Create VERIFICATION.md for Phases 2-5 with file:line evidence for all 18 requirements
 
 ## Progress
 
@@ -118,7 +118,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Foundation & SAST | 1/1 | Complete   | 2026-02-23 |
 | 2. SCA & Repository Health | 2/2 | Complete | 2026-02-23 |
-| 3. Container Scanning | 0/1 | Planning complete | - |
-| 4. DAST | 0/1 | Planning complete | - |
-| 5. Documentation | 0/1 | Planning complete | - |
-| 6. Formal Verification Sweep | 0/1 | Planning complete | - |
+| 3. Container Scanning | 1/1 | Complete | 2026-02-23 |
+| 4. DAST | 1/1 | Complete | 2026-02-23 |
+| 5. Documentation | 1/1 | Complete | 2026-02-23 |
+| 6. Formal Verification Sweep | 1/1 | Complete | 2026-02-23 |
