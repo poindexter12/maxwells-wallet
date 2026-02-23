@@ -10,28 +10,29 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 2 of 5 (SCA & Repository Health)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-23 — Phase 1 complete, transitioning to Phase 2
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-02-23 — Phase 2 complete, ready for Phase 3
 
-Progress: [██░░░░░░░░] 20%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
+- Total plans completed: 3
 - Average duration: 2 minutes
-- Total execution time: 0.03 hours
+- Total execution time: 0.10 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation-sast | 1 | 2 min | 2 min |
+| 02-sca-repository-health | 2 | 3 min | 1.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min)
-- Trend: Starting baseline established
+- Last 5 plans: 01-01 (2 min), 02-01 (1 min), 02-02 (2 min)
+- Trend: Consistent velocity, Phase 2 completed efficiently
 
 *Updated after each plan completion*
 
@@ -50,6 +51,10 @@ Recent decisions affecting current work:
 - [Phase 01-foundation-sast]: Native Semgrep Docker container over semgrep-action wrapper for better control and security
 - [Phase 01-foundation-sast]: Non-blocking security scans (continue-on-error) to inform without blocking development
 - [Phase 01-foundation-sast]: Job-level permissions over workflow-level for least privilege (security-events: write)
+- [Phase 02-sca-repository-health]: NVD database caching with 24h TTL to avoid rate limiting
+- [Phase 02-sca-repository-health]: Generate requirements.txt from pyproject.toml using uv for Dependency-Check compatibility
+- [Phase 02-sca-repository-health]: Isolated workflow for Scorecard with publish_results: true for API compliance
+- [Phase 02-sca-repository-health]: OIDC authentication (id-token: write) for Scorecard public metrics publishing
 
 ### Pending Todos
 
@@ -57,19 +62,20 @@ None yet.
 
 ### Blockers/Concerns
 
-**Before Phase 2:**
-- Repository visibility confirmation still needed (public vs private determines SARIF upload licensing)
-- NVD API key request needed for OWASP Dependency-Check (1-2 day approval process)
-- Exact commit SHAs for ossf/scorecard-action@v2.4.3 and dependency-check action need lookup
+**Phase 2 Status:**
+- ✓ NVD database caching implemented with 24h TTL
+- ✓ Scorecard action SHA located and pinned (4eaacf0543bb3f2c246792bd56e8cdeffafb205a)
+- Optional: NVD API key still recommended for faster updates (graceful degradation implemented)
 
-**Phase 2 Risk:**
-- NVD database caching strategy must be implemented to avoid rate limiting (research recommends 24h TTL with GitHub Actions cache)
+**Before Phase 3:**
+- Docker build job location confirmed (ci.yaml)
+- Trivy integration point identified (scan after build, before push)
 
 **Phase 4 Risk:**
 - ZAP false positive volume typically high (50-200 findings before tuning, target <20 after) — allocate tuning time in Phase 4 planning
 
 ## Session Continuity
 
-Last session: 2026-02-23 (Phase 1 → Phase 2 transition)
-Stopped at: Phase 1 complete, ready to discuss Phase 2
+Last session: 2026-02-23 (Phase 2 execution)
+Stopped at: Phase 2 complete (02-01, 02-02)
 Resume file: None

@@ -13,7 +13,7 @@ This roadmap delivers a free, open-source alternative to Veracode's commercial s
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation & SAST** - Establish SARIF workflows and Semgrep code scanning (completed 2026-02-23)
-- [ ] **Phase 2: SCA & Repository Health** - Dependency scanning and OpenSSF Scorecard integration
+- [x] **Phase 2: SCA & Repository Health** - Dependency scanning and OpenSSF Scorecard integration (completed 2026-02-23)
 - [ ] **Phase 3: Container Scanning** - Trivy image vulnerability detection
 - [ ] **Phase 4: DAST** - OWASP ZAP baseline scanning against running application
 - [ ] **Phase 5: Documentation** - README updates for tooling and findings interpretation
@@ -45,11 +45,11 @@ Plans:
   3. OpenSSF Scorecard runs in isolated workflow on pushes to main
   4. Scorecard results appear in GitHub Security tab showing repository security posture metrics
   5. Both scans complete successfully without blocking builds (non-blocking mode)
-**Plans**: 2 plans
+**Plans**: 2/2 plans complete
 
 Plans:
-- [ ] 02-01-PLAN.md — Add OWASP Dependency-Check to security.yaml with NVD caching and dual-language scanning
-- [ ] 02-02-PLAN.md — Create isolated scorecard.yaml workflow with publish_results compliance
+- [x] 02-01-PLAN.md — Add OWASP Dependency-Check to security.yaml with NVD caching and dual-language scanning
+- [x] 02-02-PLAN.md — Create isolated scorecard.yaml workflow with publish_results compliance
 
 ### Phase 3: Container Scanning
 **Goal**: Production Docker images are scanned for OS package and application dependency vulnerabilities before push to GHCR
@@ -100,7 +100,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & SAST | 1/1 | Complete   | 2026-02-23 |
-| 2. SCA & Repository Health | 0/2 | Planning complete | - |
+| 2. SCA & Repository Health | 2/2 | Complete | 2026-02-23 |
 | 3. Container Scanning | 0/1 | Planning complete | - |
 | 4. DAST | 0/TBD | Not started | - |
 | 5. Documentation | 0/TBD | Not started | - |

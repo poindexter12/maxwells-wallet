@@ -17,10 +17,10 @@ Requirements for initial milestone. Each maps to roadmap phases.
 
 ### SCA (OWASP Dependency-Check)
 
-- [ ] **SCA-01**: OWASP Dependency-Check scans npm and pip dependencies on pushes to main
-- [ ] **SCA-02**: Dependency-Check outputs SARIF and uploads to GitHub Security tab with unique category
-- [ ] **SCA-03**: NVD database is cached in CI to avoid rate limiting and reduce scan time
-- [ ] **SCA-04**: Dependency-Check scan is non-blocking — workflow succeeds regardless of findings
+- [x] **SCA-01**: OWASP Dependency-Check scans npm and pip dependencies on pushes to main
+- [x] **SCA-02**: Dependency-Check outputs SARIF and uploads to GitHub Security tab with unique category
+- [x] **SCA-03**: NVD database is cached in CI to avoid rate limiting and reduce scan time
+- [x] **SCA-04**: Dependency-Check scan is non-blocking — workflow succeeds regardless of findings
 
 ### Container Scanning (Trivy)
 
@@ -31,10 +31,10 @@ Requirements for initial milestone. Each maps to roadmap phases.
 
 ### Repository Health (OpenSSF Scorecard)
 
-- [ ] **SCORE-01**: OpenSSF Scorecard runs on pushes to main in an isolated workflow
-- [ ] **SCORE-02**: Scorecard outputs SARIF and uploads to GitHub Security tab with unique category
-- [ ] **SCORE-03**: Scorecard workflow uses required permissions (contents: read, security-events: write, id-token: write)
-- [ ] **SCORE-04**: Scorecard scan is non-blocking — workflow succeeds regardless of score
+- [x] **SCORE-01**: OpenSSF Scorecard runs on pushes to main in an isolated workflow
+- [x] **SCORE-02**: Scorecard outputs SARIF and uploads to GitHub Security tab with unique category
+- [x] **SCORE-03**: Scorecard workflow uses required permissions (contents: read, security-events: write, id-token: write)
+- [x] **SCORE-04**: Scorecard scan is non-blocking — workflow succeeds regardless of score
 
 ### DAST (OWASP ZAP)
 
@@ -127,14 +127,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SAST-03 | Phase 1 | Complete |
 | SAST-04 | Phase 1 | Complete |
 | SAST-05 | Phase 1 | Complete |
-| SCA-01 | Phase 2 | Pending |
-| SCA-02 | Phase 2 | Pending |
-| SCA-03 | Phase 2 | Pending |
-| SCA-04 | Phase 2 | Pending |
-| SCORE-01 | Phase 2 | Pending |
-| SCORE-02 | Phase 2 | Pending |
-| SCORE-03 | Phase 2 | Pending |
-| SCORE-04 | Phase 2 | Pending |
+| SCA-01 | Phase 2 | Complete |
+| SCA-02 | Phase 2 | Complete |
+| SCA-03 | Phase 2 | Complete |
+| SCA-04 | Phase 2 | Complete |
+| SCORE-01 | Phase 2 | Complete |
+| SCORE-02 | Phase 2 | Complete |
+| SCORE-03 | Phase 2 | Complete |
+| SCORE-04 | Phase 2 | Complete |
 | CNTR-01 | Phase 3 | Pending |
 | CNTR-02 | Phase 3 | Pending |
 | CNTR-03 | Phase 3 | Pending |
