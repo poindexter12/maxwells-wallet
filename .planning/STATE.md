@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Security scanning tools run automatically in CI and produce visible, actionable findings without breaking any builds.
-**Current focus:** Phase 4: DAST
+**Current focus:** Phase 5: Documentation
 
 ## Current Position
 
-Phase: 4 of 5 (DAST)
+Phase: 5 of 5 (Documentation)
 Plan: 1 of 1 in current phase
 Status: Phase complete
-Last activity: 2026-02-23 — Phase 4 complete (04-01 ZAP DAST workflow)
+Last activity: 2026-02-23 — Phase 5 complete (05-01 Security Tools documentation)
 
-Progress: [████████░░] 80%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 1.4 minutes
-- Total execution time: 0.14 hours
+- Total plans completed: 6
+- Average duration: 1.3 minutes
+- Total execution time: 0.16 hours
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [████████░░] 80%
 | 02-sca-repository-health | 2 | 3 min | 1.5 min |
 | 03-container-scanning | 1 | 1 min | 1 min |
 | 04-dast | 1 | 1 min | 1 min |
+| 05-documentation | 1 | 1 min | 1 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (1 min), 02-02 (2 min), 03-01 (1 min), 04-01 (1 min)
-- Trend: Excellent velocity, Phase 4 completed in 1 minute
+- Last 5 plans: 02-02 (2 min), 03-01 (1 min), 04-01 (1 min), 05-01 (1 min)
+- Trend: Excellent velocity, milestone complete
 
 *Updated after each plan completion*
 
@@ -63,6 +64,7 @@ Recent decisions affecting current work:
 - [Phase 04-01]: ZAP baseline scan v0.15.0 (SHA 6c5a007541891231cd9e0ddec25d4f25c59c9874)
 - [Phase 04-01]: SARIF output via -J zap-report.json cmd_option
 - [Phase 04-01]: 20-minute timeout for app startup + scan execution
+- [Phase 05]: Added Security Tools section to README documenting all five CI scanning tools with GitHub Security tab navigation
 
 ### Pending Todos
 
@@ -90,8 +92,15 @@ None yet.
 **Phase 4 Known Limitation:**
 - ZAP false positive volume typically high (50-200 findings before tuning) — post-deployment tuning needed
 
+**Phase 5 Status:**
+- ✓ Security Tools section added to README.md
+- ✓ All five tools documented (Semgrep, Dependency-Check, Scorecard, Trivy, ZAP)
+- ✓ GitHub Security tab access instructions provided
+- ✓ NVD_API_KEY setup documented as optional
+- ✓ Documentation verified against actual workflow implementations
+
 ## Session Continuity
 
-Last session: 2026-02-23 (Phase 4 execution)
-Stopped at: Completed 04-01-PLAN.md (ZAP DAST workflow)
+Last session: 2026-02-23 (Phase 5 execution)
+Stopped at: Completed 05-01-PLAN.md (Security Tools documentation)
 Resume file: None

@@ -53,8 +53,8 @@ Requirements for initial milestone. Each maps to roadmap phases.
 
 ### Documentation
 
-- [ ] **DOCS-01**: README documents all added security tooling with brief descriptions and output locations
-- [ ] **DOCS-02**: README explains how to interpret findings in GitHub Security tab
+- [x] **DOCS-01**: README documents all added security tooling with brief descriptions and output locations
+- [x] **DOCS-02**: README explains how to interpret findings in GitHub Security tab
 
 ## v2 Requirements
 
@@ -143,8 +143,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DAST-02 | Phase 4 | Complete |
 | DAST-03 | Phase 4 | Complete |
 | DAST-04 | Phase 4 | Complete |
-| DOCS-01 | Phase 5 | Pending |
-| DOCS-02 | Phase 5 | Pending |
+| DOCS-01 | Phase 5 | Complete |
+| DOCS-02 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 28 total
