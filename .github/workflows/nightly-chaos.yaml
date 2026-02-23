@@ -82,7 +82,12 @@ jobs:
 
       - name: Install Playwright browser (${{ matrix.browser }})
         working-directory: frontend
-        run: npx playwright install --with-deps ${{ matrix.browser }}
+        run: |
+          npx playwright install --with-deps ${{ matrix.browser }}
+          # Setup project always uses chromium, so install it for all jobs
+          if [ "${{ matrix.browser }}" != "chromium" ]; then
+            npx playwright install chromium
+          fi
 
       - name: Run chaos tests (${{ matrix.spec }})
         working-directory: frontend
