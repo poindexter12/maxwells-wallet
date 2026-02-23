@@ -56,6 +56,35 @@ See [CHANGELOG.md](CHANGELOG.md) for full release history.
 - **JWT Tokens**: Secure session management with configurable expiry
 - **Password Management**: Change in UI or reset via CLI
 
+### Security Tools
+
+Maxwell's Wallet uses five automated security scanning tools that run in CI and report findings to the GitHub Security tab:
+
+| Tool | Scans | Frequency | Category |
+|------|-------|-----------|----------|
+| **Semgrep** | Static code analysis (Python + TypeScript) | Every PR, push to main, nightly | `semgrep` |
+| **OWASP Dependency-Check** | Dependency vulnerabilities (npm + pip) via NVD database | Push to main, nightly | `dependency-check` |
+| **OpenSSF Scorecard** | Repository security posture (branch protection, dependency updates, code review) | Push to main, weekly | `scorecard` |
+| **Trivy** | Container image vulnerabilities (OS packages + app dependencies) | Every PR, push to main | `trivy-container` |
+| **OWASP ZAP** | Dynamic application security testing (XSS, CSRF, security headers) | Push to main | `zap` |
+
+**Accessing Findings:**
+
+1. Navigate to repository **Security** tab → **Code scanning** in left sidebar
+2. Filter by tool using the **Category** dropdown
+3. Each finding shows severity, description, affected file/line, and remediation guidance
+4. ZAP also produces downloadable HTML/Markdown reports in CI artifacts
+
+**Optional Setup:**
+
+For faster Dependency-Check scans, configure an NVD API key (free from NVD):
+```
+gh secret set NVD_API_KEY --body "your-api-key-here"
+```
+Without the API key, Dependency-Check still works but may hit rate limits on large scans.
+
+**Philosophy:** All security scans are **non-blocking** — they inform but never block development.
+
 ## Authentication
 
 On first launch, you'll be prompted to create an account. After setup, all access requires authentication.
