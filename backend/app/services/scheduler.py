@@ -106,7 +106,7 @@ class SchedulerService:
             replace_existing=True,
             name="Automatic database backup",
         )
-        logger.info(f"Scheduled automatic backups every {interval_hours} hours")
+        logger.info("Scheduled automatic backups every %d hours", interval_hours)
 
     def schedule_demo_reset(self, interval_hours: int) -> None:
         """Schedule demo mode data resets at the specified interval."""
@@ -121,7 +121,7 @@ class SchedulerService:
             replace_existing=True,
             name="Demo mode data reset",
         )
-        logger.info(f"Scheduled demo resets every {interval_hours} hours")
+        logger.info("Scheduled demo resets every %d hours", interval_hours)
 
     def _remove_job(self, job_id: str) -> None:
         """Remove a scheduled job if it exists."""

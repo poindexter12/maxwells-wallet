@@ -23,17 +23,17 @@ jobs:
         browser: [chromium, firefox, webkit]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
         with:
           node-version: '24'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb # v7
         with:
           version: "latest"
 
@@ -86,7 +86,7 @@ jobs:
           CI: true
 
       - name: Upload test report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: failure()
         with:
           name: e2e-report-${{ matrix.browser }}
@@ -94,7 +94,7 @@ jobs:
           retention-days: 7
 
       - name: Upload auth debug screenshots
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: always()
         with:
           name: auth-debug-${{ matrix.browser }}
@@ -108,7 +108,7 @@ jobs:
     if: failure() && github.event_name != 'pull_request'
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Create issue for E2E failures
         env:

@@ -19,10 +19,10 @@ jobs:
         working-directory: backend
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb # v7
         with:
           version: "latest"
 
@@ -56,10 +56,10 @@ jobs:
         working-directory: backend
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb # v7
         with:
           version: "latest"
 
@@ -96,10 +96,10 @@ jobs:
         working-directory: backend
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb # v7
         with:
           version: "latest"
 
@@ -147,10 +147,10 @@ jobs:
         working-directory: backend
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb # v7
         with:
           version: "latest"
 
@@ -175,7 +175,7 @@ jobs:
     if: always() && contains(needs.*.result, 'failure')
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Create issue for security vulnerabilities
         if: needs.security-audit.result == 'failure'

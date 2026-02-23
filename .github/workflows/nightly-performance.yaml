@@ -18,10 +18,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb # v7
         with:
           version: "latest"
 
@@ -44,7 +44,7 @@ jobs:
           OTEL_ENABLED: "false"
 
       - name: Upload performance results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: always()
         with:
           name: performance-results
@@ -61,7 +61,7 @@ jobs:
       issues: write
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Create issue for performance regression
         env:

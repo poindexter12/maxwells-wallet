@@ -20,8 +20,8 @@ jobs:
       docker: ${{ steps.filter.outputs.docker }}
       translations-only: ${{ steps.filter.outputs.translations-only }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
         id: filter
         with:
           filters: |
@@ -48,10 +48,10 @@ jobs:
         working-directory: frontend
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
         with:
           node-version: '24'
           cache: 'npm'
@@ -84,10 +84,10 @@ jobs:
         working-directory: backend
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb # v7
         with:
           version: "latest"
 
@@ -110,7 +110,7 @@ jobs:
         run: uv run pytest tests/ -v --cov=app --cov-report=xml --cov-report=term-missing --ignore=tests/e2e --ignore=tests/performance
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
         with:
           files: ./backend/coverage.xml
           fail_ci_if_error: false
@@ -130,17 +130,17 @@ jobs:
       (needs.backend.result == 'success' || needs.backend.result == 'skipped')
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
         with:
           node-version: '24'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb # v7
         with:
           version: "latest"
 
@@ -186,7 +186,7 @@ jobs:
           CI: true
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: failure()
         with:
           name: playwright-report
@@ -204,10 +204,10 @@ jobs:
       needs.backend.result == 'success'
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@a2a8b00df0aa22a77a33ee5f956c2128661fabeb # v7
         with:
           version: "latest"
 
@@ -230,7 +230,7 @@ jobs:
           OTEL_ENABLED: "false"
 
       - name: Upload performance results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: always()
         with:
           name: performance-results
@@ -258,7 +258,7 @@ jobs:
       IMAGE_NAME: ${{ github.repository }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Cleanup any existing containers
         run: docker compose -f docker-compose.dev.yaml down -v --remove-orphans 2>/dev/null || true
@@ -321,11 +321,11 @@ jobs:
       # Push dev tag on main branch after smoke test passes
       - name: Set up Docker Buildx
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
       - name: Log in to GitHub Container Registry
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -333,7 +333,7 @@ jobs:
 
       - name: Build and push dev tag
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           push: true
