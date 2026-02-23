@@ -74,10 +74,10 @@ Plans:
   2. OWASP ZAP baseline (passive) scan runs against the ephemeral app instance
   3. ZAP produces HTML and Markdown reports uploaded as CI artifacts for review
   4. ZAP scan completes successfully without blocking workflow (informational only)
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] TBD during planning
+- [ ] 04-01-PLAN.md — Create dast.yaml workflow with Docker Compose orchestration and ZAP baseline scan
 
 ### Phase 5: Documentation
 **Goal**: Developers and stakeholders understand what security tooling runs, where to find findings, and how to interpret results
@@ -102,5 +102,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Foundation & SAST | 1/1 | Complete   | 2026-02-23 |
 | 2. SCA & Repository Health | 2/2 | Complete | 2026-02-23 |
 | 3. Container Scanning | 0/1 | Planning complete | - |
-| 4. DAST | 0/TBD | Not started | - |
+| 4. DAST | 0/1 | Planning complete | - |
 | 5. Documentation | 0/TBD | Not started | - |
