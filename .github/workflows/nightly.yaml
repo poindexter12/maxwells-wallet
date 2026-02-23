@@ -5,8 +5,6 @@ name: Nightly Code Quality
   workflow_dispatch: null
 permissions:
   contents: read
-  issues: write
-  security-events: write
 jobs:
   security-audit:
     name: Security Audit (pip-audit)
@@ -97,6 +95,9 @@ jobs:
   create-issues:
     name: Create Issues for Failures
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
     needs:
     - security-audit
     - dead-code-analysis

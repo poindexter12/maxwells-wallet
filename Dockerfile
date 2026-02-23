@@ -1,7 +1,7 @@
 # All-in-One Dockerfile for Maxwell's Wallet
 # Runs both FastAPI backend and Next.js frontend in a single container
 
-FROM node:24-slim AS frontend-builder
+FROM node:24-slim@sha256:85a395c77b811fa7f5b5e4aa69cd6eb4c3b80c7f1a8e34704dc0ce061e5b404e AS frontend-builder
 
 # Build args
 ARG ENABLE_PSEUDO=false
@@ -35,7 +35,7 @@ ENV NEXT_PUBLIC_ENABLE_PSEUDO=$ENABLE_PSEUDO
 RUN echo "==> Building Next.js with NEXT_PUBLIC_ENABLE_PSEUDO=$ENABLE_PSEUDO" && npm run build
 
 # Final stage: Python + Node runtime
-FROM python:3.12-slim
+FROM python:3.12-slim@sha256:48006ff57afe15f247ad3da166e9487da0f66a94adbc92810b0e189382d79246
 
 # Re-declare build args for this stage
 ARG APP_VERSION=unknown
@@ -77,9 +77,9 @@ RUN mkdir -p /etc/supervisor/conf.d
 COPY <<EOF /etc/supervisor/conf.d/supervisord.conf
 [supervisord]
 nodaemon=true
-user=root
-logfile=/var/log/supervisor/supervisord.log
-pidfile=/var/run/supervisord.pid
+logfile=/dev/null
+logfile_maxbytes=0
+pidfile=/tmp/supervisord.pid
 
 [program:backend]
 command=/app/backend/.venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 3001
@@ -103,8 +103,11 @@ stderr_logfile=/dev/stderr
 stderr_logfile_maxbytes=0
 EOF
 
-# Create data directory for external volume mount
-RUN mkdir -p /data
+# Create non-root user and data directory
+RUN groupadd --gid 1000 wallet && \
+    useradd --uid 1000 --gid wallet --shell /bin/bash wallet && \
+    mkdir -p /data && \
+    chown -R wallet:wallet /app /data
 
 # Environment variables
 ENV DATABASE_URL="sqlite+aiosqlite:////data/wallet.db"
@@ -254,5 +257,6 @@ RUN chmod +x /app/start.sh
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:3001/health && curl -f http://localhost:3000 || exit 1
 
+USER wallet
 ENTRYPOINT ["/app/start.sh"]
 CMD ["run"]

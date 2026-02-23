@@ -8,7 +8,6 @@ name: CI
     - main
 permissions:
   contents: read
-  security-events: write
 jobs:
   changes:
     name: Detect Changes

@@ -86,9 +86,11 @@ jobs:
 
       - name: Determine grep pattern
         id: grep
+        env:
+          DURATION: ${{ github.event.inputs.duration || 'medium' }}
+          TEST_NAME: ${{ matrix.test }}
         run: |
-          DURATION="${{ github.event.inputs.duration || 'medium' }}"
-          case "${{ matrix.test }}" in
+          case "$TEST_NAME" in
             roaming)
               echo "pattern=Timed Roaming Endurance.*@endurance-${DURATION}" >> $GITHUB_OUTPUT
               ;;
