@@ -53,6 +53,7 @@
   },
   "overrides": {
     "vscode-ripgrep": "npm:@vscode/ripgrep@^1.17.0",
+    "minimatch": "^10.2.1",
     "crowdin-context-harvester": {
       "fast-xml-parser": "^5.3.6",
       "langsmith": "^0.4.6"
