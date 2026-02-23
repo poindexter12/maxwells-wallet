@@ -24,10 +24,10 @@ Requirements for initial milestone. Each maps to roadmap phases.
 
 ### Container Scanning (Trivy)
 
-- [ ] **CNTR-01**: Trivy scans the production Docker image after build, before push to GHCR
-- [ ] **CNTR-02**: Trivy detects OS package and application dependency vulnerabilities in the image
-- [ ] **CNTR-03**: Trivy outputs SARIF and uploads to GitHub Security tab with unique category
-- [ ] **CNTR-04**: Trivy scan is non-blocking — workflow succeeds regardless of findings
+- [x] **CNTR-01**: Trivy scans the production Docker image after build, before push to GHCR
+- [x] **CNTR-02**: Trivy detects OS package and application dependency vulnerabilities in the image
+- [x] **CNTR-03**: Trivy outputs SARIF and uploads to GitHub Security tab with unique category
+- [x] **CNTR-04**: Trivy scan is non-blocking — workflow succeeds regardless of findings
 
 ### Repository Health (OpenSSF Scorecard)
 
@@ -135,10 +135,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCORE-02 | Phase 2 | Complete |
 | SCORE-03 | Phase 2 | Complete |
 | SCORE-04 | Phase 2 | Complete |
-| CNTR-01 | Phase 3 | Pending |
-| CNTR-02 | Phase 3 | Pending |
-| CNTR-03 | Phase 3 | Pending |
-| CNTR-04 | Phase 3 | Pending |
+| CNTR-01 | Phase 3 | Complete |
+| CNTR-02 | Phase 3 | Complete |
+| CNTR-03 | Phase 3 | Complete |
+| CNTR-04 | Phase 3 | Complete |
 | DAST-01 | Phase 4 | Pending |
 | DAST-02 | Phase 4 | Pending |
 | DAST-03 | Phase 4 | Pending |
