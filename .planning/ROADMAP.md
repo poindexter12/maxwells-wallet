@@ -60,10 +60,10 @@ Plans:
   2. Trivy detects vulnerabilities in both OS packages and application dependencies within the image
   3. Trivy findings appear in GitHub Security tab with unique category identifier
   4. Docker images are pushed to GHCR regardless of Trivy findings (non-blocking scan)
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] TBD during planning
+- [ ] 03-01-PLAN.md — Add Trivy container scan to docker job in ci.yaml with SARIF upload
 
 ### Phase 4: DAST
 **Goal**: Running application is scanned for runtime vulnerabilities via OWASP ZAP baseline scan in ephemeral CI environment
@@ -101,6 +101,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation & SAST | 1/1 | Complete   | 2026-02-23 |
 | 2. SCA & Repository Health | 0/2 | Planning complete | - |
-| 3. Container Scanning | 0/TBD | Not started | - |
+| 3. Container Scanning | 0/1 | Planning complete | - |
 | 4. DAST | 0/TBD | Not started | - |
 | 5. Documentation | 0/TBD | Not started | - |
