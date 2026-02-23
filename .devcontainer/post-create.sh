@@ -3,11 +3,10 @@ set -e
 
 echo "🚀 Setting up Maxwell's Wallet development environment..."
 
-# Install uv for the vscode user if not already installed
+# Verify uv is available (installed in Dockerfile via COPY --from)
 if ! command -v uv &> /dev/null; then
-    echo "📦 Installing uv..."
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    export PATH="$HOME/.local/bin:$PATH"
+    echo "❌ uv not found — expected to be installed in the container image"
+    exit 1
 fi
 
 # Install dependencies
