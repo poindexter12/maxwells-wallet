@@ -257,7 +257,7 @@ jobs:
       if: always()
       run: docker compose -f docker-compose.dev.yaml down -v --remove-orphans
     - name: Run Trivy container scan
-      uses: aquasecurity/trivy-action@6e3dd3b4eebcf9f238e32e883f2c4c4c54713e3a # v0.30.0
+      uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # v0.34.1
       continue-on-error: true
       with:
         scan-type: 'image'
