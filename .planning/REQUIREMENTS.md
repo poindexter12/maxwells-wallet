@@ -117,13 +117,40 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| *(populated by roadmapper)* | | |
+| CROSS-01 | Phase 1 | Pending |
+| CROSS-02 | Phase 1 | Pending |
+| CROSS-03 | Phase 1 | Pending |
+| CROSS-04 | Phase 1 | Pending |
+| CROSS-05 | Phase 1 | Pending |
+| SAST-01 | Phase 1 | Pending |
+| SAST-02 | Phase 1 | Pending |
+| SAST-03 | Phase 1 | Pending |
+| SAST-04 | Phase 1 | Pending |
+| SAST-05 | Phase 1 | Pending |
+| SCA-01 | Phase 2 | Pending |
+| SCA-02 | Phase 2 | Pending |
+| SCA-03 | Phase 2 | Pending |
+| SCA-04 | Phase 2 | Pending |
+| SCORE-01 | Phase 2 | Pending |
+| SCORE-02 | Phase 2 | Pending |
+| SCORE-03 | Phase 2 | Pending |
+| SCORE-04 | Phase 2 | Pending |
+| CNTR-01 | Phase 3 | Pending |
+| CNTR-02 | Phase 3 | Pending |
+| CNTR-03 | Phase 3 | Pending |
+| CNTR-04 | Phase 3 | Pending |
+| DAST-01 | Phase 4 | Pending |
+| DAST-02 | Phase 4 | Pending |
+| DAST-03 | Phase 4 | Pending |
+| DAST-04 | Phase 4 | Pending |
+| DOCS-01 | Phase 5 | Pending |
+| DOCS-02 | Phase 5 | Pending |
 
 **Coverage:**
-- v1 requirements: 23 total
-- Mapped to phases: 0
-- Unmapped: 23 (pending roadmap creation)
+- v1 requirements: 28 total
+- Mapped to phases: 28
+- Unmapped: 0 (100% coverage ✓)
 
 ---
 *Requirements defined: 2026-02-23*
-*Last updated: 2026-02-23 after initial definition*
+*Last updated: 2026-02-23 after roadmap creation*
