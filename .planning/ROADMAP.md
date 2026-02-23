@@ -17,6 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Container Scanning** - Trivy image vulnerability detection
 - [ ] **Phase 4: DAST** - OWASP ZAP baseline scanning against running application
 - [ ] **Phase 5: Documentation** - README updates for tooling and findings interpretation
+- [ ] **Phase 6: Formal Verification Sweep** - Create VERIFICATION.md for Phases 2-5 (gap closure)
 
 ## Phase Details
 
@@ -92,10 +93,26 @@ Plans:
 Plans:
 - [ ] 05-01-PLAN.md — Add Security Tools section to README documenting all five scanning tools with access instructions
 
+### Phase 6: Formal Verification Sweep
+**Goal**: All 28 v1 requirements formally verified with VERIFICATION.md artifacts, closing procedural gaps from milestone audit
+**Depends on**: Phase 5
+**Requirements**: SCA-01, SCA-02, SCA-03, SCA-04, SCORE-01, SCORE-02, SCORE-03, SCORE-04, CNTR-01, CNTR-02, CNTR-03, CNTR-04, DAST-01, DAST-02, DAST-03, DAST-04, DOCS-01, DOCS-02
+**Gap Closure:** Closes procedural gaps from v1 milestone audit (missing VERIFICATION.md for Phases 2–5)
+**Success Criteria** (what must be TRUE):
+  1. Phase 2 has VERIFICATION.md confirming SCA and Scorecard requirements satisfied
+  2. Phase 3 has VERIFICATION.md confirming Container Scanning requirements satisfied
+  3. Phase 4 has VERIFICATION.md confirming DAST requirements satisfied
+  4. Phase 5 has VERIFICATION.md confirming Documentation requirements satisfied
+  5. All 28 v1 requirements have 3-source verification (VERIFICATION.md + SUMMARY + REQUIREMENTS.md)
+**Plans**: 0 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Run formal verification for Phases 2–5 and create VERIFICATION.md artifacts
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -104,3 +121,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 3. Container Scanning | 0/1 | Planning complete | - |
 | 4. DAST | 0/1 | Planning complete | - |
 | 5. Documentation | 0/1 | Planning complete | - |
+| 6. Formal Verification Sweep | 0/1 | Pending | - |

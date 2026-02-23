@@ -127,29 +127,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SAST-03 | Phase 1 | Complete |
 | SAST-04 | Phase 1 | Complete |
 | SAST-05 | Phase 1 | Complete |
-| SCA-01 | Phase 2 | Complete |
-| SCA-02 | Phase 2 | Complete |
-| SCA-03 | Phase 2 | Complete |
-| SCA-04 | Phase 2 | Complete |
-| SCORE-01 | Phase 2 | Complete |
-| SCORE-02 | Phase 2 | Complete |
-| SCORE-03 | Phase 2 | Complete |
-| SCORE-04 | Phase 2 | Complete |
-| CNTR-01 | Phase 3 | Complete |
-| CNTR-02 | Phase 3 | Complete |
-| CNTR-03 | Phase 3 | Complete |
-| CNTR-04 | Phase 3 | Complete |
-| DAST-01 | Phase 4 | Complete |
-| DAST-02 | Phase 4 | Complete |
-| DAST-03 | Phase 4 | Complete |
-| DAST-04 | Phase 4 | Complete |
-| DOCS-01 | Phase 5 | Complete |
-| DOCS-02 | Phase 5 | Complete |
+| SCA-01 | Phase 2 → Phase 6 verify | Pending Verification |
+| SCA-02 | Phase 2 → Phase 6 verify | Pending Verification |
+| SCA-03 | Phase 2 → Phase 6 verify | Pending Verification |
+| SCA-04 | Phase 2 → Phase 6 verify | Pending Verification |
+| SCORE-01 | Phase 2 → Phase 6 verify | Pending Verification |
+| SCORE-02 | Phase 2 → Phase 6 verify | Pending Verification |
+| SCORE-03 | Phase 2 → Phase 6 verify | Pending Verification |
+| SCORE-04 | Phase 2 → Phase 6 verify | Pending Verification |
+| CNTR-01 | Phase 3 → Phase 6 verify | Pending Verification |
+| CNTR-02 | Phase 3 → Phase 6 verify | Pending Verification |
+| CNTR-03 | Phase 3 → Phase 6 verify | Pending Verification |
+| CNTR-04 | Phase 3 → Phase 6 verify | Pending Verification |
+| DAST-01 | Phase 4 → Phase 6 verify | Pending Verification |
+| DAST-02 | Phase 4 → Phase 6 verify | Pending Verification |
+| DAST-03 | Phase 4 → Phase 6 verify | Pending Verification |
+| DAST-04 | Phase 4 → Phase 6 verify | Pending Verification |
+| DOCS-01 | Phase 5 → Phase 6 verify | Pending Verification |
+| DOCS-02 | Phase 5 → Phase 6 verify | Pending Verification |
 
 **Coverage:**
 - v1 requirements: 28 total
-- Mapped to phases: 28
-- Unmapped: 0 (100% coverage ✓)
+- Formally verified: 10 (Phase 1)
+- Pending verification: 18 (Phases 2–5 → Phase 6)
+- Unmapped: 0 (100% phase coverage ✓)
 
 ---
 *Requirements defined: 2026-02-23*
