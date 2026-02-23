@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 01-01-PLAN.md — Create security.yaml reusable workflow with Semgrep SAST and wire into CI/nightly
+- [x] 01-01-PLAN.md — Create security.yaml reusable workflow with Semgrep SAST and wire into CI/nightly
 
 ### Phase 2: SCA & Repository Health
 **Goal**: Developers see dependency vulnerabilities from OWASP Dependency-Check and repository security posture score from OpenSSF Scorecard in GitHub Security tab
@@ -45,10 +45,11 @@ Plans:
   3. OpenSSF Scorecard runs in isolated workflow on pushes to main
   4. Scorecard results appear in GitHub Security tab showing repository security posture metrics
   5. Both scans complete successfully without blocking builds (non-blocking mode)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] TBD during planning
+- [ ] 02-01-PLAN.md — Add OWASP Dependency-Check to security.yaml with NVD caching and dual-language scanning
+- [ ] 02-02-PLAN.md — Create isolated scorecard.yaml workflow with publish_results compliance
 
 ### Phase 3: Container Scanning
 **Goal**: Production Docker images are scanned for OS package and application dependency vulnerabilities before push to GHCR
@@ -99,7 +100,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & SAST | 1/1 | Complete   | 2026-02-23 |
-| 2. SCA & Repository Health | 0/TBD | Not started | - |
+| 2. SCA & Repository Health | 0/2 | Planning complete | - |
 | 3. Container Scanning | 0/TBD | Not started | - |
 | 4. DAST | 0/TBD | Not started | - |
 | 5. Documentation | 0/TBD | Not started | - |
