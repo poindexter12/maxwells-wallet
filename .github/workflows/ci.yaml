@@ -256,6 +256,21 @@ jobs:
     - name: Cleanup smoke test
       if: always()
       run: docker compose -f docker-compose.dev.yaml down -v --remove-orphans
+    - name: Run Trivy container scan
+      uses: aquasecurity/trivy-action@6e3dd3b4eebcf9f238e32e883f2c4c4c54713e3a # v0.30.0
+      continue-on-error: true
+      with:
+        scan-type: 'image'
+        image-ref: 'maxwells-wallet:latest'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
+    - name: Upload Trivy SARIF to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+        category: trivy-container
     - name: Set up Docker Buildx
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
