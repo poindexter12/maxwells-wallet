@@ -57,6 +57,7 @@ jobs:
   dependency-check:
     name: OWASP Dependency-Check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       security-events: write
       contents: read
@@ -68,13 +69,13 @@ jobs:
 
       - name: Get date for NVD cache key
         id: get-date
-        run: echo "datetime=$(date -u '+%Y%m%d%H')" >> $GITHUB_OUTPUT
+        run: echo "date=$(date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
 
       - name: Cache NVD database
         uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4
         with:
           path: ~/.m2/repository/org/owasp
-          key: ${{ runner.os }}-nvd-${{ steps.get-date.outputs.datetime }}
+          key: ${{ runner.os }}-nvd-${{ steps.get-date.outputs.date }}
           restore-keys: |
             ${{ runner.os }}-nvd-
 
