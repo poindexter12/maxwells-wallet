@@ -45,10 +45,11 @@ Plans:
   3. OpenSSF Scorecard runs in isolated workflow on pushes to main
   4. Scorecard results appear in GitHub Security tab showing repository security posture metrics
   5. Both scans complete successfully without blocking builds (non-blocking mode)
-**Plans**: TBD
+**Plans**: 2/2 plans
 
 Plans:
-- [ ] TBD during planning
+- [ ] 02-01-PLAN.md — Add Dependency-Check job to security.yaml with NVD database caching
+- [ ] 02-02-PLAN.md — Create isolated scorecard.yaml workflow for OpenSSF Scorecard
 
 ### Phase 3: Container Scanning
 **Goal**: Production Docker images are scanned for OS package and application dependency vulnerabilities before push to GHCR
