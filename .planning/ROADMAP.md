@@ -87,10 +87,10 @@ Plans:
   1. README documents all five security tools (Semgrep, Dependency-Check, Trivy, Scorecard, ZAP) with brief descriptions
   2. README explains how to access and interpret findings in GitHub Security tab
   3. Documentation is accurate and reflects the actual workflow implementations from Phases 1-4
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] TBD during planning
+- [ ] 05-01-PLAN.md — Add Security Tools section to README documenting all five scanning tools with access instructions
 
 ## Progress
 
@@ -103,4 +103,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. SCA & Repository Health | 2/2 | Complete | 2026-02-23 |
 | 3. Container Scanning | 0/1 | Planning complete | - |
 | 4. DAST | 0/1 | Planning complete | - |
-| 5. Documentation | 0/TBD | Not started | - |
+| 5. Documentation | 0/1 | Planning complete | - |
