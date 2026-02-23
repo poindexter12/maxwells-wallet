@@ -15,6 +15,12 @@ updates:
       all-deps:
         patterns:
           - "*"
+    ignore:
+      # ESLint 10 breaks eslint-plugin-react (used by eslint-config-next)
+      # Remove this once eslint-plugin-react supports ESLint 10
+      # Tracking: https://github.com/jsx-eslint/eslint-plugin-react/issues/3977
+      - dependency-name: "eslint"
+        versions: [">=10"]
 
   # Backend (pip/uv)
   - package-ecosystem: "pip"
