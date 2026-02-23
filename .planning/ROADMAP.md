@@ -12,7 +12,7 @@ This roadmap delivers a free, open-source alternative to Veracode's commercial s
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation & SAST** - Establish SARIF workflows and Semgrep code scanning
+- [x] **Phase 1: Foundation & SAST** - Establish SARIF workflows and Semgrep code scanning (completed 2026-02-23)
 - [ ] **Phase 2: SCA & Repository Health** - Dependency scanning and OpenSSF Scorecard integration
 - [ ] **Phase 3: Container Scanning** - Trivy image vulnerability detection
 - [ ] **Phase 4: DAST** - OWASP ZAP baseline scanning against running application
@@ -30,7 +30,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Semgrep findings appear in GitHub Security tab with unique category identifier (no SARIF conflicts)
   4. All third-party Actions are pinned to commit SHAs following repo convention
   5. Semgrep scans complete successfully without blocking PR checks (continue-on-error: true)
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 01-01-PLAN.md — Create security.yaml reusable workflow with Semgrep SAST and wire into CI/nightly
@@ -98,7 +98,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & SAST | 0/1 | Planning complete | - |
+| 1. Foundation & SAST | 1/1 | Complete   | 2026-02-23 |
 | 2. SCA & Repository Health | 0/TBD | Not started | - |
 | 3. Container Scanning | 0/TBD | Not started | - |
 | 4. DAST | 0/TBD | Not started | - |

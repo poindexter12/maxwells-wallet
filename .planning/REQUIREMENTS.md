@@ -9,11 +9,11 @@ Requirements for initial milestone. Each maps to roadmap phases.
 
 ### SAST (Semgrep)
 
-- [ ] **SAST-01**: Semgrep runs on PRs targeting main and pushes to main, scanning TypeScript and Python code
-- [ ] **SAST-02**: Semgrep uses the `auto` ruleset to auto-detect languages and apply community rules
-- [ ] **SAST-03**: Semgrep outputs SARIF and uploads to GitHub Security tab with unique category
-- [ ] **SAST-04**: Semgrep runs via native Docker container (not deprecated semgrep-action wrapper)
-- [ ] **SAST-05**: Semgrep scan is non-blocking — workflow succeeds regardless of findings
+- [x] **SAST-01**: Semgrep runs on PRs targeting main and pushes to main, scanning TypeScript and Python code
+- [x] **SAST-02**: Semgrep uses the `auto` ruleset to auto-detect languages and apply community rules
+- [x] **SAST-03**: Semgrep outputs SARIF and uploads to GitHub Security tab with unique category
+- [x] **SAST-04**: Semgrep runs via native Docker container (not deprecated semgrep-action wrapper)
+- [x] **SAST-05**: Semgrep scan is non-blocking — workflow succeeds regardless of findings
 
 ### SCA (OWASP Dependency-Check)
 
@@ -45,11 +45,11 @@ Requirements for initial milestone. Each maps to roadmap phases.
 
 ### Cross-Cutting
 
-- [ ] **CROSS-01**: Security scans are defined in a reusable `security.yaml` workflow callable by ci.yaml and nightly.yaml
-- [ ] **CROSS-02**: Each tool's SARIF upload uses a unique category to prevent conflicts (e.g., semgrep, dependency-check, trivy, scorecard)
-- [ ] **CROSS-03**: All third-party Actions are pinned to commit SHAs (existing repo convention)
-- [ ] **CROSS-04**: Security scan jobs use job-level permissions (least privilege, not workflow-level)
-- [ ] **CROSS-05**: All security scans use `continue-on-error: true` to remain informational-only
+- [x] **CROSS-01**: Security scans are defined in a reusable `security.yaml` workflow callable by ci.yaml and nightly.yaml
+- [x] **CROSS-02**: Each tool's SARIF upload uses a unique category to prevent conflicts (e.g., semgrep, dependency-check, trivy, scorecard)
+- [x] **CROSS-03**: All third-party Actions are pinned to commit SHAs (existing repo convention)
+- [x] **CROSS-04**: Security scan jobs use job-level permissions (least privilege, not workflow-level)
+- [x] **CROSS-05**: All security scans use `continue-on-error: true` to remain informational-only
 
 ### Documentation
 
@@ -117,16 +117,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CROSS-01 | Phase 1 | Pending |
-| CROSS-02 | Phase 1 | Pending |
-| CROSS-03 | Phase 1 | Pending |
-| CROSS-04 | Phase 1 | Pending |
-| CROSS-05 | Phase 1 | Pending |
-| SAST-01 | Phase 1 | Pending |
-| SAST-02 | Phase 1 | Pending |
-| SAST-03 | Phase 1 | Pending |
-| SAST-04 | Phase 1 | Pending |
-| SAST-05 | Phase 1 | Pending |
+| CROSS-01 | Phase 1 | Complete |
+| CROSS-02 | Phase 1 | Complete |
+| CROSS-03 | Phase 1 | Complete |
+| CROSS-04 | Phase 1 | Complete |
+| CROSS-05 | Phase 1 | Complete |
+| SAST-01 | Phase 1 | Complete |
+| SAST-02 | Phase 1 | Complete |
+| SAST-03 | Phase 1 | Complete |
+| SAST-04 | Phase 1 | Complete |
+| SAST-05 | Phase 1 | Complete |
 | SCA-01 | Phase 2 | Pending |
 | SCA-02 | Phase 2 | Pending |
 | SCA-03 | Phase 2 | Pending |
