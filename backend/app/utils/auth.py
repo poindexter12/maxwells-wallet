@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 from typing import Optional, cast
 
 import bcrypt
-from jose import jwt, JWTError  # type: ignore[import-untyped]
+import jwt
+from jwt import InvalidTokenError
 
 from app.config import settings
 
@@ -45,5 +46,5 @@ def verify_token(token: str) -> Optional[int]:
         if user_id is None:
             return None
         return int(user_id)
-    except JWTError:
+    except InvalidTokenError:
         return None

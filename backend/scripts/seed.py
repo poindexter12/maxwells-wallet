@@ -236,7 +236,7 @@ async def seed_demo_user(session: AsyncSession):
             password_hash=hash_password(user_config["password"]),
         )
         session.add(user)
-        print(f"Created user: {user_config['username']} / {user_config['password']}")
+        print(f"Created user: {user_config['username']}")
 
     await session.commit()
 
