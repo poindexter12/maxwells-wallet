@@ -38,10 +38,10 @@ Requirements for initial milestone. Each maps to roadmap phases.
 
 ### DAST (OWASP ZAP)
 
-- [ ] **DAST-01**: ZAP baseline (passive) scan runs against an ephemeral Docker Compose app instance in CI
-- [ ] **DAST-02**: Docker Compose environment spins up the app with health check before ZAP scan starts
-- [ ] **DAST-03**: ZAP produces HTML/Markdown report uploaded as CI artifact
-- [ ] **DAST-04**: ZAP scan is non-blocking — workflow succeeds regardless of findings
+- [x] **DAST-01**: ZAP baseline (passive) scan runs against an ephemeral Docker Compose app instance in CI
+- [x] **DAST-02**: Docker Compose environment spins up the app with health check before ZAP scan starts
+- [x] **DAST-03**: ZAP produces HTML/Markdown report uploaded as CI artifact
+- [x] **DAST-04**: ZAP scan is non-blocking — workflow succeeds regardless of findings
 
 ### Cross-Cutting
 
@@ -139,10 +139,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CNTR-02 | Phase 3 | Complete |
 | CNTR-03 | Phase 3 | Complete |
 | CNTR-04 | Phase 3 | Complete |
-| DAST-01 | Phase 4 | Pending |
-| DAST-02 | Phase 4 | Pending |
-| DAST-03 | Phase 4 | Pending |
-| DAST-04 | Phase 4 | Pending |
+| DAST-01 | Phase 4 | Complete |
+| DAST-02 | Phase 4 | Complete |
+| DAST-03 | Phase 4 | Complete |
+| DAST-04 | Phase 4 | Complete |
 | DOCS-01 | Phase 5 | Pending |
 | DOCS-02 | Phase 5 | Pending |
 

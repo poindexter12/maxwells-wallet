@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Security scanning tools run automatically in CI and produce visible, actionable findings without breaking any builds.
-**Current focus:** Phase 3: Container Scanning
+**Current focus:** Phase 4: DAST
 
 ## Current Position
 
-Phase: 3 of 5 (Container Scanning)
+Phase: 4 of 5 (DAST)
 Plan: 1 of 1 in current phase
 Status: Phase complete
-Last activity: 2026-02-23 — Phase 3 complete (03-01 Trivy integration)
+Last activity: 2026-02-23 — Phase 4 complete (04-01 ZAP DAST workflow)
 
-Progress: [██████░░░░] 60%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 1.5 minutes
-- Total execution time: 0.12 hours
+- Total plans completed: 5
+- Average duration: 1.4 minutes
+- Total execution time: 0.14 hours
 
 **By Phase:**
 
@@ -30,10 +30,11 @@ Progress: [██████░░░░] 60%
 | 01-foundation-sast | 1 | 2 min | 2 min |
 | 02-sca-repository-health | 2 | 3 min | 1.5 min |
 | 03-container-scanning | 1 | 1 min | 1 min |
+| 04-dast | 1 | 1 min | 1 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min), 02-01 (1 min), 02-02 (2 min), 03-01 (1 min)
-- Trend: Strong velocity, Phase 3 completed in 1 minute
+- Last 5 plans: 02-01 (1 min), 02-02 (2 min), 03-01 (1 min), 04-01 (1 min)
+- Trend: Excellent velocity, Phase 4 completed in 1 minute
 
 *Updated after each plan completion*
 
@@ -59,6 +60,9 @@ Recent decisions affecting current work:
 - [Phase 03-01]: Trivy scans local docker-compose built image before GHCR push for early vulnerability detection
 - [Phase 03-01]: Include all Trivy severity levels (UNKNOWN to CRITICAL) for comprehensive visibility
 - [Phase 03-01]: Position Trivy before buildx setup to scan all builds including PRs
+- [Phase 04-01]: ZAP baseline scan v0.15.0 (SHA 6c5a007541891231cd9e0ddec25d4f25c59c9874)
+- [Phase 04-01]: SARIF output via -J zap-report.json cmd_option
+- [Phase 04-01]: 20-minute timeout for app startup + scan execution
 
 ### Pending Todos
 
@@ -77,11 +81,17 @@ None yet.
 - ✓ SARIF uploaded with category 'trivy-container'
 - ✓ Non-blocking execution, all builds scanned (PRs and main)
 
-**Phase 4 Risk:**
-- ZAP false positive volume typically high (50-200 findings before tuning, target <20 after) — allocate tuning time in Phase 4 planning
+**Phase 4 Status:**
+- ✓ ZAP baseline scan workflow created (dast.yaml)
+- ✓ Docker Compose ephemeral environment orchestration
+- ✓ SARIF uploaded with category 'zap'
+- ✓ Non-blocking execution, runs on push to main only
+
+**Phase 4 Known Limitation:**
+- ZAP false positive volume typically high (50-200 findings before tuning) — post-deployment tuning needed
 
 ## Session Continuity
 
-Last session: 2026-02-23 (Phase 3 execution)
-Stopped at: Phase 3 complete (03-01 Trivy integration)
+Last session: 2026-02-23 (Phase 4 execution)
+Stopped at: Completed 04-01-PLAN.md (ZAP DAST workflow)
 Resume file: None
