@@ -104,10 +104,10 @@ Plans:
   3. Phase 4 has VERIFICATION.md confirming DAST requirements satisfied
   4. Phase 5 has VERIFICATION.md confirming Documentation requirements satisfied
   5. All 28 v1 requirements have 3-source verification (VERIFICATION.md + SUMMARY + REQUIREMENTS.md)
-**Plans**: 0 plans
+**Plans**: 1 plan
 
 Plans:
-- [ ] 06-01-PLAN.md — Run formal verification for Phases 2–5 and create VERIFICATION.md artifacts
+- [ ] 06-01-PLAN.md — Create VERIFICATION.md for Phases 2-5 with file:line evidence for all 18 requirements
 
 ## Progress
 
@@ -121,4 +121,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Container Scanning | 0/1 | Planning complete | - |
 | 4. DAST | 0/1 | Planning complete | - |
 | 5. Documentation | 0/1 | Planning complete | - |
-| 6. Formal Verification Sweep | 0/1 | Pending | - |
+| 6. Formal Verification Sweep | 0/1 | Planning complete | - |
