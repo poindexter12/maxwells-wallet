@@ -93,38 +93,38 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DASH-01 | — | Pending |
-| DASH-02 | — | Pending |
-| DASH-03 | — | Pending |
-| DASH-04 | — | Pending |
-| ERR-01 | — | Pending |
-| ERR-02 | — | Pending |
-| ERR-03 | — | Pending |
-| ERR-04 | — | Pending |
-| TYPE-01 | — | Pending |
-| TYPE-02 | — | Pending |
-| TYPE-03 | — | Pending |
-| TEST-01 | — | Pending |
-| TEST-02 | — | Pending |
-| TEST-03 | — | Pending |
-| TEST-04 | — | Pending |
-| I18N-01 | — | Pending |
-| I18N-02 | — | Pending |
-| I18N-03 | — | Pending |
-| PERF-01 | — | Pending |
-| PERF-02 | — | Pending |
-| PERF-03 | — | Pending |
-| BACK-01 | — | Pending |
-| BACK-02 | — | Pending |
-| BACK-03 | — | Pending |
-| BACK-04 | — | Pending |
-| BACK-05 | — | Pending |
+| DASH-01 | Phase 7 | Pending |
+| DASH-02 | Phase 7 | Pending |
+| DASH-03 | Phase 8 | Pending |
+| DASH-04 | Phase 8 | Pending |
+| ERR-01 | Phase 8 | Pending |
+| ERR-02 | Phase 8 | Pending |
+| ERR-03 | Phase 8 | Pending |
+| ERR-04 | Phase 8 | Pending |
+| TYPE-01 | Phase 7 | Pending |
+| TYPE-02 | Phase 7 | Pending |
+| TYPE-03 | Phase 7 | Pending |
+| TEST-01 | Phase 9 | Pending |
+| TEST-02 | Phase 9 | Pending |
+| TEST-03 | Phase 9 | Pending |
+| TEST-04 | Phase 10 | Pending |
+| I18N-01 | Phase 10 | Pending |
+| I18N-02 | Phase 10 | Pending |
+| I18N-03 | Phase 10 | Pending |
+| PERF-01 | Phase 9 | Pending |
+| PERF-02 | Phase 9 | Pending |
+| PERF-03 | Phase 9 | Pending |
+| BACK-01 | Phase 11 | Pending |
+| BACK-02 | Phase 11 | Pending |
+| BACK-03 | Phase 11 | Pending |
+| BACK-04 | Phase 11 | Pending |
+| BACK-05 | Phase 11 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 26 total
-- Mapped to phases: 0
-- Unmapped: 26 ⚠️
+- Mapped to phases: 26
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-24*
-*Last updated: 2026-02-24 after initial definition*
+*Last updated: 2026-02-24 after roadmap creation*
