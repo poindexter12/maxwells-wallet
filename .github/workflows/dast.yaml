@@ -58,6 +58,16 @@ jobs:
           docker compose -f docker-compose.dev.yaml logs
           exit 1
 
+      - name: Initialize application
+        run: |
+          # Create a test user so the app serves real pages instead of
+          # redirecting everything to /setup (302 without Content-Type)
+          curl -sf -X POST http://localhost:3001/api/v1/auth/setup \
+            -H 'Content-Type: application/json' \
+            -d '{"username": "dast-scanner", "password": "DastScan!2026"}' \
+            && echo "App initialized with test user" \
+            || echo "App initialization failed or already initialized"
+
       - name: Run ZAP baseline scan
         uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25 # v0.15.0
         with:
