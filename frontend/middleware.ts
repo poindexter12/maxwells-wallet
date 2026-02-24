@@ -2,22 +2,35 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
- * Next.js middleware for fresh install redirect only.
+ * Next.js middleware for:
+ * 1. Fresh install redirect (no users → /setup)
+ * 2. Per-request CSP nonce generation
  *
- * This middleware ONLY handles the fresh install case:
- * - If no users exist (not initialized), redirect to /setup
- *
- * All other auth logic (login redirect, authenticated user redirects) is
- * handled client-side. This is because existing installs store tokens in
- * localStorage, which middleware cannot access. Only new logins after this
- * update will have tokens in cookies.
- *
- * By limiting middleware to fresh install detection, we avoid redirect loops
- * for existing users who have tokens only in localStorage.
+ * Auth beyond fresh-install detection is handled client-side because existing
+ * installs store tokens in localStorage, which middleware cannot access.
  */
 
-// Routes that should be accessible without auth check (static assets, api, etc.)
+// Routes that skip middleware entirely (static assets, api, etc.)
 const BYPASS_ROUTES = ['/api', '/_next', '/favicon.ico', '/icon.svg']
+
+function buildCsp(nonce: string): string {
+  const isProd = process.env.NODE_ENV === 'production'
+  const scriptSrc = isProd
+    ? `'self' 'nonce-${nonce}'`
+    : `'self' 'nonce-${nonce}' 'unsafe-eval'`
+
+  return [
+    "default-src 'self'",
+    `script-src ${scriptSrc}`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data:",
+    "connect-src 'self'",
+    "frame-ancestors 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ')
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -27,9 +40,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Already on setup page, no need to check
+  // Generate per-request nonce for CSP
+  const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString('base64')
+  const csp = buildCsp(nonce)
+
+  // Pass nonce to server components via request header
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-nonce', nonce)
+  requestHeaders.set('Content-Security-Policy', csp)
+
+  // Already on setup page — serve with CSP
   if (pathname === '/setup') {
-    return NextResponse.next()
+    const response = NextResponse.next({ request: { headers: requestHeaders } })
+    response.headers.set('Content-Security-Policy', csp)
+    return response
   }
 
   // Check if app is initialized (any user exists)
@@ -47,7 +71,9 @@ export async function middleware(request: NextRequest) {
       // ONLY handle fresh install case - redirect to setup if not initialized
       if (!status.initialized) {
         console.log('[Middleware] App not initialized, redirecting to /setup')
-        return NextResponse.redirect(new URL('/setup', request.url))
+        const response = NextResponse.redirect(new URL('/setup', request.url))
+        response.headers.set('Content-Security-Policy', csp)
+        return response
       }
       console.log('[Middleware] App initialized, proceeding to client-side auth')
     } else {
@@ -60,7 +86,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // For all other cases (initialized app), let client-side handle auth
-  return NextResponse.next()
+  const response = NextResponse.next({ request: { headers: requestHeaders } })
+  response.headers.set('Content-Security-Policy', csp)
+  return response
 }
 
 export const config = {
