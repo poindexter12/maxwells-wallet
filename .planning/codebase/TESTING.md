@@ -1,66 +1,59 @@
 # Testing Patterns
 
-**Analysis Date:** 2026-02-23
+**Analysis Date:** 2026-02-24
 
 ## Test Framework
 
-**Frontend (Unit & Component Tests):**
-- Runner: Vitest 4.0.14
+**Frontend Runner:**
+- Vitest 4.0+ with jsdom environment
 - Config: `frontend/vitest.config.ts`
-- Environment: jsdom (browser simulation)
-- Test library: @testing-library/react 16.3.2
-- Assertion library: @testing-library/jest-dom (Vitest auto-imports globals: `describe`, `it`, `expect`, `beforeEach`, etc.)
+- Globals enabled (describe, it, expect available without imports)
 
-**Frontend (E2E Tests):**
-- Framework: Playwright 1.58.0
-- Config: `frontend/playwright.config.ts`
-- Test directory: `frontend/e2e/`
-- Browsers: Chromium, Firefox, WebKit
-- Runs against: Full stack (Next.js frontend on 3000, FastAPI backend on 3001)
+**Frontend Assertion Library:**
+- Vitest (uses Chai assertions)
+- `@testing-library/react` for component testing
+- `@testing-library/jest-dom` for DOM matchers
 
-**Backend (Unit & Integration Tests):**
-- Runner: pytest 7.4.0
-- Config: `backend/pyproject.toml` ([tool.pytest.ini_options])
-- Async support: pytest-asyncio 0.21.0
-- Database: In-memory SQLite for tests (`sqlite+aiosqlite:///:memory:`)
-- Test directory: `backend/tests/`
+**Backend Runner:**
+- pytest 7.4+ with pytest-asyncio plugin
+- Config: `backend/pyproject.toml` (markers: `performance`, `slow`)
+- AsyncIO mode: auto-detection
+
+**Backend Assertion Library:**
+- pytest assertions (standard `assert` statements)
 
 **Run Commands:**
-
-Frontend:
 ```bash
-make test-frontend        # Run unit/component tests
-make test-e2e            # Run E2E tests against live servers
-make test-e2e-headed     # Run with visible browser
-make test-e2e-debug      # Debug mode with PWDEBUG
-make test-chaos          # Chaos/monkey tests
-```
+# Frontend - unit/component tests
+npm run test              # Watch mode
+npm run test:run          # Single run
+npm run test:coverage     # With V8 coverage report
 
-Backend:
-```bash
-make test-backend        # Run unit/integration tests
-make test-coverage       # Run with coverage report
-make test-perf           # Run performance tests
+# Frontend - E2E tests
+npm run test:e2e          # Headless
+npm run test:e2e:ui       # Interactive UI mode
+
+# Backend - all tests
+uv run pytest             # Watch (if configured)
+uv run pytest -k "not slow"  # Skip slow tests
+uv run pytest -m "not performance"  # Skip performance tests
+
+# Backend - with coverage
+uv run pytest --cov=app --cov-report=term-missing
 ```
 
 ## Test File Organization
 
 **Location:**
-
-Frontend:
-- Co-located: Test files live next to source files: `src/components/NavBar.tsx` → `src/components/NavBar.test.tsx`
-- E2E tests: `frontend/e2e/` (separate directory structure)
-- Setup: `src/test/setup.ts`
-
-Backend:
-- Separate: `backend/tests/` directory
-- Organized by feature: `test_auth.py`, `test_transactions.py`, `test_tags.py`, `test_csv_import.py`, etc.
+- Frontend: Colocated with source (e.g., `components/NavBar.tsx` → `components/NavBar.test.tsx`)
+- Backend: Separate `tests/` directory at repo root (e.g., `tests/test_tags.py`)
 
 **Naming:**
-- Frontend: `*.test.tsx`, `*.test.ts`, `*.spec.tsx`, `*.spec.ts`
-- Backend: `test_*.py`
+- Frontend: `{ComponentName}.test.tsx` or `{module}.test.ts`
+- Backend: `test_{module}.py` (pytest convention)
+- E2E: `{feature}.spec.ts` in `frontend/e2e/` directory
 
-**Structure (Example):**
+**Structure:**
 ```
 frontend/
 ├── src/
@@ -68,436 +61,375 @@ frontend/
 │   │   ├── NavBar.tsx
 │   │   └── NavBar.test.tsx
 │   ├── contexts/
-│   │   ├── AuthContext.tsx
-│   │   ├── AuthContext.test.tsx
+│   │   ├── DashboardContext.tsx
 │   │   └── DashboardContext.test.tsx
-│   ├── test/
-│   │   ├── setup.ts
-│   │   ├── mocks/
-│   │   │   └── server.ts
-│   │   └── i18n.test.ts
-│   └── app/(main)/
-│       ├── page.tsx
-│       └── page.test.tsx
-└── e2e/
-    ├── auth.setup.ts
-    ├── test_chaos.ts
-    └── test_import_workflow.py
+│   └── test/
+│       ├── setup.ts          # Global test setup
+│       ├── mocks/
+│       │   ├── server.ts      # MSW server instance
+│       │   └── handlers.ts    # MSW request handlers
+
+backend/
+├── tests/
+│   ├── test_auth.py
+│   ├── test_tags.py
+│   ├── test_dashboard.py
+│   └── conftest.py           # Pytest fixtures
 ```
 
 ## Test Structure
 
-**Unit Test Pattern (Frontend - React):**
-
+**Frontend Unit/Component Test:**
 ```typescript
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import { NavBar } from './NavBar'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { render, screen, waitFor, act } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { DashboardProvider, useDashboard } from './DashboardContext'
 
-// Mock dependencies
-const mockPathname = vi.fn()
-const mockPush = vi.fn()
-vi.mock('next/navigation', () => ({
-  usePathname: () => mockPathname(),
-  useRouter: () => ({ push: mockPush }),
-}))
+// Test component that exposes context for testing
+function TestConsumer({ onMount }: { onMount?: (ctx: ReturnType<typeof useDashboard>) => void }) {
+  const ctx = useDashboard()
+  if (onMount) onMount(ctx)
+  return <div data-testid="status">{ctx.loading ? 'loading' : 'loaded'}</div>
+}
 
-describe('NavBar', () => {
+describe('DashboardContext', () => {
   beforeEach(() => {
-    mockPathname.mockReturnValue('/')
+    vi.clearAllMocks()
   })
 
-  it('renders the brand logo and name', () => {
-    render(<NavBar />)
-    expect(screen.getByText("Maxwell's Wallet")).toBeInTheDocument()
-  })
+  describe('initial loading', () => {
+    it('shows loading state initially', async () => {
+      render(<DashboardProvider><TestConsumer /></DashboardProvider>)
+      expect(screen.getByTestId('status')).toHaveTextContent('loading')
 
-  it('renders all navigation links', () => {
-    render(<NavBar />)
-    expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByTestId('status')).toHaveTextContent('loaded')
+      })
+    })
   })
 })
 ```
 
-**Key Patterns:**
-- Import `vi` from vitest for mocking
-- Use `render()` from @testing-library/react
-- Query with semantic role queries: `getByRole('link')`, `getByRole('button')`
-- Use `data-testid` for elements without roles (see Test IDs section)
-- Mock dependencies at top of file before describe blocks
-- Use `beforeEach` to reset state between tests
+**Patterns:**
+- Use `data-testid` for element selection (translation-agnostic)
+- Use `waitFor()` for async operations
+- Use `act()` wrapper for state updates outside render
+- Create test consumer components to expose hook state
 
-**Unit Test Pattern (Backend - Python):**
-
+**Backend Test Structure:**
 ```python
-"""Tests for authentication workflow."""
+"""Tests for Tags API (v0.4)"""
 
 import pytest
 from httpx import AsyncClient
 
-class TestAuthUtilities:
-    """Test auth utility functions."""
-
-    def test_hash_password_creates_hash(self):
-        """Password hashing creates a bcrypt hash."""
-        password = "testpassword123"
-        hashed = hash_password(password)
-
-        assert hashed != password
-        assert hashed.startswith("$2b$")  # bcrypt prefix
-
-class TestAuthStatus:
-    """Test GET /api/v1/auth/status endpoint."""
+class TestTags:
+    """Tags API Tests"""
 
     @pytest.mark.asyncio
-    async def test_check_auth_with_valid_token(self, client: AsyncClient):
-        """Valid token returns authenticated user."""
-        # Setup via fixture, test via client
-        response = await client.get("/api/v1/auth/status", ...)
+    async def test_list_tags(self, client: AsyncClient, seed_tags):
+        """List all tags"""
+        response = await client.get("/api/v1/tags/")
         assert response.status_code == 200
-        assert response.json()["authenticated"] is True
+        data = response.json()
+
+        assert len(data) > 0
+        assert any(t["namespace"] == "bucket" for t in data)
+
+    @pytest.mark.asyncio
+    async def test_get_tag_by_id(self, client: AsyncClient, seed_tags):
+        """Get a tag by ID"""
+        list_response = await client.get("/api/v1/tags/")
+        tags = list_response.json()
+        tag_id = tags[0]["id"]
+
+        response = await client.get(f"/api/v1/tags/{tag_id}")
+        assert response.status_code == 200
+        assert response.json()["id"] == tag_id
 ```
 
-**Key Patterns:**
-- Docstrings explain what is being tested
-- Class-based organization: `TestAuthUtilities`, `TestAuthStatus`
-- `@pytest.mark.asyncio` for async tests (auto-mode enabled)
-- Use `client` fixture for HTTP testing (AsyncClient)
-- Use `seed_tags` fixture for pre-populated data
+**Patterns:**
+- Organize tests into classes by feature/endpoint
+- Use descriptive docstrings for test purpose
+- Decorate async tests with `@pytest.mark.asyncio`
+- Use fixtures (`client`, `seed_tags`) for setup
+- Assert both status code and response data
 
 ## Mocking
 
-**Framework:**
+**Frontend Framework:** MSW (Mock Service Worker)
+- Server instance: `frontend/src/test/mocks/server.ts`
+- Request handlers: `frontend/src/test/mocks/handlers.ts`
+- Setup in `frontend/src/test/setup.ts` (runs before all tests)
 
-Frontend: `vitest` with `vi.fn()`, `vi.mock()`
-Backend: `unittest.mock` (via pytest)
-
-**Frontend Patterns:**
-
+**Mocking Pattern:**
 ```typescript
-// Mock a module
-vi.mock('next/navigation', () => ({
-  usePathname: () => mockPathname(),
-  useRouter: () => ({ push: mockPush }),
-}))
-
-// Mock a context
-vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({
-    user: { id: 1, username: 'testuser' },
-    logout: vi.fn(),
+// vi.mock creates module-level mocks
+vi.mock('@/contexts/DashboardContext', () => ({
+  useDashboard: () => ({
+    dashboards: mockDashboards,
+    currentDashboard: mockDashboards[0],
+    setCurrentDashboard: vi.fn(),
+    createDashboard: vi.fn(),
+    loading: false,
   }),
 }))
 
-// Mock recharts (complex charting library)
-vi.mock('recharts', () => ({
-  ResponsiveContainer: () => null,
-  PieChart: () => null,
-  // ... all chart components mapped to null
-}))
+// vi.fn() creates spies/mocks for functions
+const mockSetCurrentDashboard = vi.fn()
 
-// In test setup file (src/test/setup.ts):
-vi.mock('next-intl', () => ({
-  useTranslations: (namespace?: string) => {
-    const t = (key: string, values?: Record<string, unknown>) => {
-      // Return actual English translation or key
-      return getNestedValue(messages, `${namespace}.${key}`) || key
-    }
-    return t
-  },
-}))
-```
+// Clear mocks between tests
+beforeEach(() => {
+  vi.clearAllMocks()
+})
 
-**Backend Patterns:**
-
-Use fixtures in `conftest.py`:
-
-```python
-@pytest.fixture(scope="function")
-async def client(async_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
-    """Create test client with dependency override"""
-    async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
-        yield async_session
-
-    app.dependency_overrides[get_session] = override_get_session
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        yield client
-    app.dependency_overrides.clear()
+// Assert mock calls
+expect(mockSetCurrentDashboard).toHaveBeenCalledWith(expectedDashboard)
 ```
 
 **What to Mock:**
-- External dependencies: Next.js routing, third-party libraries, charts
-- API calls: Use MSW (Mock Service Worker) on frontend
-- Database: Use in-memory SQLite, fixtures provide fresh data
-- Time-dependent functions: Use `freezegun` (in dev dependencies)
+- Context providers and hooks (DashboardContext, AuthContext)
+- External API calls (via MSW handlers)
+- Third-party libraries with side effects (recharts, complex UI libs)
+- Browser APIs (localStorage via window mock)
 
 **What NOT to Mock:**
-- Core business logic (auth utilities, validation)
-- Database layer (use fixtures instead)
-- Your own utility functions (test them directly)
-- Error handling (test error cases with real code)
+- Utility functions and helpers (test real implementation)
+- React hooks like useState, useEffect (test behavior)
+- Page components using context (use real provider instead)
+- Component composition (test integrated behavior)
+
+**Backend Framework:** pytest fixtures + freezegun for time
+```python
+# In conftest.py
+@pytest.fixture
+async def client(session):
+    """Async HTTP client for testing API endpoints"""
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        yield client
+
+@pytest.fixture
+def seed_tags(session):
+    """Create test tags for tag tests"""
+    tags = [
+        Tag(namespace="bucket", value="groceries", ...),
+        Tag(namespace="bucket", value="entertainment", ...),
+    ]
+    session.add_all(tags)
+    session.commit()
+    return tags
+
+# In test
+from freezegun import freeze_time
+@freeze_time("2024-12-06")
+def test_date_ranges():
+    # Test with fixed date
+    pass
+```
 
 ## Fixtures and Factories
 
-**Frontend Test Setup:**
-
-File: `src/test/setup.ts`
-
+**Test Data (Frontend):**
 ```typescript
-import '@testing-library/jest-dom'
-import { vi, beforeAll, afterAll, afterEach, beforeEach } from 'vitest'
-import { server } from './mocks/server'  // MSW server
-import messages from '../messages/en-US.json'  // i18n translations
-
-// Mock next-intl to return actual translations
-vi.mock('next-intl', () => ({
-  useTranslations: (namespace?: string) => ({
-    t: (key: string) => getNestedValue(messages, `${namespace}.${key}`) || key,
-  }),
-}))
-
-// MSW setup for API mocking
-beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
-afterEach(() => server.resetHandlers())
-afterAll(() => server.close())
-
-// Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-}
-Object.defineProperty(window, 'localStorage', { value: localStorageMock })
-
-// Reset mocks between tests
-beforeEach(() => {
-  localStorageMock.getItem.mockClear()
-  localStorageMock.setItem.mockClear()
-})
-```
-
-**Backend Test Fixtures:**
-
-File: `backend/tests/conftest.py`
-
-```python
-@pytest.fixture(scope="function")
-async def async_engine():
-    """Create async engine with fresh schema"""
-    engine = create_async_engine(TEST_DATABASE_URL, echo=False)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    yield engine
-    await engine.dispose()
-
-@pytest.fixture(scope="function")
-async def seed_tags(async_session: AsyncSession):
-    """Seed default bucket tags and account tags"""
-    default_bucket_tags = [
-        ("bucket", "none", "Uncategorized"),
-        ("bucket", "income", "Income and earnings"),
-        # ... more tags
-    ]
-    # Create and commit tags
-```
-
-**Location:**
-- Frontend: `src/test/` directory
-- Backend: `tests/conftest.py` (pytest auto-discovers)
-- Shared mock handlers: `src/test/mocks/server.ts` (MSW)
-
-## Coverage
-
-**Frontend:**
-
-Reporter: v8 coverage
-View coverage:
-```bash
-make test-coverage  # Generates HTML report in coverage/
-```
-
-**Backend:**
-
-Configuration in `pyproject.toml`:
-```toml
-[tool.coverage.run]
-concurrency = ["greenlet"]
-source = ["app"]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "if TYPE_CHECKING:",
-    "raise NotImplementedError",
+// In test files - inline mock data
+const mockDashboards = [
+  {
+    id: 1,
+    name: 'Default',
+    date_range_type: 'mtd',
+    date_range: { label: 'Month to Date', start: '2024-12-01', end: '2024-12-06' },
+    is_default: true,
+  },
+  {
+    id: 2,
+    name: 'Yearly',
+    date_range_type: 'ytd',
+    date_range: { label: 'Year to Date', start: '2024-01-01', end: '2024-12-06' },
+    is_default: false,
+  },
 ]
+
+// Helper functions for setup
+function TestConsumer({ onMount }: { onMount?: (ctx) => void }) {
+  // Component that exposes state for testing
+}
 ```
 
-View coverage:
-```bash
-make test-coverage  # Generates HTML report in backend/htmlcov/
-```
+**Test Data (Backend):**
+- Location: `backend/tests/conftest.py` (pytest fixtures)
+- Fixtures provide `client`, `session`, `seed_tags`, etc.
+- Seed functions in routers (e.g., `resetMockDashboards()` in handlers.ts)
 
-**Requirements:** No enforced minimum; goal is to grow coverage over time
+**Coverage:**
+- Required: 70% lines, branches, functions, statements (enforced by Vitest config)
+- Report: `frontend/vitest.config.ts` → `coverage: { reporter: ['text', 'json', 'html'] }`
+- View coverage: Open `coverage/index.html` after `npm run test:coverage`
+- Backend coverage: `uv run pytest --cov=app` generates HTML report
 
 ## Test Types
 
-**Unit Tests:**
+**Frontend Unit Tests:**
+- Scope: Individual functions, hooks, small components
+- Approach: Vitest + React Testing Library
+- Example: Test a context hook in isolation with mock provider
 
-Frontend (components):
-- Scope: Single component in isolation
-- Approach: Mock all external dependencies, test component logic and rendering
-- Example: `NavBar.test.tsx` tests link rendering and active state detection
-- Location: Co-located with component
+**Frontend Component Tests:**
+- Scope: Components with props/state/effects
+- Approach: Render with test harness, assert DOM state
+- Example: `DashboardContext.test.tsx` - render provider, test all hook methods
 
-Frontend (utilities):
-- Scope: Pure functions and hooks
-- Approach: No mocking unless external dependencies
-- Example: `DashboardContext.test.tsx` tests context CRUD operations
+**Frontend Integration Tests:**
+- Scope: Multiple components + context + API
+- Approach: E2E with Playwright (see E2E section)
+- Example: Full user flow: login → dashboard → create item
 
-Backend (utilities):
-- Scope: Single function (auth, hashing, validation)
-- Approach: No database, no mocking unless needed
-- Example: `test_hash_password_creates_hash()` tests bcrypt hashing directly
+**Frontend E2E Tests:**
+- Framework: Playwright 1.58+
+- Location: `frontend/e2e/*.spec.ts`
+- Config: `frontend/playwright.config.ts` (or default Next.js config)
+- Run: `npm run test:e2e` (headless) or `npm run test:e2e:ui` (interactive)
 
-**Integration Tests:**
+**E2E Pattern:**
+```typescript
+import { test, expect, ConsoleMessage } from '@playwright/test'
 
-Backend:
-- Scope: Full API endpoint with database
-- Approach: Use test client (`AsyncClient`) with real database (in-memory SQLite)
-- Example: `test_list_tags()` tests API response with seeded data
-- Fixtures: `client`, `seed_tags`, `async_session`
+test.describe('Dashboard Tab Switching @e2e', () => {
+  let consoleErrors: string[] = []
 
-**E2E Tests:**
+  test.beforeEach(async ({ page }) => {
+    consoleErrors = []
+    page.on('console', (msg: ConsoleMessage) => {
+      if (msg.type() === 'error') consoleErrors.push(msg.text())
+    })
+  })
 
-Frontend (Playwright):
-- Scope: Full user workflows across pages
-- Approach: Test against live backend and frontend servers
-- Example: Import workflow: upload CSV → preview → confirm → verify results
-- Auth: Uses setup project to authenticate once, then runs tests with auth state
-- Location: `frontend/e2e/`
+  test('switches between tabs without error', async ({ page }) => {
+    await page.goto('http://localhost:3000/')
+    await page.locator('[data-testid="dashboard-tab-2"]').click()
+    await page.waitForTimeout(500)
+    expect(consoleErrors).toHaveLength(0)
+  })
+})
+```
 
-Backend (pytest-playwright):
-- Scope: Critical workflows (import, auth, budgets)
-- Approach: Use Playwright to automate user interactions
-- Files: `tests/e2e/test_import_workflow.py`, `test_full_workflow.py`
-- Run with: `make test-e2e`
+**Backend Unit Tests:**
+- Scope: Individual functions, utilities, business logic
+- Approach: pytest with mock dependencies
+- Example: Test auth utilities (`test_hash_password`, `test_verify_password`)
 
-**Performance Tests:**
-
-Backend:
-- Scope: Stress testing with large datasets (10k+ transactions)
-- Approach: Benchmark query performance, measure response times
-- Marker: `@pytest.mark.performance`
-- Run with: `make test-perf`
-
-**Chaos Tests:**
-
-Frontend (Playwright):
-- Scope: Random interaction testing (stress test UI)
-- Approach: Randomly click buttons, fill inputs, change selects
-- Discovery: Uses `data-chaos-target` attribute (auto-discovered)
-- Exclusions: `data-chaos-exclude` for destructive actions (delete)
-- Run with: `make test-chaos`
+**Backend Integration Tests:**
+- Scope: Full API endpoints with database
+- Approach: pytest with fixtures, real database (SQLite in-memory)
+- Example: `TestTags.test_list_tags` - call endpoint, verify response + DB state
 
 ## Common Patterns
 
 **Async Testing (Frontend):**
-
-Vitest globals handle async automatically:
 ```typescript
-it('loads and displays data', async () => {
-  render(<Dashboard />)
+// Use act() for state updates, waitFor() for async effects
+await act(async () => {
+  await contextRef!.createDashboard({ name: 'New' })
+})
 
-  // Data loading happens via useEffect/SWR
-  const element = await screen.findByText('some text')  // Waits for async
-  expect(element).toBeInTheDocument()
+await waitFor(() => {
+  expect(screen.getByTestId('count')).toHaveTextContent('3')
 })
 ```
 
 **Async Testing (Backend):**
-
 ```python
 @pytest.mark.asyncio
-async def test_list_transactions(self, client: AsyncClient, seed_tags):
-    """List all transactions"""
-    response = await client.get("/api/v1/transactions/")
+async def test_async_operation(self, client: AsyncClient):
+    """All test methods are async, use await"""
+    response = await client.get("/api/v1/endpoint")
     assert response.status_code == 200
-    data = response.json()
-    assert isinstance(data, list)
 ```
 
 **Error Testing (Frontend):**
-
 ```typescript
-it('displays error message on failed login', async () => {
-  server.use(
-    rest.post('/api/v1/auth/login', (_req, res, ctx) =>
-      res(ctx.status(401), ctx.json({ error_code: 'INVALID_CREDENTIALS' }))
-    )
-  )
+// Mock error response via MSW
+server.use(
+  http.get('/api/v1/endpoint', () => {
+    return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+  })
+)
 
-  render(<LoginForm />)
-  // Trigger submission and verify error display
+// Test error handling
+await waitFor(() => {
+  expect(screen.getByTestId('error')).toHaveTextContent('Not found')
 })
 ```
 
 **Error Testing (Backend):**
-
 ```python
 @pytest.mark.asyncio
-async def test_get_nonexistent_tag(self, client: AsyncClient):
-    """Get non-existent tag returns 404"""
+async def test_not_found(self, client: AsyncClient, seed_tags):
+    """Non-existent resource returns 404"""
     response = await client.get("/api/v1/tags/by-name/bucket/nonexistent")
     assert response.status_code == 404
-    data = response.json()
-    assert data["error_code"] == "TAG_NOT_FOUND"
+    assert response.json()["error_code"] == "TAG_NOT_FOUND"
 ```
 
-## Test IDs (Critical for All Tests)
-
-**Usage (REQUIRED for E2E and Unit Tests):**
-
-- **Always use `data-testid`** for element selection in tests
-- Never rely on text content, CSS classes, or DOM structure
-- Text content changes when translations are added; test IDs are translation-agnostic
-
-**Test ID Constants:**
-
-Centralized in `frontend/src/test-ids/index.ts`:
+**Test Isolation (Frontend):**
 ```typescript
+beforeEach(() => {
+  vi.clearAllMocks()  // Clear all mocks
+  localStorageMock.getItem.mockClear()  // Reset specific mocks
+})
+
+afterEach(() => {
+  server.resetHandlers()  // Reset MSW handlers to defaults
+})
+```
+
+**Test Isolation (Backend):**
+```python
+class TestTags:
+    @pytest.fixture(autouse=True)
+    def setup(self, session):
+        """Reset state before each test"""
+        session.query(Tag).delete()
+        session.commit()
+        yield
+        session.query(Tag).delete()
+        session.commit()
+```
+
+## Test IDs (Critical for i18n)
+
+**Always use `data-testid` for element selection - never rely on text content.**
+
+**Central Registry:**
+- Location: `frontend/src/test-ids.ts`
+- Contains: `TEST_IDS` (normal elements), `CHAOS_EXCLUDED_IDS` (destructive actions)
+
+**Pattern:**
+```typescript
+// In test-ids.ts
+export const TEST_IDS = {
+  FILTER_SEARCH: 'filter-search',
+  FILTER_BUCKET: 'filter-bucket',
+  TRANSACTIONS_LIST: 'transactions-list',
+  DASHBOARD_PAGE: 'dashboard-page',
+} as const
+
+// In component
 import { TEST_IDS } from '@/test-ids'
+<input data-testid={TEST_IDS.FILTER_SEARCH} />
 
-// In component:
-<button data-testid={TEST_IDS.HELP_DISMISS}>Got it</button>
+// In test
+import { TEST_IDS } from '@/test-ids'
+expect(screen.getByTestId(TEST_IDS.FILTER_SEARCH)).toBeInTheDocument()
 
-// In unit test:
-expect(screen.getByTestId(TEST_IDS.HELP_DISMISS)).toBeInTheDocument()
-
-// In E2E test:
-await page.locator(`[data-testid="${TEST_IDS.IMPORT_RESULT}"]`).click()
+// In E2E test
+await page.locator(`[data-testid="${TEST_IDS.FILTER_SEARCH}"]`).fill('groceries')
 ```
 
 **Naming Convention:**
-- Format: `<component>-<element>` or `<page>-<action>`
-- Examples:
-  - `filter-search` (component: filter, element: search input)
-  - `transactions-list` (page: transactions, element: list container)
-  - `help-dismiss` (component: help, element: dismiss button)
-  - `overview-stat-total-transactions-value` (overview page, stat component, total transactions field value)
-
-**Two Test ID Groups:**
-
-1. `TEST_IDS` - Normal elements safe for chaos testing
-   ```typescript
-   <button data-testid={TEST_IDS.BUDGET_NEW}>New Budget</button>
-   ```
-
-2. `CHAOS_EXCLUDED_IDS` - Destructive actions (delete, purge, remove)
-   ```typescript
-   <button data-chaos-exclude>Delete</button>  // Not selected by chaos tests
-   ```
+- Format: `<component>-<element>` or `<page>-<element>`
+- Examples: `filter-search`, `transactions-list`, `dashboard-page`, `help-dismiss`
 
 ---
 
-*Testing analysis: 2026-02-23*
+*Testing analysis: 2026-02-24*
