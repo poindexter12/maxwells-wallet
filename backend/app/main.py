@@ -23,7 +23,7 @@ from app.routers import (
 )
 from app.observability import setup_observability
 from app.services.scheduler import scheduler_service
-from app.middleware import add_demo_mode_middleware
+from app.middleware import SecurityHeadersMiddleware, add_demo_mode_middleware
 from app.version import get_version, get_version_info
 
 
@@ -98,6 +98,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Security headers (defense-in-depth for direct backend access)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Demo mode middleware (blocks restricted operations when DEMO_MODE=true)
 add_demo_mode_middleware(app)
