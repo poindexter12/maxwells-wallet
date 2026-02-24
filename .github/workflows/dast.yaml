@@ -67,9 +67,16 @@ jobs:
           fail_action: false
           cmd_options: '-J zap-report.json'
 
+      - name: Sanitize ZAP SARIF output
+        if: always() && hashFiles('zap-report.json') != ''
+        run: |
+          jq 'del(.["@programName"], .["@version"], .["@generated"], .insights)' \
+            zap-report.json > zap-report-clean.json
+          mv zap-report-clean.json zap-report.json
+
       - name: Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
-        if: always()
+        if: always() && hashFiles('zap-report.json') != ''
         with:
           sarif_file: zap-report.json
           category: zap
