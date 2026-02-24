@@ -7,6 +7,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
 [![Docker](https://img.shields.io/badge/docker-ghcr.io-2496ed?logo=docker&logoColor=white)](https://github.com/poindexter12/maxwells-wallet/pkgs/container/maxwells-wallet)
 [![Crowdin](https://badges.crowdin.net/maxwells-wallet/localized.svg)](https://crowdin.com/project/maxwells-wallet)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12013/badge)](https://www.bestpractices.dev/projects/12013)
 
 Personal finance tracker with CSV import, smart categorization, and spending trend analysis.
 

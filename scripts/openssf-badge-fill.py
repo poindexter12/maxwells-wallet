@@ -4,11 +4,11 @@ Programmatically fill OpenSSF Best Practices badge criteria.
 
 Usage:
   1. Go to https://www.bestpractices.dev and sign in with GitHub
-  2. Create a new project with repo URL: https://github.com/poindexter12/maxwells-wallet
-  3. Note the project ID from the URL (e.g., https://www.bestpractices.dev/en/projects/12345)
-  4. Open browser DevTools → Application → Cookies → copy the _BadgeApp_session value
-  5. Run:
-       python3 scripts/openssf-badge-fill.py --project-id 12345 --cookie "YOUR_SESSION_COOKIE"
+  2. Open browser DevTools → Application → Cookies → copy the _BadgeApp_session value
+  3. Run:
+       python3 scripts/openssf-badge-fill.py --cookie "YOUR_SESSION_COOKIE"
+
+Project ID 12013 is hardcoded as the default.
 
 Based on: https://github.com/coreinfrastructure/best-practices-badge/blob/main/docs/best_practices_modify.py
 """
@@ -22,6 +22,7 @@ import urllib.parse
 
 BASE_URL = "https://www.bestpractices.dev"
 REPO_URL = "https://github.com/poindexter12/maxwells-wallet"
+OPENSSF_PROJECT_ID = 12013
 
 # ---------------------------------------------------------------------------
 # All criteria answers — see OPENSSF.md for justification URLs
@@ -294,7 +295,7 @@ def patch_project(project_id: int, cookie: str, csrf_token: str, data: dict) -> 
 
 def main():
     parser = argparse.ArgumentParser(description="Fill OpenSSF Best Practices badge criteria")
-    parser.add_argument("--project-id", required=True, type=int, help="Project ID from bestpractices.dev URL")
+    parser.add_argument("--project-id", type=int, default=OPENSSF_PROJECT_ID, help=f"Project ID (default: {OPENSSF_PROJECT_ID})")
     parser.add_argument("--cookie", required=True, help="_BadgeApp_session cookie value")
     parser.add_argument("--dry-run", action="store_true", help="Print what would be sent without sending")
     parser.add_argument("--batch-size", type=int, default=10, help="Fields per PATCH request (default: 10)")
