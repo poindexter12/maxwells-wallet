@@ -94,10 +94,12 @@ Plans:
   3. User sees toast notifications when any API call fails with retry button
   4. React error boundary catches rendering crashes and shows recovery UI
   5. Loading skeleton placeholders display while dashboard widgets fetch data
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] TBD
+- [ ] 08-01-PLAN.md — Error infrastructure (error boundary + toast + skeleton verification)
+- [ ] 08-02-PLAN.md — Transactions page extraction (reduce 1323 → <500 lines)
+- [ ] 08-03-PLAN.md — Dashboard tab crash fix + chaos test verification
 
 ### Phase 9: Performance + Frontend Tests
 **Goal**: Dashboard loads faster with comprehensive frontend test coverage
@@ -158,7 +160,7 @@ Phases execute numerically. Phases 10 and 11 are independent and can run in para
 | 5. Documentation | v1.0 | 1/1 | Complete | 2026-02-23 |
 | 6. Formal Verification Sweep | v1.0 | 1/1 | Complete | 2026-02-23 |
 | 7. Type Safety + Dashboard Extraction | v1.1 | 1/1 | Complete | 2026-02-24 |
-| 8. Dashboard Polish + Error Handling | v1.1 | 0/? | Not started | - |
+| 8. Dashboard Polish + Error Handling | v1.1 | 0/3 | Not started | - |
 | 9. Performance + Frontend Tests | v1.1 | 0/? | Not started | - |
 | 10. Internationalization | v1.1 | 0/? | Not started | - |
 | 11. Backend Hardening | v1.1 | 0/? | Not started | - |
