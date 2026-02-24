@@ -9,8 +9,8 @@ Requirements for codebase health milestone. Each maps to roadmap phases.
 
 ### Dashboard Refactoring
 
-- [ ] **DASH-01**: Dashboard page.tsx reduced to <400 lines by extracting widget renderers to dedicated component files
-- [ ] **DASH-02**: Each extracted widget component manages its own local state instead of sharing 18+ hooks in a single component
+- [x] **DASH-01**: Dashboard page.tsx reduced to <400 lines by extracting widget renderers to dedicated component files
+- [x] **DASH-02**: Each extracted widget component manages its own local state instead of sharing 18+ hooks in a single component
 - [ ] **DASH-03**: Dashboard tab switching works reliably under rapid user interaction without crashes or undefined behavior
 - [ ] **DASH-04**: Transactions page.tsx reduced to <500 lines by extracting reusable sub-components
 
@@ -23,9 +23,9 @@ Requirements for codebase health milestone. Each maps to roadmap phases.
 
 ### Type Safety
 
-- [ ] **TYPE-01**: All `useState<any>` declarations replaced with typed interfaces for API response shapes
-- [ ] **TYPE-02**: API response types centralized in a shared `dashboard-types.ts` module
-- [ ] **TYPE-03**: API response validation ensures unexpected backend shapes surface as typed errors rather than silent failures
+- [x] **TYPE-01**: All `useState<any>` declarations replaced with typed interfaces for API response shapes
+- [x] **TYPE-02**: API response types centralized in a shared `dashboard-types.ts` module
+- [x] **TYPE-03**: API response validation ensures unexpected backend shapes surface as typed errors rather than silent failures
 
 ### Testing
 
@@ -93,17 +93,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DASH-01 | Phase 7 | Pending |
-| DASH-02 | Phase 7 | Pending |
+| DASH-01 | Phase 7 | Complete |
+| DASH-02 | Phase 7 | Complete |
 | DASH-03 | Phase 8 | Pending |
 | DASH-04 | Phase 8 | Pending |
 | ERR-01 | Phase 8 | Pending |
 | ERR-02 | Phase 8 | Pending |
 | ERR-03 | Phase 8 | Pending |
 | ERR-04 | Phase 8 | Pending |
-| TYPE-01 | Phase 7 | Pending |
-| TYPE-02 | Phase 7 | Pending |
-| TYPE-03 | Phase 7 | Pending |
+| TYPE-01 | Phase 7 | Complete |
+| TYPE-02 | Phase 7 | Complete |
+| TYPE-03 | Phase 7 | Complete |
 | TEST-01 | Phase 9 | Pending |
 | TEST-02 | Phase 9 | Pending |
 | TEST-03 | Phase 9 | Pending |

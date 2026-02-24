@@ -28,7 +28,7 @@ See `milestones/v1.0-ROADMAP.md` for archived v1.0 phase details.
 
 **Milestone Goal:** Address all 11 actionable concerns from codebase audit — dashboard extraction, bug fixes, error handling, type safety, tests, i18n completion, performance, and backend validation/hardening.
 
-- [ ] **Phase 7: Type Safety + Dashboard Extraction** - Extract dashboard widgets with typed interfaces
+- [x] **Phase 7: Type Safety + Dashboard Extraction** - Extract dashboard widgets with typed interfaces (verified 2026-02-24)
 - [ ] **Phase 8: Dashboard Polish + Error Handling** - Fix tab crash, add error boundaries and user feedback
 - [ ] **Phase 9: Performance + Frontend Tests** - Parallel data fetching, caching, and unit test coverage
 - [ ] **Phase 10: Internationalization** - Complete translation coverage across all UI surfaces
@@ -82,7 +82,7 @@ Every phase MUST satisfy these criteria before merge. These are non-negotiable �
 **Plans**: 1 plan
 
 Plans:
-- [ ] 07-01-PLAN.md — Verify dashboard extraction and type safety requirements
+- [x] 07-01-PLAN.md — Verify dashboard extraction and type safety requirements (complete)
 
 ### Phase 8: Dashboard Polish + Error Handling
 **Goal**: Dashboard reliably handles rapid interaction and communicates errors to users
@@ -157,7 +157,7 @@ Phases execute numerically. Phases 10 and 11 are independent and can run in para
 | 4. DAST | v1.0 | 1/1 | Complete | 2026-02-23 |
 | 5. Documentation | v1.0 | 1/1 | Complete | 2026-02-23 |
 | 6. Formal Verification Sweep | v1.0 | 1/1 | Complete | 2026-02-23 |
-| 7. Type Safety + Dashboard Extraction | v1.1 | 0/1 | Planning complete | - |
+| 7. Type Safety + Dashboard Extraction | v1.1 | 1/1 | Complete | 2026-02-24 |
 | 8. Dashboard Polish + Error Handling | v1.1 | 0/? | Not started | - |
 | 9. Performance + Frontend Tests | v1.1 | 0/? | Not started | - |
 | 10. Internationalization | v1.1 | 0/? | Not started | - |
