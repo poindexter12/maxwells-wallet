@@ -249,7 +249,8 @@ def get_tokens(project_id: int, cookie: str) -> tuple[str, str]:
         "Cookie": f"_BadgeApp_session={cookie}",
         "User-Agent": "openssf-badge-fill/1.0",
     })
-    with urllib.request.urlopen(req) as resp:
+    # URL is built from hardcoded BASE_URL (https) + integer project ID — no file:// risk
+    with urllib.request.urlopen(req) as resp:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
         body = resp.read().decode("utf-8")
         # Extract CSRF token
         match = re.search(r'<meta name="csrf-token" content="([^"]+)"', body)
@@ -282,7 +283,7 @@ def patch_project(project_id: int, cookie: str, csrf_token: str, data: dict) -> 
     })
 
     try:
-        with urllib.request.urlopen(req) as resp:
+        with urllib.request.urlopen(req) as resp:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
             return 200 <= resp.status < 400
     except urllib.error.HTTPError as e:
         # Rails returns 302 redirect on successful PATCH
