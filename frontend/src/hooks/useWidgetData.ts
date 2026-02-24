@@ -35,6 +35,7 @@ export function useDashboardParams() {
 
   if (!currentDashboard) {
     return {
+      dashboardId: null,
       startDate: '',
       endDate: '',
       selectedYear: new Date().getFullYear(),
@@ -59,6 +60,7 @@ export function useDashboardParams() {
   const groupBy = isYearlyScale ? 'month' : 'week'
 
   return {
+    dashboardId: currentDashboard.id,
     startDate,
     endDate,
     selectedYear,
@@ -81,15 +83,18 @@ function buildFilterQuery(filters?: WidgetFilters, excludeMerchants = false): st
 
 // Summary data hook (monthly or annual)
 export function useSummaryData() {
-  const { selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
+  const { dashboardId, selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
 
   const endpoint = isMonthlyScale
     ? `/api/v1/reports/monthly-summary?year=${selectedYear}&month=${selectedMonth}`
     : `/api/v1/reports/annual-summary?year=${selectedYear}`
 
+  // Include dashboardId in SWR key for cache isolation
+  const swrKey = ready && dashboardId ? [endpoint, dashboardId] : null
+
   const { data, error, isLoading, mutate } = useSWR<SummaryData>(
-    ready ? endpoint : null,
-    fetcher,
+    swrKey,
+    () => fetcher(endpoint),
     { revalidateOnFocus: false }
   )
 
@@ -104,13 +109,14 @@ export function useSummaryData() {
 
 // Month-over-month data hook
 export function useMonthOverMonthData() {
-  const { selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
+  const { dashboardId, selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
+
+  const endpoint = `/api/v1/reports/month-over-month?current_year=${selectedYear}&current_month=${selectedMonth}`
+  const swrKey = ready && isMonthlyScale && dashboardId ? [endpoint, dashboardId] : null
 
   const { data, error, isLoading, mutate } = useSWR<MonthOverMonthData>(
-    ready && isMonthlyScale
-      ? `/api/v1/reports/month-over-month?current_year=${selectedYear}&current_month=${selectedMonth}`
-      : null,
-    fetcher,
+    swrKey,
+    () => fetcher(endpoint),
     { revalidateOnFocus: false }
   )
 
@@ -125,13 +131,14 @@ export function useMonthOverMonthData() {
 
 // Spending velocity data hook
 export function useSpendingVelocityData() {
-  const { selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
+  const { dashboardId, selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
+
+  const endpoint = `/api/v1/reports/spending-velocity?year=${selectedYear}&month=${selectedMonth}`
+  const swrKey = ready && isMonthlyScale && dashboardId ? [endpoint, dashboardId] : null
 
   const { data, error, isLoading, mutate } = useSWR<SpendingVelocityData>(
-    ready && isMonthlyScale
-      ? `/api/v1/reports/spending-velocity?year=${selectedYear}&month=${selectedMonth}`
-      : null,
-    fetcher,
+    swrKey,
+    () => fetcher(endpoint),
     { revalidateOnFocus: false }
   )
 
@@ -146,13 +153,14 @@ export function useSpendingVelocityData() {
 
 // Anomalies data hook
 export function useAnomaliesData() {
-  const { selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
+  const { dashboardId, selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
+
+  const endpoint = `/api/v1/reports/anomalies?year=${selectedYear}&month=${selectedMonth}&threshold=2.0`
+  const swrKey = ready && isMonthlyScale && dashboardId ? [endpoint, dashboardId] : null
 
   const { data, error, isLoading, mutate } = useSWR<AnomaliesData>(
-    ready && isMonthlyScale
-      ? `/api/v1/reports/anomalies?year=${selectedYear}&month=${selectedMonth}&threshold=2.0`
-      : null,
-    fetcher,
+    swrKey,
+    () => fetcher(endpoint),
     { revalidateOnFocus: false }
   )
 
@@ -167,14 +175,15 @@ export function useAnomaliesData() {
 
 // Trends data hook
 export function useTrendsData(filters?: WidgetFilters) {
-  const { startDate, endDate, groupBy, ready } = useDashboardParams()
+  const { dashboardId, startDate, endDate, groupBy, ready } = useDashboardParams()
   const filterQuery = buildFilterQuery(filters)
 
+  const endpoint = `/api/v1/reports/trends?start_date=${startDate}&end_date=${endDate}&group_by=${groupBy}${filterQuery}`
+  const swrKey = ready && dashboardId ? [endpoint, dashboardId] : null
+
   const { data, error, isLoading, mutate } = useSWR<TrendsData>(
-    ready
-      ? `/api/v1/reports/trends?start_date=${startDate}&end_date=${endDate}&group_by=${groupBy}${filterQuery}`
-      : null,
-    fetcher,
+    swrKey,
+    () => fetcher(endpoint),
     { revalidateOnFocus: false }
   )
 
@@ -189,16 +198,17 @@ export function useTrendsData(filters?: WidgetFilters) {
 
 // Top merchants data hook
 export function useTopMerchantsData(filters?: WidgetFilters) {
-  const { selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
+  const { dashboardId, selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
   const monthParam = isMonthlyScale ? `&month=${selectedMonth}` : ''
   // Don't filter by merchants for top merchants (that doesn't make sense)
   const filterQuery = buildFilterQuery(filters, true)
 
+  const endpoint = `/api/v1/reports/top-merchants?limit=10&year=${selectedYear}${monthParam}${filterQuery}`
+  const swrKey = ready && dashboardId ? [endpoint, dashboardId] : null
+
   const { data, error, isLoading, mutate } = useSWR<TopMerchantsData>(
-    ready
-      ? `/api/v1/reports/top-merchants?limit=10&year=${selectedYear}${monthParam}${filterQuery}`
-      : null,
-    fetcher,
+    swrKey,
+    () => fetcher(endpoint),
     { revalidateOnFocus: false }
   )
 
@@ -213,15 +223,16 @@ export function useTopMerchantsData(filters?: WidgetFilters) {
 
 // Sankey flow data hook
 export function useSankeyData(filters?: WidgetFilters) {
-  const { selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
+  const { dashboardId, selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
   const monthParam = isMonthlyScale ? `&month=${selectedMonth}` : ''
   const filterQuery = buildFilterQuery(filters)
 
+  const endpoint = `/api/v1/reports/sankey-flow?year=${selectedYear}${monthParam}${filterQuery}`
+  const swrKey = ready && dashboardId ? [endpoint, dashboardId] : null
+
   const { data, error, isLoading, mutate } = useSWR<SankeyData>(
-    ready
-      ? `/api/v1/reports/sankey-flow?year=${selectedYear}${monthParam}${filterQuery}`
-      : null,
-    fetcher,
+    swrKey,
+    () => fetcher(endpoint),
     { revalidateOnFocus: false }
   )
 
@@ -236,15 +247,16 @@ export function useSankeyData(filters?: WidgetFilters) {
 
 // Treemap data hook
 export function useTreemapData(filters?: WidgetFilters) {
-  const { selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
+  const { dashboardId, selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
   const monthParam = isMonthlyScale ? `&month=${selectedMonth}` : ''
   const filterQuery = buildFilterQuery(filters)
 
+  const endpoint = `/api/v1/reports/treemap?year=${selectedYear}${monthParam}${filterQuery}`
+  const swrKey = ready && dashboardId ? [endpoint, dashboardId] : null
+
   const { data, error, isLoading, mutate } = useSWR<TreemapData>(
-    ready
-      ? `/api/v1/reports/treemap?year=${selectedYear}${monthParam}${filterQuery}`
-      : null,
-    fetcher,
+    swrKey,
+    () => fetcher(endpoint),
     { revalidateOnFocus: false }
   )
 
@@ -259,15 +271,16 @@ export function useTreemapData(filters?: WidgetFilters) {
 
 // Heatmap data hook
 export function useHeatmapData(filters?: WidgetFilters) {
-  const { selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
+  const { dashboardId, selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
   const monthParam = isMonthlyScale ? `&month=${selectedMonth}` : ''
   const filterQuery = buildFilterQuery(filters)
 
+  const endpoint = `/api/v1/reports/spending-heatmap?year=${selectedYear}${monthParam}${filterQuery}`
+  const swrKey = ready && dashboardId ? [endpoint, dashboardId] : null
+
   const { data, error, isLoading, mutate } = useSWR<HeatmapData>(
-    ready
-      ? `/api/v1/reports/spending-heatmap?year=${selectedYear}${monthParam}${filterQuery}`
-      : null,
-    fetcher,
+    swrKey,
+    () => fetcher(endpoint),
     { revalidateOnFocus: false }
   )
 
