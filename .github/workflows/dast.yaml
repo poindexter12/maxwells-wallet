@@ -64,20 +64,19 @@ jobs:
           target: 'http://localhost:3000'
           allow_issue_writing: false
           fail_action: false
-          cmd_options: '-J zap-report.json'
 
       - name: Sanitize ZAP SARIF output
-        if: always() && hashFiles('zap-report.json') != ''
+        if: always() && hashFiles('report_json.json') != ''
         run: |
           jq 'del(.["@programName"], .["@version"], .["@generated"], .insights)' \
-            zap-report.json > zap-report-clean.json
-          mv zap-report-clean.json zap-report.json
+            report_json.json > report_json_clean.json
+          mv report_json_clean.json report_json.json
 
       - name: Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
-        if: always() && hashFiles('zap-report.json') != ''
+        if: always() && hashFiles('report_json.json') != ''
         with:
-          sarif_file: zap-report.json
+          sarif_file: report_json.json
           category: zap
 
       - name: Upload ZAP reports as artifacts
@@ -86,7 +85,7 @@ jobs:
         with:
           name: zap-reports
           path: |
-            zap-report.json
+            report_json.json
             report_html.html
             report_md.md
           retention-days: 30
