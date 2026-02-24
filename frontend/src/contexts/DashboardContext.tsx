@@ -58,11 +58,13 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       const data = await res.json()
       setDashboards(data)
 
-      // Set current dashboard to default if not already set
-      if (!currentDashboard) {
-        const defaultDash = data.find((d: Dashboard) => d.is_default) || data[0]
-        setCurrentDashboard(defaultDash)
-      }
+      // Set current dashboard to default if not already set (use functional update to avoid stale closure)
+      setCurrentDashboard(prev => {
+        if (!prev) {
+          return data.find((d: Dashboard) => d.is_default) || data[0]
+        }
+        return prev
+      })
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
@@ -98,9 +100,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       if (!res.ok) throw new Error('Failed to update dashboard')
       const updated = await res.json()
       await refreshDashboards()
-      if (currentDashboard?.id === id) {
-        setCurrentDashboard(updated)
-      }
+      // Use functional update to avoid stale closure
+      setCurrentDashboard(prev => prev?.id === id ? updated : prev)
       return updated
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
@@ -114,12 +115,21 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         method: 'DELETE'
       })
       if (!res.ok) throw new Error('Failed to delete dashboard')
-      await refreshDashboards()
-      // If we deleted the current dashboard, switch to default
-      if (currentDashboard?.id === id) {
-        const defaultDash = dashboards.find(d => d.is_default && d.id !== id) || dashboards[0]
-        setCurrentDashboard(defaultDash)
-      }
+
+      // Capture fresh dashboards state after refresh
+      const res2 = await fetch('/api/v1/dashboards')
+      if (!res2.ok) throw new Error('Failed to fetch dashboards after delete')
+      const updatedDashboards = await res2.json()
+      setDashboards(updatedDashboards)
+
+      // Use functional update to check against fresh state
+      setCurrentDashboard(prev => {
+        if (prev?.id === id) {
+          return updatedDashboards.find((d: Dashboard) => d.is_default) || updatedDashboards[0]
+        }
+        return prev
+      })
+
       return true
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
