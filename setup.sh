@@ -54,7 +54,7 @@ echo ""
 # Install frontend dependencies
 echo -e "${BLUE}Installing frontend dependencies...${NC}"
 cd frontend
-npm install
+npm ci
 cd ..
 echo -e "${GREEN}✓ Frontend dependencies installed${NC}"
 echo ""

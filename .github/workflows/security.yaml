@@ -56,6 +56,7 @@ jobs:
 
   dependency-check:
     name: OWASP Dependency-Check
+    if: inputs.scan-mode == 'full'
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -66,9 +67,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Get date for NVD cache key
+      - name: Get cache keys
         id: get-date
-        run: echo "date=$(date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
+        run: |
+          echo "date=$(date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
+          echo "week=$(date -u '+%Y-W%V')" >> $GITHUB_OUTPUT
 
       - name: Cache NVD database
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v4
@@ -77,6 +80,25 @@ jobs:
           key: ${{ runner.os }}-nvd-${{ steps.get-date.outputs.date }}
           restore-keys: |
             ${{ runner.os }}-nvd-
+
+      - name: Cache OWASP Dependency-Check Docker image
+        id: cache-dc-image
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v4
+        with:
+          path: /tmp/dc-image.tar
+          key: ${{ runner.os }}-dc-image-${{ steps.get-date.outputs.week }}
+          restore-keys: |
+            ${{ runner.os }}-dc-image-
+
+      - name: Load cached Docker image
+        if: steps.cache-dc-image.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/dc-image.tar
+
+      - name: Pull Docker image and save to cache
+        if: steps.cache-dc-image.outputs.cache-hit != 'true'
+        run: |
+          docker pull owasp/dependency-check:latest
+          docker save owasp/dependency-check:latest -o /tmp/dc-image.tar
 
       - name: Install uv
         uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7

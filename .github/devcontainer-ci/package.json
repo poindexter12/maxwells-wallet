@@ -1,0 +1,8 @@
+{
+  "name": "devcontainer-ci",
+  "private": true,
+  "description": "Lockfile-pinned devcontainer CLI for CI (Scorecard Pinned-Dependencies)",
+  "dependencies": {
+    "@devcontainers/cli": "0.83.3"
+  }
+}
