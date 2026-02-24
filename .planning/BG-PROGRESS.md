@@ -47,6 +47,9 @@ dec2121 - test(08-03): unskip dashboard tab switching chaos test after fixing st
 24f9a2f - docs(08-03): complete tab crash fix plan
 ```
 
-## Next: Creating PR
+## Pull Request
 
-User requested PR at end of Phase 8. Creating now with completed work.
+✅ **Created:** https://github.com/poindexter12/maxwells-wallet/pull/228
+
+Branch: `phase-8-dashboard-polish-error-handling`
+Status: Open, ready for review
