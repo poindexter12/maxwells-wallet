@@ -52,6 +52,7 @@ dev = [
     "mypy>=1.10.0",
     "pip-audit>=2.7.0",
     "freezegun>=1.5.5",
+    "hypothesis>=6.151.9",
 ]
 
 [tool.vulture]
