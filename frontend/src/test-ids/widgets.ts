@@ -13,4 +13,6 @@ export const WIDGETS_IDS = {
   WIDGET_TOP_MERCHANTS_TITLE: 'widget-top-merchants-title',
   WIDGET_TOP_MERCHANTS_EMPTY: 'widget-top-merchants-empty',
   WIDGET_TOP_MERCHANTS_LIST: 'widget-top-merchants-list',
+  WIDGET_ERROR: 'widget-error',
+  WIDGET_ERROR_RETRY: 'widget-error-retry',
 } as const;

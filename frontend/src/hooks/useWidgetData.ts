@@ -1,6 +1,8 @@
 'use client'
 
+import { useEffect } from 'react'
 import useSWR from 'swr'
+import { toast } from 'sonner'
 import { useDashboard } from '@/contexts/DashboardContext'
 import {
   SummaryData,
@@ -85,20 +87,26 @@ export function useSummaryData() {
     ? `/api/v1/reports/monthly-summary?year=${selectedYear}&month=${selectedMonth}`
     : `/api/v1/reports/annual-summary?year=${selectedYear}`
 
-  const { data, error, isLoading } = useSWR<SummaryData>(
+  const { data, error, isLoading, mutate } = useSWR<SummaryData>(
     ready ? endpoint : null,
     fetcher,
     { revalidateOnFocus: false }
   )
 
-  return { data, error, isLoading }
+  useEffect(() => {
+    if (error) {
+      toast.error('Failed to load summary data')
+    }
+  }, [error])
+
+  return { data, error, isLoading, retry: mutate }
 }
 
 // Month-over-month data hook
 export function useMonthOverMonthData() {
   const { selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
 
-  const { data, error, isLoading } = useSWR<MonthOverMonthData>(
+  const { data, error, isLoading, mutate } = useSWR<MonthOverMonthData>(
     ready && isMonthlyScale
       ? `/api/v1/reports/month-over-month?current_year=${selectedYear}&current_month=${selectedMonth}`
       : null,
@@ -106,14 +114,20 @@ export function useMonthOverMonthData() {
     { revalidateOnFocus: false }
   )
 
-  return { data: isMonthlyScale ? data : null, error, isLoading }
+  useEffect(() => {
+    if (error) {
+      toast.error('Failed to load month-over-month data')
+    }
+  }, [error])
+
+  return { data: isMonthlyScale ? data : null, error, isLoading, retry: mutate }
 }
 
 // Spending velocity data hook
 export function useSpendingVelocityData() {
   const { selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
 
-  const { data, error, isLoading } = useSWR<SpendingVelocityData>(
+  const { data, error, isLoading, mutate } = useSWR<SpendingVelocityData>(
     ready && isMonthlyScale
       ? `/api/v1/reports/spending-velocity?year=${selectedYear}&month=${selectedMonth}`
       : null,
@@ -121,14 +135,20 @@ export function useSpendingVelocityData() {
     { revalidateOnFocus: false }
   )
 
-  return { data: isMonthlyScale ? data : null, error, isLoading }
+  useEffect(() => {
+    if (error) {
+      toast.error('Failed to load spending velocity data')
+    }
+  }, [error])
+
+  return { data: isMonthlyScale ? data : null, error, isLoading, retry: mutate }
 }
 
 // Anomalies data hook
 export function useAnomaliesData() {
   const { selectedYear, selectedMonth, isMonthlyScale, ready } = useDashboardParams()
 
-  const { data, error, isLoading } = useSWR<AnomaliesData>(
+  const { data, error, isLoading, mutate } = useSWR<AnomaliesData>(
     ready && isMonthlyScale
       ? `/api/v1/reports/anomalies?year=${selectedYear}&month=${selectedMonth}&threshold=2.0`
       : null,
@@ -136,7 +156,13 @@ export function useAnomaliesData() {
     { revalidateOnFocus: false }
   )
 
-  return { data: isMonthlyScale ? data : null, error, isLoading }
+  useEffect(() => {
+    if (error) {
+      toast.error('Failed to load anomalies data')
+    }
+  }, [error])
+
+  return { data: isMonthlyScale ? data : null, error, isLoading, retry: mutate }
 }
 
 // Trends data hook
@@ -144,7 +170,7 @@ export function useTrendsData(filters?: WidgetFilters) {
   const { startDate, endDate, groupBy, ready } = useDashboardParams()
   const filterQuery = buildFilterQuery(filters)
 
-  const { data, error, isLoading } = useSWR<TrendsData>(
+  const { data, error, isLoading, mutate } = useSWR<TrendsData>(
     ready
       ? `/api/v1/reports/trends?start_date=${startDate}&end_date=${endDate}&group_by=${groupBy}${filterQuery}`
       : null,
@@ -152,7 +178,13 @@ export function useTrendsData(filters?: WidgetFilters) {
     { revalidateOnFocus: false }
   )
 
-  return { data, error, isLoading }
+  useEffect(() => {
+    if (error) {
+      toast.error('Failed to load trends data')
+    }
+  }, [error])
+
+  return { data, error, isLoading, retry: mutate }
 }
 
 // Top merchants data hook
@@ -162,7 +194,7 @@ export function useTopMerchantsData(filters?: WidgetFilters) {
   // Don't filter by merchants for top merchants (that doesn't make sense)
   const filterQuery = buildFilterQuery(filters, true)
 
-  const { data, error, isLoading } = useSWR<TopMerchantsData>(
+  const { data, error, isLoading, mutate } = useSWR<TopMerchantsData>(
     ready
       ? `/api/v1/reports/top-merchants?limit=10&year=${selectedYear}${monthParam}${filterQuery}`
       : null,
@@ -170,7 +202,13 @@ export function useTopMerchantsData(filters?: WidgetFilters) {
     { revalidateOnFocus: false }
   )
 
-  return { data, error, isLoading }
+  useEffect(() => {
+    if (error) {
+      toast.error('Failed to load top merchants data')
+    }
+  }, [error])
+
+  return { data, error, isLoading, retry: mutate }
 }
 
 // Sankey flow data hook
@@ -179,7 +217,7 @@ export function useSankeyData(filters?: WidgetFilters) {
   const monthParam = isMonthlyScale ? `&month=${selectedMonth}` : ''
   const filterQuery = buildFilterQuery(filters)
 
-  const { data, error, isLoading } = useSWR<SankeyData>(
+  const { data, error, isLoading, mutate } = useSWR<SankeyData>(
     ready
       ? `/api/v1/reports/sankey-flow?year=${selectedYear}${monthParam}${filterQuery}`
       : null,
@@ -187,7 +225,13 @@ export function useSankeyData(filters?: WidgetFilters) {
     { revalidateOnFocus: false }
   )
 
-  return { data, error, isLoading }
+  useEffect(() => {
+    if (error) {
+      toast.error('Failed to load sankey flow data')
+    }
+  }, [error])
+
+  return { data, error, isLoading, retry: mutate }
 }
 
 // Treemap data hook
@@ -196,7 +240,7 @@ export function useTreemapData(filters?: WidgetFilters) {
   const monthParam = isMonthlyScale ? `&month=${selectedMonth}` : ''
   const filterQuery = buildFilterQuery(filters)
 
-  const { data, error, isLoading } = useSWR<TreemapData>(
+  const { data, error, isLoading, mutate } = useSWR<TreemapData>(
     ready
       ? `/api/v1/reports/treemap?year=${selectedYear}${monthParam}${filterQuery}`
       : null,
@@ -204,7 +248,13 @@ export function useTreemapData(filters?: WidgetFilters) {
     { revalidateOnFocus: false }
   )
 
-  return { data, error, isLoading }
+  useEffect(() => {
+    if (error) {
+      toast.error('Failed to load treemap data')
+    }
+  }, [error])
+
+  return { data, error, isLoading, retry: mutate }
 }
 
 // Heatmap data hook
@@ -213,7 +263,7 @@ export function useHeatmapData(filters?: WidgetFilters) {
   const monthParam = isMonthlyScale ? `&month=${selectedMonth}` : ''
   const filterQuery = buildFilterQuery(filters)
 
-  const { data, error, isLoading } = useSWR<HeatmapData>(
+  const { data, error, isLoading, mutate } = useSWR<HeatmapData>(
     ready
       ? `/api/v1/reports/spending-heatmap?year=${selectedYear}${monthParam}${filterQuery}`
       : null,
@@ -221,7 +271,13 @@ export function useHeatmapData(filters?: WidgetFilters) {
     { revalidateOnFocus: false }
   )
 
-  return { data, error, isLoading }
+  useEffect(() => {
+    if (error) {
+      toast.error('Failed to load heatmap data')
+    }
+  }, [error])
+
+  return { data, error, isLoading, retry: mutate }
 }
 
 // Bucket data derived from summary
