@@ -78,6 +78,9 @@ jobs:
       - name: Convert ZAP JSON to SARIF
         if: always() && hashFiles('report_json.json') != ''
         run: |
+          # Convert ZAP JSON to SARIF, filtering out riskcode=0 (informational)
+          # alerts like caching behavior reports, framework detection, and vendor
+          # JS comment patterns. Raw ZAP reports (HTML/JSON/MD) still have everything.
           jq '{
             "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
             "version": "2.1.0",
@@ -86,7 +89,7 @@ jobs:
                 "driver": {
                   "name": "OWASP ZAP",
                   "informationUri": "https://www.zaproxy.org/",
-                  "rules": [.site[0].alerts[] | {
+                  "rules": [.site[0].alerts[] | select(.riskcode != "0") | {
                     "id": .pluginid,
                     "name": .alert,
                     "shortDescription": { "text": .alert },
@@ -94,18 +97,16 @@ jobs:
                     "defaultConfiguration": {
                       "level": (if .riskcode == "3" then "error"
                                 elif .riskcode == "2" then "warning"
-                                elif .riskcode == "1" then "note"
-                                else "none" end)
+                                else "note" end)
                     }
                   }]
                 }
               },
-              "results": [.site[0].alerts[] as $alert | $alert.instances[] | {
+              "results": [.site[0].alerts[] | select(.riskcode != "0") | . as $alert | .instances[] | {
                 "ruleId": $alert.pluginid,
                 "level": (if $alert.riskcode == "3" then "error"
                           elif $alert.riskcode == "2" then "warning"
-                          elif $alert.riskcode == "1" then "note"
-                          else "none" end),
+                          else "note" end),
                 "message": { "text": ($alert.alert + " at " + .uri) },
                 "locations": [{
                   "physicalLocation": {
