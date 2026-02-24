@@ -23,7 +23,8 @@ SECURITY_HEADERS: dict[str, str] = {
     "Content-Security-Policy": (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline'; "
-        "style-src 'self' 'unsafe-inline'; "
+        "style-src 'self'; "
+        "style-src-attr 'unsafe-inline'; "
         "img-src 'self' data:; "
         "connect-src 'self'; "
         "frame-ancestors 'self'; "
