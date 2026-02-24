@@ -244,7 +244,7 @@ CRITERIA = {
 
 def get_tokens(project_id: int, cookie: str) -> tuple[str, str]:
     """Fetch CSRF token and updated session cookie from the project edit page."""
-    url = f"{BASE_URL}/en/projects/{project_id}/edit"
+    url = f"{BASE_URL}/en/projects/{project_id}/passing/edit"
     req = urllib.request.Request(url, headers={
         "Cookie": f"_BadgeApp_session={cookie}",
         "User-Agent": "openssf-badge-fill/1.0",
@@ -268,7 +268,7 @@ def get_tokens(project_id: int, cookie: str) -> tuple[str, str]:
 
 def patch_project(project_id: int, cookie: str, csrf_token: str, data: dict) -> bool:
     """PATCH criteria data to the project."""
-    url = f"{BASE_URL}/en/projects/{project_id}"
+    url = f"{BASE_URL}/en/projects/{project_id}/passing"
 
     # Convert {"key": "val"} to {"project[key]": "val"} for Rails form submission
     form_data = {f"project[{k}]": v for k, v in data.items()}
@@ -285,6 +285,9 @@ def patch_project(project_id: int, cookie: str, csrf_token: str, data: dict) -> 
         with urllib.request.urlopen(req) as resp:
             return 200 <= resp.status < 400
     except urllib.error.HTTPError as e:
+        # Rails returns 302 redirect on successful PATCH
+        if e.code in (301, 302, 303):
+            return True
         print(f"  HTTP {e.code}: {e.reason}", file=sys.stderr)
         return False
 
