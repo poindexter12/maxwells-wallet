@@ -2,18 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-23)
+See: .planning/PROJECT.md (updated 2026-02-24)
 
-**Core value:** Security scanning tools run automatically in CI and produce visible, actionable findings without breaking any builds.
-**Current focus:** Planning next milestone
+**Core value:** A reliable, maintainable personal finance tracker where users can trust their data is accurate and the UI communicates clearly when something goes wrong.
+**Current focus:** Milestone v1.1 Codebase Health
 
 ## Current Position
 
-Phase: v1.0 complete (6 phases shipped)
-Status: Milestone complete — awaiting next milestone
-Last activity: 2026-02-23 — v1.0 milestone archived
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-24 — Milestone v1.1 started
 
-Progress: [██████████] 100% (v1.0 shipped)
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -43,14 +44,14 @@ Full decision log in PROJECT.md Key Decisions table.
 
 ### Pending Todos
 
-None. Start next milestone with `/gsd:new-milestone`.
+None.
 
 ### Blockers/Concerns
 
-No open blockers. v1.0 tech debt documented in MILESTONES.md.
+Codebase audit concerns driving v1.1 — see .planning/codebase/CONCERNS.md for full details.
 
 ## Session Continuity
 
-Last session: 2026-02-23 (v1.0 milestone completion)
-Stopped at: Milestone v1.0 archived
+Last session: 2026-02-24 (v1.1 milestone start)
+Stopped at: Defining requirements
 Resume file: None
