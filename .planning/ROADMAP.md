@@ -79,10 +79,10 @@ Every phase MUST satisfy these criteria before merge. These are non-negotiable â
   3. All API response shapes have typed interfaces in a centralized module
   4. No `useState<any>` declarations remain in dashboard or widget code
   5. API response validation catches unexpected backend shapes as typed errors
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] TBD
+- [ ] 07-01-PLAN.md â€” Verify dashboard extraction and type safety requirements
 
 ### Phase 8: Dashboard Polish + Error Handling
 **Goal**: Dashboard reliably handles rapid interaction and communicates errors to users
@@ -157,7 +157,7 @@ Phases execute numerically. Phases 10 and 11 are independent and can run in para
 | 4. DAST | v1.0 | 1/1 | Complete | 2026-02-23 |
 | 5. Documentation | v1.0 | 1/1 | Complete | 2026-02-23 |
 | 6. Formal Verification Sweep | v1.0 | 1/1 | Complete | 2026-02-23 |
-| 7. Type Safety + Dashboard Extraction | v1.1 | 0/? | Not started | - |
+| 7. Type Safety + Dashboard Extraction | v1.1 | 0/1 | Planning complete | - |
 | 8. Dashboard Polish + Error Handling | v1.1 | 0/? | Not started | - |
 | 9. Performance + Frontend Tests | v1.1 | 0/? | Not started | - |
 | 10. Internationalization | v1.1 | 0/? | Not started | - |
