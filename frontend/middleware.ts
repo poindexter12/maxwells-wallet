@@ -10,8 +10,8 @@ import type { NextRequest } from 'next/server'
  * installs store tokens in localStorage, which middleware cannot access.
  */
 
-// Routes that skip middleware entirely (static assets, api, etc.)
-const BYPASS_ROUTES = ['/api', '/_next', '/favicon.ico', '/icon.svg']
+// Routes that skip middleware entirely (static assets, api, metadata files)
+const BYPASS_ROUTES = ['/api', '/_next', '/favicon.ico', '/icon.svg', '/robots.txt', '/sitemap.xml']
 
 function buildCsp(nonce: string): string {
   const isProd = process.env.NODE_ENV === 'production'
@@ -100,7 +100,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, icon.svg (favicon files)
+     * - robots.txt, sitemap.xml (metadata files served directly)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|icon.svg).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|icon.svg|robots.txt|sitemap.xml).*)',
   ],
 }
