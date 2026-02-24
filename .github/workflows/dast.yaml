@@ -65,18 +65,52 @@ jobs:
           allow_issue_writing: false
           fail_action: false
 
-      - name: Sanitize ZAP SARIF output
+      - name: Convert ZAP JSON to SARIF
         if: always() && hashFiles('report_json.json') != ''
         run: |
-          jq 'del(.["@programName"], .["@version"], .["@generated"], .insights)' \
-            report_json.json > report_json_clean.json
-          mv report_json_clean.json report_json.json
+          jq '{
+            "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+            "version": "2.1.0",
+            "runs": [{
+              "tool": {
+                "driver": {
+                  "name": "OWASP ZAP",
+                  "informationUri": "https://www.zaproxy.org/",
+                  "rules": [.site[0].alerts[] | {
+                    "id": .pluginid,
+                    "name": .alert,
+                    "shortDescription": { "text": .alert },
+                    "fullDescription": { "text": (.desc | gsub("<[^>]+>"; "") | gsub("^\\s+|\\s+$"; "")) },
+                    "defaultConfiguration": {
+                      "level": (if .riskcode == "3" then "error"
+                                elif .riskcode == "2" then "warning"
+                                elif .riskcode == "1" then "note"
+                                else "none" end)
+                    }
+                  }]
+                }
+              },
+              "results": [.site[0].alerts[] as $alert | $alert.instances[] | {
+                "ruleId": $alert.pluginid,
+                "level": (if $alert.riskcode == "3" then "error"
+                          elif $alert.riskcode == "2" then "warning"
+                          elif $alert.riskcode == "1" then "note"
+                          else "none" end),
+                "message": { "text": $alert.alert },
+                "locations": [{
+                  "physicalLocation": {
+                    "artifactLocation": { "uri": .uri }
+                  }
+                }]
+              }]
+            }]
+          }' report_json.json > zap-sarif.json
 
       - name: Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
-        if: always() && hashFiles('report_json.json') != ''
+        if: always() && hashFiles('zap-sarif.json') != ''
         with:
-          sarif_file: report_json.json
+          sarif_file: zap-sarif.json
           category: zap
 
       - name: Upload ZAP reports as artifacts
@@ -88,6 +122,7 @@ jobs:
             report_json.json
             report_html.html
             report_md.md
+            zap-sarif.json
           retention-days: 30
 
       - name: Cleanup
