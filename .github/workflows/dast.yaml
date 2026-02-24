@@ -96,10 +96,12 @@ jobs:
                           elif $alert.riskcode == "2" then "warning"
                           elif $alert.riskcode == "1" then "note"
                           else "none" end),
-                "message": { "text": $alert.alert },
+                "message": { "text": ($alert.alert + " at " + .uri) },
                 "locations": [{
                   "physicalLocation": {
-                    "artifactLocation": { "uri": .uri }
+                    "artifactLocation": {
+                      "uri": (.uri | gsub("^https?://[^/]+/?"; "") | if . == "" then "index" else . end)
+                    }
                   }
                 }]
               }]
