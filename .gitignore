@@ -24,6 +24,7 @@ wheels/
 *.egg
 MANIFEST
 .pytest_cache/
+.hypothesis/
 .coverage
 coverage/
 htmlcov/
