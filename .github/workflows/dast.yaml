@@ -63,7 +63,6 @@ jobs:
         with:
           target: 'http://localhost:3000'
           allow_issue_writing: false
-          artifact_name: 'zap-scan'
           fail_action: false
           cmd_options: '-J zap-report.json'
 
