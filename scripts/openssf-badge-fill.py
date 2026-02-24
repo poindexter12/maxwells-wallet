@@ -14,10 +14,11 @@ Based on: https://github.com/coreinfrastructure/best-practices-badge/blob/main/d
 """
 
 import argparse
+import http.client
 import re
+import ssl
 import sys
 import time
-import urllib.request
 import urllib.parse
 
 BASE_URL = "https://www.bestpractices.dev"
@@ -239,58 +240,74 @@ CRITERIA = {
 
 
 # ---------------------------------------------------------------------------
-# HTTP helpers (adapted from best_practices_modify.py)
+# HTTP helpers — uses http.client.HTTPSConnection (not urllib) so that
+# file:// scheme injection is impossible by construction.
 # ---------------------------------------------------------------------------
+
+HOST = "www.bestpractices.dev"
+
+
+def _https_request(method: str, path: str, cookie: str, headers: dict | None = None,
+                   body: bytes | None = None) -> http.client.HTTPResponse:
+    """Make an HTTPS request to bestpractices.dev and return the response."""
+    conn = http.client.HTTPSConnection(HOST, context=ssl.create_default_context())
+    all_headers = {
+        "Cookie": f"_BadgeApp_session={cookie}",
+        "User-Agent": "openssf-badge-fill/1.0",
+    }
+    if headers:
+        all_headers.update(headers)
+    conn.request(method, path, body=body, headers=all_headers)
+    return conn.getresponse()
+
 
 def get_tokens(project_id: int, cookie: str) -> tuple[str, str]:
     """Fetch CSRF token and updated session cookie from the project edit page."""
-    url = f"{BASE_URL}/en/projects/{project_id}/passing/edit"
-    req = urllib.request.Request(url, headers={
-        "Cookie": f"_BadgeApp_session={cookie}",
-        "User-Agent": "openssf-badge-fill/1.0",
-    })
-    # URL is built from hardcoded BASE_URL (https) + integer project ID — no file:// risk
-    with urllib.request.urlopen(req) as resp:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
-        body = resp.read().decode("utf-8")
-        # Extract CSRF token
-        match = re.search(r'<meta name="csrf-token" content="([^"]+)"', body)
-        if not match:
-            print("ERROR: Could not find CSRF token. Is the session cookie valid?", file=sys.stderr)
-            sys.exit(1)
-        csrf_token = match.group(1)
+    resp = _https_request("GET", f"/en/projects/{project_id}/passing/edit", cookie)
+    body = resp.read().decode("utf-8")
 
-        # Extract updated session cookie
-        set_cookie = resp.headers.get("Set-Cookie", "")
-        session_match = re.search(r"_BadgeApp_session=([^;]+)", set_cookie)
-        new_cookie = session_match.group(1) if session_match else cookie
+    if resp.status in (301, 302, 303):
+        print("ERROR: Redirected (likely not logged in). Check your session cookie.", file=sys.stderr)
+        sys.exit(1)
 
-        return csrf_token, new_cookie
+    # Extract CSRF token
+    match = re.search(r'<meta name="csrf-token" content="([^"]+)"', body)
+    if not match:
+        print("ERROR: Could not find CSRF token. Is the session cookie valid?", file=sys.stderr)
+        sys.exit(1)
+    csrf_token = match.group(1)
+
+    # Extract updated session cookie
+    set_cookie = resp.getheader("Set-Cookie", "")
+    session_match = re.search(r"_BadgeApp_session=([^;]+)", set_cookie)
+    new_cookie = session_match.group(1) if session_match else cookie
+
+    return csrf_token, new_cookie
 
 
 def patch_project(project_id: int, cookie: str, csrf_token: str, data: dict) -> bool:
     """PATCH criteria data to the project."""
-    url = f"{BASE_URL}/en/projects/{project_id}/passing"
-
     # Convert {"key": "val"} to {"project[key]": "val"} for Rails form submission
     form_data = {f"project[{k}]": v for k, v in data.items()}
     encoded = urllib.parse.urlencode(form_data).encode("utf-8")
 
-    req = urllib.request.Request(url, data=encoded, method="PATCH", headers={
-        "Cookie": f"_BadgeApp_session={cookie}",
-        "X-CSRF-Token": csrf_token,
-        "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": "openssf-badge-fill/1.0",
-    })
+    resp = _https_request(
+        "PATCH",
+        f"/en/projects/{project_id}/passing",
+        cookie,
+        headers={
+            "X-CSRF-Token": csrf_token,
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body=encoded,
+    )
+    resp.read()  # drain response body
 
-    try:
-        with urllib.request.urlopen(req) as resp:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
-            return 200 <= resp.status < 400
-    except urllib.error.HTTPError as e:
-        # Rails returns 302 redirect on successful PATCH
-        if e.code in (301, 302, 303):
-            return True
-        print(f"  HTTP {e.code}: {e.reason}", file=sys.stderr)
-        return False
+    if 200 <= resp.status < 400:
+        return True
+
+    print(f"  HTTP {resp.status}: {resp.reason}", file=sys.stderr)
+    return False
 
 
 # ---------------------------------------------------------------------------
