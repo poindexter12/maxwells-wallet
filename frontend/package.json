@@ -43,6 +43,7 @@
     "crowdin-context-harvester": "^0.8.1",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.5",
+    "fast-check": "^4.5.3",
     "jsdom": "^28.1.0",
     "msw": "^2.12.4",
     "postcss": "^8.5.6",
