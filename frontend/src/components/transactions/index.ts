@@ -1,4 +1,5 @@
 export { TransactionRow } from './TransactionRow'
 export { VirtualTransactionList } from './VirtualTransactionList'
 export { TransactionFilters } from './TransactionFilters'
+export { BulkActions } from './BulkActions'
 export * from './types'
