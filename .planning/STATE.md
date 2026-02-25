@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** A reliable, maintainable personal finance tracker where users can trust their data is accurate and the UI communicates clearly when something goes wrong.
-**Current focus:** Phase 9 - Performance + Frontend Tests
+**Current focus:** Phase 10 - Internationalization
 
 ## Current Position
 
-Phase: 9 of 11 (Performance + Frontend Tests)
-Plan: 3 of 3 in current phase
-Status: Complete
-Last activity: 2026-02-25 — Phase 9 complete (dashboard widgets, transaction/import unit tests)
+Phase: 10 of 11 (Internationalization)
+Plan: 1 of 3 in current phase
+Status: In Progress
+Last activity: 2026-02-25 — Phase 10 Plan 01 complete (i18n validation infrastructure)
 
 Progress: [█████████████░░░░░░] 9/11 phases (82% overall; v1.1: 3/5 phases)
 
@@ -47,6 +47,7 @@ Progress: [█████████████░░░░░░] 9/11 phase
 | 09 | 01 | 7 min | 2 | 10 |
 | 09 | 02 | 2 min | 1 | 1 |
 | 09 | 03 | 7 min | 2 | 4 |
+| 10 | 01 | 5 min | 2 | 2 |
 
 ## Accumulated Context
 
@@ -60,6 +61,7 @@ Recent decisions affecting v1.1 work:
 - **Test strategy decision:** Simplified async hook tests to focus on API surface rather than deep async integration testing — timing-sensitive tests deferred to E2E coverage
 - **Phase 7 verification (2026-02-24):** Confirmed dashboard extraction and type safety work completed in commits 0241daa (widget extraction) and ea2b2e3 (lazy loading with SWR) — all 5 requirements (DASH-01/02, TYPE-01/02/03) verified as satisfied
 - **Dependency ordering:** Dashboard extraction (Phase 7) must precede dashboard polish (Phase 8) because tab crash fix (DASH-03) depends on extracted widget state to diagnose the bug
+- [Phase 10]: Audit script uses regex patterns for simplicity (not full AST parsing)
 
 ### Pending Todos
 
