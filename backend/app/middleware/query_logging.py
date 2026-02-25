@@ -14,7 +14,7 @@ Only enable in development - adds overhead and produces verbose logs.
 
 import logging
 import time
-from typing import Any, Optional
+from typing import Optional
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 from contextvars import ContextVar
