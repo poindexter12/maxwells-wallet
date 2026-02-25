@@ -116,7 +116,14 @@ Plans:
 
 Plans:
 - [ ] TBD
+**Plans**: 3 plans
 
+Plans:
+- [ ] 09-01-PLAN.md — Performance verification + backend query logging (PERF-01, PERF-02, PERF-03)
+- [ ] 09-02-PLAN.md — Widget unit tests (TEST-01)
+- [ ] 09-03-PLAN.md — Transaction + import unit tests (TEST-02, TEST-03)
+
+### Phase 10: Internationalization
 ### Phase 10: Internationalization
 **Goal**: All user-facing text uses translation keys with verification
 **Depends on**: Nothing (independent of frontend extraction work)
