@@ -31,7 +31,7 @@ See `milestones/v1.0-ROADMAP.md` for archived v1.0 phase details.
 - [x] **Phase 7: Type Safety + Dashboard Extraction** - Extract dashboard widgets with typed interfaces (verified 2026-02-24)
 - [x] **Phase 8: Dashboard Polish + Error Handling** - Fix tab crash, add error boundaries and user feedback (completed 2026-02-24)
 - [x] **Phase 9: Performance + Frontend Tests** - Parallel data fetching, caching, and unit test coverage (completed 2026-02-25)
-- [ ] **Phase 10: Internationalization** - Complete translation coverage across all UI surfaces
+- [x] **Phase 10: Internationalization** - Complete translation coverage across all UI surfaces (completed 2026-02-25)
 - [ ] **Phase 11: Backend Hardening** - UTC datetimes, validation constraints, configurable CORS
 
 ## Phase Quality Gate (applies to ALL phases)
@@ -172,5 +172,5 @@ Phases execute numerically. Phases 10 and 11 are independent and can run in para
 | 7. Type Safety + Dashboard Extraction | v1.1 | 1/1 | Complete | 2026-02-24 |
 | 8. Dashboard Polish + Error Handling | v1.1 | 0/3 | Not started | - |
 | 9. Performance + Frontend Tests | v1.1 | 0/? | Not started | - |
-| 10. Internationalization | 2/3 | In Progress|  | - |
+| 10. Internationalization | 3/3 | Complete   | 2026-02-25 | - |
 | 11. Backend Hardening | v1.1 | 0/? | Not started | - |

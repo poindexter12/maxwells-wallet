@@ -32,13 +32,13 @@ Requirements for codebase health milestone. Each maps to roadmap phases.
 - [ ] **TEST-01**: Unit tests exist for each extracted dashboard widget component
 - [ ] **TEST-02**: Unit tests exist for transactions page core interactions (filter, sort, search)
 - [ ] **TEST-03**: Unit tests exist for import workflow UI states (upload, preview, confirm, error)
-- [ ] **TEST-04**: i18n test suite enabled and passing in CI
+- [x] **TEST-04**: i18n test suite enabled and passing in CI
 
 ### Internationalization
 
-- [ ] **I18N-01**: All NavBar items, page titles, and modal buttons use translation keys instead of hardcoded English
-- [ ] **I18N-02**: All form labels, help text, and error messages use translation keys
-- [ ] **I18N-03**: Pseudo-locale test validates no untranslated strings remain in core user flows
+- [x] **I18N-01**: All NavBar items, page titles, and modal buttons use translation keys instead of hardcoded English
+- [x] **I18N-02**: All form labels, help text, and error messages use translation keys
+- [x] **I18N-03**: Pseudo-locale test validates no untranslated strings remain in core user flows
 
 ### Performance
 
@@ -107,10 +107,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-01 | Phase 9 | Pending |
 | TEST-02 | Phase 9 | Pending |
 | TEST-03 | Phase 9 | Pending |
-| TEST-04 | Phase 10 | Pending |
-| I18N-01 | Phase 10 | Pending |
-| I18N-02 | Phase 10 | Pending |
-| I18N-03 | Phase 10 | Pending |
+| TEST-04 | Phase 10 | Complete |
+| I18N-01 | Phase 10 | Complete |
+| I18N-02 | Phase 10 | Complete |
+| I18N-03 | Phase 10 | Complete |
 | PERF-01 | Phase 9 | Pending |
 | PERF-02 | Phase 9 | Pending |
 | PERF-03 | Phase 9 | Pending |
