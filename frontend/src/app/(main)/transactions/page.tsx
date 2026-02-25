@@ -13,8 +13,6 @@ import {
   type Tag,
   type Transaction,
 } from '@/components/transactions'
-import { TEST_IDS } from '@/test-ids'
-import { useFormat } from '@/hooks/useFormat'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 
 // Wrapper component with Suspense boundary for useSearchParams
@@ -35,9 +33,6 @@ function TransactionsContent() {
   const searchParams = useSearchParams()
   const t = useTranslations('transactions')
   const tCommon = useTranslations('common')
-  const tFields = useTranslations('fields')
-  const { formatCurrency, getDefaultLargeThreshold } = useFormat()
-
   // Filter state
   const [filtersInitialized, setFiltersInitialized] = useState(false)
   const [filters, setFilters] = useState({
@@ -63,7 +58,6 @@ function TransactionsContent() {
   // Use data fetching hook
   const {
     transactions,
-    setTransactions,
     totalCount,
     bucketTags,
     allTags,
