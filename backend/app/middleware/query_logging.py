@@ -37,12 +37,12 @@ def setup_query_logging(engine: Engine) -> None:
     """
 
     @event.listens_for(engine, "before_cursor_execute")
-    def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+    def before_cursor_execute(conn, _cursor, _statement, _parameters, _context, _executemany):
         """Record query start time."""
         conn.info.setdefault("query_start_time", []).append(time.time())
 
     @event.listens_for(engine, "after_cursor_execute")
-    def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+    def after_cursor_execute(conn, _cursor, statement, _parameters, _context, _executemany):
         """Log query with execution time."""
         total_time = None
 
