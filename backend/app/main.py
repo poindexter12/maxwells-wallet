@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI):
     # Helps identify N+1 queries and slow database operations
     if os.getenv("ENABLE_QUERY_LOGGING") == "1":
         from app.middleware.query_logging import setup_query_logging
-        setup_query_logging(engine)
+        setup_query_logging(engine.sync_engine)
         logger.info("🔍 Query logging enabled - all SQL queries will be logged")
         logger.info("   Queries >500ms will be flagged as slow")
         logger.info("   Use this to detect N+1 patterns and missing indexes")
