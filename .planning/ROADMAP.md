@@ -126,7 +126,6 @@ Plans:
 - [ ] 09-03-PLAN.md — Transaction + import unit tests (TEST-02, TEST-03)
 
 ### Phase 10: Internationalization
-### Phase 10: Internationalization
 **Goal**: All user-facing text uses translation keys with verification
 **Depends on**: Nothing (independent of frontend extraction work)
 **Requirements**: I18N-01, I18N-02, I18N-03, TEST-04
@@ -135,10 +134,12 @@ Plans:
   2. All form labels, help text, and error messages use translation keys
   3. Pseudo-locale test validates no untranslated strings remain in core flows
   4. i18n test suite is enabled and passing in CI
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] TBD
+- [ ] 10-01-PLAN.md — i18n validation infrastructure (audit script + pseudo-locale E2E test)
+- [ ] 10-02-PLAN.md — Translation key migration (NavBar, modals, forms, error messages)
+- [ ] 10-03-PLAN.md — Pseudo-locale validation + CI integration
 
 ### Phase 11: Backend Hardening
 **Goal**: Backend ready for Postgres migration with robust validation
