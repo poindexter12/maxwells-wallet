@@ -1,7 +1,9 @@
+import os
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import init_db
+from app.database import init_db, engine
 from app.routers import (
     transactions,
     import_router,
@@ -26,11 +28,24 @@ from app.services.scheduler import scheduler_service
 from app.middleware import SecurityHeadersMiddleware, add_demo_mode_middleware
 from app.version import get_version, get_version_info
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     await init_db()
+
+    # Enable query logging if requested (development only)
+    # Usage: ENABLE_QUERY_LOGGING=1 make backend
+    # Helps identify N+1 queries and slow database operations
+    if os.getenv("ENABLE_QUERY_LOGGING") == "1":
+        from app.middleware.query_logging import setup_query_logging
+        setup_query_logging(engine.sync_engine)
+        logger.info("🔍 Query logging enabled - all SQL queries will be logged")
+        logger.info("   Queries >500ms will be flagged as slow")
+        logger.info("   Use this to detect N+1 patterns and missing indexes")
+
     scheduler_service.start()
     yield
     # Shutdown

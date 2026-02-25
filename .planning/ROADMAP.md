@@ -29,8 +29,8 @@ See `milestones/v1.0-ROADMAP.md` for archived v1.0 phase details.
 **Milestone Goal:** Address all 11 actionable concerns from codebase audit — dashboard extraction, bug fixes, error handling, type safety, tests, i18n completion, performance, and backend validation/hardening.
 
 - [x] **Phase 7: Type Safety + Dashboard Extraction** - Extract dashboard widgets with typed interfaces (verified 2026-02-24)
-- [ ] **Phase 8: Dashboard Polish + Error Handling** - Fix tab crash, add error boundaries and user feedback
-- [ ] **Phase 9: Performance + Frontend Tests** - Parallel data fetching, caching, and unit test coverage
+- [x] **Phase 8: Dashboard Polish + Error Handling** - Fix tab crash, add error boundaries and user feedback (completed 2026-02-24)
+- [x] **Phase 9: Performance + Frontend Tests** - Parallel data fetching, caching, and unit test coverage (completed 2026-02-25)
 - [ ] **Phase 10: Internationalization** - Complete translation coverage across all UI surfaces
 - [ ] **Phase 11: Backend Hardening** - UTC datetimes, validation constraints, configurable CORS
 
@@ -112,11 +112,20 @@ Plans:
   4. Unit tests exist for each extracted dashboard widget component
   5. Unit tests exist for transactions page interactions (filter, sort, search)
   6. Unit tests exist for import workflow UI states (upload, preview, confirm, error)
-**Plans**: TBD
+**Status**: ✅ Complete (2026-02-25)
+**Plans**: 3 plans
 
 Plans:
-- [ ] TBD
+- [x] 09-01-PLAN.md — Dashboard widget unit tests (10 widget components tested)
+- [x] 09-02-PLAN.md — Fix 6 failing widget test assertions
+- [x] 09-03-PLAN.md — Transaction + import unit tests (93 passing tests)
 
+Plans:
+- [ ] 09-01-PLAN.md — Performance verification + backend query logging (PERF-01, PERF-02, PERF-03)
+- [ ] 09-02-PLAN.md — Widget unit tests (TEST-01)
+- [ ] 09-03-PLAN.md — Transaction + import unit tests (TEST-02, TEST-03)
+
+### Phase 10: Internationalization
 ### Phase 10: Internationalization
 **Goal**: All user-facing text uses translation keys with verification
 **Depends on**: Nothing (independent of frontend extraction work)
