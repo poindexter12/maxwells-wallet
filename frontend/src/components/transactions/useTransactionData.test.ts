@@ -1,10 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
 import { useTransactionData } from './useTransactionData'
 
-// Mock fetch globally
-const mockFetch = vi.fn()
-global.fetch = mockFetch as any
+// Spy on globalThis.fetch — works with Node 22+ native fetch
+let mockFetch: ReturnType<typeof vi.fn>
 
 interface FilterState {
   search: string
@@ -36,12 +35,15 @@ describe('useTransactionData', () => {
   }
 
   beforeEach(() => {
-    vi.clearAllMocks()
-    // Default mock: return empty for all requests
-    mockFetch.mockResolvedValue({
+    // Intercept native fetch with a spy
+    mockFetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => [],
-    })
+    } as Response)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('initializes with loading state', () => {
