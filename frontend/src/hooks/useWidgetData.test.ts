@@ -14,20 +14,21 @@ import {
   useBucketData
 } from './useWidgetData'
 
-// Mock SWR
-const mockUseSWR = vi.fn()
+// vi.hoisted runs before vi.mock hoisting, so these refs are safe to use in factories
+const { mockUseSWR, mockToastError, mockUseDashboard } = vi.hoisted(() => ({
+  mockUseSWR: vi.fn(),
+  mockToastError: vi.fn(),
+  mockUseDashboard: vi.fn()
+}))
+
 vi.mock('swr', () => ({
   default: (...args: unknown[]) => mockUseSWR(...args)
 }))
 
-// Mock toast
-const mockToastError = vi.fn()
 vi.mock('sonner', () => ({
   toast: { error: mockToastError }
 }))
 
-// Mock DashboardContext
-const mockUseDashboard = vi.fn()
 vi.mock('@/contexts/DashboardContext', () => ({
   useDashboard: () => mockUseDashboard()
 }))

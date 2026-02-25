@@ -69,10 +69,12 @@ describe('SpendingTreemap', () => {
     expect(screen.queryByTestId('treemap')).not.toBeInTheDocument()
   })
 
-  it('returns null when data is null', () => {
-    const { container } = render(<SpendingTreemap data={null} />)
+  it('renders empty state card when data is null', () => {
+    render(<SpendingTreemap data={null} />)
 
-    expect(container.firstChild).toBeNull()
+    // Component renders empty state with title, not null
+    expect(screen.getByText('treemap')).toBeInTheDocument()
+    expect(screen.getByText('noSpendingDataPeriod')).toBeInTheDocument()
   })
 
   it('renders with widget prop', () => {

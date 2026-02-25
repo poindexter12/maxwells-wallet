@@ -49,14 +49,16 @@ describe('SankeyFlowChart', () => {
     render(<SankeyFlowChart data={emptyData} />)
 
     expect(screen.getByText('sankey')).toBeInTheDocument()
-    expect(screen.getByText('noSpendingData')).toBeInTheDocument()
+    expect(screen.getByText('noFlowData')).toBeInTheDocument()
     expect(screen.queryByTestId('sankey')).not.toBeInTheDocument()
   })
 
-  it('returns null when data is null', () => {
-    const { container } = render(<SankeyFlowChart data={null} />)
+  it('renders empty state card when data is null', () => {
+    render(<SankeyFlowChart data={null} />)
 
-    expect(container.firstChild).toBeNull()
+    // Component renders empty state with title, not null
+    expect(screen.getByText('sankey')).toBeInTheDocument()
+    expect(screen.getByText('noFlowData')).toBeInTheDocument()
   })
 
   it('renders with widget prop', () => {

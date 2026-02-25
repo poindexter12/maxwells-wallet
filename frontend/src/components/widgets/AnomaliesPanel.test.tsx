@@ -53,9 +53,10 @@ describe('AnomaliesPanel', () => {
     render(<AnomaliesPanel anomalies={mockAnomalies} selectedYear={2024} selectedMonth={12} />)
 
     expect(screen.getByText('anomalies')).toBeInTheDocument()
-    expect(screen.getByText('3')).toBeInTheDocument() // large transactions
+    // large_transaction_count and unusual_bucket_count are both 3, so use getAllByText
+    const threes = screen.getAllByText('3')
+    expect(threes.length).toBe(2) // large transactions + unusual buckets
     expect(screen.getByText('2')).toBeInTheDocument() // new merchants
-    // The unusual_bucket_count '3' appears in the component
   })
 
   it('renders large transaction anomalies', () => {

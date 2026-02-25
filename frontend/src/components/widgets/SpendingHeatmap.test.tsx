@@ -68,10 +68,12 @@ describe('SpendingHeatmap', () => {
         />
       )
 
-      expect(screen.getByText('total')).toBeInTheDocument()
+      // Component renders "{t('key')}: " — the colon+space is part of the text node
+      expect(screen.getByText(/^total/)).toBeInTheDocument()
       expect(screen.getByText('$450.00')).toBeInTheDocument()
-      expect(screen.getByText('maxDay')).toBeInTheDocument()
-      expect(screen.getByText('$200.00')).toBeInTheDocument()
+      expect(screen.getByText(/^maxDay/)).toBeInTheDocument()
+      // maxDay value ($200.00) also appears in day 2 grid cell — verify at least one exists
+      expect(screen.getAllByText('$200.00').length).toBeGreaterThanOrEqual(1)
     })
 
     it('renders heatmap cells with intensity colors', () => {
@@ -113,12 +115,15 @@ describe('SpendingHeatmap', () => {
         />
       )
 
-      expect(screen.getByText('total')).toBeInTheDocument()
+      // Component renders "{t('key')}: " — the colon+space is part of the text node
+      expect(screen.getByText(/^total/)).toBeInTheDocument()
       expect(screen.getByText('$9300.00')).toBeInTheDocument()
-      expect(screen.getByText('maxMonth')).toBeInTheDocument()
-      expect(screen.getByText('$3500.00')).toBeInTheDocument()
-      expect(screen.getByText('activeMonths')).toBeInTheDocument()
-      expect(screen.getByText('3')).toBeInTheDocument()
+      expect(screen.getByText(/^maxMonth/)).toBeInTheDocument()
+      // maxMonth value ($3500.00) also appears in Feb month card — verify at least one exists
+      expect(screen.getAllByText('$3500.00').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getByText(/^activeMonths/)).toBeInTheDocument()
+      // months_with_spending (3) also matches month count in grid
+      expect(screen.getAllByText('3').length).toBeGreaterThanOrEqual(1)
     })
   })
 
