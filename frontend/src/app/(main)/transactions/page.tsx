@@ -1,47 +1,21 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback, Suspense } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { PageHelp } from '@/components/PageHelp'
-import { VirtualTransactionList, TransactionFilters, BulkActions } from '@/components/transactions'
+import {
+  VirtualTransactionList,
+  TransactionFilters,
+  BulkActions,
+  useTransactionData,
+  type Tag,
+  type Transaction,
+} from '@/components/transactions'
 import { TEST_IDS } from '@/test-ids'
 import { useFormat } from '@/hooks/useFormat'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
-
-interface Tag {
-  id: number
-  namespace: string
-  value: string
-  description?: string
-}
-
-interface TransactionTag {
-  namespace: string
-  value: string
-  full: string
-}
-
-interface Transaction {
-  id: number
-  date: string
-  amount: number
-  description: string
-  merchant: string | null
-  account_source: string
-  account_tag_id: number | null  // FK to account tag
-  category: string | null  // Legacy field
-  reconciliation_status: string
-  notes?: string | null
-  tags?: TransactionTag[]
-  bucket?: string  // Convenience field we'll compute
-  account?: string  // Convenience field we'll compute from account tag
-  is_transfer?: boolean  // True if marked as internal transfer
-  linked_transaction_id?: number | null  // ID of linked transfer pair
-}
-
-const PAGE_SIZE = 50
 
 // Wrapper component with Suspense boundary for useSearchParams
 export default function TransactionsPage() {
@@ -64,16 +38,7 @@ function TransactionsContent() {
   const tFields = useTranslations('fields')
   const { formatCurrency, getDefaultLargeThreshold } = useFormat()
 
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [totalCount, setTotalCount] = useState<number>(0)
-  const [bucketTags, setBucketTags] = useState<Tag[]>([])
-  const [allTags, setAllTags] = useState<Tag[]>([])
-  const [accountTags, setAccountTags] = useState<Tag[]>([])
-  const [occasionTags, setOccasionTags] = useState<Tag[]>([])
-  const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
-  const [hasMore, setHasMore] = useState(true)
-  const [nextCursor, setNextCursor] = useState<string | null>(null)
+  // Filter state
   const [filtersInitialized, setFiltersInitialized] = useState(false)
   const [filters, setFilters] = useState({
     search: '',
@@ -88,47 +53,50 @@ function TransactionsContent() {
     endDate: '',
     transfers: 'hide' as 'all' | 'hide' | 'only'  // Transfer filter: all, hide, only
   })
-  // Separate state for search input to prevent refetch on every keystroke
   const [searchInput, setSearchInput] = useState('')
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [showAccountDropdown, setShowAccountDropdown] = useState(false)
+
+  // Debounce filters to prevent rapid API calls
+  const debouncedFilters = useDebouncedValue(JSON.stringify(filters), 150)
+
+  // Use data fetching hook
+  const {
+    transactions,
+    setTransactions,
+    totalCount,
+    bucketTags,
+    allTags,
+    accountTags,
+    occasionTags,
+    loading,
+    loadingMore,
+    hasMore,
+    fetchTransactions,
+    loadMoreTransactions,
+  } = useTransactionData({ filters, filtersInitialized, debouncedFilters })
+
+  // UI state
   const [addingTagTo, setAddingTagTo] = useState<number | null>(null)
   const [_newTagValue, setNewTagValue] = useState('')
-
-  // Bulk selection state
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [bulkAction, setBulkAction] = useState('')
   const [bulkValue, setBulkValue] = useState('')
   const [bulkLoading, setBulkLoading] = useState(false)
-
-  // Expanded rows for metadata
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
-
-  // Inline notes editing
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null)
   const [noteValue, setNoteValue] = useState('')
-
-  // Dynamic large transaction threshold (from anomaly detection)
   const [largeThreshold, setLargeThreshold] = useState<number | null>(null)
 
   // Infinite scroll refs
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
-  // AbortController for cancelling in-flight requests when filters change rapidly
-  const abortControllerRef = useRef<AbortController | null>(null)
-
-  // Debounce filters to prevent rapid API calls (e.g., from rapid button clicks)
-  // Using JSON.stringify to create a stable string for comparison
-  const debouncedFilters = useDebouncedValue(JSON.stringify(filters), 150)
-
-  // Initialize filters from URL params on mount and when URL changes
-  // Using searchParams.toString() ensures we detect all URL param changes
+  // Initialize filters from URL params
   const searchParamsString = searchParams.toString()
   useEffect(() => {
     const bucket = searchParams.get('bucket') || ''
     const occasion = searchParams.get('occasion') || ''
-    // Support both single 'account' param and multiple 'accounts' params
     const accountSingle = searchParams.get('account') || ''
     const accountsMulti = searchParams.getAll('accounts')
     const accountsExclude = searchParams.getAll('accounts_exclude')
@@ -140,253 +108,35 @@ function TransactionsContent() {
     const endDate = searchParams.get('end_date') || ''
     const transfersParam = searchParams.get('transfers') || 'hide'
     const transfers = (['all', 'hide', 'only'].includes(transfersParam) ? transfersParam : 'hide') as 'all' | 'hide' | 'only'
-
-    // Combine single account with multi-accounts
-    const accounts = accountSingle
-      ? [accountSingle, ...accountsMulti]
-      : accountsMulti
-
-    // Check if we have any advanced filters in URL
+    const accounts = accountSingle ? [accountSingle, ...accountsMulti] : accountsMulti
     const hasAdvanced = status || amountMin || amountMax || startDate || endDate || accountsExclude.length > 0 || transfers !== 'hide'
-    if (hasAdvanced) {
-      setShowAdvancedFilters(true)
-    }
-
-    setFilters({
-      search,
-      bucket,
-      occasion,
-      accounts,
-      accountsExclude,
-      status,
-      amountMin,
-      amountMax,
-      startDate,
-      endDate,
-      transfers
-    })
-    setSearchInput(search) // Sync search input with URL param
+    if (hasAdvanced) setShowAdvancedFilters(true)
+    setFilters({ search, bucket, occasion, accounts, accountsExclude, status, amountMin, amountMax, startDate, endDate, transfers })
+    setSearchInput(search)
     setFiltersInitialized(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParamsString]) // Parse URL params when they change
+  }, [searchParamsString])
 
-  // Fetch tags and anomaly threshold on mount
+  // Fetch anomaly threshold on mount
   useEffect(() => {
-    fetchBucketTags()
-    fetchAllTags()
-    fetchAccountTags()
-    fetchOccasionTags()
-    fetchLargeThreshold()
-  }, []) // Fetch reference data once on mount
-
-  // Fetch the dynamic large transaction threshold from anomaly detection
-  async function fetchLargeThreshold() {
-    try {
-      const now = new Date()
-      const year = now.getFullYear()
-      const month = now.getMonth() + 1
-      const res = await fetch(`/api/v1/reports/anomalies?year=${year}&month=${month}`)
-      if (res.ok) {
-        const data = await res.json()
-        if (data.summary?.large_threshold_amount) {
-          setLargeThreshold(Math.round(data.summary.large_threshold_amount))
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching anomaly threshold:', error)
-    }
-  }
-
-  // Fetch transactions when filters are initialized or change (debounced)
-  useEffect(() => {
-    if (filtersInitialized) {
-      // Cancel any in-flight request before starting a new one
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
-      }
-
-      // Create new AbortController for this request
-      const controller = new AbortController()
-      abortControllerRef.current = controller
-
-      fetchTransactions(controller.signal)
-    }
-
-    // Cleanup: abort request if component unmounts or filters change
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtersInitialized, debouncedFilters]) // Refetch when debounced filters change
-
-  async function fetchOccasionTags() {
-    try {
-      const res = await fetch('/api/v1/tags?namespace=occasion')
-      const data = await res.json()
-      setOccasionTags(data)
-    } catch (error) {
-      console.error('Error fetching occasion tags:', error)
-    }
-  }
-
-  async function fetchBucketTags() {
-    try {
-      const res = await fetch('/api/v1/tags/buckets')
-      const data = await res.json()
-      setBucketTags(data)
-    } catch (error) {
-      console.error('Error fetching bucket tags:', error)
-    }
-  }
-
-  async function fetchAllTags() {
-    try {
-      const res = await fetch('/api/v1/tags')
-      const data = await res.json()
-      setAllTags(data)
-    } catch (error) {
-      console.error('Error fetching all tags:', error)
-    }
-  }
-
-  async function fetchAccountTags() {
-    try {
-      const res = await fetch('/api/v1/tags?namespace=account')
-      const data = await res.json()
-      setAccountTags(data)
-    } catch (error) {
-      console.error('Error fetching account tags:', error)
-    }
-  }
-
-  function _getAccountDisplayName(accountSource: string): string {
-    const accountTag = accountTags.find(t => t.value === accountSource.toLowerCase().replace(/\s+/g, '-'))
-    return accountTag?.description || accountSource
-  }
-
-  // Build URL params from filters
-  function buildFilterParams(): URLSearchParams {
-    const params = new URLSearchParams()
-    if (filters.search) params.append('search', filters.search)
-    if (filters.bucket) params.append('tag', `bucket:${filters.bucket}`)
-    if (filters.occasion) params.append('tag', `occasion:${filters.occasion}`)
-    filters.accounts.forEach(acc => params.append('account', acc))
-    filters.accountsExclude.forEach(acc => params.append('account_exclude', acc))
-    if (filters.status) params.append('reconciliation_status', filters.status)
-    if (filters.amountMin) params.append('amount_min', filters.amountMin)
-    if (filters.amountMax) params.append('amount_max', filters.amountMax)
-    if (filters.startDate) params.append('start_date', filters.startDate)
-    if (filters.endDate) params.append('end_date', filters.endDate)
-    // Transfer filter: hide=false, only=true, all=no param
-    if (filters.transfers === 'hide') params.append('is_transfer', 'false')
-    else if (filters.transfers === 'only') params.append('is_transfer', 'true')
-    return params
-  }
-
-  // Fetch total count
-  async function fetchTotalCount() {
-    try {
-      const params = buildFilterParams()
-      const res = await fetch(`/api/v1/transactions/count?${params.toString()}`)
-      const data = await res.json()
-      setTotalCount(data.count)
-    } catch (error) {
-      console.error('Error fetching count:', error)
-    }
-  }
-
-  // Fetch transactions with tags
-  async function fetchTransactionsWithTags(txns: Transaction[]): Promise<Transaction[]> {
-    return await Promise.all(
-      txns.map(async (txn: Transaction) => {
-        try {
-          const tagsRes = await fetch(`/api/v1/transactions/${txn.id}/tags`)
-          const tagsData = await tagsRes.json()
-          const tags = tagsData.tags || []
-          const bucketTag = tags.find((t: TransactionTag) => t.namespace === 'bucket')
-          const accountTag = tags.find((t: TransactionTag) => t.namespace === 'account')
-          return {
-            ...txn,
-            tags,
-            bucket: bucketTag?.value || null,
-            account: accountTag?.value || null
+    async function fetchLargeThreshold() {
+      try {
+        const now = new Date()
+        const year = now.getFullYear()
+        const month = now.getMonth() + 1
+        const res = await fetch(`/api/v1/reports/anomalies?year=${year}&month=${month}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.summary?.large_threshold_amount) {
+            setLargeThreshold(Math.round(data.summary.large_threshold_amount))
           }
-        } catch {
-          return { ...txn, tags: [], bucket: null, account: null }
         }
-      })
-    )
-  }
-
-  // Initial fetch (resets list) - uses cursor pagination
-  async function fetchTransactions(signal?: AbortSignal) {
-    setLoading(true)
-    try {
-      const params = buildFilterParams()
-      params.append('limit', PAGE_SIZE.toString())
-      // No cursor for initial fetch
-
-      const res = await fetch(`/api/v1/transactions/paginated?${params.toString()}`, { signal })
-
-      // Check if aborted before processing response
-      if (signal?.aborted) return
-
-      const data = await res.json()
-
-      // Check again after parsing JSON
-      if (signal?.aborted) return
-
-      const transactionsWithTags = await fetchTransactionsWithTags(data.items || [])
-
-      // Final check before setting state
-      if (signal?.aborted) return
-
-      setTransactions(transactionsWithTags)
-      setNextCursor(data.next_cursor || null)
-      setHasMore(data.has_more || false)
-      setLoading(false)
-
-      // Also fetch total count
-      fetchTotalCount()
-    } catch (error) {
-      // Ignore abort errors - they're expected when cancelling requests
-      if (error instanceof Error && error.name === 'AbortError') {
-        return
+      } catch (error) {
+        console.error('Error fetching anomaly threshold:', error)
       }
-      console.error('Error fetching transactions:', error)
-      setLoading(false)
     }
-  }
-
-  // Load more transactions (append to list) - uses cursor pagination
-  const loadMoreTransactions = useCallback(async () => {
-    if (loadingMore || !hasMore || !nextCursor) return
-
-    setLoadingMore(true)
-    try {
-      const params = buildFilterParams()
-      params.append('limit', PAGE_SIZE.toString())
-      params.append('cursor', nextCursor)
-
-      const res = await fetch(`/api/v1/transactions/paginated?${params.toString()}`)
-      const data = await res.json()
-
-      if (data.items && data.items.length > 0) {
-        const transactionsWithTags = await fetchTransactionsWithTags(data.items)
-        setTransactions(prev => [...prev, ...transactionsWithTags])
-      }
-
-      setNextCursor(data.next_cursor || null)
-      setHasMore(data.has_more || false)
-    } catch (error) {
-      console.error('Error loading more transactions:', error)
-    } finally {
-      setLoadingMore(false)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadingMore, hasMore, nextCursor, filters]) // buildFilterParams uses filters
+    fetchLargeThreshold()
+  }, [])
 
   // Set up intersection observer for infinite scroll
   useEffect(() => {
