@@ -171,14 +171,14 @@ export function SplitTransaction({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-theme">Split Transaction</h4>
+        <h4 className="text-sm font-medium text-theme">{t('splitTransaction')}</h4>
         {splits.length > 0 && (
           <button
             onClick={handleClearAll}
             disabled={saving}
             className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
           >
-            {tCommon('clear')} all
+            {t('clearAll')}
           </button>
         )}
       </div>

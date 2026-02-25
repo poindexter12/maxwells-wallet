@@ -362,7 +362,7 @@ export const TransactionRow = memo(forwardRef<HTMLDivElement, TransactionRowProp
               </div>
               {txn.account_source && (
                 <div className="flex gap-2">
-                  <span className="text-theme-muted w-24">Source:</span>
+                  <span className="text-theme-muted w-24">{t('source')}:</span>
                   <span className="text-theme-muted text-xs">{txn.account_source}</span>
                 </div>
               )}

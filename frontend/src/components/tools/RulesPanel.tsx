@@ -363,7 +363,7 @@ export default function RulesPanel() {
                       value={formData.merchant_pattern}
                       onChange={(e) => setFormData({ ...formData, merchant_pattern: e.target.value })}
                       className="w-full px-3 py-2 bg-theme border border-theme rounded-md"
-                      placeholder="e.g., Starbucks"
+                      placeholder={t('merchantPatternPlaceholder')}
                       data-testid="rule-merchant-input"
                     />
                   </div>
@@ -374,7 +374,7 @@ export default function RulesPanel() {
                       value={formData.description_pattern}
                       onChange={(e) => setFormData({ ...formData, description_pattern: e.target.value })}
                       className="w-full px-3 py-2 bg-theme border border-theme rounded-md"
-                      placeholder="e.g., Coffee"
+                      placeholder={t('descriptionPatternPlaceholder')}
                       data-testid="rule-description-input"
                     />
                   </div>
