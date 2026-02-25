@@ -2,9 +2,11 @@
 
 import { ReactNode, useEffect, useState } from 'react'
 import { NextIntlClientProvider } from 'next-intl'
+import { Toaster } from 'sonner'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { DashboardProvider } from '@/contexts/DashboardContext'
 import { DemoModeProvider } from '@/contexts/DemoModeContext'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { defaultLocale, Locale, isValidLocale } from '@/i18n'
 import universal from '@/messages/universal.json'
 import { useRouter } from 'next/navigation'
@@ -127,13 +129,16 @@ export function ProtectedProviders({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
       <NextIntlClientProvider locale={locale} messages={messages}>
-        <AuthGuardInner>
-          <DemoModeProvider isDemoMode={demoMode} message={demoMessage}>
-            <DashboardProvider>
-              {children}
-            </DashboardProvider>
-          </DemoModeProvider>
-        </AuthGuardInner>
+        <ErrorBoundary>
+          <Toaster position="top-right" richColors />
+          <AuthGuardInner>
+            <DemoModeProvider isDemoMode={demoMode} message={demoMessage}>
+              <DashboardProvider>
+                {children}
+              </DashboardProvider>
+            </DemoModeProvider>
+          </AuthGuardInner>
+        </ErrorBoundary>
       </NextIntlClientProvider>
     </AuthProvider>
   )

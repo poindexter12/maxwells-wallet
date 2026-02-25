@@ -1,0 +1,130 @@
+# Requirements: Maxwell's Wallet v1.1 Codebase Health
+
+**Defined:** 2026-02-24
+**Core Value:** A reliable, maintainable personal finance tracker where users can trust their data is accurate and the UI communicates clearly when something goes wrong.
+
+## v1.1 Requirements
+
+Requirements for codebase health milestone. Each maps to roadmap phases.
+
+### Dashboard Refactoring
+
+- [x] **DASH-01**: Dashboard page.tsx reduced to <400 lines by extracting widget renderers to dedicated component files
+- [x] **DASH-02**: Each extracted widget component manages its own local state instead of sharing 18+ hooks in a single component
+- [ ] **DASH-03**: Dashboard tab switching works reliably under rapid user interaction without crashes or undefined behavior
+- [ ] **DASH-04**: Transactions page.tsx reduced to <500 lines by extracting reusable sub-components
+
+### Error Handling
+
+- [ ] **ERR-01**: User sees a toast notification when any API call fails, with a description of what failed
+- [ ] **ERR-02**: User can retry failed API calls via a retry button on error states
+- [ ] **ERR-03**: React error boundary catches rendering crashes and shows a recovery UI instead of blank screen
+- [ ] **ERR-04**: Loading skeleton placeholders display while dashboard widgets fetch data
+
+### Type Safety
+
+- [x] **TYPE-01**: All `useState<any>` declarations replaced with typed interfaces for API response shapes
+- [x] **TYPE-02**: API response types centralized in a shared `dashboard-types.ts` module
+- [x] **TYPE-03**: API response validation ensures unexpected backend shapes surface as typed errors rather than silent failures
+
+### Testing
+
+- [ ] **TEST-01**: Unit tests exist for each extracted dashboard widget component
+- [ ] **TEST-02**: Unit tests exist for transactions page core interactions (filter, sort, search)
+- [ ] **TEST-03**: Unit tests exist for import workflow UI states (upload, preview, confirm, error)
+- [ ] **TEST-04**: i18n test suite enabled and passing in CI
+
+### Internationalization
+
+- [ ] **I18N-01**: All NavBar items, page titles, and modal buttons use translation keys instead of hardcoded English
+- [ ] **I18N-02**: All form labels, help text, and error messages use translation keys
+- [ ] **I18N-03**: Pseudo-locale test validates no untranslated strings remain in core user flows
+
+### Performance
+
+- [ ] **PERF-01**: Dashboard widget API calls execute in parallel instead of sequentially
+- [ ] **PERF-02**: Dashboard data cached with SWR or React Query to prevent redundant refetches on navigation
+- [ ] **PERF-03**: Report endpoints verified free of N+1 query patterns with query logging
+
+### Backend Hardening
+
+- [ ] **BACK-01**: All datetime fields use timezone-aware UTC (`datetime.now(timezone.utc)`, `DateTime(timezone=True)`)
+- [ ] **BACK-02**: Alembic migration converts existing timezone-naive data to UTC-aware
+- [ ] **BACK-03**: Budget amount validation enforces positive values via Pydantic constraint and DB check constraint
+- [ ] **BACK-04**: Tag due_day validation enforces 1-28 range in schema
+- [ ] **BACK-05**: CORS origins configurable via `CORS_ORIGINS` environment variable
+
+## Future Requirements
+
+### Security Hardening (v2 candidates)
+
+- **SEC-01**: Rate limiting on regex search endpoint
+- **SEC-02**: Per-query timeout protection for SQLite REGEXP operations
+- **SEC-03**: Request timeout middleware for all API endpoints
+
+### Scaling (v2 candidates)
+
+- **SCALE-01**: Postgres migration with connection pooling
+- **SCALE-02**: Date-based partitioning for transactions table
+- **SCALE-03**: Materialized views for monthly/yearly aggregates
+- **SCALE-04**: Streaming CSV parser for large file imports
+
+### Features (v2 candidates)
+
+- **FEAT-01**: Offline-first capability with service worker cache
+- **FEAT-02**: Audit trail / transaction edit history
+- **FEAT-03**: Soft-delete pattern with undo support
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Postgres migration | Timezone fix (BACK-01/02) prepares for it, but migration itself deferred |
+| Offline support | Requires service worker + CRDT — too much scope for health milestone |
+| Audit trail | Multi-user feature; single-user app doesn't need edit history yet |
+| Custom Semgrep rules | v1.0 security tooling working fine with auto ruleset |
+| DefectDojo dashboard | No multi-project aggregation need |
+| CSV streaming parser | <10MB typical files; streaming deferred until scale demands |
+| Rate limiting | Single-user local deployment; not urgent |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| DASH-01 | Phase 7 | Complete |
+| DASH-02 | Phase 7 | Complete |
+| DASH-03 | Phase 8 | Pending |
+| DASH-04 | Phase 8 | Pending |
+| ERR-01 | Phase 8 | Pending |
+| ERR-02 | Phase 8 | Pending |
+| ERR-03 | Phase 8 | Pending |
+| ERR-04 | Phase 8 | Pending |
+| TYPE-01 | Phase 7 | Complete |
+| TYPE-02 | Phase 7 | Complete |
+| TYPE-03 | Phase 7 | Complete |
+| TEST-01 | Phase 9 | Pending |
+| TEST-02 | Phase 9 | Pending |
+| TEST-03 | Phase 9 | Pending |
+| TEST-04 | Phase 10 | Pending |
+| I18N-01 | Phase 10 | Pending |
+| I18N-02 | Phase 10 | Pending |
+| I18N-03 | Phase 10 | Pending |
+| PERF-01 | Phase 9 | Pending |
+| PERF-02 | Phase 9 | Pending |
+| PERF-03 | Phase 9 | Pending |
+| BACK-01 | Phase 11 | Pending |
+| BACK-02 | Phase 11 | Pending |
+| BACK-03 | Phase 11 | Pending |
+| BACK-04 | Phase 11 | Pending |
+| BACK-05 | Phase 11 | Pending |
+
+**Coverage:**
+- v1.1 requirements: 26 total
+- Mapped to phases: 26
+- Unmapped: 0 ✓
+
+---
+*Requirements defined: 2026-02-24*
+*Last updated: 2026-02-24 after roadmap creation*

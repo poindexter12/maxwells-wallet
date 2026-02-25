@@ -53,9 +53,7 @@ test.describe('Dashboard Chaos - Fibonacci Ramp @chaos', () => {
 });
 
 test.describe('Dashboard Tab Switching Chaos @chaos', () => {
-  // TODO: Dashboard tab switching crashes - see dashboard-tabs.spec.ts failures
-  // This is a real bug found by chaos testing that needs to be fixed separately
-  test.skip('tab switching with interleaved actions', async ({ page }) => {
+  test('tab switching with interleaved actions', async ({ page }) => {
     test.setTimeout(60000);
     const seed = 11111;
     const rng = new SeededRandom(seed);

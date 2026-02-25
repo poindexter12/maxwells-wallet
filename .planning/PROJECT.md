@@ -1,12 +1,29 @@
-# DevSecOps Tooling Integration
+# Maxwell's Wallet — Project Planning
 
 ## What This Is
 
-A free, open-source alternative to Veracode's commercial security scanning suite, integrated into the Maxwell's Wallet CI pipeline. Five security tools (Semgrep SAST, OWASP Dependency-Check SCA, OpenSSF Scorecard, Trivy container scanning, OWASP ZAP DAST) run automatically in GitHub Actions and produce visible, non-blocking findings in the GitHub Security tab.
+A full-stack personal finance tracker (Next.js 16 + FastAPI + SQLite/Postgres) with CI-integrated DevSecOps tooling. v1.0 shipped five security scanning tools in GitHub Actions; v1.1 focuses on codebase health — extracting oversized components, fixing bugs found by chaos testing, adding error handling and test coverage, and hardening the backend for future Postgres migration.
 
 ## Core Value
 
-Security scanning tools run automatically in CI and produce visible, actionable findings without breaking any builds.
+A reliable, maintainable personal finance tracker where users can trust their data is accurate and the UI communicates clearly when something goes wrong.
+
+## Current Milestone: v1.1 Codebase Health
+
+**Goal:** Address all 11 actionable concerns from the codebase audit — dashboard extraction, bug fixes, error handling, type safety, tests, i18n completion, performance, and backend validation/hardening.
+
+**Target concerns:**
+- Dashboard page extraction (1,168 → ~300 lines)
+- Dashboard tab switching crash fix
+- Silent API error handling → user-visible feedback
+- Type safety gaps (remove `any`, validate API responses)
+- Frontend unit test coverage for main pages
+- i18n translation coverage completion
+- Dashboard data fetching performance (sequential → parallel)
+- N+1 query risk in reports
+- Timezone-naive datetimes → UTC-aware
+- Budget amount + tag due_day validation
+- CORS environment-variable configuration
 
 ## Requirements
 
@@ -29,7 +46,17 @@ Security scanning tools run automatically in CI and produce visible, actionable 
 
 ### Active
 
-(None — define with `/gsd:new-milestone`)
+- [ ] Dashboard page components extracted to dedicated widget files
+- [ ] Dashboard tab switching crash resolved
+- [ ] API errors shown to users with retry capability
+- [ ] TypeScript `any` declarations replaced with typed interfaces
+- [ ] Frontend unit tests for dashboard, transactions, import pages
+- [ ] i18n translation coverage complete across all pages/components
+- [ ] Dashboard data fetching parallelized with caching
+- [ ] Report queries verified free of N+1 patterns
+- [ ] All datetimes UTC-aware with timezone=True
+- [ ] Budget amount and tag due_day input validation enforced
+- [ ] CORS origins configurable via environment variable
 
 ### Out of Scope
 
@@ -45,17 +72,22 @@ Security scanning tools run automatically in CI and produce visible, actionable 
 
 ## Context
 
-Shipped v1.0 with 33 files changed across GitHub Actions workflows, README documentation, and planning artifacts.
+v1.0 shipped DevSecOps tooling (33 files, 5 security scanners in CI). v1.1 shifts focus to the application codebase itself.
 
-**Tech stack:** GitHub Actions (reusable workflows), Semgrep (native Docker), OWASP Dependency-Check (Docker + NVD caching), OpenSSF Scorecard (OIDC auth), Trivy (container scanning), OWASP ZAP (baseline passive scan).
+**App tech stack:** Next.js 16 (App Router, TypeScript), FastAPI (async Python), SQLite (dev) with SQLModel ORM, Alembic migrations, next-intl (9 locales).
 
-**SARIF categories in use:** semgrep, dependency-check, scorecard, trivy-container, zap — all unified in GitHub Security tab.
+**Codebase state (from audit 2026-02-24):**
+- Dashboard page.tsx is 1,168 lines with 9 inline widget renderers and 18+ state hooks
+- Transactions page.tsx is 1,323 lines
+- Chaos tests found tab switching crash (skipped pending fix)
+- i18n test suite skipped — only widget components have translation support
+- Frontend unit test coverage estimated at 5-10% of critical paths
+- All datetimes are timezone-naive (blocks Postgres migration)
+- 8+ sequential API calls on dashboard load (5-8s)
 
-**Known limitations from v1.0:**
-- ZAP false positive volume typically 50-200 findings before tuning
-- ZAP scans public pages only (no authenticated routes)
-- ZAP targets frontend only (backend API not directly scanned)
-- NVD API key recommended but optional (graceful degradation)
+**DevSecOps (v1.0) — still operational:**
+- SARIF categories: semgrep, dependency-check, scorecard, trivy-container, zap
+- ZAP limitations: public pages only, frontend only, ~50-200 findings before tuning
 
 ## Constraints
 
@@ -84,4 +116,4 @@ Shipped v1.0 with 33 files changed across GitHub Actions workflows, README docum
 | 3-source verification pattern | VERIFICATION.md + SUMMARY.md + REQUIREMENTS.md provides audit-ready traceability | ✓ Shipped v1.0 |
 
 ---
-*Last updated: 2026-02-23 after v1.0 milestone*
+*Last updated: 2026-02-24 after v1.1 milestone started*
