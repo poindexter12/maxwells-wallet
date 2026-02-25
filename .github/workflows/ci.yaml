@@ -144,6 +144,9 @@ jobs:
       run: npm ci
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Generate pseudo-locale for i18n E2E tests
+      working-directory: frontend
+      run: node scripts/generate-pseudo-locale.mjs
     - name: Install Playwright browsers
       working-directory: frontend
       run: npx playwright install --with-deps chromium
