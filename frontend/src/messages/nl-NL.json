@@ -88,6 +88,10 @@
     "maxAmount": "Max €",
     "startDate": "Startdatum",
     "endDate": "Einddatum",
+    "splitTransaction": "Split Transaction",
+    "clearAll": "Clear all",
+    "allocated": "{allocated} of {total} allocated",
+    "source": "Bron",
     "status": {
       "unreconciled": "Niet afgestemd",
       "matched": "Gekoppeld",
@@ -520,7 +524,9 @@
       "confirmDelete": "Deze regel verwijderen?",
       "select": "Selecteren...",
       "all": "ALLE",
-      "any": "EEN"
+      "any": "EEN",
+      "merchantPatternPlaceholder": "e.g., Starbucks",
+      "descriptionPatternPlaceholder": "e.g., Coffee"
     },
     "merchants": {
       "description": "Normaliseer rommelige bank handelaar namen naar schone, consistente namen",
@@ -547,7 +553,9 @@
       "txns": "txns",
       "confirmDelete": "Deze alias verwijderen?",
       "confirmApply": "Aliases toepassen op {count} transacties?",
-      "none": "(geen)"
+      "none": "(geen)",
+      "patternPlaceholder": "e.g., AMZN MKTP",
+      "displayAsPlaceholder": "e.g., Amazon"
     },
     "formats": {
       "description": "Maak herbruikbare importconfiguraties voor verschillende bank CSV formaten",
@@ -572,7 +580,26 @@
       "configAccount": "Rekening: {value}",
       "configDate": "Datum: {value}",
       "configAmount": "Bedrag: {value}",
-      "invalidConfig": "Ongeldige configuratie"
+      "invalidConfig": "Ongeldige configuratie",
+      "configuration": "Configuration",
+      "selectAccount": "-- Selecteer Rekening --",
+      "newAccountPlaceholder": "New account name",
+      "createNewAccount": "Create new account",
+      "optional": "(optional)",
+      "descriptionPlaceholder": "e.g., Monthly statement export from Chase",
+      "advancedSettings": "Advanced Settings",
+      "dateColumn": "Date Column *",
+      "amountColumn": "Amount Column *",
+      "descriptionColumn": "Description Column *",
+      "referenceColumn": "Reference Column",
+      "categoryColumn": "Category Column",
+      "skipHeaderRows": "Skip Header Rows",
+      "dateFormat": "Date Format",
+      "amountFormat": "Amount Format",
+      "invertSign": "Invert sign",
+      "selectOption": "-- Select --",
+      "noneOption": "-- None --",
+      "notDetected": "Not detected"
     }
   },
   "organize": {
@@ -635,6 +662,10 @@
     "subtitle": "Volg abonnementen en terugkerende betalingen",
     "upcoming": "Aankomende betalingen",
     "detected": "Gedetecteerde patronen",
+    "activePatterns": "Active Patterns",
+    "upcomingDays": "Upcoming (30 days)",
+    "noPatternsDetected": "No recurring patterns detected yet",
+    "amountRange": "Amount Range",
     "frequency": {
       "weekly": "Wekelijks",
       "biweekly": "Tweewekelijks",
@@ -647,7 +678,12 @@
     "title": "Reconciliëren",
     "subtitle": "Bekijk en categoriseer geïmporteerde transacties",
     "markReconciled": "Markeren als gereconcilieerd",
-    "markIgnored": "Markeren als genegeerd"
+    "markIgnored": "Markeren als genegeerd",
+    "markAsTransfer": "Mark as internal transfer",
+    "markAsTransferAndReconcile": "Mark as internal transfer and reconcile",
+    "allReconciled": "All transactions are reconciled!",
+    "actions": "Acties",
+    "noBucket": "Geen Pot"
   },
   "tags": {
     "title": "Tags",
@@ -896,6 +932,7 @@
         "week": "1 week"
       }
     },
+    "manualBackupPlaceholder": "Manual backup",
     "fields": {
       "description": "Beschrijving",
       "created": "Aangemaakt",
