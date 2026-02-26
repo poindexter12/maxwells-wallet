@@ -19,6 +19,7 @@ from sqlalchemy import (
     Text,
     ForeignKey,
     UniqueConstraint,
+    CheckConstraint,
     func,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -145,6 +146,7 @@ class Tag(TimestampMixin, Base):
     __tablename__ = "tags"
     __table_args__ = (
         UniqueConstraint("namespace", "value", name="uq_tags_namespace_value"),
+        CheckConstraint("due_day IS NULL OR (due_day >= 1 AND due_day <= 28)", name="ck_tags_due_day_range"),
         {"extend_existing": True},
     )
 
@@ -279,6 +281,9 @@ class Budget(TimestampMixin, Base):
     """Budget tracking model."""
 
     __tablename__ = "budgets"
+    __table_args__ = (
+        CheckConstraint("amount > 0", name="ck_budgets_amount_positive"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     tag: Mapped[str] = mapped_column(String, index=True)

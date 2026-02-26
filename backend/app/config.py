@@ -4,6 +4,7 @@ Application configuration for demo mode and backup settings.
 All settings can be configured via environment variables.
 """
 
+from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -31,6 +32,14 @@ class AppSettings(BaseSettings):
     # Authentication settings
     secret_key: str = "change-me-in-production-use-a-long-random-string"
     token_expire_hours: int = 24 * 7  # 1 week default
+
+    # CORS settings - comma-separated list of allowed origins
+    cors_origins: str = "http://localhost:3000"
+
+    @property
+    def cors_origins_list(self) -> List[str]:
+        """Parse CORS_ORIGINS environment variable into a list."""
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
 
 settings = AppSettings()

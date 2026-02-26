@@ -261,28 +261,24 @@ class TestBudgets:
 
     @pytest.mark.asyncio
     async def test_zero_budget(self, client: AsyncClient, seed_categories):
-        """Test edge case: budget with zero amount"""
+        """Test validation: zero budget amount should be rejected"""
         budget_data = {"tag": "bucket:subscriptions", "amount": 0.00, "period": "monthly"}
 
         response = await client.post("/api/v1/budgets", json=budget_data)
-        assert response.status_code == 201
-
-        # Get status should handle zero budget gracefully
-        response = await client.get("/api/v1/budgets/status/current")
-        assert response.status_code == 200
+        assert response.status_code == 422  # Validation error - amount must be > 0
 
     @pytest.mark.asyncio
     async def test_negative_budget(self, client: AsyncClient, seed_categories):
-        """Test validation: negative budget amount should be allowed for edge cases"""
+        """Test validation: negative budget amount should be rejected"""
         budget_data = {
             "tag": "bucket:savings",
-            "amount": -100.00,  # Negative for tracking income goals
+            "amount": -100.00,
             "period": "monthly",
         }
 
-        # Should be allowed
+        # Should be rejected
         response = await client.post("/api/v1/budgets", json=budget_data)
-        assert response.status_code == 201
+        assert response.status_code == 422  # Validation error - amount must be > 0
 
     @pytest.mark.asyncio
     async def test_invalid_tag_format(self, client: AsyncClient, seed_categories):
