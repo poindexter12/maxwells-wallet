@@ -38,9 +38,9 @@ class Base(DeclarativeBase):
 class TimestampMixin:
     """Mixin providing created_at and updated_at timestamps."""
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=func.now(), onupdate=func.now()
+        DateTime(timezone=True), default=func.now(), onupdate=func.now()
     )
 
 
@@ -311,7 +311,7 @@ class TagRule(TimestampMixin, Base):
     # Stats
     match_count: Mapped[int] = mapped_column(Integer, default=0)
     last_matched_date: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
+        DateTime(timezone=True), nullable=True
     )
 
 
@@ -348,7 +348,7 @@ class MerchantAlias(TimestampMixin, Base):
     priority: Mapped[int] = mapped_column(Integer, index=True, default=0)
     match_count: Mapped[int] = mapped_column(Integer, default=0)
     last_matched_date: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
+        DateTime(timezone=True), nullable=True
     )
 
 
@@ -382,7 +382,7 @@ class SavedFilter(TimestampMixin, Base):
 
     # Usage
     use_count: Mapped[int] = mapped_column(Integer, default=0)
-    last_used_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    last_used_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     is_pinned: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
