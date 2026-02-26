@@ -32,7 +32,7 @@ See `milestones/v1.0-ROADMAP.md` for archived v1.0 phase details.
 - [x] **Phase 8: Dashboard Polish + Error Handling** - Fix tab crash, add error boundaries and user feedback (completed 2026-02-24)
 - [x] **Phase 9: Performance + Frontend Tests** - Parallel data fetching, caching, and unit test coverage (completed 2026-02-25)
 - [x] **Phase 10: Internationalization** - Complete translation coverage across all UI surfaces (completed 2026-02-25)
-- [ ] **Phase 11: Backend Hardening** - UTC datetimes, validation constraints, configurable CORS
+- [x] **Phase 11: Backend Hardening** - UTC datetimes, validation constraints, configurable CORS (completed 2026-02-26)
 
 ## Phase Quality Gate (applies to ALL phases)
 
@@ -137,9 +137,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 10-01-PLAN.md — i18n validation infrastructure (audit script + pseudo-locale E2E test)
-- [ ] 10-02-PLAN.md — Translation key migration (NavBar, modals, forms, error messages)
-- [ ] 10-03-PLAN.md — Pseudo-locale validation + CI integration
+- [x] 10-01-PLAN.md — i18n validation infrastructure (audit script + pseudo-locale E2E test)
+- [x] 10-02-PLAN.md — Translation key migration (NavBar, modals, forms, error messages)
+- [x] 10-03-PLAN.md — Pseudo-locale validation + CI integration
 
 ### Phase 11: Backend Hardening
 **Goal**: Backend ready for Postgres migration with robust validation
@@ -151,10 +151,11 @@ Plans:
   3. Budget amount validation enforces positive values via Pydantic and DB constraints
   4. Tag due_day validation enforces 1-28 range in schema
   5. CORS origins are configurable via `CORS_ORIGINS` environment variable
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] TBD
+- [ ] 11-01-PLAN.md — UTC timezone migration (DateTime(timezone=True) + Alembic migration)
+- [ ] 11-02-PLAN.md — Validation constraints (Budget.amount, Tag.due_day, CORS origins)
 
 ## Progress
 
@@ -171,6 +172,6 @@ Phases execute numerically. Phases 10 and 11 are independent and can run in para
 | 6. Formal Verification Sweep | v1.0 | 1/1 | Complete | 2026-02-23 |
 | 7. Type Safety + Dashboard Extraction | v1.1 | 1/1 | Complete | 2026-02-24 |
 | 8. Dashboard Polish + Error Handling | v1.1 | 0/3 | Not started | - |
-| 9. Performance + Frontend Tests | v1.1 | 0/? | Not started | - |
-| 10. Internationalization | 3/3 | Complete   | 2026-02-25 | - |
-| 11. Backend Hardening | v1.1 | 0/? | Not started | - |
+| 9. Performance + Frontend Tests | v1.1 | 3/3 | Complete | 2026-02-25 |
+| 10. Internationalization | v1.1 | 3/3 | Complete | 2026-02-25 |
+| 11. Backend Hardening | 2/2 | Complete   | 2026-02-26 | - |

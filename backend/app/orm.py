@@ -19,6 +19,7 @@ from sqlalchemy import (
     Text,
     ForeignKey,
     UniqueConstraint,
+    CheckConstraint,
     func,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -38,9 +39,9 @@ class Base(DeclarativeBase):
 class TimestampMixin:
     """Mixin providing created_at and updated_at timestamps."""
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=func.now(), onupdate=func.now()
+        DateTime(timezone=True), default=func.now(), onupdate=func.now()
     )
 
 
@@ -145,6 +146,7 @@ class Tag(TimestampMixin, Base):
     __tablename__ = "tags"
     __table_args__ = (
         UniqueConstraint("namespace", "value", name="uq_tags_namespace_value"),
+        CheckConstraint("due_day IS NULL OR (due_day >= 1 AND due_day <= 28)", name="ck_tags_due_day_range"),
         {"extend_existing": True},
     )
 
@@ -279,6 +281,9 @@ class Budget(TimestampMixin, Base):
     """Budget tracking model."""
 
     __tablename__ = "budgets"
+    __table_args__ = (
+        CheckConstraint("amount > 0", name="ck_budgets_amount_positive"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     tag: Mapped[str] = mapped_column(String, index=True)
@@ -311,7 +316,7 @@ class TagRule(TimestampMixin, Base):
     # Stats
     match_count: Mapped[int] = mapped_column(Integer, default=0)
     last_matched_date: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
+        DateTime(timezone=True), nullable=True
     )
 
 
@@ -348,7 +353,7 @@ class MerchantAlias(TimestampMixin, Base):
     priority: Mapped[int] = mapped_column(Integer, index=True, default=0)
     match_count: Mapped[int] = mapped_column(Integer, default=0)
     last_matched_date: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
+        DateTime(timezone=True), nullable=True
     )
 
 
@@ -382,7 +387,7 @@ class SavedFilter(TimestampMixin, Base):
 
     # Usage
     use_count: Mapped[int] = mapped_column(Integer, default=0)
-    last_used_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    last_used_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     is_pinned: Mapped[bool] = mapped_column(Boolean, default=False)
 
 

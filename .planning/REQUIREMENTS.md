@@ -48,11 +48,11 @@ Requirements for codebase health milestone. Each maps to roadmap phases.
 
 ### Backend Hardening
 
-- [ ] **BACK-01**: All datetime fields use timezone-aware UTC (`datetime.now(timezone.utc)`, `DateTime(timezone=True)`)
-- [ ] **BACK-02**: Alembic migration converts existing timezone-naive data to UTC-aware
-- [ ] **BACK-03**: Budget amount validation enforces positive values via Pydantic constraint and DB check constraint
-- [ ] **BACK-04**: Tag due_day validation enforces 1-28 range in schema
-- [ ] **BACK-05**: CORS origins configurable via `CORS_ORIGINS` environment variable
+- [x] **BACK-01**: All datetime fields use timezone-aware UTC (`datetime.now(timezone.utc)`, `DateTime(timezone=True)`)
+- [x] **BACK-02**: Alembic migration converts existing timezone-naive data to UTC-aware
+- [x] **BACK-03**: Budget amount validation enforces positive values via Pydantic constraint and DB check constraint
+- [x] **BACK-04**: Tag due_day validation enforces 1-28 range in schema
+- [x] **BACK-05**: CORS origins configurable via `CORS_ORIGINS` environment variable
 
 ## Future Requirements
 
@@ -114,11 +114,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERF-01 | Phase 9 | Pending |
 | PERF-02 | Phase 9 | Pending |
 | PERF-03 | Phase 9 | Pending |
-| BACK-01 | Phase 11 | Pending |
-| BACK-02 | Phase 11 | Pending |
-| BACK-03 | Phase 11 | Pending |
-| BACK-04 | Phase 11 | Pending |
-| BACK-05 | Phase 11 | Pending |
+| BACK-01 | Phase 11 | Complete |
+| BACK-02 | Phase 11 | Complete |
+| BACK-03 | Phase 11 | Complete |
+| BACK-04 | Phase 11 | Complete |
+| BACK-05 | Phase 11 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 26 total

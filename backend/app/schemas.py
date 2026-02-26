@@ -8,7 +8,7 @@ ORM models are in orm.py - these are separate for proper type checking.
 from datetime import datetime, date as date_type
 from typing import Optional, List
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 # Import enums from orm (shared between ORM and schemas)
 from app.orm import (
@@ -63,6 +63,7 @@ class TagCreate(BaseModel):
     namespace: str
     value: str
     description: Optional[str] = None
+    due_day: Optional[int] = Field(None, ge=1, le=28, description="Due day must be between 1-28")
 
 
 class TagUpdate(BaseModel):
@@ -70,7 +71,7 @@ class TagUpdate(BaseModel):
     description: Optional[str] = None
     sort_order: Optional[int] = None
     color: Optional[str] = None
-    due_day: Optional[int] = None
+    due_day: Optional[int] = Field(None, ge=1, le=28, description="Due day must be between 1-28")
     credit_limit: Optional[float] = None
 
 
@@ -259,7 +260,7 @@ class BatchImportSessionResponse(TimestampResponse):
 
 class BudgetCreate(BaseModel):
     tag: str  # namespace:value format
-    amount: float
+    amount: float = Field(gt=0, description="Budget amount must be positive")
     period: BudgetPeriod = BudgetPeriod.monthly
     start_date: Optional[date_type] = None
     end_date: Optional[date_type] = None
@@ -268,7 +269,7 @@ class BudgetCreate(BaseModel):
 
 class BudgetUpdate(BaseModel):
     tag: Optional[str] = None
-    amount: Optional[float] = None
+    amount: Optional[float] = Field(None, gt=0, description="Budget amount must be positive")
     period: Optional[BudgetPeriod] = None
     start_date: Optional[date_type] = None
     end_date: Optional[date_type] = None

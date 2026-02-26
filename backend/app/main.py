@@ -27,6 +27,7 @@ from app.observability import setup_observability
 from app.services.scheduler import scheduler_service
 from app.middleware import SecurityHeadersMiddleware, add_demo_mode_middleware
 from app.version import get_version, get_version_info
+from app.config import settings as app_settings
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +109,7 @@ setup_observability(app)
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=app_settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
