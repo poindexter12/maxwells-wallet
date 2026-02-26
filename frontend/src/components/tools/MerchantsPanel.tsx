@@ -263,7 +263,7 @@ export default function MerchantsPanel() {
                   type="text"
                   value={aliasForm.pattern}
                   onChange={(e) => setAliasForm({ ...aliasForm, pattern: e.target.value })}
-                  placeholder="e.g., AMZN MKTP"
+                  placeholder={t('patternPlaceholder')}
                   className="w-full px-3 py-2 bg-theme border border-theme rounded-md"
                   required
                   data-testid="alias-pattern-input"
@@ -275,7 +275,7 @@ export default function MerchantsPanel() {
                   type="text"
                   value={aliasForm.canonical_name}
                   onChange={(e) => setAliasForm({ ...aliasForm, canonical_name: e.target.value })}
-                  placeholder="e.g., Amazon"
+                  placeholder={t('displayAsPlaceholder')}
                   className="w-full px-3 py-2 bg-theme border border-theme rounded-md"
                   required
                   data-testid="alias-canonical-input"

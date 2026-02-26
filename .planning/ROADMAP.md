@@ -31,7 +31,7 @@ See `milestones/v1.0-ROADMAP.md` for archived v1.0 phase details.
 - [x] **Phase 7: Type Safety + Dashboard Extraction** - Extract dashboard widgets with typed interfaces (verified 2026-02-24)
 - [x] **Phase 8: Dashboard Polish + Error Handling** - Fix tab crash, add error boundaries and user feedback (completed 2026-02-24)
 - [x] **Phase 9: Performance + Frontend Tests** - Parallel data fetching, caching, and unit test coverage (completed 2026-02-25)
-- [ ] **Phase 10: Internationalization** - Complete translation coverage across all UI surfaces
+- [x] **Phase 10: Internationalization** - Complete translation coverage across all UI surfaces (completed 2026-02-25)
 - [ ] **Phase 11: Backend Hardening** - UTC datetimes, validation constraints, configurable CORS
 
 ## Phase Quality Gate (applies to ALL phases)
@@ -126,7 +126,6 @@ Plans:
 - [ ] 09-03-PLAN.md — Transaction + import unit tests (TEST-02, TEST-03)
 
 ### Phase 10: Internationalization
-### Phase 10: Internationalization
 **Goal**: All user-facing text uses translation keys with verification
 **Depends on**: Nothing (independent of frontend extraction work)
 **Requirements**: I18N-01, I18N-02, I18N-03, TEST-04
@@ -135,10 +134,12 @@ Plans:
   2. All form labels, help text, and error messages use translation keys
   3. Pseudo-locale test validates no untranslated strings remain in core flows
   4. i18n test suite is enabled and passing in CI
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] TBD
+- [ ] 10-01-PLAN.md — i18n validation infrastructure (audit script + pseudo-locale E2E test)
+- [ ] 10-02-PLAN.md — Translation key migration (NavBar, modals, forms, error messages)
+- [ ] 10-03-PLAN.md — Pseudo-locale validation + CI integration
 
 ### Phase 11: Backend Hardening
 **Goal**: Backend ready for Postgres migration with robust validation
@@ -171,5 +172,5 @@ Phases execute numerically. Phases 10 and 11 are independent and can run in para
 | 7. Type Safety + Dashboard Extraction | v1.1 | 1/1 | Complete | 2026-02-24 |
 | 8. Dashboard Polish + Error Handling | v1.1 | 0/3 | Not started | - |
 | 9. Performance + Frontend Tests | v1.1 | 0/? | Not started | - |
-| 10. Internationalization | v1.1 | 0/? | Not started | - |
+| 10. Internationalization | 3/3 | Complete   | 2026-02-25 | - |
 | 11. Backend Hardening | v1.1 | 0/? | Not started | - |
