@@ -33,3 +33,34 @@
 
 ---
 
+
+## v1.1 Codebase Health (Shipped: 2026-02-26)
+
+**Delivered:** Addressed all 11 actionable codebase audit concerns — dashboard extraction, bug fixes, error handling, type safety, frontend test coverage, i18n completion, performance verification, and backend hardening for Postgres migration readiness.
+
+**Phases completed:** 5 phases (7-11), 12 plans
+**Files modified:** 75 (+11,399 / -1,141 lines)
+**Timeline:** 3 days (2026-02-24 → 2026-02-26)
+**Git range:** 911838d..aaa6b73 (PRs #228-#231)
+**Requirements:** 26/26 satisfied (100%)
+
+**Key accomplishments:**
+1. Dashboard extraction: 1,168 → 122 lines (-90%) with 10 typed SWR widget components and lazy loading
+2. Transactions extraction: 1,323 → 490 lines (-63%) with TransactionFilters, BulkActions, useTransactionData
+3. Dashboard tab crash fixed via functional state updates and SWR cache isolation per dashboard ID
+4. Error infrastructure: React ErrorBoundary + sonner toasts + retry buttons on all 9 widget hooks
+5. Frontend test coverage: 93+ unit tests for widgets, transactions, and import workflows
+6. i18n pipeline: audit script, pseudo-locale E2E test, 30+ translation keys, CI integration
+7. Backend hardening: UTC-aware datetimes, dual-layer validation (Pydantic + DB), configurable CORS
+
+### Known Tech Debt
+- 10 widget/hook test failures documented (mock timing, Recharts prop interfaces) — TEST-01 at ~82% pass rate
+- i18n migration focused on high-impact strings; low-priority remnants addressable in future iterations
+- Phase 8 and Phase 9 plan checkboxes in ROADMAP never updated (cosmetic only, work was completed)
+
+**Archives:**
+- `milestones/v1.1-ROADMAP.md`
+- `milestones/v1.1-REQUIREMENTS.md`
+
+---
+

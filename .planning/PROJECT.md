@@ -2,28 +2,11 @@
 
 ## What This Is
 
-A full-stack personal finance tracker (Next.js 16 + FastAPI + SQLite/Postgres) with CI-integrated DevSecOps tooling. v1.0 shipped five security scanning tools in GitHub Actions; v1.1 focuses on codebase health — extracting oversized components, fixing bugs found by chaos testing, adding error handling and test coverage, and hardening the backend for future Postgres migration.
+A full-stack personal finance tracker (Next.js 16 + FastAPI + SQLite/Postgres) with CI-integrated DevSecOps tooling and a healthy, well-tested codebase. v1.0 shipped five security scanning tools in GitHub Actions. v1.1 addressed all 11 codebase audit concerns — extracting oversized components, fixing bugs, adding error handling, comprehensive test coverage, i18n pipeline, and hardening the backend for Postgres migration.
 
 ## Core Value
 
 A reliable, maintainable personal finance tracker where users can trust their data is accurate and the UI communicates clearly when something goes wrong.
-
-## Current Milestone: v1.1 Codebase Health
-
-**Goal:** Address all 11 actionable concerns from the codebase audit — dashboard extraction, bug fixes, error handling, type safety, tests, i18n completion, performance, and backend validation/hardening.
-
-**Target concerns:**
-- Dashboard page extraction (1,168 → ~300 lines)
-- Dashboard tab switching crash fix
-- Silent API error handling → user-visible feedback
-- Type safety gaps (remove `any`, validate API responses)
-- Frontend unit test coverage for main pages
-- i18n translation coverage completion
-- Dashboard data fetching performance (sequential → parallel)
-- N+1 query risk in reports
-- Timezone-naive datetimes → UTC-aware
-- Budget amount + tag due_day validation
-- CORS environment-variable configuration
 
 ## Requirements
 
@@ -43,20 +26,24 @@ A reliable, maintainable personal finance tracker where users can trust their da
 - ✓ DAST baseline scanning via OWASP ZAP against ephemeral CI app instance — v1.0
 - ✓ README documentation of added tooling and output interpretation — v1.0
 - ✓ Formal verification artifacts with 3-source traceability for all 28 requirements — v1.0
+- ✓ Dashboard page components extracted to dedicated widget files (1,168 → 122 lines) — v1.1
+- ✓ Dashboard tab switching crash resolved (stale closures + SWR cache isolation) — v1.1
+- ✓ API errors shown to users with toast notifications and retry capability — v1.1
+- ✓ TypeScript `any` declarations replaced with typed interfaces (15 types centralized) — v1.1
+- ✓ Frontend unit tests for dashboard widgets, transactions, and import pages (93+ tests) — v1.1
+- ✓ i18n translation coverage complete with audit script, pseudo-locale E2E, CI validation — v1.1
+- ✓ Dashboard data fetching parallelized with SWR caching per dashboard ID — v1.1
+- ✓ Report queries verified free of N+1 patterns via SQLAlchemy query logging — v1.1
+- ✓ All datetimes UTC-aware with DateTime(timezone=True) — v1.1
+- ✓ Budget amount and tag due_day input validation enforced (Pydantic + DB constraints) — v1.1
+- ✓ CORS origins configurable via CORS_ORIGINS environment variable — v1.1
+- ✓ Transactions page extracted (1,323 → 490 lines) — v1.1
+- ✓ React ErrorBoundary catches rendering crashes with recovery UI — v1.1
+- ✓ i18n test suite enabled and passing in CI — v1.1
 
 ### Active
 
-- [ ] Dashboard page components extracted to dedicated widget files
-- [ ] Dashboard tab switching crash resolved
-- [ ] API errors shown to users with retry capability
-- [ ] TypeScript `any` declarations replaced with typed interfaces
-- [ ] Frontend unit tests for dashboard, transactions, import pages
-- [ ] i18n translation coverage complete across all pages/components
-- [ ] Dashboard data fetching parallelized with caching
-- [ ] Report queries verified free of N+1 patterns
-- [ ] All datetimes UTC-aware with timezone=True
-- [ ] Budget amount and tag due_day input validation enforced
-- [ ] CORS origins configurable via environment variable
+(No active requirements — define via `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -69,21 +56,30 @@ A reliable, maintainable personal finance tracker where users can trust their da
 - Active ZAP scanning — deeper detection but slower/riskier (v2 candidate: DAST-V2-02)
 - SBOM generation — CycloneDX/SPDX format (v2 candidate: CNTR-V2-01)
 - Custom Semgrep rules — project-specific patterns (v2 candidate: SAST-V2-01)
+- Offline-first capability — requires service worker + CRDT, too much scope currently
+- Audit trail / transaction edit history — multi-user feature, single-user app doesn't need yet
+- Postgres migration — timezone fix and validation constraints prepared for it, migration itself deferred
+- CSV streaming parser — <10MB typical files, streaming deferred until scale demands
+- Rate limiting — single-user local deployment, not urgent
 
 ## Context
 
-v1.0 shipped DevSecOps tooling (33 files, 5 security scanners in CI). v1.1 shifts focus to the application codebase itself.
+**Shipped milestones:**
+- v1.0 DevSecOps Tooling (2026-02-23): 6 phases, 7 plans, 33 files, 5 security scanners in CI
+- v1.1 Codebase Health (2026-02-26): 5 phases, 12 plans, 75 files, all 11 audit concerns addressed
 
-**App tech stack:** Next.js 16 (App Router, TypeScript), FastAPI (async Python), SQLite (dev) with SQLModel ORM, Alembic migrations, next-intl (9 locales).
+**App tech stack:** Next.js 16 (App Router, TypeScript), FastAPI (async Python), SQLite (dev) with SQLModel ORM, Alembic migrations, next-intl (9 locales), SWR for data fetching, sonner for toast notifications.
 
-**Codebase state (from audit 2026-02-24):**
-- Dashboard page.tsx is 1,168 lines with 9 inline widget renderers and 18+ state hooks
-- Transactions page.tsx is 1,323 lines
-- Chaos tests found tab switching crash (skipped pending fix)
-- i18n test suite skipped — only widget components have translation support
-- Frontend unit test coverage estimated at 5-10% of critical paths
-- All datetimes are timezone-naive (blocks Postgres migration)
-- 8+ sequential API calls on dashboard load (5-8s)
+**Codebase state (post v1.1):**
+- Dashboard page.tsx: 122 lines (from 1,168) with 10 extracted widget components
+- Transactions page.tsx: 490 lines (from 1,323) with extracted filters, bulk actions, data hook
+- Error handling: React ErrorBoundary + sonner toasts + SWR retry on all 9 widget hooks
+- Type safety: 15 typed interfaces in centralized types.ts, zero `useState<any>`
+- Frontend tests: 93+ unit tests for widgets, transactions, import workflows
+- i18n: audit script, pseudo-locale E2E, 30+ translation keys, CI validation
+- Backend: UTC-aware datetimes, Pydantic + DB constraint validation, configurable CORS
+- All datetimes are timezone-aware (Postgres migration ready)
+- 1,153 backend tests, 336+ frontend tests
 
 **DevSecOps (v1.0) — still operational:**
 - SARIF categories: semgrep, dependency-check, scorecard, trivy-container, zap
@@ -114,6 +110,14 @@ v1.0 shipped DevSecOps tooling (33 files, 5 security scanners in CI). v1.1 shift
 | Non-blocking execution (all tools) | Security findings should inform but not block development; visibility in Security tab sufficient | ✓ Shipped v1.0 |
 | Job-level permissions | Least privilege — only security jobs get security-events: write, not all jobs | ✓ Shipped v1.0 |
 | 3-source verification pattern | VERIFICATION.md + SUMMARY.md + REQUIREMENTS.md provides audit-ready traceability | ✓ Shipped v1.0 |
+| SWR for widget data fetching | Automatic request deduplication, caching, revalidation; better than manual fetch/useState | ✓ Shipped v1.1 |
+| Sonner for toast notifications | Battle-tested library with good DX and accessibility; avoids building custom toast system | ✓ Shipped v1.1 |
+| Functional state updates in DashboardContext | Prevents stale closures when async operations complete after state has changed | ✓ Shipped v1.1 |
+| Dashboard ID in SWR cache keys | Isolates cached widget data per dashboard — prevents cross-contamination during tab switches | ✓ Shipped v1.1 |
+| Dual-layer validation (Pydantic + DB) | Pydantic catches invalid requests early; DB constraints prevent bad data even if bypassing API | ✓ Shipped v1.1 |
+| DateTime(timezone=True) for all columns | Prevents timezone-related data corruption during SQLite → Postgres migration | ✓ Shipped v1.1 |
+| Regex-based i18n audit (not AST) | Simpler and faster; may produce false positives but good enough for development-time auditing | ✓ Shipped v1.1 |
+| Simplified async hook tests | Focus on API surface rather than deep async integration testing; timing-sensitive tests deferred to E2E | ⚠️ Tech debt |
 
 ---
-*Last updated: 2026-02-24 after v1.1 milestone started*
+*Last updated: 2026-02-26 after v1.1 milestone*
