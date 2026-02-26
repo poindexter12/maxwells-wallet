@@ -88,6 +88,10 @@
     "maxAmount": "Max €",
     "startDate": "Startdatum",
     "endDate": "Enddatum",
+    "splitTransaction": "Split Transaction",
+    "clearAll": "Clear all",
+    "allocated": "{allocated} of {total} allocated",
+    "source": "Quelle",
     "status": {
       "unreconciled": "Nicht abgeglichen",
       "matched": "Zugeordnet",
@@ -520,7 +524,9 @@
       "confirmDelete": "Diese Regel löschen?",
       "select": "Auswählen...",
       "all": "ALLE",
-      "any": "BELIEBIG"
+      "any": "BELIEBIG",
+      "merchantPatternPlaceholder": "e.g., Starbucks",
+      "descriptionPatternPlaceholder": "e.g., Coffee"
     },
     "merchants": {
       "description": "Unordentliche Bank-Händlernamen in saubere, konsistente Namen umwandeln",
@@ -547,7 +553,9 @@
       "txns": "Transaktionen",
       "confirmDelete": "Diesen Alias löschen?",
       "confirmApply": "Aliase auf {count} Transaktionen anwenden?",
-      "none": "(keine)"
+      "none": "(keine)",
+      "patternPlaceholder": "e.g., AMZN MKTP",
+      "displayAsPlaceholder": "e.g., Amazon"
     },
     "formats": {
       "description": "Wiederverwendbare Import-Konfigurationen für verschiedene Bank-CSV-Formate erstellen",
@@ -572,7 +580,26 @@
       "configAccount": "Konto: {value}",
       "configDate": "Datum: {value}",
       "configAmount": "Betrag: {value}",
-      "invalidConfig": "Ungültige Konfiguration"
+      "invalidConfig": "Ungültige Konfiguration",
+      "configuration": "Configuration",
+      "selectAccount": "-- Konto auswählen --",
+      "newAccountPlaceholder": "New account name",
+      "createNewAccount": "Create new account",
+      "optional": "(optional)",
+      "descriptionPlaceholder": "e.g., Monthly statement export from Chase",
+      "advancedSettings": "Advanced Settings",
+      "dateColumn": "Date Column *",
+      "amountColumn": "Amount Column *",
+      "descriptionColumn": "Description Column *",
+      "referenceColumn": "Reference Column",
+      "categoryColumn": "Category Column",
+      "skipHeaderRows": "Skip Header Rows",
+      "dateFormat": "Date Format",
+      "amountFormat": "Amount Format",
+      "invertSign": "Invert sign",
+      "selectOption": "-- Select --",
+      "noneOption": "-- None --",
+      "notDetected": "Not detected"
     }
   },
   "organize": {
@@ -635,6 +662,10 @@
     "subtitle": "Abonnements und wiederkehrende Zahlungen verfolgen",
     "upcoming": "Bevorstehende Zahlungen",
     "detected": "Erkannte Muster",
+    "activePatterns": "Active Patterns",
+    "upcomingDays": "Upcoming (30 days)",
+    "noPatternsDetected": "No recurring patterns detected yet",
+    "amountRange": "Amount Range",
     "frequency": {
       "weekly": "Wöchentlich",
       "biweekly": "Zweiwöchentlich",
@@ -647,7 +678,12 @@
     "title": "Abgleichen",
     "subtitle": "Importierte Transaktionen überprüfen und kategorisieren",
     "markReconciled": "Als abgeglichen markieren",
-    "markIgnored": "Als ignoriert markieren"
+    "markIgnored": "Als ignoriert markieren",
+    "markAsTransfer": "Mark as internal transfer",
+    "markAsTransferAndReconcile": "Mark as internal transfer and reconcile",
+    "allReconciled": "All transactions are reconciled!",
+    "actions": "Aktionen",
+    "noBucket": "Keine Kategorie"
   },
   "tags": {
     "title": "Tags",
@@ -896,6 +932,7 @@
         "week": "1 Woche"
       }
     },
+    "manualBackupPlaceholder": "Manual backup",
     "fields": {
       "description": "Beschreibung",
       "created": "Erstellt",
