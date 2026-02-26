@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** A reliable, maintainable personal finance tracker where users can trust their data is accurate and the UI communicates clearly when something goes wrong.
-**Current focus:** Phase 10 - Internationalization
+**Current focus:** Phase 11 - Backend Hardening
 
 ## Current Position
 
-Phase: 10 of 11 (Internationalization)
-Plan: 3 of 3 in current phase
+Phase: 11 of 11 (Backend Hardening)
+Plan: 2 of 2 in current phase
 Status: Complete
-Last activity: 2026-02-25 — Phase 10 complete (i18n validation infrastructure, translation key migration, CI integration)
+Last activity: 2026-02-26 — Phase 11 complete (UTC timezone migration, validation constraints, configurable CORS)
 
-Progress: [██████████████░░░░░] 10/11 phases (91% overall; v1.1: 4/5 phases)
+Progress: [███████████████████░] 11/11 phases (100% overall; v1.1: 5/5 phases complete)
 
 ## Performance Metrics
 
@@ -35,9 +35,9 @@ Progress: [██████████████░░░░░] 10/11 phas
 | 06-formal-verification-sweep | 1 | 12 min | 12 min |
 
 **v1.1 Trend:**
-- Total plans completed: 4
-- Average duration: 4.75 minutes
-- Phase 7, 9 complete
+- Total plans completed: 11
+- Average duration: 4.0 minutes
+- All phases complete (7, 9, 10, 11)
 
 *Updated after each plan completion*
 
@@ -50,6 +50,8 @@ Progress: [██████████████░░░░░] 10/11 phas
 | 10 | 01 | 5 min | 2 | 2 |
 | 10 | 02 | 6 min | 1 | 5 |
 | 10 | 03 | 2 min | 1 | 1 |
+| 11 | 01 | 2 min | 2 | 2 |
+| 11 | 02 | 4 min | 2 | 5 |
 
 ## Accumulated Context
 
@@ -65,6 +67,8 @@ Recent decisions affecting v1.1 work:
 - **Phase 7 verification (2026-02-24):** Confirmed dashboard extraction and type safety work completed in commits 0241daa (widget extraction) and ea2b2e3 (lazy loading with SWR) — all 5 requirements (DASH-01/02, TYPE-01/02/03) verified as satisfied
 - [Phase 10]: Audit script uses regex patterns for simplicity (not full AST parsing)
 - [Phase 10]: Focused migration on high-impact user-facing strings rather than exhaustive conversion (remaining low-priority strings can be addressed in future iterations)
+- [Phase 11]: UTC-aware DateTime columns with timezone=True for Postgres migration readiness
+- [Phase 11]: Dual-layer validation (Pydantic + DB constraints) for Budget.amount and Tag.due_day
 
 ### Pending Todos
 
@@ -72,14 +76,15 @@ None.
 
 ### Blockers/Concerns
 
-**Phase 10 complete — next phase ready:**
-- ✅ Phase 11 (backend hardening) ready to proceed
+**Phase 11 complete — v1.1 milestone complete:**
+- ✅ All 5 v1.1 phases executed (7, 9, 10, 11)
+- ✅ All 11 requirements satisfied (DASH-01/02, TYPE-01/02/03, PERF-01/02/03, I18N-01/02/03, TEST-04, BACK-01/02/03/04/05)
 
 **Remaining work:**
-- Phase 11: Backend error handling, rate limiting, observability (final v1.1 phase)
+- None for v1.1 milestone
 
 ## Session Continuity
 
-Last session: 2026-02-25 (phase 9 execution)
-Stopped at: Phase 9 Performance + Frontend Tests complete (all 3 plans executed)
+Last session: 2026-02-26 (phase 11 execution)
+Stopped at: Phase 11 Backend Hardening complete (2 plans executed)
 Resume file: None

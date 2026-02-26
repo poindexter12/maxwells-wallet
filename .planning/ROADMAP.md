@@ -32,7 +32,7 @@ See `milestones/v1.0-ROADMAP.md` for archived v1.0 phase details.
 - [x] **Phase 8: Dashboard Polish + Error Handling** - Fix tab crash, add error boundaries and user feedback (completed 2026-02-24)
 - [x] **Phase 9: Performance + Frontend Tests** - Parallel data fetching, caching, and unit test coverage (completed 2026-02-25)
 - [x] **Phase 10: Internationalization** - Complete translation coverage across all UI surfaces (completed 2026-02-25)
-- [ ] **Phase 11: Backend Hardening** - UTC datetimes, validation constraints, configurable CORS
+- [x] **Phase 11: Backend Hardening** - UTC datetimes, validation constraints, configurable CORS (completed 2026-02-26)
 
 ## Phase Quality Gate (applies to ALL phases)
 
@@ -174,4 +174,4 @@ Phases execute numerically. Phases 10 and 11 are independent and can run in para
 | 8. Dashboard Polish + Error Handling | v1.1 | 0/3 | Not started | - |
 | 9. Performance + Frontend Tests | v1.1 | 3/3 | Complete | 2026-02-25 |
 | 10. Internationalization | v1.1 | 3/3 | Complete | 2026-02-25 |
-| 11. Backend Hardening | v1.1 | 0/2 | Not started | - |
+| 11. Backend Hardening | 2/2 | Complete   | 2026-02-26 | - |
