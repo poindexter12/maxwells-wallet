@@ -76,3 +76,6 @@ site/
 # Backup files
 backend/data/backups/
 deploy/swag-test/.env
+
+# Local dev tools (not committed)
+frontend/src/lib/i18n-audit.ts
