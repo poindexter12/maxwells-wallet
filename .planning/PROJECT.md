@@ -43,16 +43,12 @@ A reliable, maintainable personal finance tracker where users can trust their da
 
 ### Active
 
-#### Current Milestone: v1.2 Build System Modernization
-
-**Goal:** Replace Make with Just (via mise) and use gum for polished CLI output — one canonical tool manager, one task runner, beautiful DX.
-
-**Target features:**
-- mise as single tool version manager (node, python, uv, just, gum)
-- Justfile replacing all ~60 Makefile targets with gum-powered output
-- Devcontainer transitioned to mise-based setup
-- All docs/CLAUDE.md updated to reference just instead of make
-- Makefile + make/ directory deleted entirely
+- [ ] Replace Make with Just as the project task runner
+- [ ] Use gum for beautiful, interactive terminal output in all recipes
+- [ ] Use mise as the single toolchain manager (just, gum, node, python, uv)
+- [ ] Migrate .envrc secrets to mise [env] with .env file
+- [ ] Clean break from Make — delete Makefile and make/ entirely
+- [ ] Update CLAUDE.md and README to reflect new toolchain
 
 ### Out of Scope
 
@@ -72,6 +68,18 @@ A reliable, maintainable personal finance tracker where users can trust their da
 - Rate limiting — single-user local deployment, not urgent
 
 ## Context
+
+## Current Milestone: v1.2 Build System Modernization
+
+**Goal:** Replace Make with Just + gum for a modern, beautiful task runner experience, with mise as the single prerequisite managing all dev tooling.
+
+**Target features:**
+- Just as task runner (replacing Makefile + 7 modular .mk files)
+- gum for sexy interactive terminal output (replacing raw ANSI escape codes)
+- mise as sole prerequisite — manages just, gum, node, python, uv
+- mise [env] for secrets (replacing .envrc/direnv)
+- Clean break — Makefile and make/ directory deleted
+- Updated docs (CLAUDE.md, README, devcontainer)
 
 **Shipped milestones:**
 - v1.0 DevSecOps Tooling (2026-02-23): 6 phases, 7 plans, 33 files, 5 security scanners in CI
