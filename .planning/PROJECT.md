@@ -52,7 +52,16 @@ A reliable, maintainable personal finance tracker where users can trust their da
 
 ### Active
 
-(None — start next milestone with `/gsd:new-milestone`)
+#### Current Milestone: v1.2 Build System Modernization
+
+**Goal:** Replace Make with Just (via mise) and use gum for polished CLI output — one canonical tool manager, one task runner, beautiful DX.
+
+**Target features:**
+- mise as single tool version manager (node, python, uv, just, gum)
+- Justfile replacing all ~60 Makefile targets with gum-powered output
+- Devcontainer transitioned to mise-based setup
+- All docs/CLAUDE.md updated to reference just instead of make
+- Makefile + make/ directory deleted entirely
 
 ### Out of Scope
 
@@ -147,4 +156,4 @@ A reliable, maintainable personal finance tracker where users can trust their da
 | Sub-project Makefiles preserved | data/Makefile and deploy/swag-test/Makefile are separate concerns; just recipes delegate to them | ✓ Shipped v1.2 |
 
 ---
-*Last updated: 2026-02-27 after v1.2 milestone*
+*Last updated: 2026-02-26 after v1.2 milestone started*
