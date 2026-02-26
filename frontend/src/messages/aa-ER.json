@@ -88,6 +88,10 @@
     "maxAmount": "crwdns1546:0crwdne1546:0",
     "startDate": "crwdns1548:0crwdne1548:0",
     "endDate": "crwdns1550:0crwdne1550:0",
+    "splitTransaction": "crwdns2932:0crwdne2932:0",
+    "clearAll": "crwdns2934:0crwdne2934:0",
+    "allocated": "crwdns2936:0{allocated}crwdnd2936:0{total}crwdne2936:0",
+    "source": "crwdns2938:0crwdne2938:0",
     "status": {
       "unreconciled": "crwdns1552:0crwdne1552:0",
       "matched": "crwdns1554:0crwdne1554:0",
@@ -520,7 +524,9 @@
       "confirmDelete": "crwdns2294:0crwdne2294:0",
       "select": "crwdns2296:0crwdne2296:0",
       "all": "crwdns2298:0crwdne2298:0",
-      "any": "crwdns2300:0crwdne2300:0"
+      "any": "crwdns2300:0crwdne2300:0",
+      "merchantPatternPlaceholder": "crwdns2940:0crwdne2940:0",
+      "descriptionPatternPlaceholder": "crwdns2942:0crwdne2942:0"
     },
     "merchants": {
       "description": "crwdns2302:0crwdne2302:0",
@@ -547,7 +553,9 @@
       "txns": "crwdns2344:0crwdne2344:0",
       "confirmDelete": "crwdns2346:0crwdne2346:0",
       "confirmApply": "crwdns2348:0{count}crwdne2348:0",
-      "none": "crwdns2350:0crwdne2350:0"
+      "none": "crwdns2350:0crwdne2350:0",
+      "patternPlaceholder": "crwdns2944:0crwdne2944:0",
+      "displayAsPlaceholder": "crwdns2946:0crwdne2946:0"
     },
     "formats": {
       "description": "crwdns2352:0crwdne2352:0",
@@ -572,7 +580,26 @@
       "configAccount": "crwdns2390:0{value}crwdne2390:0",
       "configDate": "crwdns2392:0{value}crwdne2392:0",
       "configAmount": "crwdns2394:0{value}crwdne2394:0",
-      "invalidConfig": "crwdns2396:0crwdne2396:0"
+      "invalidConfig": "crwdns2396:0crwdne2396:0",
+      "configuration": "crwdns2948:0crwdne2948:0",
+      "selectAccount": "crwdns2950:0crwdne2950:0",
+      "newAccountPlaceholder": "crwdns2952:0crwdne2952:0",
+      "createNewAccount": "crwdns2954:0crwdne2954:0",
+      "optional": "crwdns2956:0crwdne2956:0",
+      "descriptionPlaceholder": "crwdns2958:0crwdne2958:0",
+      "advancedSettings": "crwdns2960:0crwdne2960:0",
+      "dateColumn": "crwdns2962:0crwdne2962:0",
+      "amountColumn": "crwdns2964:0crwdne2964:0",
+      "descriptionColumn": "crwdns2966:0crwdne2966:0",
+      "referenceColumn": "crwdns2968:0crwdne2968:0",
+      "categoryColumn": "crwdns2970:0crwdne2970:0",
+      "skipHeaderRows": "crwdns2972:0crwdne2972:0",
+      "dateFormat": "crwdns2974:0crwdne2974:0",
+      "amountFormat": "crwdns2976:0crwdne2976:0",
+      "invertSign": "crwdns2978:0crwdne2978:0",
+      "selectOption": "crwdns2980:0crwdne2980:0",
+      "noneOption": "crwdns2982:0crwdne2982:0",
+      "notDetected": "crwdns2984:0crwdne2984:0"
     }
   },
   "organize": {
@@ -635,6 +662,10 @@
     "subtitle": "crwdns2478:0crwdne2478:0",
     "upcoming": "crwdns2480:0crwdne2480:0",
     "detected": "crwdns2482:0crwdne2482:0",
+    "activePatterns": "crwdns2986:0crwdne2986:0",
+    "upcomingDays": "crwdns2988:0crwdne2988:0",
+    "noPatternsDetected": "crwdns2990:0crwdne2990:0",
+    "amountRange": "crwdns2992:0crwdne2992:0",
     "frequency": {
       "weekly": "crwdns2484:0crwdne2484:0",
       "biweekly": "crwdns2486:0crwdne2486:0",
@@ -647,7 +678,12 @@
     "title": "crwdns2494:0crwdne2494:0",
     "subtitle": "crwdns2496:0crwdne2496:0",
     "markReconciled": "crwdns2498:0crwdne2498:0",
-    "markIgnored": "crwdns2500:0crwdne2500:0"
+    "markIgnored": "crwdns2500:0crwdne2500:0",
+    "markAsTransfer": "crwdns2994:0crwdne2994:0",
+    "markAsTransferAndReconcile": "crwdns2996:0crwdne2996:0",
+    "allReconciled": "crwdns2998:0crwdne2998:0",
+    "actions": "crwdns3000:0crwdne3000:0",
+    "noBucket": "crwdns3002:0crwdne3002:0"
   },
   "tags": {
     "title": "crwdns2502:0crwdne2502:0",
@@ -896,6 +932,7 @@
         "week": "crwdns2858:0crwdne2858:0"
       }
     },
+    "manualBackupPlaceholder": "crwdns3004:0crwdne3004:0",
     "fields": {
       "description": "crwdns2860:0crwdne2860:0",
       "created": "crwdns2862:0crwdne2862:0",
