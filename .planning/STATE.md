@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Build System Modernization
-status: active
-last_updated: "2026-02-26T22:00:00.000Z"
+status: requirements
+last_updated: "2026-02-26T21:00:00.000Z"
 progress:
   total_phases: 0
   completed_phases: 0
@@ -55,7 +55,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-26 (v1.2 milestone initialization)
+Last session: 2026-02-26 (v1.2 milestone started)
 Stopped at: Defining requirements
 Resume file: None
 Next action: `/gsd:new-milestone` to start next milestone
