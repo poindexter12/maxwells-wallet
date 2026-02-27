@@ -73,6 +73,12 @@ class TestAuthUtilities:
         result = verify_token(tampered)
         assert result is None
 
+    def test_hash_password_at_72_byte_limit(self):
+        """Passwords at exactly 72 bytes hash and verify correctly."""
+        password = "a" * 72
+        hashed = hash_password(password)
+        assert verify_password(password, hashed) is True
+
 
 class TestAuthStatus:
     """Test GET /api/v1/auth/status endpoint."""
@@ -140,6 +146,15 @@ class TestAuthSetup:
         assert "token" in data
         assert data["user"]["username"] == "admin"
         assert "id" in data["user"]
+
+    @pytest.mark.asyncio
+    async def test_setup_rejects_password_over_72_bytes(self, client: AsyncClient):
+        """Setup rejects passwords exceeding bcrypt's 72-byte limit."""
+        response = await client.post(
+            "/api/v1/auth/setup",
+            json={"username": "admin", "password": "a" * 73}
+        )
+        assert response.status_code == 422  # Pydantic validation error
 
     @pytest.mark.asyncio
     async def test_setup_fails_when_user_exists(self, client: AsyncClient, test_user):
@@ -212,6 +227,15 @@ class TestAuthLogin:
         assert response.status_code == 401
         data = response.json()
         assert data["detail"]["error_code"] == "INVALID_CREDENTIALS"
+
+    @pytest.mark.asyncio
+    async def test_login_rejects_password_over_72_bytes(self, client: AsyncClient, test_user):
+        """Login rejects passwords exceeding bcrypt's 72-byte limit."""
+        response = await client.post(
+            "/api/v1/auth/login",
+            json={"username": "testuser", "password": "a" * 73}
+        )
+        assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_login_no_users_exist(self, client: AsyncClient):
@@ -300,6 +324,19 @@ class TestPasswordChange:
         assert response.status_code == 400
         data = response.json()
         assert data["detail"]["error_code"] == "INVALID_PASSWORD"
+
+    @pytest.mark.asyncio
+    async def test_change_password_rejects_new_password_over_72_bytes(self, client: AsyncClient, test_user, auth_token):
+        """Password change rejects new passwords exceeding bcrypt's 72-byte limit."""
+        response = await client.put(
+            "/api/v1/auth/password",
+            headers={"Authorization": f"Bearer {auth_token}"},
+            json={
+                "current_password": "testpass123",
+                "new_password": "a" * 73
+            }
+        )
+        assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_change_password_not_authenticated(self, client: AsyncClient):
