@@ -37,7 +37,7 @@ install-backend:
     source scripts/gum-helpers.sh
     style 12 "Installing backend dependencies..."
     cd backend
-    spin "Creating virtual environment..." uv venv --clear
+    spin "Creating virtual environment..." uv venv
     spin "Syncing backend packages..." uv sync --all-extras
     style 2 "Backend dependencies installed."
 
