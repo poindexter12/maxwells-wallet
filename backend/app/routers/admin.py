@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Literal
-from datetime import datetime
+from datetime import UTC, datetime
 from pydantic import BaseModel
 
 from app.database import get_session
@@ -81,7 +81,7 @@ async def delete_import_session(
 
     # Mark session as rolled back (keep for audit)
     import_session.status = "rolled_back"
-    import_session.updated_at = datetime.utcnow()
+    import_session.updated_at = datetime.now(UTC)
 
     await session.commit()
 

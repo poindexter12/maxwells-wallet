@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
-from datetime import datetime, date, timedelta
+from datetime import UTC, date, datetime, timedelta
 import json
 
 from app.database import get_session
@@ -155,7 +155,7 @@ async def update_filter(filter_id: int, filter_update: SavedFilterUpdate, sessio
     for key, value in update_data.items():
         setattr(db_filter, key, value)
 
-    db_filter.updated_at = datetime.utcnow()
+    db_filter.updated_at = datetime.now(UTC)
 
     await session.commit()
     await session.refresh(db_filter)
@@ -192,7 +192,7 @@ async def apply_filter(
 
     # Update usage stats
     db_filter.use_count += 1
-    db_filter.last_used_at = datetime.utcnow()
+    db_filter.last_used_at = datetime.now(UTC)
 
     # Calculate actual dates if using relative date range
     start_date = db_filter.start_date
@@ -250,7 +250,7 @@ async def toggle_pin(filter_id: int, session: AsyncSession = Depends(get_session
         raise not_found(ErrorCode.FILTER_NOT_FOUND, filter_id=filter_id)
 
     db_filter.is_pinned = not db_filter.is_pinned
-    db_filter.updated_at = datetime.utcnow()
+    db_filter.updated_at = datetime.now(UTC)
 
     await session.commit()
     await session.refresh(db_filter)

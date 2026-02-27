@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from datetime import datetime
+from datetime import UTC, datetime
 import re
 
 from app.database import get_session
@@ -123,7 +123,7 @@ async def update_alias(alias_id: int, alias: MerchantAliasUpdate, session: Async
     for key, value in update_data.items():
         setattr(db_alias, key, value)
 
-    db_alias.updated_at = datetime.utcnow()
+    db_alias.updated_at = datetime.now(UTC)
     await session.commit()
     await session.refresh(db_alias)
     return db_alias
@@ -192,7 +192,7 @@ async def apply_aliases(
 
     # Apply updates using explicit SQL UPDATE statements
     if not dry_run and updates:
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         for upd in updates:
             await session.execute(
                 update(Transaction)

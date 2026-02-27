@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional, Tuple
-from datetime import datetime, date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from collections import defaultdict
 import statistics
 
@@ -84,7 +84,7 @@ async def update_recurring_pattern(
     for key, value in pattern.model_dump(exclude_unset=True).items():
         setattr(db_pattern, key, value)
 
-    db_pattern.updated_at = datetime.utcnow()
+    db_pattern.updated_at = datetime.now(UTC)
 
     await session.commit()
     await session.refresh(db_pattern)

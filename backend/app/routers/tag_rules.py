@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any, Dict, List
-from datetime import datetime
+from datetime import UTC, datetime
 
 from app.database import get_session
 from app.orm import Tag, TagRule, Transaction, TransactionTag
@@ -146,7 +146,7 @@ async def update_rule(rule_id: int, rule: TagRuleUpdate, session: AsyncSession =
     for key, value in rule.model_dump(exclude_unset=True).items():
         setattr(db_rule, key, value)
 
-    db_rule.updated_at = datetime.utcnow()
+    db_rule.updated_at = datetime.now(UTC)
 
     await session.commit()
     await session.refresh(db_rule)
@@ -294,7 +294,7 @@ async def apply_rules(session: AsyncSession = Depends(get_session)):
                 if applied:
                     # Update rule stats
                     rule.match_count += 1
-                    rule.last_matched_date = datetime.utcnow()
+                    rule.last_matched_date = datetime.now(UTC)
 
                     # Track stats for response
                     if rule.id not in rule_stats:
@@ -351,7 +351,7 @@ async def apply_single_rule(rule_id: int, session: AsyncSession = Depends(get_se
     # Update rule stats
     if applied_count > 0:
         rule.match_count += applied_count
-        rule.last_matched_date = datetime.utcnow()
+        rule.last_matched_date = datetime.now(UTC)
 
     await session.commit()
 
