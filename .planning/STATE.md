@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Build System Modernization
 status: executing
-last_updated: "2026-02-27T02:04:25.000Z"
+last_updated: "2026-02-27T03:00:00.000Z"
 progress:
   total_phases: 5
-  completed_phases: 2
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 3
+  total_plans: 5
+  completed_plans: 5
 ---
 
 # Project State
@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** A reliable, maintainable personal finance tracker where users can trust their data is accurate and the UI communicates clearly when something goes wrong.
-**Current focus:** Phase 13 - Justfile Migration
+**Current focus:** Phase 14 - Integration (Complete)
 
 ## Current Position
 
-Phase: 13 of 16 (Justfile Migration)
+Phase: 14 of 16 (Integration)
 Plan: 2 of 2 complete
-Status: Phase 13 Complete
-Last activity: 2026-02-27 — Plan 13-02 complete (test, docker, release, i18n, utils modules)
+Status: Phase 14 Complete
+Last activity: 2026-02-27 — Plan 14-02 complete (devcontainer mise integration)
 
 Progress: [██████████] 100%
 
@@ -42,9 +42,9 @@ Progress: [██████████] 100%
 - Total execution time: 0.74 hours
 
 **v1.2 Velocity:**
-- Total plans completed: 3
-- Average duration: 3.3 minutes
-- Total execution time: 0.17 hours
+- Total plans completed: 5
+- Average duration: 3.2 minutes
+- Total execution time: 0.27 hours
 
 ## Accumulated Context
 
@@ -63,6 +63,9 @@ Recent decisions:
 - v1.2: gum style color codes: 1=red, 2=green, 3=yellow, 12=blue
 - v1.2: Test recipes stream output directly (no gum spin) for pytest/lint visibility
 - v1.2: data-* recipes delegate to data/Makefile via make -C (sub-project concern)
+- v1.2: CI coverage step uses direct uv run pytest (not just recipe) for XML report format
+- v1.2: Docker cleanup in CI uses direct commands (gum confirm fallback skips in non-TTY)
+- v1.2: security.yaml keeps setup-uv (separate reusable workflow, out of Phase 14 scope)
 
 ### Pending Todos
 
@@ -75,6 +78,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed 13-02-PLAN.md (all 5 remaining modules implemented)
+Stopped at: Completed Phase 14 (both plans: CI workflows + devcontainer)
 Resume file: None
-Next action: `/gsd:plan-phase 14` (Integration — CI workflows and devcontainer)
+Next action: `/gsd:plan-phase 15` (Documentation — update all docs to reference just)
