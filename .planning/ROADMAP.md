@@ -104,7 +104,10 @@ Plans:
   2. README.md setup and development instructions use `just` commands
   3. Searching codebase for backtick-wrapped make commands returns zero results (`git grep -i "\`make"`)
   4. New contributors can follow README to successful setup without encountering make references
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 15-01-PLAN.md — Rewrite CLAUDE.md, README.md, QUICKSTART.md with just commands and mise-first onboarding
+- [ ] 15-02-PLAN.md — Sweep all remaining docs, agents, skills; run DOC-03 grep audit
 
 ### Phase 16: Cleanup
 **Goal**: Remove deprecated Make files after migration validated
