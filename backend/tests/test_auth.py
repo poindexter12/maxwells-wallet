@@ -129,6 +129,18 @@ class TestAuthStatus:
         assert data["initialized"] is True
         assert data["authenticated"] is False
 
+    @pytest.mark.asyncio
+    async def test_status_malformed_auth_header(self, client: AsyncClient, test_user):
+        """Malformed Authorization header (not 'Bearer <token>') treated as unauthenticated."""
+        response = await client.get(
+            "/api/v1/auth/status",
+            headers={"Authorization": "Basic dXNlcjpwYXNz"}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["authenticated"] is False
+
 
 class TestAuthSetup:
     """Test POST /api/v1/auth/setup endpoint."""
@@ -435,6 +447,40 @@ class TestAuthWorkflow:
         # 3. Status shows not authenticated
         status_response = await client.get("/api/v1/auth/status")
         assert status_response.json()["authenticated"] is False
+
+
+class TestResetUsers:
+    """Test DELETE /api/v1/auth/test-reset endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_reset_users_success(self, client: AsyncClient, test_user):
+        """Reset deletes all users when confirmed."""
+        response = await client.delete("/api/v1/auth/test-reset?confirm=RESET_USERS")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["deleted_users"] == 1
+        assert "uninitialized" in data["message"]
+
+        # Verify no users remain
+        status = await client.get("/api/v1/auth/status")
+        assert status.json()["initialized"] is False
+
+    @pytest.mark.asyncio
+    async def test_reset_users_wrong_confirmation(self, client: AsyncClient, test_user):
+        """Reset fails without correct confirmation string."""
+        response = await client.delete("/api/v1/auth/test-reset?confirm=WRONG")
+
+        assert response.status_code == 400
+        assert response.json()["detail"]["error_code"] == "CONFIRMATION_REQUIRED"
+
+    @pytest.mark.asyncio
+    async def test_reset_users_no_users(self, client: AsyncClient):
+        """Reset with no users returns zero count."""
+        response = await client.delete("/api/v1/auth/test-reset?confirm=RESET_USERS")
+
+        assert response.status_code == 200
+        assert response.json()["deleted_users"] == 0
 
 
 # Fixtures for auth tests
