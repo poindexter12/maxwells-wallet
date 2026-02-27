@@ -81,7 +81,7 @@ just dev::build-frontend # Build frontend for production
 just db::init            # Initialize database (create tables)
 just db::seed            # Seed database with sample data
 just db::reset           # Reset database (DESTRUCTIVE — asks for confirmation)
-just db::migrate "description"  # Create new migration
+just db::migrate MESSAGE="description"  # Create new migration
 just db::upgrade         # Apply migrations
 just db::demo-setup      # Set up demo data
 ```
