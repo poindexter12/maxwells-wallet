@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 Phase: 16 of 16 (Cleanup)
 Plan: 1 of 1 complete
 Status: v1.2 Milestone Archived
-Last activity: 2026-02-27 — v1.2 Build System Modernization milestone archived
+Last activity: 2026-02-27 - Completed quick task 1: Fix CodeQL unpinned GitHub Actions alerts — pin all third-party actions to SHA hashes
 
 Progress: [██████████████████████████] 100%
 
@@ -59,6 +59,12 @@ None.
 ### Blockers/Concerns
 
 None.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 1 | Fix CodeQL unpinned GitHub Actions alerts — pin all third-party actions to SHA hashes | 2026-02-27 | 28b3e1a | [1-fix-codeql-unpinned-github-actions-alert](./quick/1-fix-codeql-unpinned-github-actions-alert/) |
 
 ## Session Continuity
 
