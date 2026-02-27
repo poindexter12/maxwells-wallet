@@ -4,6 +4,7 @@
 
 - ✅ **v1.0 DevSecOps Tooling** — Phases 1-6 (shipped 2026-02-23)
 - ✅ **v1.1 Codebase Health** — Phases 7-11 (shipped 2026-02-26)
+- 🚧 **v1.2 Build System Modernization** — Phases 12-16 (in progress)
 
 ## Phases
 
@@ -39,6 +40,74 @@ See `milestones/v1.1-ROADMAP.md` for archived v1.1 phase details.
 - [x] Phase 11: Backend Hardening (2/2 plans) — completed 2026-02-26
 
 </details>
+
+### 🚧 v1.2 Build System Modernization (In Progress)
+
+**Milestone Goal:** Replace Make with Just + gum for a modern, beautiful task runner experience, with mise as the single prerequisite managing all dev tooling.
+
+- [ ] **Phase 12: Tool Foundation** - mise manages all dev tools and environment
+- [ ] **Phase 13: Justfile Migration** - Convert all Make targets to just recipes with gum UX
+- [ ] **Phase 14: Integration** - Update CI workflows and devcontainer
+- [ ] **Phase 15: Documentation** - Update all docs to reference just
+- [ ] **Phase 16: Cleanup** - Remove deprecated Make files
+
+## Phase Details
+
+### Phase 12: Tool Foundation
+**Goal**: Establish mise as the single tool version manager and environment handler
+**Depends on**: Nothing (first phase of v1.2)
+**Requirements**: MISE-01, MISE-02, MISE-03, MISE-04
+**Success Criteria** (what must be TRUE):
+  1. Developer runs `cd` into project directory and mise auto-installs all tools (just, gum, node, python, uv)
+  2. All tool versions match `.mise.toml` specification without manual intervention
+  3. Secrets load from gitignored `.env` file via mise `[env]` section
+  4. Running `just --version`, `gum --version`, `node --version`, `python --version`, `uv --version` all succeed without additional setup
+**Plans**: TBD
+
+### Phase 13: Justfile Migration
+**Goal**: Convert all ~60 Make targets to just recipes with beautiful gum terminal UX
+**Depends on**: Phase 12
+**Requirements**: JUST-01, JUST-02, JUST-03, JUST-04, JUST-05, JUST-06, JUST-07, GUM-01, GUM-02, GUM-03, GUM-04, GUM-05
+**Success Criteria** (what must be TRUE):
+  1. All existing Make targets have identical behavior in just recipes (setup, dev, test, db, docker, i18n, release, utils)
+  2. Running `just --list` shows organized, documented recipes with descriptions
+  3. Destructive commands (db-reset, clean-all) require interactive confirmation via gum
+  4. Long operations (install, build, test) show progress spinners
+  5. Both `make <target>` and `just <recipe>` work in parallel during transition period
+**Plans**: TBD
+
+### Phase 14: Integration
+**Goal**: Update CI workflows and devcontainer to use mise + just
+**Depends on**: Phase 13
+**Requirements**: CI-01, CI-02, CI-03, DEVC-01, DEVC-02, DEVC-03
+**Success Criteria** (what must be TRUE):
+  1. All GitHub Actions workflows use mise-action and call `just <recipe>` instead of inline bash
+  2. Devcontainer rebuilds and all tools are available in new terminal sessions
+  3. CI jobs pass using just recipes with identical behavior to previous Make commands
+  4. Gum commands gracefully fall back to plain output in CI (non-TTY environments)
+**Plans**: TBD
+
+### Phase 15: Documentation
+**Goal**: Update all documentation to reference just instead of make
+**Depends on**: Phase 14
+**Requirements**: DOC-01, DOC-02, DOC-03
+**Success Criteria** (what must be TRUE):
+  1. CLAUDE.md Development Commands section references `just` targets exclusively
+  2. README.md setup and development instructions use `just` commands
+  3. Searching codebase for backtick-wrapped make commands returns zero results (`git grep -i "\`make"`)
+  4. New contributors can follow README to successful setup without encountering make references
+**Plans**: TBD
+
+### Phase 16: Cleanup
+**Goal**: Remove deprecated Make files after migration validated
+**Depends on**: Phase 15
+**Requirements**: CLEAN-01, CLEAN-02, CLEAN-03
+**Success Criteria** (what must be TRUE):
+  1. Makefile and make/ directory no longer exist in repository
+  2. `.nvmrc` and `.python-version` removed (replaced by `.mise.toml`)
+  3. CI remains green after deletion (all workflows using just)
+  4. Developer workflows unchanged (just recipes provide identical functionality)
+**Plans**: TBD
 
 ## Phase Quality Gate (applies to ALL phases)
 
@@ -84,3 +153,8 @@ Every phase MUST satisfy these criteria before merge. These are non-negotiable �
 | 9. Performance + Frontend Tests | v1.1 | 3/3 | Complete | 2026-02-25 |
 | 10. Internationalization | v1.1 | 3/3 | Complete | 2026-02-25 |
 | 11. Backend Hardening | v1.1 | 2/2 | Complete | 2026-02-26 |
+| 12. Tool Foundation | v1.2 | 0/0 | Not started | - |
+| 13. Justfile Migration | v1.2 | 0/0 | Not started | - |
+| 14. Integration | v1.2 | 0/0 | Not started | - |
+| 15. Documentation | v1.2 | 0/0 | Not started | - |
+| 16. Cleanup | v1.2 | 0/0 | Not started | - |
