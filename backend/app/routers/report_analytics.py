@@ -3,7 +3,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import noload
 from typing import Any, DefaultDict, Dict, Optional, List, cast
 from datetime import date, timedelta
 from collections import defaultdict
@@ -14,7 +13,6 @@ from app.database import get_session
 from app.orm import Transaction
 from app.routers.report_helpers import (
     get_transaction_tags,
-    get_transaction_ids_by_buckets,
     apply_transaction_filters,
 )
 

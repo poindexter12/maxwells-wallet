@@ -13,7 +13,6 @@ from httpx import AsyncClient
 from datetime import date
 import io
 
-from typing import Dict, List, Optional, Tuple
 
 from app.parsers import ParserRegistry, ParsedTransaction
 from app.models import ImportFormatType

@@ -1,10 +1,10 @@
 """Core report endpoints: filter options, monthly/annual summaries, trends, top merchants, account/bucket summaries."""
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import noload
-from typing import DefaultDict, Dict, Optional, List
+from typing import DefaultDict, Dict, Optional
 from datetime import date
 from collections import defaultdict
 import calendar
@@ -14,9 +14,6 @@ from app.orm import Transaction
 from app.routers.report_helpers import (
     get_transaction_tags,
     get_transaction_ids_by_buckets,
-    filter_transactions_by_accounts,
-    filter_transactions_by_merchants,
-    parse_filter_param,
     apply_transaction_filters,
 )
 

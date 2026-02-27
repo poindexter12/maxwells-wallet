@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Literal
-from datetime import datetime
+
 from pydantic import BaseModel
 
 from app.database import get_session
