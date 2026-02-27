@@ -45,7 +45,7 @@ See `milestones/v1.1-ROADMAP.md` for archived v1.1 phase details.
 
 **Milestone Goal:** Replace Make with Just + gum for a modern, beautiful task runner experience, with mise as the single prerequisite managing all dev tooling.
 
-- [ ] **Phase 12: Tool Foundation** - mise manages all dev tools and environment
+- [x] **Phase 12: Tool Foundation** - mise manages all dev tools and environment
 - [ ] **Phase 13: Justfile Migration** - Convert all Make targets to just recipes with gum UX
 - [ ] **Phase 14: Integration** - Update CI workflows and devcontainer
 - [ ] **Phase 15: Documentation** - Update all docs to reference just
@@ -64,7 +64,7 @@ See `milestones/v1.1-ROADMAP.md` for archived v1.1 phase details.
   4. Running `just --version`, `gum --version`, `node --version`, `python --version`, `uv --version` all succeed without additional setup
 **Plans:** 1 plan
 Plans:
-- [ ] 12-01-PLAN.md — Create .mise.toml, migrate secrets to .env, validate tool installation
+- [x] 12-01-PLAN.md — Create .mise.toml, migrate secrets to .env, validate tool installation
 
 ### Phase 13: Justfile Migration
 **Goal**: Convert all ~60 Make targets to just recipes with beautiful gum terminal UX
@@ -141,7 +141,7 @@ See `milestones/v1.2-ROADMAP.md` for archived v1.2 phase details.
 | 9. Performance + Frontend Tests | v1.1 | 3/3 | Complete | 2026-02-25 |
 | 10. Internationalization | v1.1 | 3/3 | Complete | 2026-02-25 |
 | 11. Backend Hardening | v1.1 | 2/2 | Complete | 2026-02-26 |
-| 12. Tool Foundation | v1.2 | 0/1 | Planned | - |
+| 12. Tool Foundation | v1.2 | 1/1 | Complete | 2026-02-26 |
 | 13. Justfile Migration | v1.2 | 0/0 | Not started | - |
 | 14. Integration | v1.2 | 0/0 | Not started | - |
 | 15. Documentation | v1.2 | 0/0 | Not started | - |
