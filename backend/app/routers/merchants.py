@@ -64,6 +64,71 @@ async def list_aliases(session: AsyncSession = Depends(get_session)):
     return result.scalars().all()
 
 
+@router.get("/aliases/suggestions")
+async def get_alias_suggestions(
+    min_count: int = Query(3, ge=1, description="Minimum occurrences to suggest"),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Suggest potential merchant aliases based on similar transaction descriptions.
+    Groups similar merchants and suggests canonical names.
+    """
+    # Get merchants with counts
+    result = await session.execute(
+        select(Transaction.merchant, Transaction.description, func.count(Transaction.id).label("count"))
+        .where(Transaction.merchant.isnot(None))
+        .group_by(Transaction.merchant)
+        .having(func.count(Transaction.id) >= min_count)
+        .order_by(func.count(Transaction.id).desc())
+        .limit(100)
+    )
+    merchants = result.all()
+
+    # Get existing aliases to exclude
+    alias_result = await session.execute(select(MerchantAlias.pattern, MerchantAlias.canonical_name))
+    existing_aliases = {row.pattern.lower(): row.canonical_name for row in alias_result.all()}
+
+    suggestions = []
+    for m in merchants:
+        merchant_lower = m.merchant.lower() if m.merchant else ""
+
+        # Skip if already has an alias
+        if merchant_lower in existing_aliases:
+            continue
+
+        # Look for common patterns that could be cleaned up
+        suggestion = {
+            "raw_merchant": m.merchant,
+            "transaction_count": m.count,
+            "suggested_canonical": None,
+            "reason": None,
+        }
+
+        # Simple heuristics for suggestions
+        if m.merchant:
+            # Remove common suffixes/prefixes
+            cleaned = m.merchant
+
+            # Remove location info (often after * or #)
+            if "*" in cleaned:
+                cleaned = cleaned.split("*")[0].strip()
+            if "#" in cleaned:
+                cleaned = cleaned.split("#")[0].strip()
+
+            # Remove card number suffixes
+            cleaned = re.sub(r"\d{4,}$", "", cleaned).strip()
+
+            # Clean up excessive spaces
+            cleaned = re.sub(r"\s+", " ", cleaned).strip()
+
+            if cleaned != m.merchant and len(cleaned) > 2:
+                suggestion["suggested_canonical"] = cleaned.title()
+                suggestion["reason"] = "Cleaned location/number info"
+                suggestions.append(suggestion)
+
+    return {"count": len(suggestions), "suggestions": suggestions}
+
+
 @router.get("/aliases/{alias_id}", response_model=MerchantAliasResponse)
 async def get_alias(alias_id: int, session: AsyncSession = Depends(get_session)):
     """Get a single merchant alias by ID"""
@@ -216,68 +281,3 @@ async def apply_aliases(
         "updated_count": len(updates),
         "updates": updates[:100],  # Limit response size
     }
-
-
-@router.get("/aliases/suggestions")
-async def get_alias_suggestions(
-    min_count: int = Query(3, ge=1, description="Minimum occurrences to suggest"),
-    session: AsyncSession = Depends(get_session),
-):
-    """
-    Suggest potential merchant aliases based on similar transaction descriptions.
-    Groups similar merchants and suggests canonical names.
-    """
-    # Get merchants with counts
-    result = await session.execute(
-        select(Transaction.merchant, Transaction.description, func.count(Transaction.id).label("count"))
-        .where(Transaction.merchant.isnot(None))
-        .group_by(Transaction.merchant)
-        .having(func.count(Transaction.id) >= min_count)
-        .order_by(func.count(Transaction.id).desc())
-        .limit(100)
-    )
-    merchants = result.all()
-
-    # Get existing aliases to exclude
-    alias_result = await session.execute(select(MerchantAlias.pattern, MerchantAlias.canonical_name))
-    existing_aliases = {row.pattern.lower(): row.canonical_name for row in alias_result.all()}
-
-    suggestions = []
-    for m in merchants:
-        merchant_lower = m.merchant.lower() if m.merchant else ""
-
-        # Skip if already has an alias
-        if merchant_lower in existing_aliases:
-            continue
-
-        # Look for common patterns that could be cleaned up
-        suggestion = {
-            "raw_merchant": m.merchant,
-            "transaction_count": m.count,
-            "suggested_canonical": None,
-            "reason": None,
-        }
-
-        # Simple heuristics for suggestions
-        if m.merchant:
-            # Remove common suffixes/prefixes
-            cleaned = m.merchant
-
-            # Remove location info (often after * or #)
-            if "*" in cleaned:
-                cleaned = cleaned.split("*")[0].strip()
-            if "#" in cleaned:
-                cleaned = cleaned.split("#")[0].strip()
-
-            # Remove card number suffixes
-            cleaned = re.sub(r"\d{4,}$", "", cleaned).strip()
-
-            # Clean up excessive spaces
-            cleaned = re.sub(r"\s+", " ", cleaned).strip()
-
-            if cleaned != m.merchant and len(cleaned) > 2:
-                suggestion["suggested_canonical"] = cleaned.title()
-                suggestion["reason"] = "Cleaned location/number info"
-                suggestions.append(suggestion)
-
-    return {"count": len(suggestions), "suggestions": suggestions}
