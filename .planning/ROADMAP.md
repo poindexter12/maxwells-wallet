@@ -4,7 +4,7 @@
 
 - ✅ **v1.0 DevSecOps Tooling** — Phases 1-6 (shipped 2026-02-23)
 - ✅ **v1.1 Codebase Health** — Phases 7-11 (shipped 2026-02-26)
-- 🚧 **v1.2 Build System Modernization** — Phases 12-16 (in progress)
+- ✅ **v1.2 Build System Modernization** — Phases 12-16 (shipped 2026-02-27)
 
 ## Phases
 
@@ -41,15 +41,15 @@ See `milestones/v1.1-ROADMAP.md` for archived v1.1 phase details.
 
 </details>
 
-### 🚧 v1.2 Build System Modernization (In Progress)
+### ✅ v1.2 Build System Modernization (Shipped 2026-02-27)
 
 **Milestone Goal:** Replace Make with Just + gum for a modern, beautiful task runner experience, with mise as the single prerequisite managing all dev tooling.
 
 - [x] **Phase 12: Tool Foundation** - mise manages all dev tools and environment
-- [x] **Phase 13: Justfile Migration** - Convert all Make targets to just recipes with gum UX (completed 2026-02-27)
-- [x] **Phase 14: Integration** - Update CI workflows and devcontainer (completed 2026-02-27)
-- [x] **Phase 15: Documentation** - Update all docs to reference just (completed 2026-02-27)
-- [ ] **Phase 16: Cleanup** - Remove deprecated Make files
+- [x] **Phase 13: Justfile Migration** - Convert all Make targets to just recipes with gum UX
+- [x] **Phase 14: Integration** - Update CI workflows and devcontainer
+- [x] **Phase 15: Documentation** - Update all docs to reference just
+- [x] **Phase 16: Cleanup** - Remove deprecated Make files
 
 ## Phase Details
 
@@ -118,9 +118,9 @@ Plans:
   2. `.nvmrc` and `.python-version` removed (replaced by `.mise.toml`)
   3. CI remains green after deletion (all workflows using just)
   4. Developer workflows unchanged (just recipes provide identical functionality)
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 16-01-PLAN.md — Delete deprecated Make/tool-version files, sweep stale references
+- [x] 16-01-PLAN.md — Delete deprecated Make/tool-version files, sweep stale references
 
 ## Phase Quality Gate (applies to ALL phases)
 
@@ -156,4 +156,4 @@ See `milestones/v1.2-ROADMAP.md` for archived v1.2 phase details.
 | 13. Justfile Migration | v1.2 | 2/2 | Complete | 2026-02-27 |
 | 14. Integration | v1.2 | 2/2 | Complete | 2026-02-27 |
 | 15. Documentation | v1.2 | 2/2 | Complete | 2026-02-27 |
-| 16. Cleanup | v1.2 | 0/0 | Not started | - |
+| 16. Cleanup | v1.2 | 1/1 | Complete | 2026-02-27 |
