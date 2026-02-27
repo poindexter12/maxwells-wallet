@@ -71,7 +71,6 @@ Thumbs.db
 # Claude Code
 .claude/settings.local.json
 site/
-.envrc
 
 # Backup files
 backend/data/backups/
