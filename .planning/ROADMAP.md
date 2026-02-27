@@ -47,7 +47,7 @@ See `milestones/v1.1-ROADMAP.md` for archived v1.1 phase details.
 
 - [x] **Phase 12: Tool Foundation** - mise manages all dev tools and environment
 - [x] **Phase 13: Justfile Migration** - Convert all Make targets to just recipes with gum UX (completed 2026-02-27)
-- [ ] **Phase 14: Integration** - Update CI workflows and devcontainer
+- [x] **Phase 14: Integration** - Update CI workflows and devcontainer (completed 2026-02-27)
 - [ ] **Phase 15: Documentation** - Update all docs to reference just
 - [ ] **Phase 16: Cleanup** - Remove deprecated Make files
 
@@ -90,10 +90,10 @@ Plans:
   2. Devcontainer rebuilds and all tools are available in new terminal sessions
   3. CI jobs pass using just recipes with identical behavior to previous Make commands
   4. Gum commands gracefully fall back to plain output in CI (non-TTY environments)
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
-- [ ] 14-01-PLAN.md — Migrate CI workflows to mise-action + just recipes
-- [ ] 14-02-PLAN.md — Update devcontainer for mise tool management
+- [x] 14-01-PLAN.md — Migrate CI workflows to mise-action + just recipes
+- [x] 14-02-PLAN.md — Update devcontainer for mise tool management
 
 ### Phase 15: Documentation
 **Goal**: Update all documentation to reference just instead of make
@@ -163,6 +163,6 @@ Every phase MUST satisfy these criteria before merge. These are non-negotiable �
 | 11. Backend Hardening | v1.1 | 2/2 | Complete | 2026-02-26 |
 | 12. Tool Foundation | v1.2 | 1/1 | Complete | 2026-02-26 |
 | 13. Justfile Migration | v1.2 | 2/2 | Complete | 2026-02-27 |
-| 14. Integration | v1.2 | 0/0 | Not started | - |
+| 14. Integration | v1.2 | 2/2 | Complete | 2026-02-27 |
 | 15. Documentation | v1.2 | 0/0 | Not started | - |
 | 16. Cleanup | v1.2 | 0/0 | Not started | - |
