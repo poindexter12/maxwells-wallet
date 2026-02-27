@@ -48,7 +48,7 @@ See `milestones/v1.1-ROADMAP.md` for archived v1.1 phase details.
 - [x] **Phase 12: Tool Foundation** - mise manages all dev tools and environment
 - [x] **Phase 13: Justfile Migration** - Convert all Make targets to just recipes with gum UX (completed 2026-02-27)
 - [x] **Phase 14: Integration** - Update CI workflows and devcontainer (completed 2026-02-27)
-- [ ] **Phase 15: Documentation** - Update all docs to reference just
+- [x] **Phase 15: Documentation** - Update all docs to reference just (completed 2026-02-27)
 - [ ] **Phase 16: Cleanup** - Remove deprecated Make files
 
 ## Phase Details
@@ -104,10 +104,10 @@ Plans:
   2. README.md setup and development instructions use `just` commands
   3. Searching codebase for backtick-wrapped make commands returns zero results (`git grep -i "\`make"`)
   4. New contributors can follow README to successful setup without encountering make references
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
-- [ ] 15-01-PLAN.md — Rewrite CLAUDE.md, README.md, QUICKSTART.md with just commands and mise-first onboarding
-- [ ] 15-02-PLAN.md — Sweep all remaining docs, agents, skills; run DOC-03 grep audit
+- [x] 15-01-PLAN.md — Rewrite CLAUDE.md, README.md, QUICKSTART.md with just commands and mise-first onboarding
+- [x] 15-02-PLAN.md — Sweep all remaining docs, agents, skills; run DOC-03 grep audit
 
 ### Phase 16: Cleanup
 **Goal**: Remove deprecated Make files after migration validated
@@ -167,5 +167,5 @@ Every phase MUST satisfy these criteria before merge. These are non-negotiable �
 | 12. Tool Foundation | v1.2 | 1/1 | Complete | 2026-02-26 |
 | 13. Justfile Migration | v1.2 | 2/2 | Complete | 2026-02-27 |
 | 14. Integration | v1.2 | 2/2 | Complete | 2026-02-27 |
-| 15. Documentation | v1.2 | 0/0 | Not started | - |
+| 15. Documentation | v1.2 | 2/2 | Complete | 2026-02-27 |
 | 16. Cleanup | v1.2 | 0/0 | Not started | - |
