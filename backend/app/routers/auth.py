@@ -5,7 +5,7 @@ Authentication router for user login, setup, and password management.
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -27,7 +27,7 @@ class AuthStatus(BaseModel):
 class LoginRequest(BaseModel):
     """Login request body."""
     username: str
-    password: str
+    password: str = Field(max_length=72)
 
 
 class LoginResponse(BaseModel):

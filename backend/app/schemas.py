@@ -561,7 +561,7 @@ class AppSettingsResponse(TimestampResponse):
 
 class UserCreate(BaseModel):
     username: str
-    password: str
+    password: str = Field(max_length=72)
 
 
 class UserResponse(BaseResponse):
@@ -572,7 +572,7 @@ class UserResponse(BaseResponse):
 
 class PasswordChange(BaseModel):
     current_password: str
-    new_password: str
+    new_password: str = Field(max_length=72)
 
 
 # ============================================================================

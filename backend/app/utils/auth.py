@@ -2,7 +2,7 @@
 Authentication utilities for password hashing and JWT tokens.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Optional, cast
 
 import bcrypt
@@ -13,6 +13,9 @@ from app.config import settings
 
 # JWT settings
 ALGORITHM = "HS256"
+
+# bcrypt's hard limit — passwords are validated at the API boundary (Pydantic schemas)
+MAX_PASSWORD_BYTES = 72
 
 
 def hash_password(password: str) -> str:
@@ -27,7 +30,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def create_access_token(user_id: int) -> str:
     """Create a JWT access token for a user."""
-    expire = datetime.utcnow() + timedelta(hours=settings.token_expire_hours)
+    expire = datetime.now(UTC) + timedelta(hours=settings.token_expire_hours)
     to_encode = {
         "sub": str(user_id),
         "exp": expire,
