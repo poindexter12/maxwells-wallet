@@ -52,9 +52,9 @@ Requirements for Build System Modernization milestone. Each maps to roadmap phas
 
 ### Cleanup (CLEAN)
 
-- [ ] **CLEAN-01**: Makefile and `make/` directory deleted
-- [ ] **CLEAN-02**: `.nvmrc` removed (replaced by `.mise.toml` `[tools]`)
-- [ ] **CLEAN-03**: `.python-version` removed if exists (replaced by `.mise.toml`)
+- [x] **CLEAN-01**: Makefile and `make/` directory deleted
+- [x] **CLEAN-02**: `.nvmrc` removed (replaced by `.mise.toml` `[tools]`)
+- [x] **CLEAN-03**: `.python-version` removed if exists (replaced by `.mise.toml`)
 
 ## v2 Requirements
 
@@ -111,9 +111,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DOC-01 | Phase 15 | Pending |
 | DOC-02 | Phase 15 | Pending |
 | DOC-03 | Phase 15 | Pending |
-| CLEAN-01 | Phase 16 | Pending |
-| CLEAN-02 | Phase 16 | Pending |
-| CLEAN-03 | Phase 16 | Pending |
+| CLEAN-01 | Phase 16 | Complete |
+| CLEAN-02 | Phase 16 | Complete |
+| CLEAN-03 | Phase 16 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 26 total

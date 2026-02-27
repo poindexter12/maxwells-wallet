@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Build System Modernization
-status: executing
-last_updated: "2026-02-27T04:00:00.000Z"
+status: complete
+last_updated: "2026-02-27T05:33:15.000Z"
 progress:
   total_phases: 5
-  completed_phases: 4
-  total_plans: 7
-  completed_plans: 7
+  completed_phases: 5
+  total_plans: 8
+  completed_plans: 8
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** A reliable, maintainable personal finance tracker where users can trust their data is accurate and the UI communicates clearly when something goes wrong.
-**Current focus:** Phase 15 - Documentation (Complete)
+**Current focus:** v1.2 Milestone Complete
 
 ## Current Position
 
-Phase: 15 of 16 (Documentation)
-Plan: 2 of 2 complete
-Status: Phase 15 Complete
-Last activity: 2026-02-27 — Plan 15-02 complete (sweep all docs/agents/skills for just migration)
+Phase: 16 of 16 (Cleanup)
+Plan: 1 of 1 complete
+Status: v1.2 Milestone Complete
+Last activity: 2026-02-27 — Plan 16-01 complete (remove deprecated Make files)
 
-Progress: [██████████] 100%
+Progress: [██████████████████████████] 100%
 
 ## Performance Metrics
 
@@ -42,9 +42,9 @@ Progress: [██████████] 100%
 - Total execution time: 0.74 hours
 
 **v1.2 Velocity:**
-- Total plans completed: 7
-- Average duration: 3.1 minutes
-- Total execution time: 0.36 hours
+- Total plans completed: 8
+- Average duration: 2.6 minutes
+- Total execution time: 0.38 hours
 
 ## Accumulated Context
 
@@ -68,6 +68,9 @@ Recent decisions:
 - v1.2: security.yaml keeps setup-uv (separate reusable workflow, out of Phase 14 scope)
 - v1.2: docs/MAKEFILE.md rewritten as just recipes reference (title changed, content replaced)
 - v1.2: .planning/ and CHANGELOG.md excluded from doc audit scope (historical records)
+- v1.2: Two-commit strategy: first update references, then delete files for clean git history
+- v1.2: Preserved data/Makefile and deploy/swag-test/Makefile as separate sub-projects
+- v1.2: Updated setup.sh to reference just commands instead of deleting it
 
 ### Pending Todos
 
@@ -80,6 +83,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed Phase 15 (both plans: primary docs + sweep all remaining)
+Stopped at: Completed Phase 16 (plan 16-01: remove deprecated Make files) — v1.2 Milestone Complete
 Resume file: None
-Next action: `/gsd:plan-phase 16` (Cleanup — remove deprecated Make files)
+Next action: Begin next milestone (v1.3 or beyond)
