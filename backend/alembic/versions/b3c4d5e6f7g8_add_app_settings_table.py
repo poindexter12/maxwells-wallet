@@ -11,7 +11,7 @@ Create Date: 2025-12-09
 from alembic import op
 import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 # revision identifiers, used by Alembic.
@@ -33,7 +33,7 @@ def upgrade() -> None:
 
     # Insert default row with 'browser' language preference
     connection = op.get_bind()
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     connection.execute(
         sa.text("""
             INSERT INTO app_settings (created_at, updated_at, language)

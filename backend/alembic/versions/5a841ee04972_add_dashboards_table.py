@@ -9,7 +9,7 @@ Creates a default dashboard and assigns all existing widgets to it.
 """
 from alembic import op
 import sqlalchemy as sa
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 # revision identifiers, used by Alembic.
@@ -48,7 +48,7 @@ def upgrade() -> None:
 
     # Create default dashboard and assign existing widgets
     connection = op.get_bind()
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
 
     # Insert default dashboard
     connection.execute(

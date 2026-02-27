@@ -7,7 +7,7 @@ Create Date: 2025-11-28 11:00:00.000000
 """
 from alembic import op
 import sqlalchemy as sa
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 # revision identifiers, used by Alembic.
@@ -46,7 +46,7 @@ def upgrade() -> None:
 
     # 2. Seed default bucket tags
     conn = op.get_bind()
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     for idx, (namespace, value, description) in enumerate(DEFAULT_BUCKET_TAGS):
         conn.execute(
