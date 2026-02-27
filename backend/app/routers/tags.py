@@ -3,7 +3,7 @@ from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func
 from typing import List, Optional
-from datetime import datetime
+from datetime import UTC, datetime
 from app.database import get_session
 from app.orm import Tag, TransactionTag, Transaction
 from app.schemas import TagCreate, TagUpdate, TagResponse, TagOrderUpdate
@@ -91,7 +91,7 @@ async def update_tag(tag_id: int, tag: TagUpdate, session: AsyncSession = Depend
     for key, value in tag.model_dump(exclude_unset=True).items():
         setattr(db_tag, key, value)
 
-    db_tag.updated_at = datetime.utcnow()
+    db_tag.updated_at = datetime.now(UTC)
 
     await session.commit()
     await session.refresh(db_tag)
@@ -147,7 +147,7 @@ async def reorder_tags(order: TagOrderUpdate, session: AsyncSession = Depends(ge
         tag = result.scalar_one_or_none()
         if tag:
             tag.sort_order = item.sort_order
-            tag.updated_at = datetime.utcnow()
+            tag.updated_at = datetime.now(UTC)
 
     await session.commit()
     return {"success": True, "updated": len(order.tags)}

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
-from datetime import datetime, date
+from datetime import UTC, date, datetime
 from calendar import monthrange
 
 from app.database import get_session
@@ -90,7 +90,7 @@ async def update_budget(budget_id: int, budget: BudgetUpdate, session: AsyncSess
     for key, value in budget.model_dump(exclude_unset=True).items():
         setattr(db_budget, key, value)
 
-    db_budget.updated_at = datetime.utcnow()
+    db_budget.updated_at = datetime.now(UTC)
 
     await session.commit()
     await session.refresh(db_budget)
@@ -162,7 +162,7 @@ async def get_budget_status(
     Returns budget vs actual spending for each tag
     """
     # Use current month if not specified
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     year = year or now.year
     month = month or now.month
 

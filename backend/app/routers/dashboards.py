@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Dict, Any, Optional
-from datetime import datetime, date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pydantic import BaseModel
 
 from app.database import get_session
@@ -223,9 +223,8 @@ async def create_dashboard(dashboard: DashboardCreate, session: AsyncSession = D
 
         # Initialize with default widgets using raw SQL to avoid SQLite async RETURNING issues
         from sqlalchemy import text
-        from datetime import datetime
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         for widget_data in DEFAULT_WIDGETS:
             await session.execute(
                 text("""
@@ -273,7 +272,7 @@ async def update_dashboard(dashboard_id: int, dashboard: DashboardUpdate, sessio
     for key, value in update_data.items():
         setattr(db_dashboard, key, value)
 
-    db_dashboard.updated_at = datetime.utcnow()
+    db_dashboard.updated_at = datetime.now(UTC)
     await session.commit()
     await session.refresh(db_dashboard)
     return dashboard_to_response(db_dashboard)
@@ -381,7 +380,7 @@ async def set_default_dashboard(dashboard_id: int, session: AsyncSession = Depen
         existing.is_default = False
 
     dashboard.is_default = True
-    dashboard.updated_at = datetime.utcnow()
+    dashboard.updated_at = datetime.now(UTC)
     await session.commit()
     await session.refresh(dashboard)
     return dashboard_to_response(dashboard)
@@ -406,7 +405,7 @@ async def reorder_dashboards(order: List[dict], session: AsyncSession = Depends(
             raise not_found(ErrorCode.DASHBOARD_NOT_FOUND, dashboard_id=dashboard_id)
 
         dashboard.position = new_position
-        dashboard.updated_at = datetime.utcnow()
+        dashboard.updated_at = datetime.now(UTC)
 
     await session.commit()
 
