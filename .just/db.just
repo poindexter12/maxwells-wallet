@@ -1,4 +1,5 @@
 # Database recipes
+set working-directory := '..'
 
 # Initialize database (create tables)
 init:
@@ -50,7 +51,7 @@ migrate MESSAGE="":
             fi
         else
             style 1 "ERROR: MESSAGE parameter required in non-interactive mode."
-            style 1 "Usage: just db::migrate MESSAGE='add users table'"
+            style 1 "Usage: just db::migrate 'add users table'"
             exit 1
         fi
     fi

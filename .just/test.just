@@ -1,4 +1,5 @@
 # Testing recipes
+set working-directory := '..'
 
 # =============================================================================
 # Unit & Integration Tests
@@ -149,7 +150,7 @@ chaos:
     source scripts/gum-helpers.sh
     style 12 "Running chaos tests..."
     style 11 "Checking if servers are running..."
-    curl -s http://localhost:3001/health >/dev/null 2>&1 || { style 1 "Backend not running. Start with: just dev::dev"; exit 1; }
+    curl -s http://localhost:8000/api/v1/transactions >/dev/null 2>&1 || { style 1 "Backend not running. Start with: just dev::dev"; exit 1; }
     curl -s http://localhost:3000 >/dev/null 2>&1 || { style 1 "Frontend not running. Start with: just dev::dev"; exit 1; }
     style 2 "Servers detected, running chaos tests..."
     cd frontend && SKIP_MIGRATIONS=1 npx playwright test chaos/ --reporter=line

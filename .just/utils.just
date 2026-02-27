@@ -1,4 +1,5 @@
 # Utility recipes
+set working-directory := '..'
 
 # =============================================================================
 # Cleaning
@@ -46,7 +47,7 @@ status:
     style 12 "Service Status:"
     echo ""
     echo "Backend:"
-    if curl -s http://localhost:8000/health 2>/dev/null; then
+    if curl -s http://localhost:8000/health >/dev/null 2>&1; then
         style 2 "  Running at http://localhost:8000"
     else
         style 1 "  Not running"

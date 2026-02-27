@@ -1,4 +1,5 @@
 # Development recipes
+set working-directory := '..'
 
 # Run backend server (runs migrations first)
 backend:
@@ -6,9 +7,10 @@ backend:
     set -euo pipefail
     source scripts/gum-helpers.sh
     style 12 "Running database migrations..."
-    cd backend && uv run alembic upgrade head
+    cd backend
+    uv run alembic upgrade head
     style 2 "Starting backend server..."
-    cd backend && . .venv/bin/activate && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    . .venv/bin/activate && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 # Run frontend development server
 frontend:

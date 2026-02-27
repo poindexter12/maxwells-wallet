@@ -1,4 +1,5 @@
 # Docker recipes
+set working-directory := '..'
 
 # Docker compose commands
 COMPOSE_DEV := "docker compose -f docker-compose.dev.yaml"

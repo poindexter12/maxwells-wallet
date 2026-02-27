@@ -1,4 +1,5 @@
 # Release recipes
+set working-directory := '..'
 
 # Version detection
 CURRENT_VERSION := `grep -E '^version = ' backend/pyproject.toml | sed 's/version = "\(.*\)"/\1/'`
@@ -71,7 +72,7 @@ validate:
     fi
     style 2 "All release checks passed."
 
-# Create a release (usage: just release::release VERSION=x.y.z)
+# Create a release (usage: just release::release x.y.z)
 release VERSION="":
     #!/usr/bin/env bash
     set -euo pipefail
@@ -80,7 +81,7 @@ release VERSION="":
     if [ -z "$VERSION" ]; then
         header "Release Commands"
         echo ""
-        style 11 "  just release::release VERSION=x.y.z  - Release specific version"
+        style 11 "  just release::release x.y.z           - Release specific version"
         style 11 "  just release::release-patch           - {{ CURRENT_VERSION }} -> next patch"
         style 11 "  just release::release-minor           - {{ CURRENT_VERSION }} -> next minor"
         style 11 "  just release::release-major           - {{ CURRENT_VERSION }} -> next major"
@@ -147,18 +148,18 @@ release-patch:
     #!/usr/bin/env bash
     set -euo pipefail
     NEW_VERSION=$(echo "{{ CURRENT_VERSION }}" | awk -F. '{print $1"."$2"."$3+1}')
-    just release::release VERSION="$NEW_VERSION"
+    just release::release "$NEW_VERSION"
 
 # Create a minor release (x.Y+1.0)
 release-minor:
     #!/usr/bin/env bash
     set -euo pipefail
     NEW_VERSION=$(echo "{{ CURRENT_VERSION }}" | awk -F. '{print $1"."$2+1".0"}')
-    just release::release VERSION="$NEW_VERSION"
+    just release::release "$NEW_VERSION"
 
 # Create a major release (X+1.0.0)
 release-major:
     #!/usr/bin/env bash
     set -euo pipefail
     NEW_VERSION=$(echo "{{ CURRENT_VERSION }}" | awk -F. '{print $1+1".0.0"}')
-    just release::release VERSION="$NEW_VERSION"
+    just release::release "$NEW_VERSION"
