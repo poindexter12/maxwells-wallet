@@ -118,7 +118,9 @@ Plans:
   2. `.nvmrc` and `.python-version` removed (replaced by `.mise.toml`)
   3. CI remains green after deletion (all workflows using just)
   4. Developer workflows unchanged (just recipes provide identical functionality)
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 16-01-PLAN.md — Delete deprecated Make/tool-version files, sweep stale references
 
 ## Phase Quality Gate (applies to ALL phases)
 
