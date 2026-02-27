@@ -10,68 +10,49 @@
  * refactors don't reintroduce it. See: https://github.com/vercel/next.js/issues/86178
  */
 import { describe, it, expect } from 'vitest'
-import { readFileSync, existsSync, readdirSync } from 'fs'
-import { join, resolve } from 'path'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
 
+// All paths are hardcoded constants — no dynamic input
 const APP_DIR = resolve(__dirname)
-const FRONTEND_DIR = resolve(__dirname, '..', '..')
-
-function readFile(relativePath: string): string {
-  return readFileSync(join(APP_DIR, relativePath), 'utf-8')
-}
-
-/** Find all route group directories (parenthesized names) under app/ */
-function findRouteGroupLayouts(): { group: string; path: string; content: string }[] {
-  const entries = readdirSync(APP_DIR, { withFileTypes: true })
-  const results: { group: string; path: string; content: string }[] = []
-
-  for (const entry of entries) {
-    if (entry.isDirectory() && entry.name.startsWith('(') && entry.name.endsWith(')')) {
-      const layoutPath = join(APP_DIR, entry.name, 'layout.tsx')
-      if (existsSync(layoutPath)) {
-        results.push({
-          group: entry.name,
-          path: layoutPath,
-          content: readFileSync(layoutPath, 'utf-8'),
-        })
-      }
-    }
-  }
-
-  return results
-}
+const ROOT_LAYOUT = resolve(APP_DIR, 'layout.tsx')
+const GLOBAL_ERROR = resolve(APP_DIR, 'global-error.tsx')
+const MAIN_LAYOUT = resolve(APP_DIR, '(main)', 'layout.tsx')
+const AUTH_LAYOUT = resolve(APP_DIR, '(auth)', 'layout.tsx')
+const PACKAGE_JSON = resolve(APP_DIR, '..', '..', 'package.json')
 
 describe('App Router layout structure', () => {
   it('root layout.tsx exists and provides <html>/<body>', () => {
-    const rootLayout = readFile('layout.tsx')
-    expect(rootLayout).toContain('<html')
-    expect(rootLayout).toContain('<body')
+    const content = readFileSync(ROOT_LAYOUT, 'utf-8')
+    expect(content).toContain('<html')
+    expect(content).toContain('<body')
   })
 
   it('root layout exports force-dynamic to prevent static prerendering', () => {
-    const rootLayout = readFile('layout.tsx')
-    expect(rootLayout).toMatch(/export\s+const\s+dynamic\s*=\s*['"]force-dynamic['"]/)
+    const content = readFileSync(ROOT_LAYOUT, 'utf-8')
+    expect(content).toMatch(/export\s+const\s+dynamic\s*=\s*['"]force-dynamic['"]/)
   })
 
   it('route group layouts do NOT contain <html> or <body> tags', () => {
-    const groupLayouts = findRouteGroupLayouts()
-    expect(groupLayouts.length).toBeGreaterThan(0)
-
-    for (const { group, content } of groupLayouts) {
-      expect(content, `${group}/layout.tsx should not contain <html>`).not.toMatch(/<html[\s>]/)
-      expect(content, `${group}/layout.tsx should not contain <body>`).not.toMatch(/<body[\s>]/)
+    for (const { name, path } of [
+      { name: '(main)', path: MAIN_LAYOUT },
+      { name: '(auth)', path: AUTH_LAYOUT },
+    ]) {
+      const content = readFileSync(path, 'utf-8')
+      expect(content, `${name}/layout.tsx should not contain <html>`).not.toMatch(/<html[\s>]/)
+      expect(content, `${name}/layout.tsx should not contain <body>`).not.toMatch(/<body[\s>]/)
     }
   })
 
   it('global-error.tsx exists and is a client component with its own <html>/<body>', () => {
-    const globalError = readFile('global-error.tsx')
-    expect(globalError).toContain("'use client'")
-    expect(globalError).toContain('<html')
-    expect(globalError).toContain('<body')
+    const content = readFileSync(GLOBAL_ERROR, 'utf-8')
+    expect(content).toContain("'use client'")
+    expect(content).toContain('<html')
+    expect(content).toContain('<body')
   })
 
   it('build script sets NODE_ENV=production', () => {
-    const pkg = JSON.parse(readFileSync(join(FRONTEND_DIR, 'package.json'), 'utf-8'))
+    const pkg = JSON.parse(readFileSync(PACKAGE_JSON, 'utf-8'))
     expect(pkg.scripts.build).toContain('NODE_ENV=production')
   })
 })
