@@ -30,64 +30,6 @@ async def list_import_sessions(session: AsyncSession = Depends(get_session)):
     return sessions
 
 
-@router.get("/import-sessions/{session_id}")
-async def get_import_session(session_id: int, session: AsyncSession = Depends(get_session)):
-    """Get details of a specific import session"""
-    result = await session.execute(select(ImportSession).where(ImportSession.id == session_id))
-    import_session = result.scalar_one_or_none()
-    if not import_session:
-        raise not_found(ErrorCode.IMPORT_SESSION_NOT_FOUND, session_id=session_id)
-
-    # Get associated transactions
-    txn_result = await session.execute(select(Transaction).where(Transaction.import_session_id == session_id))
-    transactions = txn_result.scalars().all()
-
-    return {"session": import_session, "transactions": transactions}
-
-
-@router.delete("/import-sessions/{session_id}")
-async def delete_import_session(
-    session_id: int,
-    confirm: str = Query(..., description="Must be 'DELETE' to confirm"),
-    session: AsyncSession = Depends(get_session),
-):
-    """
-    Delete an import session and all its transactions.
-
-    ⚠️ WARNING: This permanently deletes all transactions from this import.
-    This action cannot be undone.
-
-    Pass confirm='DELETE' to confirm deletion.
-    """
-    if confirm != "DELETE":
-        raise bad_request(
-            ErrorCode.CONFIRMATION_REQUIRED, "Must pass confirm='DELETE' to confirm deletion", expected="DELETE"
-        )
-
-    result = await session.execute(select(ImportSession).where(ImportSession.id == session_id))
-    import_session = result.scalar_one_or_none()
-    if not import_session:
-        raise not_found(ErrorCode.IMPORT_SESSION_NOT_FOUND, session_id=session_id)
-
-    # Count transactions that will be deleted
-    count_result = await session.execute(select(func.count()).where(Transaction.import_session_id == session_id))
-    txn_count = count_result.scalar()
-
-    # Delete transactions first
-    txn_result = await session.execute(select(Transaction).where(Transaction.import_session_id == session_id))
-    transactions = txn_result.scalars().all()
-    for txn in transactions:
-        await session.delete(txn)
-
-    # Mark session as rolled back (keep for audit)
-    import_session.status = "rolled_back"
-    import_session.updated_at = datetime.utcnow()
-
-    await session.commit()
-
-    return {"deleted_transactions": txn_count, "session_status": "rolled_back"}
-
-
 @router.delete("/purge-all")
 async def purge_all_data(
     confirm: str = Query(..., description="Must be 'PURGE_ALL' to confirm"),

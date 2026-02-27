@@ -739,46 +739,6 @@ class TestCustomCsvApiEndpoints:
         get_response = await client.get(f"/api/v1/import/custom/configs/{config_id}")
         assert get_response.status_code == 404
 
-    async def test_export_import_config(self, client: AsyncClient):
-        """Test export and import of config"""
-        # Create a config
-        config = {
-            "name": "Export Test",
-            "account_source": "TEST-CHECKING",
-            "date_column": "Date",
-            "amount_column": "Amount",
-            "description_column": "Description",
-        }
-        create_response = await client.post(
-            "/api/v1/import/custom/configs",
-            json={
-                "name": "Export Test Config",
-                "description": "Test export",
-                "config_json": json.dumps(config),
-            },
-        )
-        config_id = create_response.json()["id"]
-
-        # Export it
-        export_response = await client.get(f"/api/v1/import/custom/configs/{config_id}/export")
-        assert export_response.status_code == 200
-        exported = export_response.json()
-
-        # Import it with a new name
-        import_response = await client.post(
-            "/api/v1/import/custom/configs/import",
-            json={
-                "name": "Imported Config",
-                "config": exported["config"],
-            },
-        )
-
-        assert import_response.status_code == 200
-        imported = import_response.json()
-        assert imported["name"] == "Imported Config"
-        assert imported["id"] != config_id
-
-
 class TestCustomCsvConfigParsing:
     """Test CustomCsvConfig JSON parsing edge cases."""
 

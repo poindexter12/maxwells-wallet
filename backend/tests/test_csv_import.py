@@ -6,31 +6,80 @@ Comprehensive tests for all CSV import formats:
 - Amex Credit Card
 - Inspira HSA
 - Venmo
-
-Tests both the new parser class system and the backwards-compatible wrapper.
 """
 
 import pytest
 from httpx import AsyncClient
 from datetime import date
 import io
+from typing import Dict, List, Optional, Tuple
 
-# New parser system (preferred)
 from app.parsers import ParserRegistry, ParsedTransaction
-
-# Backwards-compat wrapper (deprecated but still tested)
-from app.csv_parser import (
-    detect_format,
-    parse_csv,
-    parse_bofa_csv,
-    parse_bofa_cc_csv,
-    parse_amex_csv,
-    parse_inspira_hsa_csv,
-    parse_venmo_csv,
-    extract_merchant_from_description,
-    map_amex_category,
-)
 from app.models import ImportFormatType
+
+
+# ---------------------------------------------------------------------------
+# Test helpers — thin wrappers around ParserRegistry for test convenience
+# ---------------------------------------------------------------------------
+
+def detect_format(csv_content: str) -> ImportFormatType:
+    parser, _confidence = ParserRegistry.detect_format(csv_content)
+    if parser:
+        try:
+            return ImportFormatType(parser.format_key)
+        except ValueError:
+            return ImportFormatType.unknown
+    return ImportFormatType.unknown
+
+
+def parse_csv(
+    csv_content: str, account_source: Optional[str] = None, format_hint: Optional[ImportFormatType] = None
+) -> Tuple[List[Dict], ImportFormatType]:
+    if format_hint is not None and format_hint != ImportFormatType.unknown:
+        format_key = format_hint.value if hasattr(format_hint, "value") else format_hint
+        parser = ParserRegistry.get_parser(format_key)
+        fmt = format_hint if isinstance(format_hint, ImportFormatType) else ImportFormatType(format_hint)
+    else:
+        parser, _ = ParserRegistry.detect_format(csv_content)
+        fmt = ImportFormatType(parser.format_key) if parser else ImportFormatType.unknown
+    if parser is None:
+        return [], fmt
+    return [t.to_dict() for t in parser.parse(csv_content, account_source)], fmt
+
+
+def _parse_with(key: str, csv_content: str, account_source: Optional[str] = None) -> List[Dict]:
+    parser = ParserRegistry.get_parser(key)
+    return [t.to_dict() for t in parser.parse(csv_content, account_source)] if parser else []
+
+
+def parse_bofa_csv(csv_content: str, account_source: str) -> List[Dict]:
+    return _parse_with("bofa_bank", csv_content, account_source)
+
+
+def parse_bofa_cc_csv(csv_content: str, account_source: str) -> List[Dict]:
+    return _parse_with("bofa_cc", csv_content, account_source)
+
+
+def parse_amex_csv(csv_content: str) -> List[Dict]:
+    return _parse_with("amex_cc", csv_content)
+
+
+def parse_inspira_hsa_csv(csv_content: str, account_source: str) -> List[Dict]:
+    return _parse_with("inspira_hsa", csv_content, account_source)
+
+
+def parse_venmo_csv(csv_content: str, account_source: str) -> List[Dict]:
+    return _parse_with("venmo", csv_content, account_source)
+
+
+def extract_merchant_from_description(description: str, format_type: ImportFormatType) -> str:
+    parser = ParserRegistry.get_parser(format_type.value)
+    return parser.extract_merchant({}, description) if parser else description[:50].strip()
+
+
+def map_amex_category(amex_cat: str) -> Optional[str]:
+    parser = ParserRegistry.get_parser("amex_cc")
+    return parser.map_category(amex_cat) if parser else None
 
 
 # =============================================================================
@@ -90,86 +139,6 @@ class TestParserRegistry:
         assert names["amex_cc"] == "American Express"
         assert names["bofa_bank"] == "Bank of America Bank"
         assert names["venmo"] == "Venmo"
-
-
-class TestBackwardsCompatWrapper:
-    """Test that the csv_parser.py wrapper correctly delegates to ParserRegistry"""
-
-    def test_wrapper_detect_format_uses_registry(self):
-        """detect_format() should use ParserRegistry.detect_format()"""
-        csv_content = """Date,Description,Card Member,Account #,Amount
-11/15/2025,AMAZON,JOHN DOE,XXXXX-53004,50.00
-"""
-        # Wrapper function
-        wrapper_result = detect_format(csv_content)
-
-        # Direct registry call
-        parser, confidence = ParserRegistry.detect_format(csv_content)
-
-        # Should produce the same format
-        assert wrapper_result.value == parser.format_key
-
-    def test_wrapper_parse_csv_matches_registry(self):
-        """parse_csv() should produce same results as ParserRegistry"""
-        csv_content = """Date,Description,Card Member,Account #,Amount,Extended Details,Appears On Your Statement As,Address,City/State,Zip Code,Country,Reference,Category
-11/15/2025,AMAZON.COM,JOHN DOE,XXXXX-53004,199.99,,,,,,,320251150001,Merchandise
-"""
-        # Wrapper function
-        wrapper_txns, wrapper_format = parse_csv(csv_content)
-
-        # Direct registry call
-        parser = ParserRegistry.get_parser("amex_cc")
-        registry_txns = parser.parse(csv_content)
-
-        # Same count and amounts
-        assert len(wrapper_txns) == len(registry_txns)
-        assert wrapper_txns[0]["amount"] == registry_txns[0].amount
-        assert wrapper_txns[0]["merchant"] == registry_txns[0].merchant
-
-    def test_wrapper_parse_bofa_csv_matches_registry(self):
-        """parse_bofa_csv() should delegate to BofaBankParser"""
-        csv_content = """Date,Description,Amount,Running Bal.
-11/15/2025,PAYROLL DEPOSIT,3500.00,4734.56
-"""
-        # Wrapper function
-        wrapper_txns = parse_bofa_csv(csv_content, "BOFA-Test")
-
-        # Direct registry call
-        parser = ParserRegistry.get_parser("bofa_bank")
-        registry_txns = parser.parse(csv_content, "BOFA-Test")
-
-        assert len(wrapper_txns) == len(registry_txns)
-        assert wrapper_txns[0]["amount"] == registry_txns[0].amount
-
-    def test_wrapper_map_amex_category_matches_parser(self):
-        """map_amex_category() should delegate to AmexCCParser.map_category()"""
-        from app.parsers.formats.amex_cc import AmexCCParser
-
-        # Wrapper function
-        wrapper_result = map_amex_category("Restaurant-Dining")
-
-        # Direct parser call
-        parser = AmexCCParser()
-        parser_result = parser.map_category("Restaurant-Dining")
-
-        assert wrapper_result == parser_result == "Dining & Coffee"
-
-    def test_wrapper_returns_dict_format(self):
-        """Wrapper functions should return dicts (not ParsedTransaction)"""
-        csv_content = """Date,Description,Card Member,Account #,Amount
-11/15/2025,TEST,JOHN DOE,XXXXX-53004,50.00
-"""
-        wrapper_txns, _ = parse_csv(csv_content)
-
-        # Wrapper returns dicts
-        assert isinstance(wrapper_txns[0], dict)
-        assert "date" in wrapper_txns[0]
-        assert "amount" in wrapper_txns[0]
-
-        # Registry returns ParsedTransaction
-        parser = ParserRegistry.get_parser("amex_cc")
-        registry_txns = parser.parse(csv_content)
-        assert isinstance(registry_txns[0], ParsedTransaction)
 
 
 class TestParserClassesDirect:
