@@ -19,8 +19,9 @@ def is_valid_import_file(filename: str) -> bool:
 
 def _parse_csv(
     csv_content: str, account_source: Optional[str] = None, format_hint: Optional[ImportFormatType] = None
-) -> tuple:
+) -> tuple[list, ImportFormatType]:
     """Parse CSV/QIF/QFX content via ParserRegistry and return (transactions_dicts, format_type)."""
+    format_type: ImportFormatType
     if format_hint is not None and format_hint != ImportFormatType.unknown:
         format_key = format_hint.value if hasattr(format_hint, "value") else format_hint
         parser = ParserRegistry.get_parser(format_key)
