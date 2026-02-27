@@ -23,8 +23,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
+      - name: Setup mise
+        uses: jdx/mise-action@v2
+        with:
+          install: true
+
       - name: Build and start application
-        run: docker compose -f docker-compose.dev.yaml up -d --build
+        run: |
+          just docker::build
+          just docker::up
 
       - name: Wait for application health
         run: |
