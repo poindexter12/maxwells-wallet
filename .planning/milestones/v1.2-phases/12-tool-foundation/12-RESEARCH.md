@@ -364,8 +364,8 @@ use mise
 **Before (old .envrc):**
 ```bash
 # .envrc (OLD - being replaced)
-export CROWDIN_PERSONAL_TOKEN="c176a9458fbb6a66bacd5dc19e9531ecf7e81973851eaf2dfc3e29415135e55ac6195e43acde53fa"
-export ANTHROPIC_API_KEY="REDACTED_API_KEY"
+export CROWDIN_PERSONAL_TOKEN="REDACTED"
+export ANTHROPIC_API_KEY="REDACTED"
 ```
 
 **After (new setup):**
@@ -374,8 +374,8 @@ export ANTHROPIC_API_KEY="REDACTED_API_KEY"
 use mise
 
 # .env (gitignored - holds secrets)
-CROWDIN_PERSONAL_TOKEN=c176a9458fbb6a66bacd5dc19e9531ecf7e81973851eaf2dfc3e29415135e55ac6195e43acde53fa
-ANTHROPIC_API_KEY=REDACTED_API_KEY
+CROWDIN_PERSONAL_TOKEN=REDACTED
+ANTHROPIC_API_KEY=REDACTED
 
 # .mise.toml [env] section
 [env]
