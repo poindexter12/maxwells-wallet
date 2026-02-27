@@ -86,40 +86,40 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MISE-01 | — | Pending |
-| MISE-02 | — | Pending |
-| MISE-03 | — | Pending |
-| MISE-04 | — | Pending |
-| JUST-01 | — | Pending |
-| JUST-02 | — | Pending |
-| JUST-03 | — | Pending |
-| JUST-04 | — | Pending |
-| JUST-05 | — | Pending |
-| JUST-06 | — | Pending |
-| JUST-07 | — | Pending |
-| GUM-01 | — | Pending |
-| GUM-02 | — | Pending |
-| GUM-03 | — | Pending |
-| GUM-04 | — | Pending |
-| GUM-05 | — | Pending |
-| CI-01 | — | Pending |
-| CI-02 | — | Pending |
-| CI-03 | — | Pending |
-| DEVC-01 | — | Pending |
-| DEVC-02 | — | Pending |
-| DEVC-03 | — | Pending |
-| DOC-01 | — | Pending |
-| DOC-02 | — | Pending |
-| DOC-03 | — | Pending |
-| CLEAN-01 | — | Pending |
-| CLEAN-02 | — | Pending |
-| CLEAN-03 | — | Pending |
+| MISE-01 | Phase 12 | Pending |
+| MISE-02 | Phase 12 | Pending |
+| MISE-03 | Phase 12 | Pending |
+| MISE-04 | Phase 12 | Pending |
+| JUST-01 | Phase 13 | Pending |
+| JUST-02 | Phase 13 | Pending |
+| JUST-03 | Phase 13 | Pending |
+| JUST-04 | Phase 13 | Pending |
+| JUST-05 | Phase 13 | Pending |
+| JUST-06 | Phase 13 | Pending |
+| JUST-07 | Phase 13 | Pending |
+| GUM-01 | Phase 13 | Pending |
+| GUM-02 | Phase 13 | Pending |
+| GUM-03 | Phase 13 | Pending |
+| GUM-04 | Phase 13 | Pending |
+| GUM-05 | Phase 13 | Pending |
+| CI-01 | Phase 14 | Pending |
+| CI-02 | Phase 14 | Pending |
+| CI-03 | Phase 14 | Pending |
+| DEVC-01 | Phase 14 | Pending |
+| DEVC-02 | Phase 14 | Pending |
+| DEVC-03 | Phase 14 | Pending |
+| DOC-01 | Phase 15 | Pending |
+| DOC-02 | Phase 15 | Pending |
+| DOC-03 | Phase 15 | Pending |
+| CLEAN-01 | Phase 16 | Pending |
+| CLEAN-02 | Phase 16 | Pending |
+| CLEAN-03 | Phase 16 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 26 total
-- Mapped to phases: 0
-- Unmapped: 26
+- Mapped to phases: 26
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-26*
-*Last updated: 2026-02-26 after initial definition*
+*Last updated: 2026-02-26 after roadmap creation*
