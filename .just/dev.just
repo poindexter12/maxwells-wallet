@@ -1,4 +1,5 @@
 # Development recipes
+set working-directory := '..'
 
 # Run backend server (runs migrations first)
 backend:
