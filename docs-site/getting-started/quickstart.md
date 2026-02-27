@@ -20,14 +20,14 @@ docker run -d \
   ghcr.io/poindexter12/maxwells-wallet
 ```
 
-## Using Make (Development)
+## Using Just (Development)
 
 ```bash
 # First-time setup
-make setup
+just setup
 
 # Start development servers
-make dev
+just dev::dev
 
 # Open http://localhost:3000
 ```
@@ -45,7 +45,7 @@ make dev
 Try Maxwell's Wallet without setting up your own data:
 
 ```bash
-make docker-with-demo
+just docker::with-demo
 # Login: maxwell / wallet
 ```
 

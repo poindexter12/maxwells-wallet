@@ -4,6 +4,7 @@
 
 - ✅ **v1.0 DevSecOps Tooling** — Phases 1-6 (shipped 2026-02-23)
 - ✅ **v1.1 Codebase Health** — Phases 7-11 (shipped 2026-02-26)
+- ✅ **v1.2 Build System Modernization** — Phases 12-16 (shipped 2026-02-27)
 
 ## Phases
 
@@ -40,34 +41,21 @@ See `milestones/v1.1-ROADMAP.md` for archived v1.1 phase details.
 
 </details>
 
-## Phase Quality Gate (applies to ALL phases)
+<details>
+<summary>✅ v1.2 Build System Modernization (Phases 12-16) — SHIPPED 2026-02-27</summary>
 
-Every phase MUST satisfy these criteria before merge. These are non-negotiable — a phase is not complete until the PR passes all gates.
+See `milestones/v1.2-ROADMAP.md` for archived v1.2 phase details.
 
-### Delivery
-- [ ] Phase work submitted as a PR against `main`
-- [ ] All CI checks pass (build, lint, typecheck, tests, security scans)
-- [ ] PR reviewed and approved before merge
+**Delivered:** Replaced Make with Just + gum for a modern task runner experience, with mise as the single prerequisite managing all dev tooling.
 
-### Security
-- [ ] No new GitHub Security tab findings introduced (Semgrep SAST, Dependency-Check SCA, Trivy, ZAP)
-- [ ] No new `npm audit` or `pip-audit` vulnerabilities introduced
-- [ ] No secrets or credentials committed
+**Phases:**
+- [x] Phase 12: Tool Foundation (1/1 plans) — completed 2026-02-26
+- [x] Phase 13: Justfile Migration (2/2 plans) — completed 2026-02-27
+- [x] Phase 14: Integration (2/2 plans) — completed 2026-02-27
+- [x] Phase 15: Documentation (2/2 plans) — completed 2026-02-27
+- [x] Phase 16: Cleanup (1/1 plan) — completed 2026-02-27
 
-### Quality
-- [ ] Backend test coverage does not decrease from pre-phase baseline
-- [ ] Frontend test coverage does not decrease from pre-phase baseline (V8 thresholds: 70% lines/branches/functions/statements)
-- [ ] No new TypeScript `any` assertions introduced (existing ones may be removed)
-- [ ] `pnpm check` (lint/format) passes with zero warnings
-
-### Performance
-- [ ] No measurable performance regressions in affected areas
-- [ ] Dashboard load time does not increase (measured by E2E or manual benchmark)
-- [ ] No new N+1 query patterns introduced in backend
-
-### Compatibility
-- [ ] Existing E2E tests pass without modification (unless test is explicitly updated for new behavior)
-- [ ] Existing API contracts unchanged (unless migration is part of the phase)
+</details>
 
 ## Progress
 
@@ -84,3 +72,8 @@ Every phase MUST satisfy these criteria before merge. These are non-negotiable �
 | 9. Performance + Frontend Tests | v1.1 | 3/3 | Complete | 2026-02-25 |
 | 10. Internationalization | v1.1 | 3/3 | Complete | 2026-02-25 |
 | 11. Backend Hardening | v1.1 | 2/2 | Complete | 2026-02-26 |
+| 12. Tool Foundation | v1.2 | 1/1 | Complete | 2026-02-26 |
+| 13. Justfile Migration | v1.2 | 2/2 | Complete | 2026-02-27 |
+| 14. Integration | v1.2 | 2/2 | Complete | 2026-02-27 |
+| 15. Documentation | v1.2 | 2/2 | Complete | 2026-02-27 |
+| 16. Cleanup | v1.2 | 1/1 | Complete | 2026-02-27 |

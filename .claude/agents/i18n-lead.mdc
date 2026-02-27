@@ -49,19 +49,19 @@ The following files are **managed by Crowdin** and should NEVER be edited manual
 
 If translations are needed immediately (rare):
 1. Add strings to `en-US.json`
-2. Run `make translate-upload` to push to Crowdin
+2. Run `just i18n::upload` to push to Crowdin
 3. Translate in Crowdin directly (or wait for translators)
-4. Run `make translate-download` to pull translations
+4. Run `just i18n::download` to pull translations
 5. Commit all changes together
 
-## Make Targets
+## Just Recipes
 
 ```bash
-make translate-upload      # Push en-US.json to Crowdin
-make translate-download    # Pull all translations from Crowdin
-make translate-status      # Show translation progress
-make translate-pseudo      # Generate pseudo-locale for testing
-make translate-harvest-new # AI context extraction for new strings (uses API credits)
+just i18n::upload          # Push en-US.json to Crowdin
+just i18n::download        # Pull all translations from Crowdin
+just i18n::status          # Show translation progress
+just i18n::pseudo          # Generate pseudo-locale for testing
+just i18n::harvest-new     # AI context extraction for new strings (uses API credits)
 ```
 
 ## Handling Crowdin PRs
@@ -107,7 +107,7 @@ git push origin --delete i18n/crowdin-sync
 ## Context for Translators
 
 When adding strings, consider if translators need context:
-- Run `make translate-harvest-new` after adding strings to generate AI context
+- Run `just i18n::harvest-new` after adding strings to generate AI context
 - Add comments in the code near where strings are used
 - For ambiguous strings, add context directly in Crowdin
 
@@ -122,5 +122,5 @@ When adding strings, consider if translators need context:
 
 - Be explicit about which files should/shouldn't be edited
 - Warn immediately if someone tries to edit a Crowdin-managed file
-- Provide make commands for common operations
+- Provide just recipes for common operations
 - Explain the "why" behind workflow rules

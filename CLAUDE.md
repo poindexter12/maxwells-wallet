@@ -24,12 +24,21 @@ backend/            # FastAPI app
 
 ## Development Environment
 
-### VS Code Devcontainer (Recommended)
+### Prerequisites
+
+Install [mise](https://mise.jdx.dev/) (tool version manager):
+```bash
+curl https://mise.run | sh
+```
+
+mise auto-installs Node, Python, uv, just, and gum when you enter the project directory. No other manual tool installation required.
+
+### VS Code Devcontainer (Alternative)
 
 This repository includes a devcontainer configuration for VS Code. To use it:
 1. Open the repository in VS Code
 2. Click "Reopen in Container" when prompted (or use Command Palette → "Dev Containers: Reopen in Container")
-3. Wait for the container to build and `make setup` to complete
+3. Wait for the container to build and `just setup` to complete
 
 The devcontainer provides:
 - Node.js 22 (frontend)
@@ -38,65 +47,92 @@ The devcontainer provides:
 - Pre-configured VS Code extensions (Python, ESLint, Prettier, Tailwind CSS, Playwright, Ruff)
 - Automatic formatting on save
 
-### Local Setup (Alternative)
-
-If not using devcontainer, see the Development Commands section below for manual setup.
-
 ## Available Agent
 
-- **@techlead** (`.claude/agents/techlead.mdc`): Repo-aware technical lead. Reads `CLAUDE.md` and the per-topic skills in `.claude/skills/`, builds a short plan for non-trivial tasks, prefers `make` commands, and enforces the stack-specific skills.
-- **@frontend-lead** (`.claude/agents/frontend-lead.mdc`): Leads frontend/UI changes. Applies Next.js and TypeScript skills; prefers `make frontend`/`make dev`.
-- **@backend-lead** (`.claude/agents/backend-lead.mdc`): Leads backend/API work. Applies FastAPI, Python, and Postgres skills; prefers `make backend`/`make test-backend`; defaults to read/EXPLAIN posture for DB.
+- **@techlead** (`.claude/agents/techlead.mdc`): Repo-aware technical lead. Reads `CLAUDE.md` and the per-topic skills in `.claude/skills/`, builds a short plan for non-trivial tasks, prefers `just` recipes, and enforces the stack-specific skills.
+- **@frontend-lead** (`.claude/agents/frontend-lead.mdc`): Leads frontend/UI changes. Applies Next.js and TypeScript skills; prefers `just dev::frontend`/`just dev::dev`.
+- **@backend-lead** (`.claude/agents/backend-lead.mdc`): Leads backend/API work. Applies FastAPI, Python, and Postgres skills; prefers `just dev::backend`/`just test::backend`; defaults to read/EXPLAIN posture for DB.
 - **@db-lead** (`.claude/agents/db-lead.mdc`): Leads database design/migrations/query review. Applies Postgres and DB-design skills; favors additive, reversible migrations and explicit EXPLAIN-before-write.
-- **@testlead** (`.claude/agents/testlead.mdc`): Leads testing strategy/implementation. Applies frontend, backend, and Python testing skills; prefers repo `make` test targets; keeps tests deterministic and isolated.
+- **@testlead** (`.claude/agents/testlead.mdc`): Leads testing strategy/implementation. Applies frontend, backend, and Python testing skills; prefers `just test::` recipes; keeps tests deterministic and isolated.
 - **@i18n-lead** (`.claude/agents/i18n-lead.mdc`): Leads internationalization work. Manages Crowdin workflow, enforces translation best practices. **Use this agent when adding/modifying translatable strings.**
 
 ## Development Commands
 
-**IMPORTANT**: Always prefer `make` commands over running commands directly. The Makefile handles environment setup, paths, and can include additional variables or env files as needed.
+**IMPORTANT**: Always use `just` recipes. The justfile handles environment setup, paths, and provides enhanced terminal UX via gum. Run bare `just` (no args) to see all available recipes. Do not use direct npm/uv/alembic commands for tasks that have just recipes.
 
-### Using Make (Preferred)
-
-From the repository root:
+### Setup
 ```bash
-# First-time setup
-make setup               # Install deps + seed database
-
-# Development
-make dev                 # Run both backend and frontend in parallel
-make backend             # Run backend only
-make frontend            # Run frontend only
-
-# Build & Test
-make build-frontend      # Build frontend for production
-make test-backend        # Run backend tests
-make test-all            # Run all tests
-
-# Database
-make db-migrate          # Create new migration
-make db-upgrade          # Apply migrations
-make db-reset            # Reset database
-
-# Linting & Quality
-make lint                # Lint all code
-make quality             # Run all quality checks
+just setup               # First-time setup (install deps + init database)
+just install             # Install all dependencies
+just install-backend     # Install backend deps only
+just install-frontend    # Install frontend deps only
 ```
 
-Run `make help` to see all available targets.
-
-### Direct Commands (When Necessary)
-
-Backend (from `backend/` directory):
+### Development
 ```bash
-uv run uvicorn app.main:app --reload
-uv run alembic revision --autogenerate -m "description"
-uv run alembic upgrade head
+just dev::dev            # Run both backend and frontend in parallel
+just dev::backend        # Run backend server only
+just dev::frontend       # Run frontend server only
+just dev::build-frontend # Build frontend for production
 ```
 
-Frontend (from `frontend/` directory):
+### Database
 ```bash
-npm run dev
-npm run build
+just db::init            # Initialize database (create tables)
+just db::seed            # Seed database with sample data
+just db::reset           # Reset database (DESTRUCTIVE — asks for confirmation)
+just db::migrate "description"  # Create new migration
+just db::upgrade         # Apply migrations
+just db::demo-setup      # Set up demo data
+```
+
+### Testing & Quality
+```bash
+just test::backend       # Run backend tests
+just test::coverage      # Run tests with coverage report
+just test::e2e           # Run E2E tests (requires servers running)
+just test::e2e-install   # Install Playwright browsers (one-time)
+just test::chaos         # Run chaos/monkey tests
+just test::lint          # Lint all code (backend + frontend)
+just test::quality       # Run all quality checks (lint + typecheck + vulture)
+just test::typecheck     # Type checking with mypy
+just test::vulture       # Dead code detection
+just test::security-audit # Security audit
+just test::all           # Run all tests (unit + E2E)
+```
+
+### Docker
+```bash
+just docker::build       # Build Docker image
+just docker::up          # Start containers
+just docker::down        # Stop containers
+just docker::logs        # View container logs
+just docker::shell       # Shell into running container
+just docker::clean       # Remove containers and volumes (DESTRUCTIVE)
+```
+
+### Internationalization
+```bash
+just i18n::upload        # Push source strings to Crowdin
+just i18n::download      # Pull translations from Crowdin
+just i18n::status        # Check translation progress
+just i18n::pseudo        # Generate pseudo-locale for testing
+```
+
+### Release
+```bash
+just release::check      # Pre-flight validation (dry-run)
+just release::validate   # Validation (fails on errors)
+just release::release VERSION="x.y.z"  # Create release
+```
+
+### Utilities
+```bash
+just utils::status       # Check server status
+just utils::info         # Show project info
+just utils::clean        # Clean build artifacts
+just utils::clean-all    # Clean everything (DESTRUCTIVE)
+just utils::check-deps   # Verify dependencies installed
 ```
 
 ## Architecture Notes
@@ -115,14 +151,13 @@ npm run build
 
 **Python Environment**:
 - uv replaces both venv + pip
-- `.envrc` with direnv for auto-activation
-- `.python-version` pins Python 3.11+
+- mise manages Python version and environment activation via `.mise.toml`
 - Never use `pip` directly - always `uv pip` or `uv run`
 
 ## Typical Workflow
 
-1. Use `make` targets for setup, dev, tests, and migrations (see commands above).
-2. Run backend (`uv run uvicorn ...`) and frontend (`npm run dev`) servers for local development.
+1. Use `just` recipes for setup, dev, tests, and migrations (see commands above).
+2. Run `just dev::dev` to start both servers for local development.
 3. On first run, create a user account when prompted at `/setup`.
 4. Iterate by editing code/config directly.
 
@@ -151,7 +186,7 @@ Use this section for quick reference. Canonical skill cards live in `.claude/ski
 - Use Pydantic models for request/response; set explicit status codes and error payloads.
 - Dependency injection: DB session from a single `get_session` dependency; avoid global sessions.
 - Validation: constrain query/path params (max lengths, enums); return typed responses for OpenAPI accuracy.
-- Testing: structure tests around routers/services; prefer `make test-backend` to run suites.
+- Testing: structure tests around routers/services; prefer `just test::backend` to run suites.
 
 ### Postgres (production target)
 - Default to read/EXPLAIN before write; parameterize queries, never string-concatenate SQL.
@@ -216,8 +251,8 @@ await page.locator(`[data-testid="${TEST_IDS.IMPORT_RESULT}"]`).click();
 - When adding a destructive button (delete, purge, remove), use `CHAOS_EXCLUDED_IDS` not `TEST_IDS`.
 
 #### Test Locations
-- E2E tests live in `frontend/e2e/`. Run with `make test-e2e` or `npx playwright test`.
-- Unit tests live alongside components as `*.test.tsx`. Run with `make test-frontend` or `npx vitest`.
+- E2E tests live in `frontend/e2e/`. Run with `just test::e2e` or `npx playwright test`.
+- Unit tests live alongside components as `*.test.tsx`. Run with `npx vitest`.
 - See `frontend/e2e/README.md` for detailed E2E testing conventions.
 
 ### Chaos Testing (`data-chaos-target`)
@@ -256,12 +291,12 @@ await page.locator(`[data-testid="${TEST_IDS.IMPORT_RESULT}"]`).click();
 3. Crowdin auto-syncs and creates translation PR when ready
 4. See `docs/i18n-workflow.md` for full workflow
 
-#### Make Commands
+#### Commands
 ```bash
-make translate-upload      # Push source strings to Crowdin
-make translate-download    # Pull translations from Crowdin
-make translate-status      # Check translation progress
-make translate-pseudo      # Generate pseudo-locale for testing
+just i18n::upload          # Push source strings to Crowdin
+just i18n::download        # Pull translations from Crowdin
+just i18n::status          # Check translation progress
+just i18n::pseudo          # Generate pseudo-locale for testing
 ```
 
 #### String Keys

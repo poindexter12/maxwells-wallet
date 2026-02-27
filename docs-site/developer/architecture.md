@@ -78,7 +78,7 @@ maxwells-wallet/
 ├── data/                   # Test data directory
 │   ├── raw/                # Real CSVs (gitignored)
 │   └── anonymized/         # Scrubbed test data
-├── make/                   # Modular Makefile components
+├── .just/                  # Modular justfile components
 └── docs-site/              # MkDocs documentation source
 ```
 
@@ -201,6 +201,6 @@ This proxy setup allows the frontend to make API calls to `/api/v1/...` without 
 
 Run tests:
 ```bash
-make test-coverage    # Backend with coverage
-make test-e2e         # E2E tests (requires make dev)
+just test::coverage       # Backend with coverage
+just test::e2e            # E2E tests (requires just dev::dev)
 ```

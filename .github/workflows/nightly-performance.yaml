@@ -20,22 +20,17 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7
+      - name: Setup mise
+        uses: jdx/mise-action@v2
         with:
-          version: "latest"
-
-      - name: Set up Python
-        run: uv python install 3.11
+          install: true
 
       - name: Install backend dependencies
-        working-directory: backend
-        run: uv sync
+        run: just install-backend
 
       - name: Run performance tests
-        working-directory: backend
         run: |
-          uv run pytest tests/performance -v -m performance --tb=short
+          cd backend && uv run pytest tests/performance -v -m performance --tb=short
 
           echo "## Performance Tests" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

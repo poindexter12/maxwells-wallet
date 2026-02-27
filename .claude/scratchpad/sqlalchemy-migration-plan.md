@@ -119,7 +119,7 @@ For each model:
 
 3. **Update imports** in affected files (routers, services)
 
-4. **Run tests**: `make test-backend`
+4. **Run tests**: `just test::backend`
 
 5. **Commit** if tests pass
 
@@ -182,7 +182,7 @@ backend/app/
 
 ## Testing Strategy
 
-- Run `make test-backend` after each model migration
+- Run `just test::backend` after each model migration
 - All 200+ backend tests should pass
 - No database schema changes (same tables, same columns)
 - Alembic migrations should still work

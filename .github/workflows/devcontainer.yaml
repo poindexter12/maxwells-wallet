@@ -5,10 +5,12 @@ on:
     branches: [main]
     paths:
       - '.devcontainer/**'
+      - '.mise.toml'
   pull_request:
     branches: [main]
     paths:
       - '.devcontainer/**'
+      - '.mise.toml'
 
 permissions:
   contents: read
@@ -37,27 +39,35 @@ jobs:
           echo "Container ID: $CONTAINER_ID"
 
           # Use docker exec directly since container might not stay discoverable by devcontainer exec
-          # Test Node.js version
+          # Test mise is installed
+          echo "Testing mise..."
+          docker exec "$CONTAINER_ID" mise --version || (echo "mise not found" && exit 1)
+
+          # Test Node.js version (installed via mise)
           echo "Testing Node.js..."
           docker exec "$CONTAINER_ID" node --version | grep -q "v22" || (echo "Node.js v22 not found" && exit 1)
 
-          # Test Python version
+          # Test Python version (installed via mise)
           echo "Testing Python..."
           docker exec "$CONTAINER_ID" python --version | grep -q "3.11" || (echo "Python 3.11 not found" && exit 1)
 
-          # Test uv is installed
+          # Test uv is installed (via mise)
           echo "Testing uv..."
-          docker exec "$CONTAINER_ID" bash -c 'export PATH="$HOME/.local/bin:$PATH" && uv --version' || (echo "uv not found" && exit 1)
+          docker exec "$CONTAINER_ID" uv --version || (echo "uv not found" && exit 1)
 
-          # Test make is available
-          echo "Testing make..."
-          docker exec "$CONTAINER_ID" make --version || (echo "make not found" && exit 1)
+          # Test just is installed (via mise)
+          echo "Testing just..."
+          docker exec "$CONTAINER_ID" just --version || (echo "just not found" && exit 1)
 
-          # Test npm is available
+          # Test gum is installed (via mise)
+          echo "Testing gum..."
+          docker exec "$CONTAINER_ID" gum --version || (echo "gum not found" && exit 1)
+
+          # Test npm is available (comes with node)
           echo "Testing npm..."
           docker exec "$CONTAINER_ID" npm --version || (echo "npm not found" && exit 1)
 
-          echo "✅ All devcontainer tests passed!"
+          echo "All devcontainer tests passed!"
 
       - name: Cleanup
         if: always()

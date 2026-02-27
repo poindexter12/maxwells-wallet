@@ -140,12 +140,12 @@ Data persists in a Docker volume. For custom configurations, see below.
 
 ```bash
 # Demo mode (sample data, periodic resets)
-make docker-with-demo
+just docker::with-demo
 # Login: maxwell / wallet
 
 # Build from source (development)
-docker compose -f docker-compose.dev.yaml build
-docker compose -f docker-compose.dev.yaml up -d
+just docker::build
+just docker::up
 ```
 
 #### Custom Data Location
@@ -160,7 +160,16 @@ See [Installation Guide](docs/installation.md) for complete Docker configuration
 
 ### Development
 
-#### VS Code Devcontainer (Recommended)
+#### Prerequisites
+
+Install [mise](https://mise.jdx.dev/) (tool version manager):
+```bash
+curl https://mise.run | sh
+```
+
+mise auto-installs all dev tools (Node, Python, uv, just, gum) when you enter the project directory.
+
+#### VS Code Devcontainer (Alternative)
 
 Open this repository in VS Code and click "Reopen in Container" when prompted. This provides a fully configured development environment with all dependencies pre-installed.
 
@@ -169,13 +178,13 @@ Open this repository in VS Code and click "Reopen in Container" when prompted. T
 #### Local Setup
 
 ```bash
-make setup    # First-time setup
-make dev      # Start servers
+just setup     # First-time setup
+just dev::dev  # Start servers
 # Open http://localhost:3000
 ```
 
 ```bash
-make help     # Show all commands
+just           # Show all available commands
 ```
 
 ## Usage

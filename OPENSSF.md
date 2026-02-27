@@ -100,16 +100,16 @@ Repo: https://github.com/poindexter12/maxwells-wallet
 
 | Criterion | Answer | URL |
 |-----------|--------|-----|
-| **build** — Does the project provide an automated build from source? | Met | https://github.com/poindexter12/maxwells-wallet/blob/main/Makefile (`make setup && make dev`) |
-| **build_common_tools** — Are common build tools used? | Met | npm, uv (pip), make, Docker — https://github.com/poindexter12/maxwells-wallet#development |
-| **build_floss_tools** — Is the project buildable using only FLOSS tools? | Met | All tools (npm, uv, make, Docker) are FLOSS |
+| **build** — Does the project provide an automated build from source? | Met | https://github.com/poindexter12/maxwells-wallet/blob/main/justfile (`just setup && just dev::dev`) |
+| **build_common_tools** — Are common build tools used? | Met | npm, uv, just, mise, Docker — https://github.com/poindexter12/maxwells-wallet#development |
+| **build_floss_tools** — Is the project buildable using only FLOSS tools? | Met | All tools (npm, uv, just, mise, Docker) are FLOSS |
 
 ### Automated Test Suite
 
 | Criterion | Answer | URL |
 |-----------|--------|-----|
 | **test** — Is there a FLOSS test suite? | Met | https://github.com/poindexter12/maxwells-wallet/blob/main/CONTRIBUTING.md#testing-requirements |
-| **test_invocation** — Is the test suite invokable in a standard way? | Met | `make test-all` or `npm run test` / `uv run pytest` — https://github.com/poindexter12/maxwells-wallet/blob/main/Makefile |
+| **test_invocation** — Is the test suite invokable in a standard way? | Met | `just test::all` or `npm run test` / `uv run pytest` — https://github.com/poindexter12/maxwells-wallet/blob/main/justfile |
 | **test_most** — Does the suite cover most functionality? | Met | 80% coverage enforced — https://codecov.io/gh/poindexter12/maxwells-wallet |
 | **test_continuous_integration** — Is CI implemented? | Met | https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yaml |
 

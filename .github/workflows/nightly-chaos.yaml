@@ -41,38 +41,24 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Setup Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
+      - name: Setup mise
+        uses: jdx/mise-action@v2
         with:
-          node-version: '24'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        run: uv python install 3.11
+          install: true
 
       - name: Install backend dependencies
-        working-directory: backend
-        run: uv sync
+        run: just install-backend
 
       - name: Create data directory
-        working-directory: backend
-        run: mkdir -p data
+        run: mkdir -p backend/data
 
       - name: Initialize database schema
-        working-directory: backend
-        run: uv run python -m scripts.init_db
+        run: just db::init
         env:
           DATABASE_URL: "sqlite+aiosqlite:///./data/wallet.db"
 
       - name: Seed database
-        working-directory: backend
-        run: uv run python -m scripts.seed
+        run: just db::seed
         env:
           DATABASE_URL: "sqlite+aiosqlite:///./data/wallet.db"
 

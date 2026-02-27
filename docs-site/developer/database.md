@@ -44,7 +44,7 @@ uv run alembic downgrade -1
 Populate the database with sample transactions:
 
 ```bash
-make db-seed
+just db::seed
 ```
 
 This imports sample CSV files from `/samples/` and creates default categories.
@@ -54,7 +54,7 @@ This imports sample CSV files from `/samples/` and creates default categories.
 To start fresh:
 
 ```bash
-make db-reset
+just db::reset
 ```
 
 Or manually:

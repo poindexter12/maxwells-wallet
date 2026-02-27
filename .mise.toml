@@ -1,0 +1,25 @@
+# .mise.toml - Tool Foundation Configuration
+# Replaces: .nvmrc, manual Python/uv setup, direnv env exports
+# All dev tools managed declaratively - auto-installed on `cd`
+
+[tools]
+# Frontend tooling
+node = "22"                    # Latest Node 22.x (matches .nvmrc)
+# Backend tooling
+python = "3.11"                # Python 3.11.x (matches project requirement)
+uv = "latest"                  # Python package manager
+# Build system (Phase 13+)
+just = "latest"                # Command runner (replaces Make)
+gum = "latest"                 # Terminal UI toolkit
+
+[env]
+# Load secrets from gitignored .env file
+_.file = ".env"
+# Development defaults
+NODE_ENV = "development"
+
+[settings]
+# Auto-install missing tools when entering directory
+auto_install = true
+# Parallel downloads for faster tool installation
+jobs = 4

@@ -4,20 +4,21 @@ Set up Maxwell's Wallet for local development.
 
 ## Prerequisites
 
-- Python 3.11+
-- Node.js 22+ (LTS) - pinned via `.nvmrc`
-- [uv](https://github.com/astral-sh/uv) - Fast Python package manager
+Install [mise](https://mise.jdx.dev/) (tool version manager):
+```bash
+curl https://mise.run | sh
+```
 
-> **Tip**: If you use nvm, run `nvm install` in the repo root to install the correct Node version.
+mise auto-installs all dev tools (Node, Python, uv, just, gum) when you enter the project directory.
 
-## Using Make (Recommended)
+## Using Just (Recommended)
 
 ```bash
 # Install dependencies and seed database
-make setup
+just setup
 
 # Start both servers
-make dev
+just dev::dev
 ```
 
 ## Manual Setup
@@ -53,14 +54,14 @@ npm install
 npm run dev
 ```
 
-## Useful Commands
+## Useful Recipes
 
 ```bash
-make help           # Show all commands
-make test-backend   # Run backend tests
-make db-reset       # Reset database
-make db-seed        # Seed sample data
-make status         # Check if servers running
+just                    # Show all available recipes
+just test::backend      # Run backend tests
+just db::reset          # Reset database
+just db::seed           # Seed sample data
+just utils::status      # Check if servers running
 ```
 
 ## Database Migrations

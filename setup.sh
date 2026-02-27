@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Finances - Setup Script
-# Alternative to Makefile for first-time setup
+# Alternative to just setup for first-time setup
 
 set -e
 
@@ -83,10 +83,10 @@ echo -e "${GREEN}========================================${NC}"
 echo ""
 echo -e "${YELLOW}Next steps:${NC}"
 echo ""
-echo "Using Makefile:"
-echo "  make dev          # Start both servers"
-echo "  make backend      # Start backend only"
-echo "  make frontend     # Start frontend only"
+echo "Using just:"
+echo "  just dev::dev       # Start both servers"
+echo "  just dev::backend   # Start backend only"
+echo "  just dev::frontend  # Start frontend only"
 echo ""
 echo "Or manually:"
 echo "  Terminal 1: cd backend && source .venv/bin/activate && uv run uvicorn app.main:app --reload"

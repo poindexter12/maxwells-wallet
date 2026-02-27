@@ -1,82 +1,95 @@
-# Makefile Commands
+# Just Recipes Reference
 
-This document provides detailed information about all available `make` commands for Maxwell's Wallet.
+This document provides detailed information about all available `just` recipes for Maxwell's Wallet.
 
-Run `make` or `make help` to see a quick reference of all commands.
+Run bare `just` (no arguments) to see a quick reference of all recipes.
+
+## Prerequisites
+
+Install [mise](https://mise.jdx.dev/):
+```bash
+curl https://mise.run | sh
+```
+
+mise auto-installs all dev tools (Node, Python, uv, just, gum) when you enter the project directory.
 
 ## Quick Start
 
 ```bash
-make setup   # First-time setup (installs deps, inits DB, seeds data)
-make dev     # Start both backend and frontend servers
+just setup       # First-time setup (installs deps, inits DB, seeds data)
+just dev::dev    # Start both backend and frontend servers
 ```
 
 ## File Organization
 
-Commands are organized into modular files under `make/`:
+Recipes are organized into modular files under `.just/`:
 
 | File | Purpose |
 |------|---------|
-| `Makefile` | Main entry point, shared variables, core targets |
-| `make/dev.mk` | Development servers |
-| `make/db.mk` | Database operations |
-| `make/test.mk` | Testing (unit, e2e, lint) |
-| `make/docker.mk` | Docker operations |
-| `make/release.mk` | Release automation |
-| `make/utils.mk` | Utilities (clean, status, info) |
+| `justfile` | Main entry point, shared variables, core targets |
+| `.just/dev.just` | Development servers |
+| `.just/db.just` | Database operations |
+| `.just/test.just` | Testing (unit, e2e, lint) |
+| `.just/docker.just` | Docker operations |
+| `.just/release.just` | Release automation |
+| `.just/i18n.just` | Internationalization |
+| `.just/utils.just` | Utilities (clean, status, info) |
 
 ---
 
-## Core Commands
+## Core Recipes
 
-### `make setup`
-First-time setup. Runs `install`, `db-init`, and `db-seed`.
+### `just setup`
+First-time setup. Runs `install`, `db::init`, and `db::seed`.
 
-### `make install`
+### `just install`
 Install all dependencies (backend + frontend).
 
-### `make install-backend`
+### `just install-backend`
 Install Python dependencies using `uv`.
 
-### `make install-frontend`
+### `just install-frontend`
 Install Node.js dependencies using `npm`.
 
 ---
 
 ## Development
 
-### `make dev`
+### `just dev::dev`
 Start both backend and frontend servers in parallel.
 - Frontend: http://localhost:3000
 - Backend: http://localhost:3001
 
-### `make backend`
+### `just dev::backend`
 Start only the backend FastAPI server with hot reload.
 
-### `make frontend`
+### `just dev::frontend`
 Start only the frontend Next.js development server.
 
-### `make build-frontend`
+### `just dev::build-frontend`
 Build the frontend for production.
 
 ---
 
 ## Database
 
-### `make db-init`
+### `just db::init`
 Initialize the database by creating all tables.
 
-### `make db-seed`
+### `just db::seed`
 Seed the database with sample data and default categories.
 
-### `make db-reset`
-Delete and recreate the database (runs `db-init` + `db-seed`).
+### `just db::reset`
+Delete and recreate the database (runs `db::init` + `db::seed`). Prompts for confirmation.
 
-### `make db-migrate`
-Create a new Alembic migration. Prompts for a migration message.
+### `just db::migrate MESSAGE="description"`
+Create a new Alembic migration.
 
-### `make db-upgrade`
+### `just db::upgrade`
 Apply all pending database migrations.
+
+### `just db::demo-setup`
+Set up demo data for demo mode.
 
 ---
 
@@ -85,32 +98,29 @@ Apply all pending database migrations.
 ### Unit & Integration Tests
 
 ```bash
-make test-backend    # Run all backend tests (excludes E2E)
-make test-unit       # Alias for test-backend
-make test-reports    # Run report/analytics tests only
-make test-tags       # Run tag system tests only
-make test-import     # Run CSV import tests only
-make test-budgets    # Run budget tests only
-make test-all        # Run all tests (unit + E2E)
+just test::backend       # Run all backend tests (excludes E2E)
+just test::coverage      # Run tests with coverage report
+just test::all           # Run all tests (unit + E2E)
 ```
 
 ### End-to-End Tests (Playwright)
 
-**Prerequisite:** Run `make dev` in another terminal first.
+**Prerequisite:** Run `just dev::dev` in another terminal first.
 
 ```bash
-make test-e2e-install   # Install Playwright browsers (one-time setup)
-make test-e2e           # Run E2E tests (headless)
-make test-e2e-headed    # Run E2E tests with visible browser
-make test-e2e-debug     # Run E2E tests in debug mode (slow, step-through)
-make test-e2e-import    # Run only import workflow tests
-make test-e2e-full      # Run full workflow tests (slow)
+just test::e2e-install   # Install Playwright browsers (one-time setup)
+just test::e2e           # Run E2E tests (headless)
+just test::chaos         # Run chaos/monkey tests
 ```
 
-### Linting
+### Linting & Quality
 
 ```bash
-make lint-frontend   # Lint frontend code with ESLint
+just test::lint          # Lint all code (backend + frontend)
+just test::quality       # Run all quality checks (lint + typecheck + vulture)
+just test::typecheck     # Type checking with mypy
+just test::vulture       # Dead code detection
+just test::security-audit # Security audit
 ```
 
 ---
@@ -120,30 +130,34 @@ make lint-frontend   # Lint frontend code with ESLint
 ### Building
 
 ```bash
-make docker-build        # Build Docker image
-make docker-build-force  # Build Docker image without cache
+just docker::build       # Build Docker image
 ```
 
 ### Running
 
 ```bash
-make docker-up      # Start container (detached)
-make docker-down    # Stop container
-make docker-logs    # View container logs (follow mode)
-make docker-shell   # Open bash shell in running container
-```
-
-### Database in Docker
-
-```bash
-make docker-seed     # Seed database with sample data
-make docker-migrate  # Run database migrations
+just docker::up          # Start containers
+just docker::down        # Stop containers
+just docker::logs        # View container logs
+just docker::shell       # Open shell in running container
 ```
 
 ### Cleanup
 
 ```bash
-make docker-clean   # Remove containers and volumes
+just docker::clean       # Remove containers and volumes (DESTRUCTIVE)
+```
+
+---
+
+## Internationalization (i18n)
+
+```bash
+just i18n::upload        # Push en-US.json to Crowdin
+just i18n::download      # Pull all translations from Crowdin
+just i18n::status        # Show translation progress
+just i18n::pseudo        # Generate pseudo-locale for testing
+just i18n::harvest-new   # AI context extraction for new strings (uses API credits)
 ```
 
 ---
@@ -155,8 +169,8 @@ Automated release workflow that updates versions, commits, tags, and pushes to t
 ### Pre-flight Checks
 
 ```bash
-make release-check      # Validate versions match and docs updated (dry-run)
-make release-validate   # Same checks but fails on errors
+just release::check      # Validate versions match and docs updated (dry-run)
+just release::validate   # Same checks but fails on errors
 ```
 
 Pre-flight checks verify:
@@ -168,14 +182,10 @@ Pre-flight checks verify:
 ### Creating Releases
 
 ```bash
-make release                  # Show usage and current version
-make release VERSION=1.2.3    # Release specific version
-make release-patch            # Bump patch version (0.9.0 -> 0.9.1)
-make release-minor            # Bump minor version (0.9.0 -> 0.10.0)
-make release-major            # Bump major version (0.9.0 -> 1.0.0)
+just release::release VERSION="1.2.3"   # Release specific version
 ```
 
-The release command will:
+The release recipe will:
 1. Verify CHANGELOG.md has the version section
 2. Update version in `backend/pyproject.toml` and `frontend/package.json`
 3. Commit and tag
@@ -193,24 +203,16 @@ GitHub Actions will then:
 ### Status & Info
 
 ```bash
-make status      # Check if backend/frontend servers are running
-make info        # Show project information and features
-make check-deps  # Verify required dependencies are installed
+just utils::status       # Check if backend/frontend servers are running
+just utils::info         # Show project information and features
+just utils::check-deps   # Verify required dependencies are installed
 ```
 
 ### Cleaning
 
 ```bash
-make clean       # Clean build artifacts and caches
-make clean-all   # Clean everything (including .venv, node_modules, DB)
-```
-
-### Test Data Anonymization
-
-```bash
-make anonymize         # Anonymize CSV files (data/raw/ -> data/anonymized/)
-make anonymize-status  # Show status of anonymized files
-make anonymize-force   # Force re-anonymize all files
+just utils::clean        # Clean build artifacts and caches
+just utils::clean-all    # Clean everything (including .venv, node_modules, DB)
 ```
 
 ---
@@ -219,26 +221,26 @@ make anonymize-force   # Force re-anonymize all files
 
 ### Daily Development
 ```bash
-make dev   # Start servers, then work in your editor
+just dev::dev            # Start servers, then work in your editor
 ```
 
 ### Running Tests Before Commit
 ```bash
-make test-backend lint-frontend
+just test::backend && just test::lint
 ```
 
 ### Fresh Start
 ```bash
-make clean-all
-make setup
-make dev
+just utils::clean-all
+just setup
+just dev::dev
 ```
 
 ### Creating a Release
 ```bash
 # Ensure all tests pass
-make test-all
+just test::all
 
 # Create release
-make release-patch   # or release-minor, release-major
+just release::release VERSION="1.2.3"
 ```

@@ -113,15 +113,15 @@ Guidelines:
 - Be descriptive but concise
 - Reuse `common.*` for shared strings
 
-## Make Commands
+## Just Recipes
 
 | Command | Description |
 |---------|-------------|
-| `make translate-upload` | Push `en-US.json` to Crowdin |
-| `make translate-download` | Pull all translations from Crowdin |
-| `make translate-status` | Show translation progress |
-| `make translate-pseudo` | Generate pseudo-locale for testing |
-| `make translate-harvest-new` | Generate AI context for new strings |
+| `just i18n::upload` | Push `en-US.json` to Crowdin |
+| `just i18n::download` | Pull all translations from Crowdin |
+| `just i18n::status` | Show translation progress |
+| `just i18n::pseudo` | Generate pseudo-locale for testing |
+| `just i18n::harvest-new` | Generate AI context for new strings |
 
 ## Manual Sync (When Needed)
 
@@ -129,10 +129,10 @@ If you need translations immediately without waiting for auto-sync:
 
 ```bash
 # Push new source strings
-make translate-upload
+just i18n::upload
 
 # After translation in Crowdin...
-make translate-download
+just i18n::download
 
 # Commit all updated files
 git add frontend/src/messages/*.json
@@ -188,7 +188,7 @@ Good context helps translators understand:
 Run after adding new strings:
 
 ```bash
-make translate-harvest-new
+just i18n::harvest-new
 ```
 
 This uses AI to analyze your codebase and automatically generate context descriptions for new strings in Crowdin.
@@ -217,7 +217,7 @@ This helps identify:
 
 Generate it:
 ```bash
-make translate-pseudo
+just i18n::pseudo
 ```
 
 Enable in the app by selecting "Pseudo" in language settings.
@@ -250,7 +250,7 @@ Crowdin uses the GitHub App integration (not a workflow file):
 ### "My new strings aren't in Crowdin"
 
 1. Verify strings are in `en-US.json` and pushed to `main`
-2. Wait for auto-sync (~1 hour) or run `make translate-upload`
+2. Wait for auto-sync (~1 hour) or run `just i18n::upload`
 3. Check Crowdin project for the strings
 
 ### "Translations aren't appearing in the app"
@@ -272,6 +272,6 @@ Someone edited a non-English locale directly. See "Handling Crowdin PRs" above.
 ## Related Files
 
 - Agent: `.claude/agents/i18n-lead.mdc`
-- Make targets: `make/i18n.mk`
+- Just recipes: `.just/i18n.just`
 - Config: `crowdin.yaml`
 - Messages: `frontend/src/messages/CLAUDE.md`

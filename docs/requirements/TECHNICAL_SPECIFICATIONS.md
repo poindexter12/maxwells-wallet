@@ -34,7 +34,7 @@
 ### Development Tools
 - **Frontend Package Manager**: npm
 - **Backend Package Manager**: uv
-- **Build System**: Makefile
+- **Build System**: just (justfile)
 - **Version Control**: Git
 - **E2E Testing**: Playwright
 - **CI/CD**: GitHub Actions
@@ -413,19 +413,19 @@ No environment variables needed for v0 (API proxy handles routing)
 
 ### Setup
 ```bash
-make setup    # Install deps + init DB + seed sample data
+just setup          # Install deps + init DB + seed sample data
 ```
 
 ### Development
 ```bash
-make dev      # Run backend + frontend in parallel
+just dev::dev       # Run backend + frontend in parallel
 ```
 
 ### Database
 ```bash
-make db-reset      # Reset DB with fresh sample data
-make db-migrate    # Create migration
-make db-upgrade    # Apply migrations
+just db::reset      # Reset DB with fresh sample data
+just db::migrate MESSAGE="description"  # Create migration
+just db::upgrade    # Apply migrations
 ```
 
 ## Performance Considerations

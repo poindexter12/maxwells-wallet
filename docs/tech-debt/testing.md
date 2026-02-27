@@ -103,7 +103,7 @@ Use React Testing Library + user-event for interactive flows. Target: 50%+ cover
 
 **Severity:** HIGH
 
-- E2E tests require `make dev` running (manual prerequisite)
+- E2E tests require `just dev::dev` running (manual prerequisite)
 - No automatic server startup/teardown in CI
 - CI doesn't run E2E tests (only unit/integration)
 - E2E tests fail silently if servers aren't running (verify_servers fixture exits with pytest.exit)
@@ -267,7 +267,7 @@ Parameterize existing tests where applicable (pytest.mark.parametrize)
 Add README to `backend/tests/` explaining:
 - How fixtures compose (conftest.py structure)
 - When to write unit vs. integration vs. E2E
-- How to run specific test subsets (make test-tags, etc.)
+- How to run specific test subsets
 - Common debugging patterns (PWDEBUG=1, --pdb)
 
 ### P3 - Set Coverage Baselines

@@ -36,55 +36,43 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
-    defaults:
-      run:
-        working-directory: frontend
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Setup Node.js
-      uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
+    - name: Setup mise
+      uses: jdx/mise-action@v2
       with:
-        node-version: '24'
-        cache: npm
-        cache-dependency-path: frontend/package-lock.json
+        install: true
     - name: Install dependencies
-      run: npm ci
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: just install-frontend
     - name: Generate pseudo-locale for i18n tests
-      run: node scripts/generate-pseudo-locale.mjs
+      run: just i18n::pseudo
     - name: Run linter
-      run: npm run lint
+      run: just test::lint-frontend
     - name: Run tests
-      run: npm run test:run
+      run: cd frontend && npm run test:run
     - name: Build
-      run: npm run build
+      run: just dev::build-frontend
   backend:
     name: Backend Build & Test
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.backend == 'true' || github.ref == 'refs/heads/main'
-    defaults:
-      run:
-        working-directory: backend
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Install uv
-      uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
+    - name: Setup mise
+      uses: jdx/mise-action@v2
       with:
-        version: latest
-    - name: Set up Python
-      run: uv python install 3.11
+        install: true
     - name: Install dependencies
-      run: uv sync
+      run: just install-backend
     - name: Run linter (ruff)
-      run: uv run ruff check .
+      run: just test::lint-backend
     - name: Check for dead code (vulture)
-      run: uv run vulture app
+      run: just test::dead-code
     - name: Run type checker (mypy)
-      run: uv run mypy app
+      run: just test::typecheck
     - name: Run tests with coverage
-      run: uv run pytest tests/ -v --cov=app --cov-report=xml --cov-report=term-missing --ignore=tests/e2e --ignore=tests/performance
+      run: cd backend && uv run pytest tests/ -v --cov=app --cov-report=xml --cov-report=term-missing --ignore=tests/e2e --ignore=tests/performance
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
       with:
@@ -111,42 +99,24 @@ jobs:
       '
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Setup Node.js
-      uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
+    - name: Setup mise
+      uses: jdx/mise-action@v2
       with:
-        node-version: '24'
-        cache: npm
-        cache-dependency-path: frontend/package-lock.json
-    - name: Install uv
-      uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
-      with:
-        version: latest
-    - name: Set up Python
-      run: uv python install 3.11
-    - name: Install backend dependencies
-      working-directory: backend
-      run: uv sync
+        install: true
+    - name: Install dependencies
+      run: just install
     - name: Create data directory
-      working-directory: backend
-      run: mkdir -p data
+      run: mkdir -p backend/data
     - name: Initialize database schema
-      working-directory: backend
-      run: uv run python -m scripts.init_db
+      run: just db::init
       env:
         DATABASE_URL: sqlite+aiosqlite:///./data/wallet.db
     - name: Seed database
-      working-directory: backend
-      run: uv run python -m scripts.seed
+      run: just db::seed
       env:
         DATABASE_URL: sqlite+aiosqlite:///./data/wallet.db
-    - name: Install frontend dependencies
-      working-directory: frontend
-      run: npm ci
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Generate pseudo-locale for i18n E2E tests
-      working-directory: frontend
-      run: node scripts/generate-pseudo-locale.mjs
+      run: just i18n::pseudo
     - name: Install Playwright browsers
       working-directory: frontend
       run: npx playwright install --with-deps chromium
@@ -177,18 +147,14 @@ jobs:
       '
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - name: Install uv
-      uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
+    - name: Setup mise
+      uses: jdx/mise-action@v2
       with:
-        version: latest
-    - name: Set up Python
-      run: uv python install 3.11
+        install: true
     - name: Install backend dependencies
-      working-directory: backend
-      run: uv sync
+      run: just install-backend
     - name: Run performance tests
-      working-directory: backend
-      run: "uv run pytest tests/performance -v -m performance --tb=short\n\necho \"## Performance Tests\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\necho \"\u2705 Performance tests completed\" >> $GITHUB_STEP_SUMMARY\n"
+      run: "cd backend && uv run pytest tests/performance -v -m performance --tb=short\n\necho \"## Performance Tests\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\necho \"\u2705 Performance tests completed\" >> $GITHUB_STEP_SUMMARY\n"
       env:
         OTEL_ENABLED: 'false'
     - name: Upload performance results
@@ -226,32 +192,22 @@ jobs:
       IMAGE_NAME: ${{ github.repository }}
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Setup mise
+      uses: jdx/mise-action@v2
+      with:
+        install: true
     - name: Cleanup any existing containers
       run: docker compose -f docker-compose.dev.yaml down -v --remove-orphans 2>/dev/null || true
     - name: Build all-in-one image
-      run: docker compose -f docker-compose.dev.yaml build
+      run: just docker::build
     - name: Test migrate command
-      run: '# Run migrate in a fresh container (not detached)
-
-        # -T disables pseudo-TTY allocation for cleaner CI output
-
-        docker compose -f docker-compose.dev.yaml run -T --rm maxwells-wallet migrate
-
-        '
+      run: just docker::migrate
     - name: Test seed command
-      run: '# Small delay to ensure volume is fully released from migrate
-
+      run: |
         sleep 2
-
-        # Run seed in a fresh container (not detached)
-
-        # -T disables pseudo-TTY allocation for cleaner CI output
-
-        docker compose -f docker-compose.dev.yaml run -T --rm maxwells-wallet seed
-
-        '
+        just docker::seed
     - name: Start container and verify health
-      run: "docker compose -f docker-compose.dev.yaml up -d\necho \"Waiting for services to start...\"\nsleep 15\n\n# Health check backend\nfor i in {1..10}; do\n  if curl -sf http://localhost:3001/health; then\n    echo \"Backend is healthy\"\n    break\n  fi\n  echo \"Backend attempt $i failed, retrying...\"\n  sleep 3\ndone\n\n# Health check frontend\nfor i in {1..10}; do\n  if curl -sf http://localhost:3000 > /dev/null; then\n    echo \"Frontend is healthy\"\n    exit 0\n  fi\n  echo \"Frontend attempt $i failed, retrying...\"\n  sleep 3\ndone\n\necho \"Health checks failed\"\ndocker compose -f docker-compose.dev.yaml logs\nexit 1\n"
+      run: "just docker::up\necho \"Waiting for services to start...\"\nsleep 15\n\n# Health check backend\nfor i in {1..10}; do\n  if curl -sf http://localhost:3001/health; then\n    echo \"Backend is healthy\"\n    break\n  fi\n  echo \"Backend attempt $i failed, retrying...\"\n  sleep 3\ndone\n\n# Health check frontend\nfor i in {1..10}; do\n  if curl -sf http://localhost:3000 > /dev/null; then\n    echo \"Frontend is healthy\"\n    exit 0\n  fi\n  echo \"Frontend attempt $i failed, retrying...\"\n  sleep 3\ndone\n\necho \"Health checks failed\"\ndocker compose -f docker-compose.dev.yaml logs\nexit 1\n"
     - name: Show logs on failure
       if: failure()
       run: docker compose -f docker-compose.dev.yaml logs

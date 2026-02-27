@@ -2,24 +2,18 @@
 
 ## Prerequisites
 
-Install these first if you don't have them:
+Install [mise](https://mise.jdx.dev/) (tool version manager):
 
 ```bash
-# Check if you have them
-python3 --version  # Need 3.11+
-node --version     # Need 22+ (use `nvm install` to auto-install)
-npm --version      # Comes with Node.js
-uv --version       # If not: curl -LsSf https://astral.sh/uv/install.sh | sh
+curl https://mise.run | sh
 ```
+
+mise auto-installs all dev tools (Node, Python, uv, just, gum) when you enter the project directory. No other manual tool installation required.
 
 ## Setup (First Time)
 
 ```bash
-# Option 1: Using Makefile (recommended)
-make setup
-
-# Option 2: Using shell script
-./setup.sh
+just setup
 ```
 
 This will:
@@ -31,7 +25,7 @@ This will:
 
 ```bash
 # Start both backend and frontend servers
-make dev
+just dev::dev
 ```
 
 Then open: **http://localhost:3000**
@@ -54,20 +48,20 @@ Press `Ctrl+C` to stop both servers.
 
 ```bash
 # Start servers (both in parallel)
-make dev
+just dev::dev
 
 # Start servers separately
-make backend        # Terminal 1
-make frontend       # Terminal 2
+just dev::backend       # Terminal 1
+just dev::frontend      # Terminal 2
 
 # Reset database with fresh sample data
-make db-reset
+just db::reset
 
 # Check if services are running
-make status
+just utils::status
 
 # See all available commands
-make help
+just
 ```
 
 ## Explore the App
@@ -101,29 +95,28 @@ Then go to Reconcile to review and categorize.
 
 **Services won't start?**
 ```bash
-make clean
-make db-reset
-make dev
+just utils::clean
+just db::reset
+just dev::dev
 ```
 
 **Database is messed up?**
 ```bash
-make db-reset      # Deletes DB and reloads sample data
+just db::reset          # Deletes DB and reloads sample data
 ```
 
 **Need to reinstall everything?**
 ```bash
-make clean-all     # Nuclear option
-make setup         # Start fresh
+just utils::clean-all   # Nuclear option
+just setup              # Start fresh
 ```
 
 **Check what's running:**
 ```bash
-make status
+just utils::status
 ```
 
 ## Next Steps
 
 - Check `README.md` for full documentation
-- Check `docs/MAKEFILE.md` for all Makefile commands
-- Run `make help` to see available commands
+- Run bare `just` to see all available commands
