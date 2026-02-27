@@ -76,7 +76,10 @@ Plans:
   3. Destructive commands (db-reset, clean-all) require interactive confirmation via gum
   4. Long operations (install, build, test) show progress spinners
   5. Both `make <target>` and `just <recipe>` work in parallel during transition period
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 13-01-PLAN.md — Foundation: gum-helpers.sh, root justfile, dev + db modules, stub remaining modules
+- [ ] 13-02-PLAN.md — Complete remaining modules: test, docker, release, i18n, utils
 
 ### Phase 14: Integration
 **Goal**: Update CI workflows and devcontainer to use mise + just
@@ -142,7 +145,7 @@ See `milestones/v1.2-ROADMAP.md` for archived v1.2 phase details.
 | 10. Internationalization | v1.1 | 3/3 | Complete | 2026-02-25 |
 | 11. Backend Hardening | v1.1 | 2/2 | Complete | 2026-02-26 |
 | 12. Tool Foundation | v1.2 | 1/1 | Complete | 2026-02-26 |
-| 13. Justfile Migration | v1.2 | 0/0 | Not started | - |
+| 13. Justfile Migration | v1.2 | 0/2 | Planned | - |
 | 14. Integration | v1.2 | 0/0 | Not started | - |
 | 15. Documentation | v1.2 | 0/0 | Not started | - |
 | 16. Cleanup | v1.2 | 0/0 | Not started | - |
