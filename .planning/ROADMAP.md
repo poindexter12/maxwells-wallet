@@ -62,7 +62,9 @@ See `milestones/v1.1-ROADMAP.md` for archived v1.1 phase details.
   2. All tool versions match `.mise.toml` specification without manual intervention
   3. Secrets load from gitignored `.env` file via mise `[env]` section
   4. Running `just --version`, `gum --version`, `node --version`, `python --version`, `uv --version` all succeed without additional setup
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 12-01-PLAN.md â€” Create .mise.toml, migrate secrets to .env, validate tool installation
 
 ### Phase 13: Justfile Migration
 **Goal**: Convert all ~60 Make targets to just recipes with beautiful gum terminal UX
@@ -153,7 +155,7 @@ Every phase MUST satisfy these criteria before merge. These are non-negotiable â
 | 9. Performance + Frontend Tests | v1.1 | 3/3 | Complete | 2026-02-25 |
 | 10. Internationalization | v1.1 | 3/3 | Complete | 2026-02-25 |
 | 11. Backend Hardening | v1.1 | 2/2 | Complete | 2026-02-26 |
-| 12. Tool Foundation | v1.2 | 0/0 | Not started | - |
+| 12. Tool Foundation | v1.2 | 0/1 | Planned | - |
 | 13. Justfile Migration | v1.2 | 0/0 | Not started | - |
 | 14. Integration | v1.2 | 0/0 | Not started | - |
 | 15. Documentation | v1.2 | 0/0 | Not started | - |
