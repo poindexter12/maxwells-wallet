@@ -16,7 +16,7 @@ Requirements for Build System Modernization milestone. Each maps to roadmap phas
 
 ### Task Runner (JUST)
 
-- [ ] **JUST-01**: All ~60 Make targets have just recipe equivalents with identical behavior
+- [x] **JUST-01**: All ~60 Make targets have just recipe equivalents with identical behavior
 - [x] **JUST-02**: Recipes organized in 7 domain modules (`.just/*.just`) mirroring `make/*.mk`
 - [x] **JUST-03**: Every recipe has documentation comment visible in `just --list`
 - [x] **JUST-04**: Recipe dependencies preserved (e.g., `setup: install db-init db-seed`)
@@ -90,7 +90,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MISE-02 | Phase 12 | Pending |
 | MISE-03 | Phase 12 | Pending |
 | MISE-04 | Phase 12 | Pending |
-| JUST-01 | Phase 13 | Pending |
+| JUST-01 | Phase 13 | Complete |
 | JUST-02 | Phase 13 | Complete |
 | JUST-03 | Phase 13 | Complete |
 | JUST-04 | Phase 13 | Complete |
