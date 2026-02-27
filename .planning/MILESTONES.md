@@ -64,3 +64,34 @@
 
 ---
 
+
+## v1.2 Build System Modernization (Shipped: 2026-02-27)
+
+**Delivered:** Replaced Make with Just + gum for a modern, beautiful task runner experience, with mise as the single prerequisite managing all dev tooling.
+
+**Phases completed:** 5 phases (12-16), 8 plans, ~14 tasks
+**Files modified:** 89 (+8,072 / -1,465 lines)
+**Timeline:** 2 days (2026-02-26 → 2026-02-27)
+**Git range:** a6f66e0..0e13255 (30 commits)
+**Execution time:** 0.38 hours (avg 2.6 min/plan)
+**Requirements:** 26/26 satisfied (100%)
+
+**Key accomplishments:**
+1. mise as single tool version manager — .mise.toml manages 5 tools (node, python, uv, just, gum) with secrets in gitignored .env
+2. 82 just recipes across 7 modules replacing all Make targets with gum-powered TTY-aware UX
+3. CI workflows migrated — 7 GitHub Actions workflows use mise-action + just recipes instead of individual setup actions
+4. Devcontainer modernized — mise feature replaces node/python features with single tool manager
+5. 25+ documentation files updated — zero `make` command references remain in active docs
+6. Deprecated build system removed — Makefile, 7 .mk modules, .nvmrc, .python-version deleted
+
+### Known Tech Debt
+- REQUIREMENTS.md traceability table wasn't kept in sync during phases 12, 14, 15 (cosmetic — summaries confirm all requirements satisfied)
+- security.yaml workflow still uses setup-uv directly (separate reusable workflow, out of v1.2 scope)
+- data/Makefile and deploy/swag-test/Makefile preserved as sub-project concerns
+
+**Archives:**
+- `milestones/v1.2-ROADMAP.md`
+- `milestones/v1.2-REQUIREMENTS.md`
+
+---
+

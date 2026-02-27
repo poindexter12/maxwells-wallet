@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A full-stack personal finance tracker (Next.js 16 + FastAPI + SQLite/Postgres) with CI-integrated DevSecOps tooling and a healthy, well-tested codebase. v1.0 shipped five security scanning tools in GitHub Actions. v1.1 addressed all 11 codebase audit concerns — extracting oversized components, fixing bugs, adding error handling, comprehensive test coverage, i18n pipeline, and hardening the backend for Postgres migration.
+A full-stack personal finance tracker (Next.js 16 + FastAPI + SQLite/Postgres) with CI-integrated DevSecOps tooling, a healthy well-tested codebase, and a modern mise + Just + gum developer experience. v1.0 shipped five security scanning tools in GitHub Actions. v1.1 addressed all 11 codebase audit concerns. v1.2 replaced Make with Just + gum, managed by mise as the single prerequisite.
 
 ## Core Value
 
@@ -40,15 +40,19 @@ A reliable, maintainable personal finance tracker where users can trust their da
 - ✓ Transactions page extracted (1,323 → 490 lines) — v1.1
 - ✓ React ErrorBoundary catches rendering crashes with recovery UI — v1.1
 - ✓ i18n test suite enabled and passing in CI — v1.1
+- ✓ mise manages all dev tooling (just, gum, node, python, uv) from .mise.toml — v1.2
+- ✓ mise auto-installs correct tool versions on cd into project directory — v1.2
+- ✓ Secrets loaded via mise [env] from gitignored .env file — v1.2
+- ✓ 82 just recipes across 7 modules replacing all Make targets — v1.2
+- ✓ gum-powered terminal UX with TTY detection and CI fallback — v1.2
+- ✓ CI workflows migrated to mise-action + just recipes (7 workflows) — v1.2
+- ✓ Devcontainer uses mise feature for tool management — v1.2
+- ✓ All documentation updated to reference just exclusively (25+ files) — v1.2
+- ✓ Deprecated Make build system removed (Makefile + 7 .mk modules + .nvmrc + .python-version) — v1.2
 
 ### Active
 
-- [ ] Replace Make with Just as the project task runner
-- [ ] Use gum for beautiful, interactive terminal output in all recipes
-- [ ] Use mise as the single toolchain manager (just, gum, node, python, uv)
-- [ ] Migrate .envrc secrets to mise [env] with .env file
-- [ ] Clean break from Make — delete Makefile and make/ entirely
-- [ ] Update CLAUDE.md and README to reflect new toolchain
+(None — start next milestone with `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -66,28 +70,25 @@ A reliable, maintainable personal finance tracker where users can trust their da
 - Postgres migration — timezone fix and validation constraints prepared for it, migration itself deferred
 - CSV streaming parser — <10MB typical files, streaming deferred until scale demands
 - Rate limiting — single-user local deployment, not urgent
+- mise tasks replacing just — mise tasks less mature for complex workflows
+- Windows support — macOS (primary) + Linux (devcontainer) only
 
 ## Context
-
-## Current Milestone: v1.2 Build System Modernization
-
-**Goal:** Replace Make with Just + gum for a modern, beautiful task runner experience, with mise as the single prerequisite managing all dev tooling.
-
-**Target features:**
-- Just as task runner (replacing Makefile + 7 modular .mk files)
-- gum for sexy interactive terminal output (replacing raw ANSI escape codes)
-- mise as sole prerequisite — manages just, gum, node, python, uv
-- mise [env] for secrets (replacing .envrc/direnv)
-- Clean break — Makefile and make/ directory deleted
-- Updated docs (CLAUDE.md, README, devcontainer)
 
 **Shipped milestones:**
 - v1.0 DevSecOps Tooling (2026-02-23): 6 phases, 7 plans, 33 files, 5 security scanners in CI
 - v1.1 Codebase Health (2026-02-26): 5 phases, 12 plans, 75 files, all 11 audit concerns addressed
+- v1.2 Build System Modernization (2026-02-27): 5 phases, 8 plans, 89 files, Make → Just + gum + mise
 
 **App tech stack:** Next.js 16 (App Router, TypeScript), FastAPI (async Python), SQLite (dev) with SQLModel ORM, Alembic migrations, next-intl (9 locales), SWR for data fetching, sonner for toast notifications.
 
-**Codebase state (post v1.1):**
+**Dev tooling (post v1.2):**
+- mise manages all dev tools: node 22, python 3.11, uv, just, gum
+- 82 just recipes across 7 modules (.just/*.just): dev, db, test, docker, release, i18n, utils
+- gum-helpers.sh provides TTY-aware styled output with CI fallback
+- Secrets in gitignored .env loaded via mise [env] section
+
+**Codebase state (post v1.2):**
 - Dashboard page.tsx: 122 lines (from 1,168) with 10 extracted widget components
 - Transactions page.tsx: 490 lines (from 1,323) with extracted filters, bulk actions, data hook
 - Error handling: React ErrorBoundary + sonner toasts + SWR retry on all 9 widget hooks
@@ -135,6 +136,15 @@ A reliable, maintainable personal finance tracker where users can trust their da
 | DateTime(timezone=True) for all columns | Prevents timezone-related data corruption during SQLite → Postgres migration | ✓ Shipped v1.1 |
 | Regex-based i18n audit (not AST) | Simpler and faster; may produce false positives but good enough for development-time auditing | ✓ Shipped v1.1 |
 | Simplified async hook tests | Focus on API surface rather than deep async integration testing; timing-sensitive tests deferred to E2E | ⚠️ Tech debt |
+| mise as single tool version manager | Replaces nvm + pyenv + direnv with single declarative .mise.toml; auto-installs on cd | ✓ Shipped v1.2 |
+| aqua backend for just/gum (not cargo) | cargo backend requires Rust toolchain; aqua downloads pre-built binaries (faster, no Rust dependency) | ✓ Shipped v1.2 |
+| just as task runner (replaces Make) | Better UX (doc comments, modules, parameters), no tab/space gotchas, gum integration | ✓ Shipped v1.2 |
+| gum for terminal UX | TTY-aware styled output with CI fallback; replaces raw ANSI escape codes | ✓ Shipped v1.2 |
+| Shebang recipe pattern | Every multi-line recipe uses #!/usr/bin/env bash + set -euo pipefail + source gum-helpers.sh | ✓ Shipped v1.2 |
+| Test recipes stream output directly | Users need to see pytest/lint output in real-time; no gum spin wrapper | ✓ Shipped v1.2 |
+| Clean break from Make | Delete Makefile and make/ entirely; no backward-compat wrapper or deprecation period | ✓ Shipped v1.2 |
+| CI coverage uses direct uv run pytest | CI needs XML report format for Codecov upload; just recipe generates HTML for local dev | ✓ Shipped v1.2 |
+| Sub-project Makefiles preserved | data/Makefile and deploy/swag-test/Makefile are separate concerns; just recipes delegate to them | ✓ Shipped v1.2 |
 
 ---
-*Last updated: 2026-02-26 after v1.2 milestone started*
+*Last updated: 2026-02-27 after v1.2 milestone*
