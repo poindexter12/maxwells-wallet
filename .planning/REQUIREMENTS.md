@@ -17,20 +17,20 @@ Requirements for Build System Modernization milestone. Each maps to roadmap phas
 ### Task Runner (JUST)
 
 - [ ] **JUST-01**: All ~60 Make targets have just recipe equivalents with identical behavior
-- [ ] **JUST-02**: Recipes organized in 7 domain modules (`.just/*.just`) mirroring `make/*.mk`
-- [ ] **JUST-03**: Every recipe has documentation comment visible in `just --list`
-- [ ] **JUST-04**: Recipe dependencies preserved (e.g., `setup: install db-init db-seed`)
-- [ ] **JUST-05**: Parameters with defaults supported (VERSION, DEMO_MODE, etc.)
-- [ ] **JUST-06**: Parallel dev server startup (backend + frontend simultaneously)
-- [ ] **JUST-07**: Shell set to bash explicitly; shebang recipes for multi-line logic
+- [x] **JUST-02**: Recipes organized in 7 domain modules (`.just/*.just`) mirroring `make/*.mk`
+- [x] **JUST-03**: Every recipe has documentation comment visible in `just --list`
+- [x] **JUST-04**: Recipe dependencies preserved (e.g., `setup: install db-init db-seed`)
+- [x] **JUST-05**: Parameters with defaults supported (VERSION, DEMO_MODE, etc.)
+- [x] **JUST-06**: Parallel dev server startup (backend + frontend simultaneously)
+- [x] **JUST-07**: Shell set to bash explicitly; shebang recipes for multi-line logic
 
 ### Terminal UX (GUM)
 
-- [ ] **GUM-01**: Shared gum helper functions in `scripts/gum-helpers.sh`
-- [ ] **GUM-02**: All ANSI escape codes replaced with gum style commands
-- [ ] **GUM-03**: Interactive confirmations for destructive actions (db-reset, clean-all)
-- [ ] **GUM-04**: Spinners for long-running operations (install, build, test, docker)
-- [ ] **GUM-05**: TTY detection with graceful fallback for CI/non-interactive environments
+- [x] **GUM-01**: Shared gum helper functions in `scripts/gum-helpers.sh`
+- [x] **GUM-02**: All ANSI escape codes replaced with gum style commands
+- [x] **GUM-03**: Interactive confirmations for destructive actions (db-reset, clean-all)
+- [x] **GUM-04**: Spinners for long-running operations (install, build, test, docker)
+- [x] **GUM-05**: TTY detection with graceful fallback for CI/non-interactive environments
 
 ### CI Integration (CI)
 
@@ -91,17 +91,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MISE-03 | Phase 12 | Pending |
 | MISE-04 | Phase 12 | Pending |
 | JUST-01 | Phase 13 | Pending |
-| JUST-02 | Phase 13 | Pending |
-| JUST-03 | Phase 13 | Pending |
-| JUST-04 | Phase 13 | Pending |
-| JUST-05 | Phase 13 | Pending |
-| JUST-06 | Phase 13 | Pending |
-| JUST-07 | Phase 13 | Pending |
-| GUM-01 | Phase 13 | Pending |
-| GUM-02 | Phase 13 | Pending |
-| GUM-03 | Phase 13 | Pending |
-| GUM-04 | Phase 13 | Pending |
-| GUM-05 | Phase 13 | Pending |
+| JUST-02 | Phase 13 | Complete |
+| JUST-03 | Phase 13 | Complete |
+| JUST-04 | Phase 13 | Complete |
+| JUST-05 | Phase 13 | Complete |
+| JUST-06 | Phase 13 | Complete |
+| JUST-07 | Phase 13 | Complete |
+| GUM-01 | Phase 13 | Complete |
+| GUM-02 | Phase 13 | Complete |
+| GUM-03 | Phase 13 | Complete |
+| GUM-04 | Phase 13 | Complete |
+| GUM-05 | Phase 13 | Complete |
 | CI-01 | Phase 14 | Pending |
 | CI-02 | Phase 14 | Pending |
 | CI-03 | Phase 14 | Pending |
