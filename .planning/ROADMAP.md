@@ -90,7 +90,10 @@ Plans:
   2. Devcontainer rebuilds and all tools are available in new terminal sessions
   3. CI jobs pass using just recipes with identical behavior to previous Make commands
   4. Gum commands gracefully fall back to plain output in CI (non-TTY environments)
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 14-01-PLAN.md — Migrate CI workflows to mise-action + just recipes
+- [ ] 14-02-PLAN.md — Update devcontainer for mise tool management
 
 ### Phase 15: Documentation
 **Goal**: Update all documentation to reference just instead of make
