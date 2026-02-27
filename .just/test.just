@@ -1,4 +1,5 @@
 # Testing recipes
+set working-directory := '..'
 
 # =============================================================================
 # Unit & Integration Tests

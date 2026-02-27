@@ -1,4 +1,5 @@
 # Database recipes
+set working-directory := '..'
 
 # Initialize database (create tables)
 init:

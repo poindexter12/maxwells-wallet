@@ -1,4 +1,5 @@
 # Internationalization recipes
+set working-directory := '..'
 
 # Crowdin configuration
 CROWDIN_CONFIG := "-c ../crowdin.yaml"

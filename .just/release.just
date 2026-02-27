@@ -1,4 +1,5 @@
 # Release recipes
+set working-directory := '..'
 
 # Version detection
 CURRENT_VERSION := `grep -E '^version = ' backend/pyproject.toml | sed 's/version = "\(.*\)"/\1/'`
