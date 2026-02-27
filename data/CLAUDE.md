@@ -21,35 +21,23 @@ data/
 
 From project root:
 ```bash
-make data-setup    # Creates venv in data/.venv and installs deps
-```
-
-Or from data directory:
-```bash
-cd data
-make setup
+just utils::data-setup    # Creates venv in data/.venv and installs deps
 ```
 
 ## When you find a new raw file that needs testing
 
-1. **Always anonymize it first** using make:
+1. **Always anonymize it first:**
    ```bash
    # From project root:
-   make data-status                      # See what's pending
-   make data-anonymize                   # Process all pending files
-   make data-force                       # Reprocess everything
-
-   # Or from data directory:
-   cd data
-   make status
-   make anonymize
-   make force
+   just utils::data-status               # See what's pending
+   just utils::data-anonymize            # Process all pending files
+   just utils::data-force                # Reprocess everything
    ```
 
 2. **Anonymize a single file:**
    ```bash
    cd data
-   make anonymize raw/MyBank/statement.csv   # Auto-generates output name
+   make anonymize raw/MyBank/statement.csv   # Auto-generates output name (uses data/Makefile)
    ```
 
 3. **Update tests to use the anonymized version**, e.g.:

@@ -5,9 +5,6 @@
 ### Frontend Unit Tests (Vitest)
 
 ```bash
-# Run all frontend unit tests
-make test-frontend
-
 # Run with watch mode
 cd frontend && npm test
 
@@ -21,16 +18,10 @@ Frontend tests use Vitest with React Testing Library. All tests should use `data
 
 ```bash
 # Run all backend tests (unit + integration)
-make test-backend
+just test::backend
 
 # Run with coverage report
-make test-coverage
-
-# Run specific test suites
-make test-reports     # Report/analytics tests
-make test-tags        # Tag system tests
-make test-import      # CSV import tests
-make test-budgets     # Budget tests
+just test::coverage
 ```
 
 ### E2E Tests (Playwright)
@@ -39,27 +30,20 @@ E2E tests require the development servers to be running.
 
 ```bash
 # Install Playwright browsers (first time only)
-make test-e2e-install
+just test::e2e-install
 
 # Run E2E tests (headless)
-make test-e2e
+just test::e2e
 
-# Run E2E tests with visible browser
-make test-e2e-headed
-
-# Run E2E tests in debug mode
-make test-e2e-debug
-
-# Run specific E2E test suites
-make test-e2e-import  # Import workflow tests
-make test-e2e-full    # Full workflow tests
+# Run chaos tests
+just test::chaos
 ```
 
 ### All Tests
 
 ```bash
 # Run both unit and E2E tests
-make test-all
+just test::all
 ```
 
 ### i18n Translation Tests
@@ -76,10 +60,11 @@ The i18n test ensures:
 - No extra/orphaned keys in non-English locales
 - All translated strings are actually different from English (catches copy-paste errors)
 
-### Frontend Linting
+### Linting & Quality
 
 ```bash
-make lint-frontend
+just test::lint       # Lint all code (backend + frontend)
+just test::quality    # Full quality checks (lint + typecheck + vulture)
 ```
 
 ## Test Data
@@ -91,7 +76,7 @@ The `/samples/` directory contains sample CSV files for database seeding:
 - `bofa.csv` - Bank of America checking format
 - `amex.csv` - American Express format
 
-These are imported when running `make db-seed`.
+These are imported when running `just db::seed`.
 
 ### Anonymizing Real Data
 
@@ -105,10 +90,10 @@ cp ~/Downloads/amex_statement.csv data/raw/
 cp ~/Downloads/bofa_checking.csv data/raw/
 
 # 2. Check what needs processing
-make anonymize-status
+just utils::data-status
 
 # 3. Anonymize all new/changed files
-make anonymize
+just utils::data-anonymize
 
 # 4. Find scrubbed files in data/anonymized/
 ls data/anonymized/
@@ -124,9 +109,9 @@ ls data/anonymized/
 #### Commands
 
 ```bash
-make anonymize         # Process new/changed files
-make anonymize-status  # Show pending/processed files
-make anonymize-force   # Reprocess all files
+just utils::data-anonymize    # Process new/changed files
+just utils::data-status       # Show pending/processed files
+just utils::data-force        # Reprocess all files
 ```
 
 The anonymized files in `data/anonymized/` are safe to commit and share.
@@ -138,7 +123,7 @@ Test coverage is tracked via [Codecov](https://codecov.io/gh/poindexter12/maxwel
 To generate a local coverage report:
 
 ```bash
-make test-coverage
+just test::coverage
 # Report saved to backend/htmlcov/
 open backend/htmlcov/index.html
 ```

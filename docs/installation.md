@@ -259,9 +259,12 @@ For local development without Docker:
 
 ### Prerequisites
 
-- Node.js 22+ (use `nvm install` to auto-install from `.nvmrc`)
-- Python 3.11+
-- [uv](https://github.com/astral-sh/uv) (Python package manager)
+Install [mise](https://mise.jdx.dev/) (tool version manager):
+```bash
+curl https://mise.run | sh
+```
+
+mise auto-installs all dev tools (Node, Python, uv, just, gum) when you enter the project directory.
 
 ### Setup
 
@@ -270,47 +273,45 @@ git clone https://github.com/poindexter12/maxwells-wallet.git
 cd maxwells-wallet
 
 # Install dependencies and initialize database
-make setup
+just setup
 
 # Start development servers (frontend + backend)
-make dev
+just dev::dev
 
 # Open http://localhost:3000
 ```
 
-### Available Make Commands
+### Available Recipes
 
 ```bash
-make help         # Show all available commands
+just              # Show all available recipes
 
 # Development
-make dev          # Run both servers
-make backend      # Run backend only
-make frontend     # Run frontend only
+just dev::dev           # Run both servers
+just dev::backend       # Run backend only
+just dev::frontend      # Run frontend only
 
 # Testing
-make test-all     # Run all tests
-make test-backend # Run backend tests only
-make test-e2e     # Run E2E tests
+just test::all          # Run all tests
+just test::backend      # Run backend tests only
+just test::e2e          # Run E2E tests
 
 # Database
-make db-migrate   # Create new migration
-make db-upgrade   # Apply migrations
-make db-reset     # Reset database
+just db::migrate MESSAGE="description"  # Create new migration
+just db::upgrade        # Apply migrations
+just db::reset          # Reset database
 
 # Build
-make build        # Build for production
-make docker-build # Build Docker image
+just dev::build-frontend  # Build frontend for production
+just docker::build        # Build Docker image
 ```
 
 ### Development Environment
 
 The repository includes:
 
-- `.nvmrc` - Node.js version (use `nvm install`)
-- `.python-version` - Python version
-- `.envrc` - direnv configuration for auto-activation
-- `Makefile` - All common commands
+- `.mise.toml` - Tool versions (Node, Python, uv, just, gum)
+- `justfile` + `.just/` - All task runner recipes
 
 ---
 

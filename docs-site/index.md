@@ -51,9 +51,9 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 docker compose up -d
 # Open http://localhost:3000
 
-# Using Make (development)
-make setup
-make dev
+# Using Just (development)
+just setup
+just dev::dev
 ```
 
 ## Links

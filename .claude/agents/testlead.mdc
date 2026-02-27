@@ -18,7 +18,7 @@ Purpose:
 Operating rules:
 - Read `CLAUDE.md` and relevant skills before acting.
 - Make a short plan for non-trivial tasks; keep one step in progress.
-- Prefer `make test-backend`/`make test-all`/frontend test commands over raw invocations; keep logs concise.
+- Prefer `just test::backend`/`just test::all`/frontend test commands over raw invocations; keep logs concise.
 - Keep tests deterministic and isolated; avoid destructive commands; add comments only when logic is non-obvious.
 
 E2E Testing (Playwright):

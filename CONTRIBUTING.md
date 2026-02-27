@@ -5,9 +5,10 @@ Thank you for your interest in contributing! This document explains how to get s
 ## Getting Started
 
 1. Fork the repository and clone your fork
-2. Run `make setup` (or `./setup.sh`) to install dependencies and seed the database
-3. Run `make dev` to start both backend and frontend servers
-4. Open http://localhost:3000
+2. Install [mise](https://mise.jdx.dev/) if you don't have it: `curl https://mise.run | sh`
+3. Run `just setup` to install dependencies and seed the database
+4. Run `just dev::dev` to start both backend and frontend servers
+5. Open http://localhost:3000
 
 See [README.md](README.md) for detailed setup instructions including Docker and devcontainer options.
 
@@ -16,7 +17,7 @@ See [README.md](README.md) for detailed setup instructions including Docker and 
 1. Create a branch from `main` for your change
 2. Make your changes, following the code style guidelines below
 3. Add or update tests for your changes
-4. Run `make lint` and `make test-all` to verify everything passes
+4. Run `just test::lint` and `just test::all` to verify everything passes
 5. Open a pull request against `main`
 
 ## Code Style
@@ -32,15 +33,15 @@ See [README.md](README.md) for detailed setup instructions including Docker and 
 - Prefer server components; use client components only for event-heavy UI
 - Use Tailwind utility classes for styling
 
-Pre-commit hooks enforce these checks automatically. Install them with `make setup`.
+Pre-commit hooks enforce these checks automatically. Install them with `just setup`.
 
 ## Testing Requirements
 
 All pull requests must include tests for new functionality:
 
-- **Backend:** pytest tests colocated as `tests/test_*.py`. Run with `make test-backend`.
-- **Frontend:** Vitest tests colocated as `*.test.tsx`. Run with `make test-frontend`.
-- **E2E:** Playwright tests in `frontend/e2e/`. Run with `make test-e2e`.
+- **Backend:** pytest tests colocated as `tests/test_*.py`. Run with `just test::backend`.
+- **Frontend:** Vitest tests colocated as `*.test.tsx`.
+- **E2E:** Playwright tests in `frontend/e2e/`. Run with `just test::e2e`.
 - Use `data-testid` attributes for element selection (see `frontend/src/test-ids.ts`).
 
 Coverage target is 80% (enforced by Codecov on PRs).

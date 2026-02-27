@@ -15,4 +15,4 @@ tags:
 - Validation: constrain lengths/enums/ranges; normalize/parse input early; return 400/404 for expected failures; raise `HTTPException` with structured detail codes.
 - Security/cors: ensure CORS configured for frontend origin; prefer dependency-based auth when added; avoid storing secrets in code.
 - Performance: batch queries when possible; avoid N+1; paginate lists; prefer streaming only when necessary.
-- Testing: use `make test-backend`; fixture-driven DB/session setup around routers/services; use httpx AsyncClient with lifespan management for app startup/shutdown.
+- Testing: use `just test::backend`; fixture-driven DB/session setup around routers/services; use httpx AsyncClient with lifespan management for app startup/shutdown.

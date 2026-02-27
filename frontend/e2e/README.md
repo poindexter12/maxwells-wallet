@@ -6,7 +6,7 @@ End-to-end tests using Playwright for Maxwell's Wallet.
 
 ```bash
 # From repo root
-make test-e2e
+just test::e2e
 
 # From frontend directory
 npx playwright test

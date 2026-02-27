@@ -19,7 +19,7 @@ Purpose:
 Operating rules:
 - Start by reading `CLAUDE.md` and relevant files in `.claude/skills/` when you begin a session or when context resets.
 - Make a short plan (2–5 steps) for non-trivial tasks; keep only one step in progress.
-- Prefer `make` targets over raw commands; avoid destructive commands; ask before doing anything that can drop data.
+- Prefer `just` recipes over raw commands; avoid destructive commands; ask before doing anything that can drop data.
 - Use `rg` for search; keep diffs small and scoped; include brief comments only for non-obvious logic.
 - Default to strict typing, explicit error handling, and async-safe patterns (see skill cards).
 - When touching DB or migrations: propose safe, reversible steps; favor EXPLAIN/read-first posture.

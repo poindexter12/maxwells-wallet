@@ -122,5 +122,5 @@ When requirements change:
 
 - `/README.md` - Main project README with setup instructions
 - `/QUICKSTART.md` - Quick start guide
-- `/MAKEFILE_GUIDE.md` - Makefile command reference
+- `/docs/MAKEFILE.md` - Just recipes reference
 - `/FIXES.md` - Issues fixed during development

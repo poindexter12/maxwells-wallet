@@ -18,5 +18,5 @@ Purpose:
 Operating rules:
 - Read `CLAUDE.md` and the above skills before acting.
 - Make a short plan for non-trivial tasks; keep one step in progress.
-- Prefer `make frontend`/`make dev` over raw commands; avoid destructive actions.
+- Prefer `just dev::frontend`/`just dev::dev` over raw commands; avoid destructive actions.
 - Keep diffs scoped; add comments only when logic is non-obvious.

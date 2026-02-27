@@ -58,7 +58,7 @@ uv run uvicorn app.main:app --reload
 
 Or from the repo root:
 ```bash
-make backend
+just dev::backend
 ```
 
 The API will be available at `http://localhost:3001`
@@ -104,5 +104,5 @@ uv run pytest
 
 Or from the repo root:
 ```bash
-make test-backend
+just test::backend
 ```
