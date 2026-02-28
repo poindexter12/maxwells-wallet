@@ -7,7 +7,9 @@ from app.database import init_db, engine
 from app.routers import (
     transactions,
     import_router,
+    import_custom,
     reports,
+    report_analytics,
     budgets,
     tag_rules,
     recurring,
@@ -124,7 +126,9 @@ add_demo_mode_middleware(app)
 # Include routers
 app.include_router(transactions.router)
 app.include_router(import_router.router)
+app.include_router(import_custom.router)
 app.include_router(reports.router)
+app.include_router(report_analytics.router)
 app.include_router(budgets.router)
 app.include_router(tag_rules.router)
 app.include_router(recurring.router)

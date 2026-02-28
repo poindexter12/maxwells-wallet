@@ -319,33 +319,30 @@ class TestAliasSuggestions:
     @pytest.mark.asyncio
     async def test_get_suggestions_empty(self, client: AsyncClient):
         """Get suggestions with no transactions"""
-        # Note: Route ordering may cause 422 if path variable matches first
         response = await client.get("/api/v1/merchants/aliases/suggestions")
-        # Accept 200 (success) or 422 (route ordering issue with path params)
-        if response.status_code == 200:
-            data = response.json()
-            assert "count" in data
-            assert "suggestions" in data
-            assert isinstance(data["suggestions"], list)
+        assert response.status_code == 200
+        data = response.json()
+        assert "count" in data
+        assert "suggestions" in data
+        assert isinstance(data["suggestions"], list)
 
     @pytest.mark.asyncio
     async def test_get_suggestions_with_data(self, client: AsyncClient, seed_transactions):
         """Get suggestions with existing transactions"""
         response = await client.get("/api/v1/merchants/aliases/suggestions")
-        if response.status_code == 200:
-            data = response.json()
-            assert "count" in data
-            assert "suggestions" in data
+        assert response.status_code == 200
+        data = response.json()
+        assert "count" in data
+        assert "suggestions" in data
 
     @pytest.mark.asyncio
     async def test_get_suggestions_min_count(self, client: AsyncClient, seed_transactions):
         """Get suggestions with custom min_count"""
         response = await client.get("/api/v1/merchants/aliases/suggestions?min_count=1")
-        # Route may or may not work due to path ordering
-        assert response.status_code in [200, 422]
+        assert response.status_code == 200
 
         response2 = await client.get("/api/v1/merchants/aliases/suggestions?min_count=10")
-        assert response2.status_code in [200, 422]
+        assert response2.status_code == 200
 
     @pytest.mark.asyncio
     async def test_suggestions_exclude_existing_aliases(self, client: AsyncClient, seed_transactions):
@@ -361,10 +358,10 @@ class TestAliasSuggestions:
 
         # Get suggestions - should not include aliased pattern
         response = await client.get("/api/v1/merchants/aliases/suggestions")
-        if response.status_code == 200:
-            data = response.json()
-            for s in data["suggestions"]:
-                assert "EXCLUDE_FROM_SUGGESTIONS" not in (s.get("raw_merchant") or "").upper()
+        assert response.status_code == 200
+        data = response.json()
+        for s in data["suggestions"]:
+            assert "EXCLUDE_FROM_SUGGESTIONS" not in (s.get("raw_merchant") or "").upper()
 
 
 class TestAliasMatchTypes:

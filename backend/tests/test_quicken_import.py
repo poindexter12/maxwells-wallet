@@ -13,9 +13,23 @@ from httpx import AsyncClient
 from datetime import date
 import io
 
+
 from app.parsers import ParserRegistry, ParsedTransaction
-from app.csv_parser import detect_format, parse_csv, parse_qif, parse_qfx
 from app.models import ImportFormatType
+
+
+# ---------------------------------------------------------------------------
+# Test helpers — thin wrappers around ParserRegistry for test convenience
+# ---------------------------------------------------------------------------
+
+def detect_format(content: str) -> ImportFormatType:
+    parser, _confidence = ParserRegistry.detect_format(content)
+    if parser:
+        try:
+            return ImportFormatType(parser.format_key)
+        except ValueError:
+            return ImportFormatType.unknown
+    return ImportFormatType.unknown
 
 
 # =============================================================================
@@ -469,52 +483,6 @@ class TestQFXParser:
         transactions = parser.parse(SAMPLE_QFX)
 
         assert all(isinstance(t, ParsedTransaction) for t in transactions)
-
-
-# =============================================================================
-# Wrapper Function Tests
-# =============================================================================
-
-
-class TestQuickenWrapperFunctions:
-    """Test backwards-compatible wrapper functions"""
-
-    def test_parse_qif_wrapper(self):
-        """parse_qif() wrapper function works"""
-        transactions = parse_qif(SAMPLE_QIF_BANK, "Test-Account")
-
-        assert len(transactions) == 3
-        assert isinstance(transactions[0], dict)
-        assert transactions[0]["amount"] == -150.00
-
-    def test_parse_qfx_wrapper(self):
-        """parse_qfx() wrapper function works"""
-        transactions = parse_qfx(SAMPLE_QFX, "Test-Account")
-
-        assert len(transactions) == 3
-        assert isinstance(transactions[0], dict)
-        assert transactions[0]["amount"] == -150.00
-
-    def test_parse_csv_handles_qif(self):
-        """parse_csv() handles QIF format"""
-        transactions, format_type = parse_csv(SAMPLE_QIF_BANK)
-
-        assert format_type == ImportFormatType.qif
-        assert len(transactions) == 3
-
-    def test_parse_csv_handles_qfx(self):
-        """parse_csv() handles QFX format"""
-        transactions, format_type = parse_csv(SAMPLE_QFX)
-
-        assert format_type == ImportFormatType.qfx
-        assert len(transactions) == 3
-
-    def test_parse_csv_with_qif_format_hint(self):
-        """parse_csv() respects QIF format hint"""
-        transactions, format_type = parse_csv(SAMPLE_QIF_BANK, format_hint=ImportFormatType.qif)
-
-        assert format_type == ImportFormatType.qif
-        assert len(transactions) == 3
 
 
 # =============================================================================
