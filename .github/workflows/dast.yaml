@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup mise
-        uses: jdx/mise-action@v2
+        uses: jdx/mise-action@v3
         with:
           install: true
 
@@ -127,14 +127,14 @@ jobs:
           }' report_json.json > zap-sarif.json
 
       - name: Upload SARIF to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
+        uses: github/codeql-action/upload-sarif@c793b717bc78562f491db7b0e93a3a178b099162 # v4.32.5
         if: always() && hashFiles('zap-sarif.json') != ''
         with:
           sarif_file: zap-sarif.json
           category: zap
 
       - name: Upload ZAP reports as artifacts
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4
         if: always()
         with:
           name: zap-reports
