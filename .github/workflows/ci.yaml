@@ -19,7 +19,7 @@ jobs:
       translations-only: ${{ steps.filter.outputs.translations-only }}
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-    - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36
+    - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d
       id: filter
       with:
         filters: "frontend:\n  - 'frontend/**'\nbackend:\n  - 'backend/**'\ndocker:\n  - 'Dockerfile'\n  - 'docker-compose*.yaml'\ntranslations-only:\n  - 'frontend/src/messages/**'\n  - '!frontend/src/**/*.ts'\n  - '!frontend/src/**/*.tsx'\n  - '!backend/**'\n"
@@ -39,7 +39,7 @@ jobs:
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
     - name: Setup mise
-      uses: jdx/mise-action@v2
+      uses: jdx/mise-action@v4
       with:
         install: true
     - name: Install dependencies
@@ -60,7 +60,7 @@ jobs:
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
     - name: Setup mise
-      uses: jdx/mise-action@v2
+      uses: jdx/mise-action@v4
       with:
         install: true
     - name: Install dependencies
@@ -74,7 +74,7 @@ jobs:
     - name: Run tests with coverage
       run: cd backend && uv run pytest tests/ -v --cov=app --cov-report=xml --cov-report=term-missing --ignore=tests/e2e --ignore=tests/performance
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+      uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad
       with:
         files: ./backend/coverage.xml
         fail_ci_if_error: false
@@ -100,7 +100,7 @@ jobs:
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
     - name: Setup mise
-      uses: jdx/mise-action@v2
+      uses: jdx/mise-action@v4
       with:
         install: true
     - name: Install dependencies
@@ -126,7 +126,7 @@ jobs:
       env:
         CI: true
     - name: Upload Playwright report
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
       if: failure()
       with:
         name: playwright-report
@@ -148,7 +148,7 @@ jobs:
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
     - name: Setup mise
-      uses: jdx/mise-action@v2
+      uses: jdx/mise-action@v4
       with:
         install: true
     - name: Install backend dependencies
@@ -158,7 +158,7 @@ jobs:
       env:
         OTEL_ENABLED: 'false'
     - name: Upload performance results
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
       if: always()
       with:
         name: performance-results
@@ -193,7 +193,7 @@ jobs:
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
     - name: Setup mise
-      uses: jdx/mise-action@v2
+      uses: jdx/mise-action@v4
       with:
         install: true
     - name: Cleanup any existing containers
@@ -215,7 +215,7 @@ jobs:
       if: always()
       run: docker compose -f docker-compose.dev.yaml down -v --remove-orphans
     - name: Run Trivy container scan
-      uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # v0.34.1
+      uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.34.1
       continue-on-error: true
       with:
         scan-type: 'image'
@@ -225,24 +225,24 @@ jobs:
         severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
         docker-host: 'unix:///var/run/docker.sock'
     - name: Upload Trivy SARIF to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
+      uses: github/codeql-action/upload-sarif@38697555549f1db7851b81482ff19f1fa5c4fedc # v4.34.1
       if: always() && hashFiles('trivy-results.sarif') != ''
       with:
         sarif_file: 'trivy-results.sarif'
         category: trivy-container
     - name: Set up Docker Buildx
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+      uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd
     - name: Log in to GitHub Container Registry
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+      uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Build and push dev tag
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
+      uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
       with:
         context: .
         push: true
