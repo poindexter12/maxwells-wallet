@@ -78,11 +78,11 @@ Maxwell's Wallet uses five automated security scanning tools that run in CI and 
 
 **Optional Setup:**
 
-For faster Dependency-Check scans, configure an NVD API key (free from NVD):
+To enable Dependency-Check scans, configure an NVD API key (free from NVD):
 ```
 gh secret set NVD_API_KEY --body "your-api-key-here"
 ```
-Without the API key, Dependency-Check still works but may hit rate limits on large scans.
+Without the API key, the Dependency-Check job is skipped — NVD's unauthenticated rate limit (1 request / 6 seconds) makes the scan impractical to run in CI. Other security scans (pip-audit, Semgrep, CodeQL) run regardless.
 
 **Philosophy:** All security scans are **non-blocking** — they inform but never block development.
 
