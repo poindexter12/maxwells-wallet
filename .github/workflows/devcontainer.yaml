@@ -38,34 +38,31 @@ jobs:
           CONTAINER_ID=$(echo "$RESULT" | grep -o '"containerId":"[^"]*"' | cut -d'"' -f4)
           echo "Container ID: $CONTAINER_ID"
 
-          # Use docker exec directly since container might not stay discoverable by devcontainer exec
-          # Test mise is installed
+          # Exec as the 'vscode' remoteUser in the workspace folder so that
+          # mise-managed tools (installed during postCreate under vscode's home)
+          # resolve. Raw 'docker exec' would run as root, which has no installs.
+          dexec() { docker exec -u vscode -w /workspaces/maxwells-wallet "$CONTAINER_ID" "$@"; }
+
           echo "Testing mise..."
-          docker exec "$CONTAINER_ID" mise --version || (echo "mise not found" && exit 1)
+          dexec mise --version || { echo "mise not found"; exit 1; }
 
-          # Test Node.js version (installed via mise)
           echo "Testing Node.js..."
-          docker exec "$CONTAINER_ID" node --version | grep -q "v22" || (echo "Node.js v22 not found" && exit 1)
+          dexec mise exec -- node --version | grep -q "v22" || { echo "Node.js v22 not found"; exit 1; }
 
-          # Test Python version (installed via mise)
           echo "Testing Python..."
-          docker exec "$CONTAINER_ID" python --version | grep -q "3.11" || (echo "Python 3.11 not found" && exit 1)
+          dexec mise exec -- python --version | grep -q "3.14" || { echo "Python 3.14 not found"; exit 1; }
 
-          # Test uv is installed (via mise)
           echo "Testing uv..."
-          docker exec "$CONTAINER_ID" uv --version || (echo "uv not found" && exit 1)
+          dexec mise exec -- uv --version || { echo "uv not found"; exit 1; }
 
-          # Test just is installed (via mise)
           echo "Testing just..."
-          docker exec "$CONTAINER_ID" just --version || (echo "just not found" && exit 1)
+          dexec mise exec -- just --version || { echo "just not found"; exit 1; }
 
-          # Test gum is installed (via mise)
           echo "Testing gum..."
-          docker exec "$CONTAINER_ID" gum --version || (echo "gum not found" && exit 1)
+          dexec mise exec -- gum --version || { echo "gum not found"; exit 1; }
 
-          # Test npm is available (comes with node)
           echo "Testing npm..."
-          docker exec "$CONTAINER_ID" npm --version || (echo "npm not found" && exit 1)
+          dexec mise exec -- npm --version || { echo "npm not found"; exit 1; }
 
           echo "All devcontainer tests passed!"
 
