@@ -13,7 +13,9 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { pseudoLocalizeString as localize } from 'pseudo-localization';
+// pseudo-localization 2.x exports `localize` (3.x renamed it to
+// pseudoLocalizeString and dropped node 22 support — we stay on 2.x for node 22).
+import { localize } from 'pseudo-localization';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
