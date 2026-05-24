@@ -226,26 +226,29 @@ export function DatePicker({
             locale={dateFnsLocale}
             showOutsideDays
             classNames={{
+              // react-day-picker v10 element keys (renamed from the older v8/v9 names)
               root: 'text-sm',
               months: 'flex flex-col',
               month: 'space-y-2',
-              caption: 'flex justify-center relative items-center h-8',
+              month_caption: 'flex justify-center relative items-center h-8',
               caption_label: 'text-sm font-medium text-gray-900 dark:text-gray-100',
               nav: 'flex items-center gap-1',
-              nav_button: 'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700',
-              nav_button_previous: 'absolute left-1',
-              nav_button_next: 'absolute right-1',
-              table: 'w-full border-collapse',
-              head_row: 'flex',
-              head_cell: 'text-gray-500 dark:text-gray-400 w-8 font-normal text-xs',
-              row: 'flex w-full mt-1',
-              cell: 'text-center text-sm p-0 relative focus-within:z-20',
-              day: 'h-8 w-8 p-0 font-normal inline-flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500',
-              day_selected: 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600',
-              day_today: 'text-blue-600 dark:text-blue-400 font-semibold',
-              day_outside: 'text-gray-300 dark:text-gray-600 opacity-50',
-              day_disabled: 'text-gray-300 dark:text-gray-600',
-              day_hidden: 'invisible',
+              button_previous:
+                'absolute left-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700',
+              button_next:
+                'absolute right-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700',
+              month_grid: 'w-full border-collapse',
+              weekdays: 'flex',
+              weekday: 'text-gray-500 dark:text-gray-400 w-8 font-normal text-xs',
+              week: 'flex w-full mt-1',
+              day: 'text-center text-sm p-0 relative focus-within:z-20',
+              day_button:
+                'h-8 w-8 p-0 font-normal inline-flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500',
+              selected: 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600',
+              today: 'text-blue-600 dark:text-blue-400 font-semibold',
+              outside: 'text-gray-300 dark:text-gray-600 opacity-50',
+              disabled: 'text-gray-300 dark:text-gray-600',
+              hidden: 'invisible',
             }}
           />
         </div>
