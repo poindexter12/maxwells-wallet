@@ -109,14 +109,25 @@ jobs:
         run: uv pip compile backend/pyproject.toml -o backend/requirements.txt
 
       - name: Run OWASP Dependency-Check scan
-        timeout-minutes: 12
+        timeout-minutes: 25
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
-          NVD_FLAG=""
-          if [ -n "$NVD_API_KEY" ]; then
-            NVD_FLAG="--nvdApiKey $NVD_API_KEY"
+          echo "## OWASP Dependency-Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Without an NVD API key the scanner is rate-limited (1 req/6s) and
+          # reliably exceeds any reasonable timeout. Skip cleanly so nightly
+          # runs aren't permanently red — README documents key setup.
+          if [ -z "$NVD_API_KEY" ]; then
+            echo "::warning::NVD_API_KEY secret not configured — skipping OWASP Dependency-Check scan."
+            echo "⏭️ Skipped — \`NVD_API_KEY\` secret not configured." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Without an NVD API key, the scanner is rate-limited and cannot complete in a reasonable time." >> $GITHUB_STEP_SUMMARY
+            echo "See [README](../blob/main/README.md) for setup instructions." >> $GITHUB_STEP_SUMMARY
+            exit 0
           fi
+
           mkdir -p reports
           docker run --rm \
             -v $(pwd):/src \
@@ -128,7 +139,7 @@ jobs:
             --format HTML \
             --out /src/reports \
             --project "Maxwell's Wallet" \
-            $NVD_FLAG \
+            --nvdApiKey "$NVD_API_KEY" \
             --enableExperimental
 
       - name: Upload SARIF to GitHub Security tab
