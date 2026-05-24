@@ -88,6 +88,10 @@
     "maxAmount": "Max €",
     "startDate": "Date de début",
     "endDate": "Date de fin",
+    "splitTransaction": "Split Transaction",
+    "clearAll": "Clear all",
+    "allocated": "{allocated} of {total} allocated",
+    "source": "Origine",
     "status": {
       "unreconciled": "Non rapproché",
       "matched": "Apparié",
@@ -286,7 +290,7 @@
     "previewImport": "Aperçu de l'import",
     "previewBatchImport": "Aperçu de l'import par lot",
     "confirm": "Confirmer l'import",
-    "confirmImport": "Importer les transactions",
+    "confirmImport": "Importer des transactions",
     "success": "Import réussi",
     "importComplete": "Import terminé !",
     "transactionsImported": "{count} transactions importées",
@@ -320,7 +324,7 @@
     "dbDuplicates": "Doublons BD",
     "batchDuplicates": "Doublons lot",
     "selectAccount": "-- Sélectionner un compte --",
-    "accountPlaceholder": "ex. BNP-Courant, SG-12345",
+    "accountPlaceholder": "e.g., BOFA-Checking, AMEX-53004",
     "orTypeNew": "ou saisir un nouveau",
     "existing": "Existant",
     "new": "Nouveau",
@@ -347,12 +351,13 @@
       "overview": "Vue d'ensemble",
       "imports": "Imports",
       "health": "Santé",
+      "backups": "Sauvegardes",
+      "security": "Sécurité",
       "buckets": "Catégories",
       "accounts": "Comptes",
       "occasions": "Occasions",
       "expenses": "Types de dépenses",
-      "allTags": "Tous les tags",
-      "backups": "Sauvegardes"
+      "allTags": "Tous les tags"
     },
     "overview": {
       "stats": {
@@ -383,7 +388,7 @@
         "file": "Fichier",
         "format": "Format",
         "account": "Compte",
-        "imported": "Importées",
+        "imported": "Importé",
         "duplicates": "Doublons",
         "dateRange": "Plage de dates",
         "status": "Statut",
@@ -505,13 +510,13 @@
       "descriptionPattern": "Motif description",
       "amountMin": "Montant min",
       "amountMax": "Montant max",
-      "accountSource": "Compte source",
+      "accountSource": "Source du compte",
       "matchAll": "Toutes les conditions doivent correspondre (logique ET)",
       "enableImmediately": "Activer la règle immédiatement",
       "disabled": "Désactivée",
       "enabled": "Activée",
       "test": "Tester",
-      "matched": "Correspondance",
+      "matched": "Apparié",
       "transactions": "transactions",
       "testResult": "Test : {count} transactions correspondraient",
       "confirmApplyAll": "Appliquer toutes les règles actives aux transactions non taguées ?",
@@ -519,7 +524,9 @@
       "confirmDelete": "Supprimer cette règle ?",
       "select": "Sélectionner...",
       "all": "TOUTES",
-      "any": "L'UNE"
+      "any": "L'UNE",
+      "merchantPatternPlaceholder": "e.g., Starbucks",
+      "descriptionPatternPlaceholder": "e.g., Coffee"
     },
     "merchants": {
       "description": "Normaliser les noms de commerçants bancaires désordonnés en noms propres et cohérents",
@@ -546,7 +553,9 @@
       "txns": "trans.",
       "confirmDelete": "Supprimer cet alias ?",
       "confirmApply": "Appliquer les alias à {count} transactions ?",
-      "none": "(aucun)"
+      "none": "(aucun)",
+      "patternPlaceholder": "e.g., AMZN MKTP",
+      "displayAsPlaceholder": "e.g., Amazon"
     },
     "formats": {
       "description": "Créer des configurations d'import réutilisables pour différents formats CSV bancaires",
@@ -571,7 +580,26 @@
       "configAccount": "Compte : {value}",
       "configDate": "Date : {value}",
       "configAmount": "Montant : {value}",
-      "invalidConfig": "Configuration invalide"
+      "invalidConfig": "Configuration invalide",
+      "configuration": "Configuration",
+      "selectAccount": "-- Sélectionner un compte --",
+      "newAccountPlaceholder": "New account name",
+      "createNewAccount": "Create new account",
+      "optional": "(optional)",
+      "descriptionPlaceholder": "e.g., Monthly statement export from Chase",
+      "advancedSettings": "Advanced Settings",
+      "dateColumn": "Date Column *",
+      "amountColumn": "Amount Column *",
+      "descriptionColumn": "Description Column *",
+      "referenceColumn": "Reference Column",
+      "categoryColumn": "Category Column",
+      "skipHeaderRows": "Skip Header Rows",
+      "dateFormat": "Date Format",
+      "amountFormat": "Amount Format",
+      "invertSign": "Invert sign",
+      "selectOption": "-- Select --",
+      "noneOption": "-- None --",
+      "notDetected": "Not detected"
     }
   },
   "organize": {
@@ -634,6 +662,10 @@
     "subtitle": "Suivre les abonnements et paiements récurrents",
     "upcoming": "Paiements à venir",
     "detected": "Motifs détectés",
+    "activePatterns": "Active Patterns",
+    "upcomingDays": "Upcoming (30 days)",
+    "noPatternsDetected": "No recurring patterns detected yet",
+    "amountRange": "Amount Range",
     "frequency": {
       "weekly": "Hebdomadaire",
       "biweekly": "Bi-hebdomadaire",
@@ -646,7 +678,12 @@
     "title": "Rapprocher",
     "subtitle": "Réviser et catégoriser les transactions importées",
     "markReconciled": "Marquer comme rapproché",
-    "markIgnored": "Marquer comme ignoré"
+    "markIgnored": "Marquer comme ignoré",
+    "markAsTransfer": "Mark as internal transfer",
+    "markAsTransferAndReconcile": "Mark as internal transfer and reconcile",
+    "allReconciled": "All transactions are reconciled!",
+    "actions": "Actions",
+    "noBucket": "Sans catégorie"
   },
   "tags": {
     "title": "Tags",
@@ -800,7 +837,7 @@
       ],
       "tips": [
         "Créez de nouveaux tags dans Admin > Tags",
-        "Définissez des budgets pour chaque catégorie, occasion ou compte"
+        "Définir des budgets pour chaque catégorie, occasion ou compte"
       ]
     },
     "recurring": {
@@ -867,6 +904,7 @@
   },
   "demo": {
     "banner": "Mode Démo - Les données sont réinitialisées périodiquement. Certaines fonctionnalités sont désactivées.",
+    "loginBanner": "Mode Démo - Connectez-vous avec le nom d'utilisateur \"maxwell\" et le mot de passe \"wallet\"",
     "featureDisabled": "Cette fonctionnalité est désactivée en mode démo."
   },
   "backup": {
@@ -894,12 +932,52 @@
         "week": "1 semaine"
       }
     },
+    "manualBackupPlaceholder": "Manual backup",
     "fields": {
-      "description": "Libellé",
+      "description": "Description",
       "created": "Créé",
       "size": "Taille",
       "source": "Origine",
       "demoBackup": "Sauvegarde Démo"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Se connecter",
+      "subtitle": "Bon retour sur Maxwell's Wallet",
+      "username": "Nom d'utilisateur",
+      "password": "Mot de passe",
+      "submit": "Se connecter",
+      "forgotPassword": "Mot de passe oublié ? Utilisez le CLI pour le réinitialiser."
+    },
+    "setup": {
+      "title": "Bienvenue sur Maxwell's Wallet",
+      "subtitle": "Créez votre compte pour commencer",
+      "username": "Nom d'utilisateur",
+      "password": "Mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "submit": "Créer un compte",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "passwordTooShort": "Le mot de passe doit contenir au moins 4 caractères"
+    },
+    "changePassword": {
+      "title": "Changer le mot de passe",
+      "currentPassword": "Mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le nouveau mot de passe",
+      "submit": "Changer le mot de passe",
+      "success": "Mot de passe modifié avec succès",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "passwordTooShort": "Le mot de passe doit contenir au moins 4 caractères"
+    },
+    "logout": "Se déconnecter",
+    "errors": {
+      "INVALID_CREDENTIALS": "Nom d'utilisateur ou mot de passe invalide",
+      "NOT_AUTHENTICATED": "Veuillez vous connecter pour continuer",
+      "SETUP_ALREADY_COMPLETE": "Le compte existe déjà. Veuillez vous connecter.",
+      "INVALID_PASSWORD": "Le mot de passe actuel est incorrect",
+      "LOGIN_FAILED": "La connexion a échoué. Veuillez réessayer.",
+      "SETUP_FAILED": "La configuration a échoué. Veuillez réessayer."
     }
   }
 }

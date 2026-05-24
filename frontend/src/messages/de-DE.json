@@ -88,6 +88,10 @@
     "maxAmount": "Max €",
     "startDate": "Startdatum",
     "endDate": "Enddatum",
+    "splitTransaction": "Split Transaction",
+    "clearAll": "Clear all",
+    "allocated": "{allocated} of {total} allocated",
+    "source": "Quelle",
     "status": {
       "unreconciled": "Nicht abgeglichen",
       "matched": "Zugeordnet",
@@ -320,7 +324,7 @@
     "dbDuplicates": "DB-Duplikate",
     "batchDuplicates": "Stapel-Duplikate",
     "selectAccount": "-- Konto auswählen --",
-    "accountPlaceholder": "z.B. Sparkasse-Girokonto, DKB-12345",
+    "accountPlaceholder": "e.g., BOFA-Checking, AMEX-53004",
     "orTypeNew": "oder neu eingeben",
     "existing": "Vorhanden",
     "new": "Neu",
@@ -347,12 +351,13 @@
       "overview": "Übersicht",
       "imports": "Importe",
       "health": "Systemzustand",
+      "backups": "Sicherungen",
+      "security": "Sicherheit",
       "buckets": "Kategorien",
       "accounts": "Konten",
       "occasions": "Anlässe",
       "expenses": "Ausgabentypen",
-      "allTags": "Alle Tags",
-      "backups": "Sicherungen"
+      "allTags": "Alle Tags"
     },
     "overview": {
       "stats": {
@@ -511,7 +516,7 @@
       "disabled": "Deaktiviert",
       "enabled": "Aktiviert",
       "test": "Testen",
-      "matched": "Übereinstimmend",
+      "matched": "Zugeordnet",
       "transactions": "Transaktionen",
       "testResult": "Test: {count} Transaktionen würden übereinstimmen",
       "confirmApplyAll": "Alle aktiven Regeln auf nicht getaggte Transaktionen anwenden?",
@@ -519,7 +524,9 @@
       "confirmDelete": "Diese Regel löschen?",
       "select": "Auswählen...",
       "all": "ALLE",
-      "any": "BELIEBIG"
+      "any": "BELIEBIG",
+      "merchantPatternPlaceholder": "e.g., Starbucks",
+      "descriptionPatternPlaceholder": "e.g., Coffee"
     },
     "merchants": {
       "description": "Unordentliche Bank-Händlernamen in saubere, konsistente Namen umwandeln",
@@ -546,7 +553,9 @@
       "txns": "Transaktionen",
       "confirmDelete": "Diesen Alias löschen?",
       "confirmApply": "Aliase auf {count} Transaktionen anwenden?",
-      "none": "(keine)"
+      "none": "(keine)",
+      "patternPlaceholder": "e.g., AMZN MKTP",
+      "displayAsPlaceholder": "e.g., Amazon"
     },
     "formats": {
       "description": "Wiederverwendbare Import-Konfigurationen für verschiedene Bank-CSV-Formate erstellen",
@@ -571,7 +580,26 @@
       "configAccount": "Konto: {value}",
       "configDate": "Datum: {value}",
       "configAmount": "Betrag: {value}",
-      "invalidConfig": "Ungültige Konfiguration"
+      "invalidConfig": "Ungültige Konfiguration",
+      "configuration": "Configuration",
+      "selectAccount": "-- Konto auswählen --",
+      "newAccountPlaceholder": "New account name",
+      "createNewAccount": "Create new account",
+      "optional": "(optional)",
+      "descriptionPlaceholder": "e.g., Monthly statement export from Chase",
+      "advancedSettings": "Advanced Settings",
+      "dateColumn": "Date Column *",
+      "amountColumn": "Amount Column *",
+      "descriptionColumn": "Description Column *",
+      "referenceColumn": "Reference Column",
+      "categoryColumn": "Category Column",
+      "skipHeaderRows": "Skip Header Rows",
+      "dateFormat": "Date Format",
+      "amountFormat": "Amount Format",
+      "invertSign": "Invert sign",
+      "selectOption": "-- Select --",
+      "noneOption": "-- None --",
+      "notDetected": "Not detected"
     }
   },
   "organize": {
@@ -634,6 +662,10 @@
     "subtitle": "Abonnements und wiederkehrende Zahlungen verfolgen",
     "upcoming": "Bevorstehende Zahlungen",
     "detected": "Erkannte Muster",
+    "activePatterns": "Active Patterns",
+    "upcomingDays": "Upcoming (30 days)",
+    "noPatternsDetected": "No recurring patterns detected yet",
+    "amountRange": "Amount Range",
     "frequency": {
       "weekly": "Wöchentlich",
       "biweekly": "Zweiwöchentlich",
@@ -646,7 +678,12 @@
     "title": "Abgleichen",
     "subtitle": "Importierte Transaktionen überprüfen und kategorisieren",
     "markReconciled": "Als abgeglichen markieren",
-    "markIgnored": "Als ignoriert markieren"
+    "markIgnored": "Als ignoriert markieren",
+    "markAsTransfer": "Mark as internal transfer",
+    "markAsTransferAndReconcile": "Mark as internal transfer and reconcile",
+    "allReconciled": "All transactions are reconciled!",
+    "actions": "Aktionen",
+    "noBucket": "Keine Kategorie"
   },
   "tags": {
     "title": "Tags",
@@ -867,6 +904,7 @@
   },
   "demo": {
     "banner": "Demo-Modus - Daten werden regelmäßig zurückgesetzt. Einige Funktionen sind deaktiviert.",
+    "loginBanner": "Demo-Modus - Anmelden mit Benutzername \"maxwell\" und Passwort \"wallet\"",
     "featureDisabled": "Diese Funktion ist im Demo-Modus deaktiviert."
   },
   "backup": {
@@ -894,12 +932,52 @@
         "week": "1 Woche"
       }
     },
+    "manualBackupPlaceholder": "Manual backup",
     "fields": {
       "description": "Beschreibung",
       "created": "Erstellt",
       "size": "Größe",
       "source": "Quelle",
       "demoBackup": "Demo-Sicherung"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Anmelden",
+      "subtitle": "Willkommen zurück bei Maxwell's Wallet",
+      "username": "Benutzername",
+      "password": "Passwort",
+      "submit": "Anmelden",
+      "forgotPassword": "Passwort vergessen? Verwenden Sie die CLI, um es zurückzusetzen."
+    },
+    "setup": {
+      "title": "Willkommen bei Maxwell's Wallet",
+      "subtitle": "Erstellen Sie Ihr Konto, um zu beginnen",
+      "username": "Benutzername",
+      "password": "Passwort",
+      "confirmPassword": "Passwort bestätigen",
+      "submit": "Konto erstellen",
+      "passwordMismatch": "Passwörter stimmen nicht überein",
+      "passwordTooShort": "Passwort muss mindestens 4 Zeichen haben"
+    },
+    "changePassword": {
+      "title": "Passwort ändern",
+      "currentPassword": "Aktuelles Passwort",
+      "newPassword": "Neues Passwort",
+      "confirmPassword": "Neues Passwort bestätigen",
+      "submit": "Passwort ändern",
+      "success": "Passwort erfolgreich geändert",
+      "passwordMismatch": "Passwörter stimmen nicht überein",
+      "passwordTooShort": "Passwort muss mindestens 4 Zeichen haben"
+    },
+    "logout": "Abmelden",
+    "errors": {
+      "INVALID_CREDENTIALS": "Ungültiger Benutzername oder Passwort",
+      "NOT_AUTHENTICATED": "Bitte melden Sie sich an, um fortzufahren",
+      "SETUP_ALREADY_COMPLETE": "Konto bereits vorhanden. Bitte melden Sie sich an.",
+      "INVALID_PASSWORD": "Aktuelles Passwort ist falsch",
+      "LOGIN_FAILED": "Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+      "SETUP_FAILED": "Einrichtung fehlgeschlagen. Bitte versuchen Sie es erneut."
     }
   }
 }

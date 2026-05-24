@@ -88,6 +88,10 @@
     "maxAmount": "Max €",
     "startDate": "Data inizio",
     "endDate": "Data fine",
+    "splitTransaction": "Split Transaction",
+    "clearAll": "Clear all",
+    "allocated": "{allocated} of {total} allocated",
+    "source": "Sorgente",
     "status": {
       "unreconciled": "Non riconciliato",
       "matched": "Abbinato",
@@ -320,7 +324,7 @@
     "dbDuplicates": "Duplicati DB",
     "batchDuplicates": "Duplicati batch",
     "selectAccount": "-- Seleziona conto --",
-    "accountPlaceholder": "es. Intesa-Corrente, Unicredit-12345",
+    "accountPlaceholder": "e.g., BOFA-Checking, AMEX-53004",
     "orTypeNew": "o digita nuovo",
     "existing": "Esistente",
     "new": "Nuovo",
@@ -347,12 +351,13 @@
       "overview": "Panoramica",
       "imports": "Importazioni",
       "health": "Salute",
+      "backups": "Backup",
+      "security": "Sicurezza",
       "buckets": "Voci",
       "accounts": "Conti",
       "occasions": "Occasioni",
       "expenses": "Tipi di spesa",
-      "allTags": "Tutti i tag",
-      "backups": "Backup"
+      "allTags": "Tutti i tag"
     },
     "overview": {
       "stats": {
@@ -383,7 +388,7 @@
         "file": "File",
         "format": "Formato",
         "account": "Conto",
-        "imported": "Importate",
+        "imported": "Importato",
         "duplicates": "Duplicati",
         "dateRange": "Intervallo date",
         "status": "Stato",
@@ -505,13 +510,13 @@
       "descriptionPattern": "Pattern descrizione",
       "amountMin": "Importo min",
       "amountMax": "Importo max",
-      "accountSource": "Conto di origine",
+      "accountSource": "Origine conto",
       "matchAll": "Tutte le condizioni devono corrispondere (logica AND)",
       "enableImmediately": "Attiva regola immediatamente",
       "disabled": "Disabilitata",
       "enabled": "Abilitata",
       "test": "Testa",
-      "matched": "Corrispondenza",
+      "matched": "Abbinato",
       "transactions": "transazioni",
       "testResult": "Test: {count} transazioni corrisponderebbero",
       "confirmApplyAll": "Applicare tutte le regole attive alle transazioni senza tag?",
@@ -519,7 +524,9 @@
       "confirmDelete": "Eliminare questa regola?",
       "select": "Seleziona...",
       "all": "TUTTE",
-      "any": "UNA"
+      "any": "UNA",
+      "merchantPatternPlaceholder": "e.g., Starbucks",
+      "descriptionPatternPlaceholder": "e.g., Coffee"
     },
     "merchants": {
       "description": "Normalizza i nomi disordinati degli esercenti bancari in nomi puliti e coerenti",
@@ -546,7 +553,9 @@
       "txns": "trans.",
       "confirmDelete": "Eliminare questo alias?",
       "confirmApply": "Applicare gli alias a {count} transazioni?",
-      "none": "(nessuno)"
+      "none": "(nessuno)",
+      "patternPlaceholder": "e.g., AMZN MKTP",
+      "displayAsPlaceholder": "e.g., Amazon"
     },
     "formats": {
       "description": "Crea configurazioni di importazione riutilizzabili per diversi formati CSV bancari",
@@ -571,7 +580,26 @@
       "configAccount": "Conto: {value}",
       "configDate": "Data: {value}",
       "configAmount": "Importo: {value}",
-      "invalidConfig": "Configurazione non valida"
+      "invalidConfig": "Configurazione non valida",
+      "configuration": "Configuration",
+      "selectAccount": "-- Seleziona conto --",
+      "newAccountPlaceholder": "New account name",
+      "createNewAccount": "Create new account",
+      "optional": "(optional)",
+      "descriptionPlaceholder": "e.g., Monthly statement export from Chase",
+      "advancedSettings": "Advanced Settings",
+      "dateColumn": "Date Column *",
+      "amountColumn": "Amount Column *",
+      "descriptionColumn": "Description Column *",
+      "referenceColumn": "Reference Column",
+      "categoryColumn": "Category Column",
+      "skipHeaderRows": "Skip Header Rows",
+      "dateFormat": "Date Format",
+      "amountFormat": "Amount Format",
+      "invertSign": "Invert sign",
+      "selectOption": "-- Select --",
+      "noneOption": "-- None --",
+      "notDetected": "Not detected"
     }
   },
   "organize": {
@@ -634,6 +662,10 @@
     "subtitle": "Traccia abbonamenti e pagamenti ricorrenti",
     "upcoming": "Pagamenti in arrivo",
     "detected": "Pattern rilevati",
+    "activePatterns": "Active Patterns",
+    "upcomingDays": "Upcoming (30 days)",
+    "noPatternsDetected": "No recurring patterns detected yet",
+    "amountRange": "Amount Range",
     "frequency": {
       "weekly": "Settimanale",
       "biweekly": "Bisettimanale",
@@ -646,7 +678,12 @@
     "title": "Riconcilia",
     "subtitle": "Rivedi e categorizza le transazioni importate",
     "markReconciled": "Segna come riconciliato",
-    "markIgnored": "Segna come ignorato"
+    "markIgnored": "Segna come ignorato",
+    "markAsTransfer": "Mark as internal transfer",
+    "markAsTransferAndReconcile": "Mark as internal transfer and reconcile",
+    "allReconciled": "All transactions are reconciled!",
+    "actions": "Azioni",
+    "noBucket": "Nessuna voce"
   },
   "tags": {
     "title": "Tag",
@@ -867,6 +904,7 @@
   },
   "demo": {
     "banner": "Modalità Demo - I dati vengono reimpostati periodicamente. Alcune funzionalità sono disabilitate.",
+    "loginBanner": "Modalità Demo - Accedi con nome utente \"maxwell\" e password \"wallet\"",
     "featureDisabled": "Questa funzionalità è disabilitata in modalità demo."
   },
   "backup": {
@@ -894,12 +932,52 @@
         "week": "1 settimana"
       }
     },
+    "manualBackupPlaceholder": "Manual backup",
     "fields": {
       "description": "Descrizione",
       "created": "Creato",
       "size": "Dimensione",
       "source": "Sorgente",
       "demoBackup": "Backup Demo"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Accedi",
+      "subtitle": "Bentornato su Maxwell's Wallet",
+      "username": "Nome utente",
+      "password": "Password",
+      "submit": "Accedi",
+      "forgotPassword": "Hai dimenticato la password? Usa la CLI per reimpostarla."
+    },
+    "setup": {
+      "title": "Benvenuto su Maxwell's Wallet",
+      "subtitle": "Crea il tuo account per iniziare",
+      "username": "Nome utente",
+      "password": "Password",
+      "confirmPassword": "Conferma Password",
+      "submit": "Crea Account",
+      "passwordMismatch": "Le password non corrispondono",
+      "passwordTooShort": "La password deve essere di almeno 4 caratteri"
+    },
+    "changePassword": {
+      "title": "Cambia Password",
+      "currentPassword": "Password Attuale",
+      "newPassword": "Nuova Password",
+      "confirmPassword": "Conferma Nuova Password",
+      "submit": "Cambia Password",
+      "success": "Password cambiata con successo",
+      "passwordMismatch": "Le password non corrispondono",
+      "passwordTooShort": "La password deve essere di almeno 4 caratteri"
+    },
+    "logout": "Disconnetti",
+    "errors": {
+      "INVALID_CREDENTIALS": "Nome utente o password non validi",
+      "NOT_AUTHENTICATED": "Effettua l'accesso per continuare",
+      "SETUP_ALREADY_COMPLETE": "Account già esistente. Effettua l'accesso.",
+      "INVALID_PASSWORD": "La password attuale non è corretta",
+      "LOGIN_FAILED": "Accesso non riuscito. Riprova.",
+      "SETUP_FAILED": "Configurazione non riuscita. Riprova."
     }
   }
 }
