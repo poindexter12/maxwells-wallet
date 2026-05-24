@@ -21,6 +21,11 @@ updates:
       # Tracking: https://github.com/jsx-eslint/eslint-plugin-react/issues/3977
       - dependency-name: "eslint"
         versions: [">=10"]
+      # pseudo-localization 3.x requires node >=23; this project pins node 22.
+      # Stay on 2.x until the project moves to node >=23. (Dev-only QA tool;
+      # the script uses its `localize` export.)
+      - dependency-name: "pseudo-localization"
+        versions: [">=3"]
 
   # Backend (pip/uv)
   - package-ecosystem: "pip"
