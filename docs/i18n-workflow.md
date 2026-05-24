@@ -228,16 +228,16 @@ files:
 
 ### GitHub Integration
 
-Sync runs through the **Crowdin GitHub Action** (`.github/workflows/crowdin.yaml`), not the Crowdin GitHub App. The Action:
+Sync runs through the **Crowdin GitHub Action** (`.github/workflows/crowdin.yaml`). It replaces Crowdin's older **webhook/OAuth integration** — the one that authenticated as a repo user (so its commits/PRs showed up under a human account, not a `crowdin[bot]`) and silently orphaned the `i18n/crowdin-sync` branch after a history rewrite. That integration has been disconnected. The Action:
 - **Push to `main`** touching `en-US.json` → uploads source strings to Crowdin.
 - **Weekly schedule + manual dispatch** → downloads translations and opens a PR from `l10n/crowdin` → `main`.
-- Recreates `l10n/crowdin` fresh from `main` each run, so it can't silently drift from history rewrites (the failure that orphaned the old `i18n/crowdin-sync` branch).
+- Recreates `l10n/crowdin` fresh from `main` each run, so it can't silently drift from history rewrites.
 
 Requirements:
 - Repo secret `CROWDIN_PERSONAL_TOKEN` (already set).
 - Project ID `854226` lives in `crowdin.yaml`.
 
-> **Do not also enable the Crowdin GitHub App.** Running both the App and the Action against the same project causes duplicate/competing PRs. If the App is still connected in Crowdin (Project → Settings → Integrations → GitHub), disconnect it.
+> **Do not reconnect Crowdin's native GitHub integration** (Project → Settings → Integrations → GitHub). Running it alongside the Action against the same project causes duplicate/competing PRs and re-introduces the branch-drift failure. The Action is the only sync path.
 
 ## Troubleshooting
 
