@@ -81,3 +81,5 @@ jobs:
         env:
           CROWDIN_PROJECT_ID: "854226"
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+          # Required for the Action to push l10n/crowdin and open the PR.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
