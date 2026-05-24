@@ -61,6 +61,6 @@
       "onAutoForward": "notify"
     }
   },
-  "postCreateCommand": "mise trust && mise install && just setup",
+  "postCreateCommand": "mise trust && mise install && mise exec -- just setup",
   "remoteUser": "vscode"
 }
