@@ -1,0 +1,5 @@
+# Source dependencies for the documentation site (MkDocs).
+# Regenerate the pinned, hashed lockfile with:
+#   uv pip compile .github/requirements-docs.in \
+#     --universal --generate-hashes -o .github/requirements-docs.txt
+mkdocs-material
