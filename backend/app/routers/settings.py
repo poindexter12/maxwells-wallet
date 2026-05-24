@@ -1,5 +1,6 @@
 """Settings router for application-wide configuration including i18n preferences."""
 
+from datetime import UTC, datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, Request, Body
 from sqlalchemy import select
@@ -131,7 +132,7 @@ async def update_settings(updates: AppSettingsUpdate, session: AsyncSession = De
     for key, value in updates.model_dump(exclude_unset=True).items():
         setattr(settings, key, value)
 
-    settings.updated_at = __import__("datetime").datetime.utcnow()
+    settings.updated_at = datetime.now(UTC)
 
     await session.commit()
     await session.refresh(settings)

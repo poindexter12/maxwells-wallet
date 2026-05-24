@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
-from datetime import datetime
+from datetime import UTC, datetime
 from pydantic import BaseModel
 import re
 
@@ -134,7 +134,7 @@ async def mark_as_transfer(request: MarkTransferRequest, session: AsyncSession =
     for txn in transactions:
         if txn.is_transfer != request.is_transfer:
             txn.is_transfer = request.is_transfer
-            txn.updated_at = datetime.utcnow()
+            txn.updated_at = datetime.now(UTC)
             updated_count += 1
 
     await session.commit()
@@ -176,8 +176,8 @@ async def link_transaction(
     txn1.is_transfer = True
     txn2.is_transfer = True
 
-    txn1.updated_at = datetime.utcnow()
-    txn2.updated_at = datetime.utcnow()
+    txn1.updated_at = datetime.now(UTC)
+    txn2.updated_at = datetime.now(UTC)
 
     await session.commit()
 
@@ -210,11 +210,11 @@ async def unlink_transaction(transaction_id: int, session: AsyncSession = Depend
 
     # Unlink both
     txn.linked_transaction_id = None
-    txn.updated_at = datetime.utcnow()
+    txn.updated_at = datetime.now(UTC)
 
     if linked_txn and linked_txn.linked_transaction_id == transaction_id:
         linked_txn.linked_transaction_id = None
-        linked_txn.updated_at = datetime.utcnow()
+        linked_txn.updated_at = datetime.now(UTC)
 
     await session.commit()
 
