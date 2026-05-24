@@ -84,13 +84,13 @@ git commit -m "feat: add myFeature translations"
 git push origin main
 ```
 
-### Step 4: Crowdin Syncs Automatically
+### Step 4: CI Uploads Sources to Crowdin
 
-Crowdin watches the `main` branch via GitHub integration. Within an hour (or on next sync), new strings appear in Crowdin for translators.
+The **Crowdin Sync** GitHub Action (`.github/workflows/crowdin.yaml`) runs on every push to `main` that changes `en-US.json` and uploads the new source strings to Crowdin. Watch it in the **Actions** tab — unlike the old GitHub App, every sync is visible and debuggable.
 
 ### Step 5: Translations Arrive via PR
 
-When translations are complete, Crowdin creates a PR from `i18n/crowdin-sync` → `main`. Review and merge it.
+The same workflow runs weekly (Mondays 06:00 UTC) and on-demand via **Actions → Crowdin Sync → Run workflow**. It downloads completed translations and opens a PR from `l10n/crowdin` → `main`. Review and merge it.
 
 ## String Key Conventions
 
@@ -144,36 +144,24 @@ git push
 
 ### Normal Flow
 
-1. Crowdin creates PR from `i18n/crowdin-sync` → `main`
+1. The Crowdin Sync workflow opens a PR from `l10n/crowdin` → `main`
 2. CI runs (skips E2E for translation-only changes)
 3. Review the changes (spot check a few strings)
 4. Merge the PR
 
 ### If There Are Conflicts
 
-Conflicts occur when `main` has changes Crowdin doesn't know about (usually from incorrect direct edits).
+Conflicts occur when `main` has changes Crowdin doesn't know about (usually from incorrect direct edits). Because the Action recreates `l10n/crowdin` from `main` on each run, the simplest fix is almost always to discard the branch and re-run the workflow:
 
-**Option A: Rebase**
 ```bash
-git fetch origin
-git checkout i18n/crowdin-sync
-git rebase origin/main
-# Resolve conflicts:
-# - For en-US.json: keep main's version
-# - For other locales: keep Crowdin's version (incoming)
-git push --force-with-lease
-```
-
-**Option B: Reset**
-```bash
-# Close the conflicted PR
+# Close the conflicted PR and delete the branch
 gh pr close <PR-number>
+git push origin --delete l10n/crowdin
 
-# Delete the branch
-git push origin --delete i18n/crowdin-sync
-
-# Crowdin will recreate it on next sync
+# Re-run: Actions → Crowdin Sync → Run workflow (download = true)
 ```
+
+If you must keep the branch, rebase it on `main` — keep `main`'s version of `en-US.json`, keep Crowdin's (incoming) version of every other locale — then `git push --force-with-lease`.
 
 ## Providing Context for Translators
 
@@ -240,17 +228,23 @@ files:
 
 ### GitHub Integration
 
-Crowdin uses the GitHub App integration (not a workflow file):
-- Watches: `main` branch
-- Creates: `i18n/crowdin-sync` branch
-- Auto-syncs: ~hourly
+Sync runs through the **Crowdin GitHub Action** (`.github/workflows/crowdin.yaml`), not the Crowdin GitHub App. The Action:
+- **Push to `main`** touching `en-US.json` → uploads source strings to Crowdin.
+- **Weekly schedule + manual dispatch** → downloads translations and opens a PR from `l10n/crowdin` → `main`.
+- Recreates `l10n/crowdin` fresh from `main` each run, so it can't silently drift from history rewrites (the failure that orphaned the old `i18n/crowdin-sync` branch).
+
+Requirements:
+- Repo secret `CROWDIN_PERSONAL_TOKEN` (already set).
+- Project ID `854226` lives in `crowdin.yaml`.
+
+> **Do not also enable the Crowdin GitHub App.** Running both the App and the Action against the same project causes duplicate/competing PRs. If the App is still connected in Crowdin (Project → Settings → Integrations → GitHub), disconnect it.
 
 ## Troubleshooting
 
 ### "My new strings aren't in Crowdin"
 
 1. Verify strings are in `en-US.json` and pushed to `main`
-2. Wait for auto-sync (~1 hour) or run `just i18n::upload`
+2. Check the **Crowdin Sync** run in the Actions tab (it triggers on push to `main`), or run `just i18n::upload` locally
 3. Check Crowdin project for the strings
 
 ### "Translations aren't appearing in the app"
