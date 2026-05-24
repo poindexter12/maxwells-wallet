@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import UTC, datetime
 from pydantic import BaseModel as PydanticBaseModel
 
 from app.database import get_session
@@ -462,7 +462,7 @@ async def confirm_custom_import(
             # Update existing config
             existing_config.config_json = config_json
             existing_config.use_count += 1
-            existing_config.updated_at = datetime.utcnow()
+            existing_config.updated_at = datetime.now(UTC)
             # Update signature if provided
             if header_signature:
                 existing_config.header_signature = header_signature
@@ -590,7 +590,7 @@ async def update_custom_config(
     for field, value in update_data.items():
         setattr(config, field, value)
 
-    config.updated_at = datetime.utcnow()
+    config.updated_at = datetime.now(UTC)
     await session.commit()
     await session.refresh(config)
 

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List, Dict, Any
-from datetime import datetime, date
+from datetime import UTC, datetime, date
 from pydantic import BaseModel as PydanticBaseModel
 
 from app.database import get_session
@@ -294,7 +294,7 @@ async def confirm_import(
 
         if existing_format:
             existing_format.format_type = format_type
-            existing_format.updated_at = datetime.utcnow()
+            existing_format.updated_at = datetime.now(UTC)
         else:
             new_format = ImportFormat(account_source=account_source, format_type=format_type)
             session.add(new_format)
@@ -724,7 +724,7 @@ async def batch_confirm_import(
 
             if existing_format:
                 existing_format.format_type = file_info.format_type
-                existing_format.updated_at = datetime.utcnow()
+                existing_format.updated_at = datetime.now(UTC)
             else:
                 new_format = ImportFormat(account_source=file_info.account_source, format_type=file_info.format_type)
                 session.add(new_format)

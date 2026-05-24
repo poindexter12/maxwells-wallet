@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from datetime import datetime
+from datetime import UTC, datetime
 
 from app.database import get_session
 from app.orm import Dashboard, DashboardWidget
@@ -106,7 +106,7 @@ async def update_widget(widget_id: int, widget: DashboardWidgetUpdate, session: 
     for key, value in widget.model_dump(exclude_unset=True).items():
         setattr(db_widget, key, value)
 
-    db_widget.updated_at = datetime.utcnow()
+    db_widget.updated_at = datetime.now(UTC)
     await session.commit()
     await session.refresh(db_widget)
     return db_widget
@@ -145,7 +145,7 @@ async def update_layout(layout: DashboardLayoutUpdate, session: AsyncSession = D
             raise not_found(ErrorCode.WIDGET_NOT_FOUND, widget_id=widget_id)
 
         widget.position = new_position
-        widget.updated_at = datetime.utcnow()
+        widget.updated_at = datetime.now(UTC)
 
     await session.commit()
 
@@ -192,7 +192,7 @@ async def toggle_widget_visibility(widget_id: int, session: AsyncSession = Depen
         raise not_found(ErrorCode.WIDGET_NOT_FOUND, widget_id=widget_id)
 
     widget.is_visible = not widget.is_visible
-    widget.updated_at = datetime.utcnow()
+    widget.updated_at = datetime.now(UTC)
     await session.commit()
     await session.refresh(widget)
 

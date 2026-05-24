@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func
 from typing import List, Optional
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 import re
 
 from app.database import get_session
@@ -404,7 +404,7 @@ async def update_transaction(
     for key, value in transaction.model_dump(exclude_unset=True).items():
         setattr(db_transaction, key, value)
 
-    db_transaction.updated_at = datetime.utcnow()
+    db_transaction.updated_at = datetime.now(UTC)
 
     await session.commit()
     await session.refresh(db_transaction)
@@ -437,7 +437,7 @@ async def bulk_update_transactions(
     for txn in transactions:
         for key, value in updates.model_dump(exclude_unset=True).items():
             setattr(txn, key, value)
-        txn.updated_at = datetime.utcnow()
+        txn.updated_at = datetime.now(UTC)
 
     await session.commit()
 

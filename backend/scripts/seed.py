@@ -18,7 +18,7 @@ import asyncio
 import random
 import hashlib
 import argparse
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import delete, select
@@ -452,7 +452,7 @@ async def seed_dashboards(session: AsyncSession):
     await session.refresh(default_dashboard)
 
     # Widgets for default dashboard - use raw insert to avoid ORM identity issues
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     default_widget_data = [
         {
             "dashboard_id": default_dashboard.id,
