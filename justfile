@@ -37,7 +37,9 @@ install-backend:
     source scripts/gum-helpers.sh
     style 12 "Installing backend dependencies..."
     cd backend
-    spin "Creating virtual environment..." uv venv
+    # `uv sync` creates the .venv itself. A separate `uv venv` step errors on
+    # re-runs once .venv exists (newer uv refuses without --clear), and under the
+    # gum spinner that failure is hidden — which looks like a hang.
     spin "Syncing backend packages..." uv sync --all-extras
     style 2 "Backend dependencies installed."
 
