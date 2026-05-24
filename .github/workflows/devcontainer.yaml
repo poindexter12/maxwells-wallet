@@ -45,27 +45,27 @@ jobs:
 
           # Test Node.js version (installed via mise)
           echo "Testing Node.js..."
-          docker exec "$CONTAINER_ID" node --version | grep -q "v22" || (echo "Node.js v22 not found" && exit 1)
+          docker exec "$CONTAINER_ID" mise exec -- node --version | grep -q "v22" || (echo "Node.js v22 not found" && exit 1)
 
           # Test Python version (installed via mise)
           echo "Testing Python..."
-          docker exec "$CONTAINER_ID" python --version | grep -q "3.11" || (echo "Python 3.11 not found" && exit 1)
+          docker exec "$CONTAINER_ID" mise exec -- python --version | grep -q "3.14" || (echo "Python 3.14 not found" && exit 1)
 
           # Test uv is installed (via mise)
           echo "Testing uv..."
-          docker exec "$CONTAINER_ID" uv --version || (echo "uv not found" && exit 1)
+          docker exec "$CONTAINER_ID" mise exec -- uv --version || (echo "uv not found" && exit 1)
 
           # Test just is installed (via mise)
           echo "Testing just..."
-          docker exec "$CONTAINER_ID" just --version || (echo "just not found" && exit 1)
+          docker exec "$CONTAINER_ID" mise exec -- just --version || (echo "just not found" && exit 1)
 
           # Test gum is installed (via mise)
           echo "Testing gum..."
-          docker exec "$CONTAINER_ID" gum --version || (echo "gum not found" && exit 1)
+          docker exec "$CONTAINER_ID" mise exec -- gum --version || (echo "gum not found" && exit 1)
 
           # Test npm is available (comes with node)
           echo "Testing npm..."
-          docker exec "$CONTAINER_ID" npm --version || (echo "npm not found" && exit 1)
+          docker exec "$CONTAINER_ID" mise exec -- npm --version || (echo "npm not found" && exit 1)
 
           echo "All devcontainer tests passed!"
 
