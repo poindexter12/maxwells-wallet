@@ -5,7 +5,7 @@ Provides automatic instrumentation for FastAPI and SQLAlchemy,
 plus decorators for adding custom spans to business logic.
 """
 
-import asyncio
+import inspect
 from functools import wraps
 from typing import TYPE_CHECKING, Any, Callable, TypeVar
 
@@ -144,7 +144,7 @@ def traced(span_name: str | None = None) -> Callable[[F], F]:
                     span.set_status(trace.StatusCode.ERROR, str(e))
                     raise
 
-        if asyncio.iscoroutinefunction(func):
+        if inspect.iscoroutinefunction(func):
             return async_wrapper  # type: ignore[return-value]
         return sync_wrapper  # type: ignore[return-value]
 
