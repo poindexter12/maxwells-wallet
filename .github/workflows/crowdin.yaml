@@ -30,9 +30,9 @@ name: Crowdin Sync
         type: boolean
         default: true
 
+# Least privilege: read by default; write is scoped to the jobs that need it.
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 # Never let two syncs race each other against the same Crowdin project.
 concurrency:
@@ -43,6 +43,9 @@ jobs:
   crowdin:
     name: Crowdin Sync
     runs-on: ubuntu-latest
+    permissions:
+      contents: write        # push the l10n/crowdin branch
+      pull-requests: write    # open the translation PR
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
