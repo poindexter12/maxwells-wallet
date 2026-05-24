@@ -223,6 +223,17 @@ These checks make i18n problems loud instead of silent (the prior setup drifted 
 
 The shipped locale set is defined once in `frontend/src/i18n.ts` (`productionLocales`) and must match the backend's `SUPPORTED_LOCALES` (`backend/app/routers/settings.py`) and `LanguagePreference` enum (`backend/app/orm.py`).
 
+### Auto-merge
+
+`.github/workflows/crowdin-automerge.yaml` merges the translation PR automatically once CI passes, so translations land hands-free. It needs a personal access token because the PR is authored by `github-actions[bot]` (which can't approve its own PR) and `main` requires a review plus an `E2E Tests` check that translation PRs skip.
+
+One-time setup:
+1. Create a **fine-grained PAT** scoped to this repository with **Contents: Read & write** and **Pull requests: Read & write** (the token's owner must be a repo admin, since the merge bypasses branch protection). If the admin merge is rejected, also grant **Administration: Read & write**.
+2. Add it as the repo secret **`GH_AUTOMERGE_TOKEN`** (Settings → Secrets and variables → Actions).
+3. Note the expiry — when the PAT expires, auto-merge silently no-ops (the workflow logs a warning) and you fall back to merging the PR by hand.
+
+Without the secret the workflow is a safe no-op; you just merge the Crowdin PR manually.
+
 ## Configuration
 
 ### Crowdin Config (`crowdin.yaml`)

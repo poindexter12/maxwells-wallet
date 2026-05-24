@@ -1,0 +1,54 @@
+name: Crowdin Auto-merge
+
+# Tier 4: when CI passes on the Crowdin translation PR (branch l10n/crowdin),
+# merge it automatically — no manual step.
+#
+# Why this needs an admin PAT and can't use the built-in GITHUB_TOKEN:
+#   - The PR is authored by github-actions[bot], which cannot approve its own PR.
+#   - main requires 1 review + an "E2E Tests" check that is SKIPPED on
+#     translation-only PRs, so native auto-merge would stall.
+# So we wait for the CI workflow to conclude success, then admin-bypass merge
+# (enforce_admins is off) using GH_AUTOMERGE_TOKEN — a PAT belonging to a repo
+# admin. Setup instructions: docs/i18n-workflow.md ("Auto-merge").
+
+"on":
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+concurrency:
+  group: crowdin-automerge
+  cancel-in-progress: false
+
+jobs:
+  automerge:
+    name: Admin-merge the green translation PR
+    runs-on: ubuntu-latest
+    # Only the Crowdin PR, only from this repo (not a fork), only when CI passed.
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_branch == 'l10n/crowdin' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Merge if a PAT is configured
+        env:
+          GH_TOKEN: ${{ secrets.GH_AUTOMERGE_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::warning::GH_AUTOMERGE_TOKEN is not set — skipping auto-merge. Add the PAT to enable it (see docs/i18n-workflow.md)."
+            exit 0
+          fi
+          pr=$(gh pr list --repo "$REPO" --head l10n/crowdin --state open \
+            --json number --jq '.[0].number // empty')
+          if [ -z "$pr" ]; then
+            echo "No open l10n/crowdin PR to merge."
+            exit 0
+          fi
+          echo "CI passed — admin-merging PR #$pr"
+          gh pr merge "$pr" --repo "$REPO" --squash --admin --delete-branch
