@@ -35,7 +35,7 @@ ENV NEXT_PUBLIC_ENABLE_PSEUDO=$ENABLE_PSEUDO
 RUN echo "==> Building Next.js with NEXT_PUBLIC_ENABLE_PSEUDO=$ENABLE_PSEUDO" && npm run build
 
 # Final stage: Python + Node runtime
-FROM python:3.12-slim@sha256:48006ff57afe15f247ad3da166e9487da0f66a94adbc92810b0e189382d79246
+FROM python:3.14-slim@sha256:c845af9399020c7e562969a13689e929074a10fd057acd1b1fad06a2fb068e97
 
 # Re-declare build args for this stage
 ARG APP_VERSION=unknown

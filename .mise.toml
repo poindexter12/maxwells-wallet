@@ -6,7 +6,7 @@
 # Frontend tooling
 node = "22"                    # Latest Node 22.x (matches .nvmrc)
 # Backend tooling
-python = "3.11"                # Python 3.11.x (matches project requirement)
+python = "3.14"                # Python 3.14.x (matches project requirement)
 uv = "latest"                  # Python package manager
 # Build system (Phase 13+)
 just = "latest"                # Command runner (replaces Make)
