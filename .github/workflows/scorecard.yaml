@@ -32,8 +32,12 @@ jobs:
           results_format: sarif
           publish_results: true
 
+      # Always upload, even if the publish_results step above had a transient
+      # failure — otherwise the GitHub Security alerts never refresh and stale
+      # findings linger (which is exactly what happened with the imposter pin).
       - name: Upload SARIF to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@dc73d59c2d7bd4f8194098a91219eeee6d8a1719 # v4
+        if: always()
+        uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4
         with:
           sarif_file: results.sarif
           category: scorecard
