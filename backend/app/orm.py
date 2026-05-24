@@ -115,6 +115,7 @@ class LanguagePreference(str, Enum):
     pt_pt = "pt-PT"
     de_de = "de-DE"
     nl_nl = "nl-NL"
+    aa_er = "aa-ER"
     pseudo = "pseudo"
 
 

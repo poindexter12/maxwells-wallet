@@ -1,7 +1,7 @@
 /**
  * Internationalization (i18n) configuration for Maxwell's Wallet
  *
- * Supports 8 languages:
+ * Supports 9 languages:
  * - en-US: English (United States) - default
  * - en-GB: English (United Kingdom)
  * - es-ES: Spanish (Spain)
@@ -10,13 +10,18 @@
  * - pt-PT: Portuguese (Portugal)
  * - de-DE: German (Germany)
  * - nl-NL: Dutch (Netherlands)
+ * - aa-ER: Afar (Eritrea)
  *
  * In development, a 'pseudo' locale is available for QA testing.
  * Generate it with: make i18n-pseudo
+ *
+ * This list is the single source of truth for shipped locales. It is enforced
+ * by src/test/i18n.test.ts (every locale here must have every en-US key) and
+ * must stay in sync with the backend's SUPPORTED_LOCALES (app/routers/settings.py).
  */
 
 // Production locales (always available)
-const productionLocales = ['en-US', 'en-GB', 'es-ES', 'fr-FR', 'it-IT', 'pt-PT', 'de-DE', 'nl-NL'] as const;
+export const productionLocales = ['en-US', 'en-GB', 'es-ES', 'fr-FR', 'it-IT', 'pt-PT', 'de-DE', 'nl-NL', 'aa-ER'] as const;
 
 // Dev-only locale for QA testing (not shipped to production)
 const devLocales = ['pseudo'] as const;
@@ -41,6 +46,7 @@ export const languageNames: Record<Locale, string> = {
   'de-DE': '🇩🇪 Deutsch',
   'nl-NL': '🇳🇱 Nederlands',
   'pt-PT': '🇵🇹 Português',
+  'aa-ER': '🇪🇷 Qafar af',
   'pseudo': '🔤 [Ƥşḗḗŭŭḓǿǿ]',
 };
 

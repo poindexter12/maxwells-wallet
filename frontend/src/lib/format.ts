@@ -22,6 +22,7 @@ const LOCALE_CURRENCIES: Record<string, string> = {
   'es-ES': 'EUR',
   'pt-PT': 'EUR',
   'nl-NL': 'EUR',
+  'aa-ER': 'ERN', // Eritrean nakfa
   'pseudo': 'USD', // Use USD for pseudo-locale testing
 }
 
@@ -39,6 +40,7 @@ const LOCALE_LARGE_THRESHOLDS: Record<string, number> = {
   'es-ES': 85,   // €85 EUR
   'pt-PT': 85,   // €85 EUR
   'nl-NL': 85,   // €85 EUR
+  'aa-ER': 1500, // ~Nfk 1500 (rough purchasing-power equivalent)
   'pseudo': 100, // Use same as en-US for testing
 }
 

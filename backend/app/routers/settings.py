@@ -25,7 +25,7 @@ class BackupScheduleUpdate(BaseModel):
 router = APIRouter(prefix="/api/v1/settings", tags=["settings"])
 
 # Supported locales for i18n (BCP 47 codes)
-SUPPORTED_LOCALES = ["en-US", "en-GB", "es-ES", "fr-FR", "it-IT", "pt-PT", "de-DE", "nl-NL", "pseudo"]
+SUPPORTED_LOCALES = ["en-US", "en-GB", "es-ES", "fr-FR", "it-IT", "pt-PT", "de-DE", "nl-NL", "aa-ER", "pseudo"]
 DEFAULT_LOCALE = "en-US"
 
 
