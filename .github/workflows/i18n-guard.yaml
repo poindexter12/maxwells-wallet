@@ -1,0 +1,42 @@
+name: i18n Source Guard
+
+# Enforces the golden rule: only en-US.json is hand-edited. Every other
+# messages/*.json is managed by Crowdin (branch l10n/crowdin); editing one by
+# hand causes drift and merge conflicts. Developer-editable files are exempt:
+# en-US.json (source), pseudo.json (generated), universal.json + schema.json
+# (the validation allowlist). The Crowdin Sync PR is exempt by branch name.
+
+"on":
+  pull_request:
+    branches:
+      - main
+    paths:
+      - frontend/src/messages/**
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    name: No hand-edited locale files
+    if: github.head_ref != 'l10n/crowdin'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+      - name: Check changed locale files
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          changed=$(git diff --name-only "$BASE_SHA" HEAD -- 'frontend/src/messages/')
+          violations=$(printf '%s\n' "$changed" \
+            | grep -E '^frontend/src/messages/.+\.json$' \
+            | grep -vE '^frontend/src/messages/(en-US|pseudo|universal|schema)\.json$' || true)
+          if [ -n "$violations" ]; then
+            echo "::error::Translations are managed by Crowdin — only edit en-US.json. These Crowdin-managed locale files were hand-edited:"
+            printf '%s\n' "$violations"
+            echo "Revert them and put your strings in en-US.json instead. See docs/i18n-workflow.md."
+            exit 1
+          fi
+          echo "OK — no hand-edited Crowdin-managed locale files."

@@ -210,6 +210,19 @@ just i18n::pseudo
 
 Enable in the app by selecting "Pseudo" in language settings.
 
+## CI Safety Gates
+
+These checks make i18n problems loud instead of silent (the prior setup drifted for months unnoticed):
+
+| Gate | Where | Catches |
+|------|-------|---------|
+| **Locale completeness** | `frontend/src/test/i18n.test.ts` | Any shipped locale missing a key from `en-US.json`. Runs in the Frontend CI job. |
+| **Placeholder integrity** | `frontend/src/test/i18n.test.ts` | A translation that drops/renames an ICU `{placeholder}` (a render-time crash). |
+| **Source guard** | `.github/workflows/i18n-guard.yaml` | A PR that hand-edits a Crowdin-managed locale file (everything except `en-US`, `pseudo`, `universal`, `schema`). The `l10n/crowdin` PR is exempt. |
+| **Notify on failure** | `.github/workflows/crowdin.yaml` | A scheduled/push sync that fails — opens/updates a `crowdin-sync-failure` issue instead of failing into the void. |
+
+The shipped locale set is defined once in `frontend/src/i18n.ts` (`productionLocales`) and must match the backend's `SUPPORTED_LOCALES` (`backend/app/routers/settings.py`) and `LanguagePreference` enum (`backend/app/orm.py`).
+
 ## Configuration
 
 ### Crowdin Config (`crowdin.yaml`)

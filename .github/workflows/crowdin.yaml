@@ -83,3 +83,32 @@ jobs:
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
           # Required for the Action to push l10n/crowdin and open the PR.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Make unattended failures loud. A scheduled/push sync that fails silently is
+  # exactly how the old integration rotted for 5 months. Manual (workflow_dispatch)
+  # runs are skipped here since whoever triggered them already sees the result.
+  notify-failure:
+    name: Report sync failure
+    needs: crowdin
+    if: failure() && github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update a tracking issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create crowdin-sync-failure --color B60205 \
+            --description "Crowdin Sync workflow failed" --force --repo "$GITHUB_REPOSITORY" || true
+          body=$(printf 'The scheduled `Crowdin Sync` workflow failed — translations are not syncing.\n\nFailed run: %s\n\nSee docs/i18n-workflow.md. This issue gets a new comment on each subsequent failure; close it once a run succeeds.' "$RUN_URL")
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --label crowdin-sync-failure --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body "$body"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" \
+              --title "Crowdin Sync workflow failed" \
+              --label crowdin-sync-failure --body "$body"
+          fi

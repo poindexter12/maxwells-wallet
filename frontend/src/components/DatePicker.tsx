@@ -26,6 +26,7 @@ const dateFnsLocales: Record<string, DateFnsLocale> = {
   'pt-PT': pt,
   'de-DE': de,
   'nl-NL': nl,
+  'aa-ER': enUS, // date-fns has no Afar locale; fall back to en-US formatting
   'pseudo': enUS, // Fallback for pseudo locale
 }
 
@@ -39,6 +40,7 @@ const dateFormats: Record<string, string> = {
   'pt-PT': 'dd/MM/yyyy',
   'de-DE': 'dd.MM.yyyy',
   'nl-NL': 'dd-MM-yyyy',
+  'aa-ER': 'dd/MM/yyyy',
   'pseudo': 'MM/dd/yyyy',
 }
 

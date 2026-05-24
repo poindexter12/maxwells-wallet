@@ -9,7 +9,7 @@ This file provides guidance to AI coding agents when working with code in this r
 - **Backend**: FastAPI + Python (async)
 - **Database**: SQLite (dev) with SQLModel ORM (Postgres-ready for prod)
 - **Package Management**: npm (frontend), uv (backend)
-- **i18n**: next-intl with 9 locales (en-US, en-GB, es-ES, fr-FR, it-IT, pt-PT, de-DE, nl-NL, pseudo)
+- **i18n**: next-intl with 10 locales (en-US, en-GB, es-ES, fr-FR, it-IT, pt-PT, de-DE, nl-NL, aa-ER, pseudo)
 
 ## Repository Structure
 

@@ -24,6 +24,7 @@ class TestSettingsEndpoints:
             "pt-PT",
             "de-DE",
             "nl-NL",
+            "aa-ER",
             "pseudo",
         ]
         assert "supported_locales" in data
@@ -44,6 +45,7 @@ class TestSettingsEndpoints:
             "pt-PT",
             "de-DE",
             "nl-NL",
+            "aa-ER",
             "pseudo",
         }
 
