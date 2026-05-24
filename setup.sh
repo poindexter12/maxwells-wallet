@@ -44,9 +44,7 @@ echo ""
 # Install backend dependencies
 echo -e "${BLUE}Installing backend dependencies...${NC}"
 cd backend
-uv venv
-source .venv/bin/activate
-uv pip install -e .
+uv sync --all-extras
 cd ..
 echo -e "${GREEN}✓ Backend dependencies installed${NC}"
 echo ""

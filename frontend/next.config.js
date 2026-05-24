@@ -2,6 +2,12 @@
 const nextConfig = {
   output: 'standalone',
   poweredByHeader: false,
+  // Pin the Turbopack root to this directory. Next 16 walks up looking for
+  // lockfiles to infer the workspace root; a stray lockfile in a parent dir
+  // otherwise makes the build fail with "couldn't find the Next.js package".
+  turbopack: {
+    root: __dirname,
+  },
   async rewrites() {
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001'
     return [

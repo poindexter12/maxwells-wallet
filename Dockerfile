@@ -54,12 +54,14 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 
-# Setup Python backend
-COPY backend/pyproject.toml ./backend/
+# Setup Python backend — install the locked dependency set into a venv for
+# reproducible, vulnerability-pinned production builds. The app runs from source
+# (cwd=/app/backend, see supervisord), so we skip installing the project package
+# itself here, which keeps this dependency layer cacheable.
+COPY backend/pyproject.toml backend/uv.lock ./backend/
 WORKDIR /app/backend
-RUN uv venv /app/backend/.venv
 ENV PATH="/app/backend/.venv/bin:$PATH"
-RUN uv pip install -e .
+RUN uv sync --frozen --no-dev --no-install-project
 
 # Copy backend code
 COPY backend/ ./

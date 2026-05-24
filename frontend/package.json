@@ -21,7 +21,7 @@
     "next": "^16.1.5",
     "next-intl": "^4.7.0",
     "react": "^19.2.4",
-    "react-day-picker": "^9.13.0",
+    "react-day-picker": "^10.0.1",
     "react-dom": "^19.2.4",
     "recharts": "^3.7.0",
     "sonner": "^2.0.7",
@@ -37,28 +37,30 @@
     "@types/node": "^25.0.10",
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.1",
+    "@vitejs/plugin-react": "^6.0.2",
     "@vitest/coverage-v8": "^4.0.18",
     "autoprefixer": "^10.4.23",
     "baseline-browser-mapping": "^2.9.18",
-    "crowdin-context-harvester": "^0.8.1",
+    "crowdin-context-harvester": "^0.9.0",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.5",
     "fast-check": "^4.5.3",
-    "jsdom": "^28.1.0",
+    "jsdom": "^29.1.1",
     "msw": "^2.12.4",
-    "postcss": "^8.5.6",
+    "postcss": "^8.5.10",
     "pseudo-localization": "^3.1.1",
     "tailwindcss": "^4.1.18",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "vitest": "^4.0.14"
   },
   "overrides": {
     "vscode-ripgrep": "npm:@vscode/ripgrep@^1.17.0",
     "minimatch": "^10.2.1",
+    "postcss": "$postcss",
+    "uuid": "^11.1.1",
     "crowdin-context-harvester": {
       "fast-xml-parser": "^5.3.6",
-      "langsmith": "^0.4.6"
+      "langsmith": "^0.7.2"
     }
   }
 }
