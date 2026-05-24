@@ -88,6 +88,10 @@
     "maxAmount": "Máx €",
     "startDate": "Data inicial",
     "endDate": "Data final",
+    "splitTransaction": "Split Transaction",
+    "clearAll": "Clear all",
+    "allocated": "{allocated} of {total} allocated",
+    "source": "Origem",
     "status": {
       "unreconciled": "Não reconciliado",
       "matched": "Correspondido",
@@ -320,7 +324,7 @@
     "dbDuplicates": "Duplicados BD",
     "batchDuplicates": "Duplicados lote",
     "selectAccount": "-- Selecionar conta --",
-    "accountPlaceholder": "ex. CGD-Ordem, Millennium-12345",
+    "accountPlaceholder": "e.g., BOFA-Checking, AMEX-53004",
     "orTypeNew": "ou escreva novo",
     "existing": "Existente",
     "new": "Novo",
@@ -341,18 +345,19 @@
     "noBucket": "Sem rubrica"
   },
   "admin": {
-    "title": "Admin",
+    "title": "Administração",
     "subtitle": "Gestão de base de dados, importações e configuração de etiquetas",
     "tabs": {
       "overview": "Visão geral",
       "imports": "Importações",
       "health": "Saúde",
+      "backups": "Cópias",
+      "security": "Segurança",
       "buckets": "Rubricas",
       "accounts": "Contas",
       "occasions": "Ocasiões",
       "expenses": "Tipos de despesa",
-      "allTags": "Todas as etiquetas",
-      "backups": "Cópias"
+      "allTags": "Todas as etiquetas"
     },
     "overview": {
       "stats": {
@@ -383,7 +388,7 @@
         "file": "Ficheiro",
         "format": "Formato",
         "account": "Conta",
-        "imported": "Importadas",
+        "imported": "Importado",
         "duplicates": "Duplicados",
         "dateRange": "Intervalo de datas",
         "status": "Estado",
@@ -505,13 +510,13 @@
       "descriptionPattern": "Padrão de descrição",
       "amountMin": "Montante mín.",
       "amountMax": "Montante máx.",
-      "accountSource": "Conta de origem",
+      "accountSource": "Origem da conta",
       "matchAll": "Todas as condições devem corresponder (lógica E)",
       "enableImmediately": "Ativar regra imediatamente",
       "disabled": "Desativada",
       "enabled": "Ativada",
       "test": "Testar",
-      "matched": "Correspondência",
+      "matched": "Correspondido",
       "transactions": "transações",
       "testResult": "Teste: {count} transações corresponderiam",
       "confirmApplyAll": "Aplicar todas as regras ativas a transações sem etiqueta?",
@@ -519,7 +524,9 @@
       "confirmDelete": "Eliminar esta regra?",
       "select": "Selecionar...",
       "all": "TODAS",
-      "any": "UMA"
+      "any": "UMA",
+      "merchantPatternPlaceholder": "e.g., Starbucks",
+      "descriptionPatternPlaceholder": "e.g., Coffee"
     },
     "merchants": {
       "description": "Normalizar nomes confusos de comerciantes bancários em nomes limpos e consistentes",
@@ -546,7 +553,9 @@
       "txns": "trans.",
       "confirmDelete": "Eliminar este alias?",
       "confirmApply": "Aplicar aliases a {count} transações?",
-      "none": "(nenhum)"
+      "none": "(nenhum)",
+      "patternPlaceholder": "e.g., AMZN MKTP",
+      "displayAsPlaceholder": "e.g., Amazon"
     },
     "formats": {
       "description": "Criar configurações de importação reutilizáveis para diferentes formatos CSV bancários",
@@ -571,7 +580,26 @@
       "configAccount": "Conta: {value}",
       "configDate": "Data: {value}",
       "configAmount": "Montante: {value}",
-      "invalidConfig": "Configuração inválida"
+      "invalidConfig": "Configuração inválida",
+      "configuration": "Configuration",
+      "selectAccount": "-- Selecionar conta --",
+      "newAccountPlaceholder": "New account name",
+      "createNewAccount": "Create new account",
+      "optional": "(optional)",
+      "descriptionPlaceholder": "e.g., Monthly statement export from Chase",
+      "advancedSettings": "Advanced Settings",
+      "dateColumn": "Date Column *",
+      "amountColumn": "Amount Column *",
+      "descriptionColumn": "Description Column *",
+      "referenceColumn": "Reference Column",
+      "categoryColumn": "Category Column",
+      "skipHeaderRows": "Skip Header Rows",
+      "dateFormat": "Date Format",
+      "amountFormat": "Amount Format",
+      "invertSign": "Invert sign",
+      "selectOption": "-- Select --",
+      "noneOption": "-- None --",
+      "notDetected": "Not detected"
     }
   },
   "organize": {
@@ -634,6 +662,10 @@
     "subtitle": "Acompanhar subscrições e pagamentos recorrentes",
     "upcoming": "Pagamentos próximos",
     "detected": "Padrões detetados",
+    "activePatterns": "Active Patterns",
+    "upcomingDays": "Upcoming (30 days)",
+    "noPatternsDetected": "No recurring patterns detected yet",
+    "amountRange": "Amount Range",
     "frequency": {
       "weekly": "Semanal",
       "biweekly": "Quinzenal",
@@ -646,7 +678,12 @@
     "title": "Reconciliar",
     "subtitle": "Rever e categorizar transações importadas",
     "markReconciled": "Marcar como reconciliado",
-    "markIgnored": "Marcar como ignorado"
+    "markIgnored": "Marcar como ignorado",
+    "markAsTransfer": "Mark as internal transfer",
+    "markAsTransferAndReconcile": "Mark as internal transfer and reconcile",
+    "allReconciled": "All transactions are reconciled!",
+    "actions": "Ações",
+    "noBucket": "Sem rubrica"
   },
   "tags": {
     "title": "Etiquetas",
@@ -867,10 +904,11 @@
   },
   "demo": {
     "banner": "Modo Demo - Os dados são redefinidos periodicamente. Algumas funcionalidades estão desativadas.",
+    "loginBanner": "Modo Demonstração - Faça login com nome de usuário \"maxwell\" e senha \"wallet\"",
     "featureDisabled": "Esta funcionalidade está desativada no modo demo."
   },
   "backup": {
-    "title": "Cópias de Segurança",
+    "title": "Cópias",
     "description": "Criar e restaurar cópias de segurança da base de dados.",
     "createBackup": "Criar Cópia",
     "restoreBackup": "Restaurar",
@@ -894,12 +932,52 @@
         "week": "1 semana"
       }
     },
+    "manualBackupPlaceholder": "Manual backup",
     "fields": {
       "description": "Descrição",
       "created": "Criado",
       "size": "Tamanho",
       "source": "Origem",
       "demoBackup": "Cópia Demo"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Entrar",
+      "subtitle": "Bem-vindo de volta ao Maxwell's Wallet",
+      "username": "Nome de usuário",
+      "password": "Senha",
+      "submit": "Entrar",
+      "forgotPassword": "Esqueceu sua senha? Use a CLI para redefini-la."
+    },
+    "setup": {
+      "title": "Bem-vindo ao Maxwell's Wallet",
+      "subtitle": "Crie sua conta para começar",
+      "username": "Nome de usuário",
+      "password": "Senha",
+      "confirmPassword": "Confirmar Senha",
+      "submit": "Criar Conta",
+      "passwordMismatch": "As senhas não coincidem",
+      "passwordTooShort": "A senha deve ter pelo menos 4 caracteres"
+    },
+    "changePassword": {
+      "title": "Alterar Senha",
+      "currentPassword": "Senha Atual",
+      "newPassword": "Nova Senha",
+      "confirmPassword": "Confirmar Nova Senha",
+      "submit": "Alterar Senha",
+      "success": "Senha alterada com sucesso",
+      "passwordMismatch": "As senhas não coincidem",
+      "passwordTooShort": "A senha deve ter pelo menos 4 caracteres"
+    },
+    "logout": "Sair",
+    "errors": {
+      "INVALID_CREDENTIALS": "Nome de usuário ou senha inválidos",
+      "NOT_AUTHENTICATED": "Por favor, faça login para continuar",
+      "SETUP_ALREADY_COMPLETE": "Conta já existe. Por favor, faça login.",
+      "INVALID_PASSWORD": "A senha atual está incorreta",
+      "LOGIN_FAILED": "Login falhou. Por favor, tente novamente.",
+      "SETUP_FAILED": "Configuração falhou. Por favor, tente novamente."
     }
   }
 }

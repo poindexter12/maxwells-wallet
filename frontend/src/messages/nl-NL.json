@@ -88,6 +88,10 @@
     "maxAmount": "Max €",
     "startDate": "Startdatum",
     "endDate": "Einddatum",
+    "splitTransaction": "Split Transaction",
+    "clearAll": "Clear all",
+    "allocated": "{allocated} of {total} allocated",
+    "source": "Bron",
     "status": {
       "unreconciled": "Niet afgestemd",
       "matched": "Gekoppeld",
@@ -320,7 +324,7 @@
     "dbDuplicates": "DB Duplicaten",
     "batchDuplicates": "Batch Duplicaten",
     "selectAccount": "-- Selecteer Rekening --",
-    "accountPlaceholder": "bijv. ING-Betaalrekening, Rabobank-12345",
+    "accountPlaceholder": "bijv. BOFA-Checking, AMEX-53004",
     "orTypeNew": "of typ nieuwe",
     "existing": "Bestaande",
     "new": "Nieuw",
@@ -341,18 +345,19 @@
     "noBucket": "Geen Pot"
   },
   "admin": {
-    "title": "Admin",
+    "title": "Beheer",
     "subtitle": "Database beheer, imports en tag configuratie",
     "tabs": {
       "overview": "Overzicht",
       "imports": "Imports",
       "health": "Gezondheid",
+      "backups": "Back-ups",
+      "security": "Beveiliging",
       "buckets": "Potten",
       "accounts": "Rekeningen",
       "occasions": "Gebeurtenissen",
       "expenses": "Uitgavencategorieën",
-      "allTags": "Alle Tags",
-      "backups": "Back-ups"
+      "allTags": "Alle Tags"
     },
     "overview": {
       "stats": {
@@ -511,7 +516,7 @@
       "disabled": "Uitgeschakeld",
       "enabled": "Ingeschakeld",
       "test": "Testen",
-      "matched": "Overeenkomend",
+      "matched": "Gekoppeld",
       "transactions": "transacties",
       "testResult": "Test: {count} transacties zouden overeenkomen",
       "confirmApplyAll": "Alle actieve regels toepassen op niet-getagde transacties?",
@@ -519,7 +524,9 @@
       "confirmDelete": "Deze regel verwijderen?",
       "select": "Selecteren...",
       "all": "ALLE",
-      "any": "EEN"
+      "any": "EEN",
+      "merchantPatternPlaceholder": "e.g., Starbucks",
+      "descriptionPatternPlaceholder": "e.g., Coffee"
     },
     "merchants": {
       "description": "Normaliseer rommelige bank handelaar namen naar schone, consistente namen",
@@ -546,7 +553,9 @@
       "txns": "txns",
       "confirmDelete": "Deze alias verwijderen?",
       "confirmApply": "Aliases toepassen op {count} transacties?",
-      "none": "(geen)"
+      "none": "(geen)",
+      "patternPlaceholder": "e.g., AMZN MKTP",
+      "displayAsPlaceholder": "e.g., Amazon"
     },
     "formats": {
       "description": "Maak herbruikbare importconfiguraties voor verschillende bank CSV formaten",
@@ -566,12 +575,31 @@
       "confirmDelete": "Deze formaatconfiguratie verwijderen?",
       "deleting": "Verwijderen...",
       "editFormat": "Formaat bewerken",
-      "test": "Test",
+      "test": "Testen",
       "usedCount": "{count}x gebruikt",
       "configAccount": "Rekening: {value}",
       "configDate": "Datum: {value}",
       "configAmount": "Bedrag: {value}",
-      "invalidConfig": "Ongeldige configuratie"
+      "invalidConfig": "Ongeldige configuratie",
+      "configuration": "Configuration",
+      "selectAccount": "-- Selecteer Rekening --",
+      "newAccountPlaceholder": "New account name",
+      "createNewAccount": "Create new account",
+      "optional": "(optional)",
+      "descriptionPlaceholder": "e.g., Monthly statement export from Chase",
+      "advancedSettings": "Advanced Settings",
+      "dateColumn": "Date Column *",
+      "amountColumn": "Amount Column *",
+      "descriptionColumn": "Description Column *",
+      "referenceColumn": "Reference Column",
+      "categoryColumn": "Category Column",
+      "skipHeaderRows": "Skip Header Rows",
+      "dateFormat": "Date Format",
+      "amountFormat": "Amount Format",
+      "invertSign": "Invert sign",
+      "selectOption": "-- Select --",
+      "noneOption": "-- None --",
+      "notDetected": "Not detected"
     }
   },
   "organize": {
@@ -580,11 +608,11 @@
     "manageInAdmin": "Beheren in Admin",
     "tabs": {
       "buckets": "Potten",
-      "occasions": "Gelegenheden",
+      "occasions": "Gebeurtenissen",
       "accounts": "Rekeningen"
     },
     "buckets": {
-      "description": "Uitgavencategorieën zoals boodschappen, uit eten, entertainment",
+      "description": "Uitgavencategorieën zoals boodschappen, eten, entertainment",
       "totalBuckets": "Totaal Buckets",
       "taggedTransactions": "Getagde transacties",
       "totalCategorized": "Totaal gecategoriseerd",
@@ -606,7 +634,7 @@
     "accounts": {
       "description": "Bankrekeningen en creditcards. Automatisch aangemaakt wanneer u transacties importeert.",
       "totalAccounts": "Totaal rekeningen",
-      "totalTransactions": "Totaal transacties",
+      "totalTransactions": "Totale Transacties",
       "netFlow": "Netto stroom",
       "noAccounts": "Nog geen rekeningen. Importeer transacties om automatisch rekeningen aan te maken.",
       "importTransactions": "Transacties importeren",
@@ -634,6 +662,10 @@
     "subtitle": "Volg abonnementen en terugkerende betalingen",
     "upcoming": "Aankomende betalingen",
     "detected": "Gedetecteerde patronen",
+    "activePatterns": "Active Patterns",
+    "upcomingDays": "Upcoming (30 days)",
+    "noPatternsDetected": "No recurring patterns detected yet",
+    "amountRange": "Amount Range",
     "frequency": {
       "weekly": "Wekelijks",
       "biweekly": "Tweewekelijks",
@@ -646,18 +678,23 @@
     "title": "Reconciliëren",
     "subtitle": "Bekijk en categoriseer geïmporteerde transacties",
     "markReconciled": "Markeren als gereconcilieerd",
-    "markIgnored": "Markeren als genegeerd"
+    "markIgnored": "Markeren als genegeerd",
+    "markAsTransfer": "Mark as internal transfer",
+    "markAsTransferAndReconcile": "Mark as internal transfer and reconcile",
+    "allReconciled": "All transactions are reconciled!",
+    "actions": "Acties",
+    "noBucket": "Geen Pot"
   },
   "tags": {
     "title": "Tags",
     "bucket": "Pot",
-    "occasion": "Gelegenheid",
+    "occasion": "Gebeurtenis",
     "account": "Rekening",
     "expense": "Uitgave",
     "create": "Tag aanmaken",
-    "edit": "Tag bewerken",
+    "edit": "Tag Bewerken",
     "delete": "Tag verwijderen",
-    "namespace": "Naamruimte",
+    "namespace": "Namespace",
     "sortOrder": "Sorteervolgorde",
     "color": "Kleur"
   },
@@ -867,6 +904,7 @@
   },
   "demo": {
     "banner": "Demo-modus - Gegevens worden periodiek gereset. Sommige functies zijn uitgeschakeld.",
+    "loginBanner": "Demo Modus - Inloggen met gebruikersnaam \"maxwell\" en wachtwoord \"wallet\"",
     "featureDisabled": "Deze functie is uitgeschakeld in demo-modus."
   },
   "backup": {
@@ -894,12 +932,52 @@
         "week": "1 week"
       }
     },
+    "manualBackupPlaceholder": "Manual backup",
     "fields": {
       "description": "Beschrijving",
-      "created": "Gemaakt",
+      "created": "Aangemaakt",
       "size": "Grootte",
       "source": "Bron",
       "demoBackup": "Demo Back-up"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Aanmelden",
+      "subtitle": "Welkom terug bij Maxwell's Wallet",
+      "username": "Gebruikersnaam",
+      "password": "Wachtwoord",
+      "submit": "Aanmelden",
+      "forgotPassword": "Wachtwoord vergeten? Gebruik de CLI om het opnieuw in te stellen."
+    },
+    "setup": {
+      "title": "Welkom bij Maxwell's Wallet",
+      "subtitle": "Maak uw account aan om aan de slag te gaan",
+      "username": "Gebruikersnaam",
+      "password": "Wachtwoord",
+      "confirmPassword": "Bevestig wachtwoord",
+      "submit": "Account aanmaken",
+      "passwordMismatch": "Wachtwoorden komen niet overeen",
+      "passwordTooShort": "Wachtwoord moet minstens 4 tekens bevatten"
+    },
+    "changePassword": {
+      "title": "Wachtwoord wijzigen",
+      "currentPassword": "Huidig wachtwoord",
+      "newPassword": "Nieuw wachtwoord",
+      "confirmPassword": "Bevestig nieuw wachtwoord",
+      "submit": "Wachtwoord wijzigen",
+      "success": "Wachtwoord succesvol gewijzigd",
+      "passwordMismatch": "Wachtwoorden komen niet overeen",
+      "passwordTooShort": "Wachtwoord moet minstens 4 tekens bevatten"
+    },
+    "logout": "Uitloggen",
+    "errors": {
+      "INVALID_CREDENTIALS": "Ongeldige gebruikersnaam of wachtwoord",
+      "NOT_AUTHENTICATED": "Gelieve in te loggen om verder te gaan",
+      "SETUP_ALREADY_COMPLETE": "Account bestaat al. Gelieve in te loggen.",
+      "INVALID_PASSWORD": "Huidig wachtwoord is onjuist",
+      "LOGIN_FAILED": "Inloggen mislukt. Probeer opnieuw.",
+      "SETUP_FAILED": "Installatie mislukt. Probeer opnieuw."
     }
   }
 }

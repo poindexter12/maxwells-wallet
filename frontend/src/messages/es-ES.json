@@ -88,6 +88,10 @@
     "maxAmount": "Máx €",
     "startDate": "Fecha inicio",
     "endDate": "Fecha fin",
+    "splitTransaction": "Split Transaction",
+    "clearAll": "Clear all",
+    "allocated": "{allocated} of {total} allocated",
+    "source": "Origen",
     "status": {
       "unreconciled": "Sin conciliar",
       "matched": "Coincidente",
@@ -320,7 +324,7 @@
     "dbDuplicates": "Duplicados en BD",
     "batchDuplicates": "Duplicados en Lote",
     "selectAccount": "-- Seleccionar Cuenta --",
-    "accountPlaceholder": "ej., Santander-Corriente, BBVA-12345",
+    "accountPlaceholder": "e.g., BOFA-Checking, AMEX-53004",
     "orTypeNew": "o escribe nuevo",
     "existing": "Existente",
     "new": "Nuevo",
@@ -347,12 +351,13 @@
       "overview": "Resumen",
       "imports": "Importaciones",
       "health": "Estado",
+      "backups": "Copias",
+      "security": "Seguridad",
       "buckets": "Categorías",
       "accounts": "Cuentas",
       "occasions": "Ocasiones",
       "expenses": "Tipos de Gasto",
-      "allTags": "Todas las Etiquetas",
-      "backups": "Copias"
+      "allTags": "Todas las Etiquetas"
     },
     "overview": {
       "stats": {
@@ -511,7 +516,7 @@
       "disabled": "Desactivada",
       "enabled": "Activada",
       "test": "Probar",
-      "matched": "Coincidentes",
+      "matched": "Coincidente",
       "transactions": "transacciones",
       "testResult": "Prueba: {count} transacciones coincidirían",
       "confirmApplyAll": "¿Aplicar todas las reglas activas a transacciones sin etiquetar?",
@@ -519,7 +524,9 @@
       "confirmDelete": "¿Eliminar esta regla?",
       "select": "Seleccionar...",
       "all": "TODAS",
-      "any": "CUALQUIER"
+      "any": "CUALQUIER",
+      "merchantPatternPlaceholder": "e.g., Starbucks",
+      "descriptionPatternPlaceholder": "e.g., Coffee"
     },
     "merchants": {
       "description": "Normalizar nombres de comercios del banco en nombres limpios y consistentes",
@@ -546,7 +553,9 @@
       "txns": "trans.",
       "confirmDelete": "¿Eliminar este alias?",
       "confirmApply": "¿Aplicar alias a {count} transacciones?",
-      "none": "(ninguno)"
+      "none": "(ninguno)",
+      "patternPlaceholder": "e.g., AMZN MKTP",
+      "displayAsPlaceholder": "e.g., Amazon"
     },
     "formats": {
       "description": "Crear configuraciones de importación reutilizables para diferentes formatos CSV de bancos",
@@ -571,7 +580,26 @@
       "configAccount": "Cuenta: {value}",
       "configDate": "Fecha: {value}",
       "configAmount": "Importe: {value}",
-      "invalidConfig": "Configuración inválida"
+      "invalidConfig": "Configuración inválida",
+      "configuration": "Configuration",
+      "selectAccount": "-- Seleccionar Cuenta --",
+      "newAccountPlaceholder": "New account name",
+      "createNewAccount": "Create new account",
+      "optional": "(optional)",
+      "descriptionPlaceholder": "e.g., Monthly statement export from Chase",
+      "advancedSettings": "Advanced Settings",
+      "dateColumn": "Date Column *",
+      "amountColumn": "Amount Column *",
+      "descriptionColumn": "Description Column *",
+      "referenceColumn": "Reference Column",
+      "categoryColumn": "Category Column",
+      "skipHeaderRows": "Skip Header Rows",
+      "dateFormat": "Date Format",
+      "amountFormat": "Amount Format",
+      "invertSign": "Invert sign",
+      "selectOption": "-- Select --",
+      "noneOption": "-- None --",
+      "notDetected": "Not detected"
     }
   },
   "organize": {
@@ -634,6 +662,10 @@
     "subtitle": "Rastrea suscripciones y pagos recurrentes",
     "upcoming": "Próximos Pagos",
     "detected": "Patrones Detectados",
+    "activePatterns": "Active Patterns",
+    "upcomingDays": "Upcoming (30 days)",
+    "noPatternsDetected": "No recurring patterns detected yet",
+    "amountRange": "Amount Range",
     "frequency": {
       "weekly": "Semanal",
       "biweekly": "Quincenal",
@@ -646,7 +678,12 @@
     "title": "Conciliar",
     "subtitle": "Revisar y categorizar transacciones importadas",
     "markReconciled": "Marcar como Conciliado",
-    "markIgnored": "Marcar como Ignorado"
+    "markIgnored": "Marcar como Ignorado",
+    "markAsTransfer": "Mark as internal transfer",
+    "markAsTransferAndReconcile": "Mark as internal transfer and reconcile",
+    "allReconciled": "All transactions are reconciled!",
+    "actions": "Acciones",
+    "noBucket": "Sin Categoría"
   },
   "tags": {
     "title": "Etiquetas",
@@ -867,10 +904,11 @@
   },
   "demo": {
     "banner": "Modo Demo - Los datos se restablecen periódicamente. Algunas funciones están deshabilitadas.",
+    "loginBanner": "Modo Demo - Inicia sesión con el nombre de usuario \"maxwell\" y la contraseña \"wallet\"",
     "featureDisabled": "Esta función está deshabilitada en modo demo."
   },
   "backup": {
-    "title": "Copias de seguridad",
+    "title": "Copias",
     "description": "Crear y restaurar copias de seguridad de la base de datos.",
     "createBackup": "Crear copia",
     "restoreBackup": "Restaurar",
@@ -894,12 +932,52 @@
         "week": "1 semana"
       }
     },
+    "manualBackupPlaceholder": "Manual backup",
     "fields": {
       "description": "Descripción",
       "created": "Creado",
       "size": "Tamaño",
       "source": "Origen",
       "demoBackup": "Copia Demo"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Iniciar Sesión",
+      "subtitle": "Bienvenido de vuelta a Maxwell's Wallet",
+      "username": "Nombre de usuario",
+      "password": "Contraseña",
+      "submit": "Iniciar Sesión",
+      "forgotPassword": "¿Olvidaste tu contraseña? Usa la CLI para restablecerla."
+    },
+    "setup": {
+      "title": "Bienvenido a Maxwell's Wallet",
+      "subtitle": "Crea tu cuenta para comenzar",
+      "username": "Nombre de usuario",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar Contraseña",
+      "submit": "Crear Cuenta",
+      "passwordMismatch": "Las contraseñas no coinciden",
+      "passwordTooShort": "La contraseña debe tener al menos 4 caracteres"
+    },
+    "changePassword": {
+      "title": "Cambiar Contraseña",
+      "currentPassword": "Contraseña Actual",
+      "newPassword": "Nueva Contraseña",
+      "confirmPassword": "Confirmar Nueva Contraseña",
+      "submit": "Cambiar Contraseña",
+      "success": "Contraseña cambiada exitosamente",
+      "passwordMismatch": "Las contraseñas no coinciden",
+      "passwordTooShort": "La contraseña debe tener al menos 4 caracteres"
+    },
+    "logout": "Cerrar Sesión",
+    "errors": {
+      "INVALID_CREDENTIALS": "Nombre de usuario o contraseña inválidos",
+      "NOT_AUTHENTICATED": "Por favor, inicia sesión para continuar",
+      "SETUP_ALREADY_COMPLETE": "La cuenta ya existe. Por favor, inicia sesión.",
+      "INVALID_PASSWORD": "La contraseña actual es incorrecta",
+      "LOGIN_FAILED": "Error de inicio de sesión. Por favor, inténtalo de nuevo.",
+      "SETUP_FAILED": "Error de configuración. Por favor, inténtalo de nuevo."
     }
   }
 }
