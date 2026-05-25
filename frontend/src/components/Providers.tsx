@@ -25,14 +25,21 @@ function deepMerge(base: Record<string, unknown>, override: Record<string, unkno
 
 // Dynamic message loader - merges locale messages with universal strings
 async function loadMessages(locale: string): Promise<Record<string, unknown>> {
+  // The pseudo locale is a QA/test locale where EVERY string must be
+  // transformed (accented). Universal strings (e.g. "Tools") are intentionally
+  // identical English across real languages, but merging them over pseudo would
+  // leave those keys as plain English and defeat the i18n-coverage tests, so we
+  // skip the universal merge for pseudo.
+  const mergeUniversal = (msgs: Record<string, unknown>) =>
+    locale === 'pseudo' ? msgs : deepMerge(msgs, universal)
   try {
     const localeMessages = (await import(`@/messages/${locale}.json`)).default
-    return deepMerge(localeMessages, universal)
+    return mergeUniversal(localeMessages)
   } catch {
     // Fallback to default locale if message file not found
     console.warn(`Messages for locale "${locale}" not found, falling back to ${defaultLocale}`)
     const fallbackMessages = (await import(`@/messages/${defaultLocale}.json`)).default
-    return deepMerge(fallbackMessages, universal)
+    return mergeUniversal(fallbackMessages)
   }
 }
 
@@ -44,6 +51,14 @@ export function Providers({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function initLocale() {
+      // Allow an explicit locale override via localStorage (used by QA / E2E
+      // pseudo-locale tests). This takes precedence over the API-resolved
+      // locale and is never set in normal production usage.
+      const override = typeof window !== 'undefined' ? window.localStorage.getItem('locale') : null
+      if (override && isValidLocale(override)) {
+        setLocale(override)
+      }
+
       try {
         // Fetch effective locale from settings API
         const res = await fetch('/api/v1/settings')
@@ -51,8 +66,8 @@ export function Providers({ children }: { children: ReactNode }) {
           const data = await res.json()
           const effectiveLocale = data.effective_locale || defaultLocale
 
-          // Validate and set locale
-          if (isValidLocale(effectiveLocale)) {
+          // Validate and set locale (skip if a localStorage override is active)
+          if (!(override && isValidLocale(override)) && isValidLocale(effectiveLocale)) {
             setLocale(effectiveLocale)
           }
 
