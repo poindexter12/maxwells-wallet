@@ -432,6 +432,27 @@ async function executeAction(
           });
           if (isDisabled) continue;
 
+          // Honor caller-provided exclusions (e.g. nav links so a test can stay
+          // on one page). Without this, click-target would freely click any
+          // [data-chaos-target] element, including nav links, navigating away
+          // and breaking page-scoped tests (see issue #279).
+          let excluded = false;
+          for (const excludeSel of excludeSelectors) {
+            try {
+              const matches = await target.evaluate(
+                (el, sel) => el.matches(sel),
+                excludeSel
+              );
+              if (matches) {
+                excluded = true;
+                break;
+              }
+            } catch {
+              // Selector might not be valid for this element
+            }
+          }
+          if (excluded) continue;
+
           eligibleTargets.push(target);
         } catch {
           // Element may have become stale, skip it

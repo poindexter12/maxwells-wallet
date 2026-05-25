@@ -85,6 +85,22 @@ test.describe('Dashboard Tab Switching Chaos @chaos', () => {
     // 5 rounds: switch tab, do 8 actions
     for (let round = 0; round < 5; round++) {
       const tabIndex = rng.int(0, tabCount - 1);
+
+      // Chaos actions in the previous round may have (a) navigated away from the
+      // dashboard via a nav link, or (b) left a full-screen backdrop overlay open
+      // (e.g. the "customize dashboard" panel) that intercepts pointer events.
+      // Either of these makes the tab click hang until the test times out
+      // (see issue #279). Reset to a known-good state before switching tabs:
+      // dismiss any overlay, return to the dashboard, and wait for the tabs.
+      await page.keyboard.press('Escape');
+      if (!page.url().endsWith('/')) {
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+      }
+      await page
+        .locator('[data-testid="dashboard-selector"]')
+        .waitFor({ state: 'visible', timeout: 10000 });
+
       await tabs.nth(tabIndex).click();
       await page.waitForTimeout(50);
 

@@ -243,3 +243,56 @@ class TestDashboardWidgets:
         assert len(widgets2) == initial_count - 1
         widget_types = [w["widget_type"] for w in widgets2]
         assert "velocity" not in widget_types
+
+
+class TestDuplicateDefaultDashboards:
+    """Regression tests for issue #279.
+
+    Concurrent/interleaved dashboard writes (e.g. chaos testing) could leave
+    multiple dashboards flagged ``is_default=True``. The widgets endpoint then
+    raised ``MultipleResultsFound`` (500), which crashed the frontend dashboard
+    with a client-side exception. The default-dashboard resolution must tolerate
+    and self-heal that state instead.
+    """
+
+    @pytest.mark.asyncio
+    async def test_list_widgets_with_multiple_defaults(self, client: AsyncClient, async_session):
+        """Two default dashboards must not 500 the widgets endpoint."""
+        from app.orm import Dashboard
+
+        async_session.add_all(
+            [
+                Dashboard(name="A", view_mode="month", is_default=True, position=0),
+                Dashboard(name="B", view_mode="month", is_default=True, position=1),
+            ]
+        )
+        await async_session.commit()
+
+        response = await client.get("/api/v1/dashboard/widgets")
+        assert response.status_code == 200, response.text
+
+    @pytest.mark.asyncio
+    async def test_multiple_defaults_self_heal(self, client: AsyncClient, async_session):
+        """After resolving, exactly one dashboard should remain default."""
+        from sqlalchemy import select
+        from app.orm import Dashboard
+
+        async_session.add_all(
+            [
+                Dashboard(name="A", view_mode="month", is_default=True, position=0),
+                Dashboard(name="B", view_mode="month", is_default=True, position=1),
+                Dashboard(name="C", view_mode="month", is_default=True, position=2),
+            ]
+        )
+        await async_session.commit()
+
+        # Trigger resolution via the widgets endpoint.
+        response = await client.get("/api/v1/dashboard/widgets")
+        assert response.status_code == 200, response.text
+
+        async_session.expire_all()
+        result = await async_session.execute(select(Dashboard).where(Dashboard.is_default.is_(True)))
+        defaults = list(result.scalars().all())
+        assert len(defaults) == 1
+        # Lowest position/id wins.
+        assert defaults[0].name == "A"
