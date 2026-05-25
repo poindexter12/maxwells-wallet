@@ -16,13 +16,12 @@ jobs:
       frontend: ${{ steps.filter.outputs.frontend }}
       backend: ${{ steps.filter.outputs.backend }}
       docker: ${{ steps.filter.outputs.docker }}
-      translations-only: ${{ steps.filter.outputs.translations-only }}
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
     - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
       id: filter
       with:
-        filters: "frontend:\n  - 'frontend/**'\nbackend:\n  - 'backend/**'\ndocker:\n  - 'Dockerfile'\n  - 'docker-compose*.yaml'\ntranslations-only:\n  - 'frontend/src/messages/**'\n  - '!frontend/src/**/*.ts'\n  - '!frontend/src/**/*.tsx'\n  - '!backend/**'\n"
+        filters: "frontend:\n  - 'frontend/**'\nbackend:\n  - 'backend/**'\ndocker:\n  - 'Dockerfile'\n  - 'docker-compose*.yaml'\n"
   security:
     name: Security Scans
     uses: ./.github/workflows/security.yaml
@@ -90,7 +89,7 @@ jobs:
     - backend
     if: 'always() &&
 
-      needs.changes.outputs.translations-only != ''true'' &&
+      github.head_ref != ''l10n/crowdin'' &&
 
       (needs.frontend.result == ''success'' || needs.frontend.result == ''skipped'') &&
 
