@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 
@@ -61,6 +61,17 @@ export function DashboardConfig({
   const tDash = useTranslations('dashboard')
   const tWidgets = useTranslations('dashboard.widgets')
   const [isOpen, setIsOpen] = useState(false)
+
+  // Close the panel on Escape so its full-screen backdrop never gets stuck
+  // open and blocking interaction with the rest of the dashboard (issue #279).
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen])
 
   const sortedWidgets = [...widgets].sort((a, b) => a.position - b.position)
 

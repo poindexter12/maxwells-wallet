@@ -146,9 +146,27 @@ DEFAULT_WIDGETS = [
 
 
 async def get_or_create_default_dashboard(session: AsyncSession) -> Dashboard:
-    """Get the default dashboard, creating one if none exists."""
-    result = await session.execute(select(Dashboard).where(Dashboard.is_default.is_(True)))
-    dashboard = result.scalar_one_or_none()
+    """Get the default dashboard, creating one if none exists.
+
+    Tolerates a corrupted state with multiple ``is_default=True`` rows
+    (which concurrent/interleaved writes can produce) instead of raising
+    MultipleResultsFound. The lowest-position/id dashboard wins and any
+    extra default flags are cleared so the state self-heals.
+    """
+    result = await session.execute(
+        select(Dashboard)
+        .where(Dashboard.is_default.is_(True))
+        .order_by(Dashboard.position, Dashboard.id)
+    )
+    defaults = list(result.scalars().all())
+    dashboard = defaults[0] if defaults else None
+
+    if dashboard is not None and len(defaults) > 1:
+        # Self-heal: keep only the canonical dashboard as default.
+        for extra in defaults[1:]:
+            extra.is_default = False
+        await session.commit()
+        await session.refresh(dashboard)
 
     if not dashboard:
         # Create default dashboard with MTD date range

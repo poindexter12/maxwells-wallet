@@ -461,3 +461,48 @@ class TestDashboardWidgets:
         widgets2 = response2.json()
 
         assert len(widgets1) == len(widgets2)
+
+
+class TestDuplicateDefaultDashboards:
+    """Regression tests for issue #279 on the /dashboards endpoints.
+
+    ``get_or_create_default_dashboard`` must not raise MultipleResultsFound
+    when more than one dashboard is flagged as default; it should resolve
+    deterministically and self-heal.
+    """
+
+    @pytest.mark.asyncio
+    async def test_get_default_with_multiple_defaults(self, client: AsyncClient, async_session):
+        from app.orm import Dashboard
+
+        async_session.add_all(
+            [
+                Dashboard(name="A", view_mode="month", is_default=True, position=0),
+                Dashboard(name="B", view_mode="month", is_default=True, position=1),
+            ]
+        )
+        await async_session.commit()
+
+        response = await client.get("/api/v1/dashboards/default")
+        assert response.status_code == 200, response.text
+        assert response.json()["name"] == "A"
+
+    @pytest.mark.asyncio
+    async def test_list_dashboards_with_multiple_defaults(self, client: AsyncClient, async_session):
+        from sqlalchemy import select
+        from app.orm import Dashboard
+
+        async_session.add_all(
+            [
+                Dashboard(name="A", view_mode="month", is_default=True, position=0),
+                Dashboard(name="B", view_mode="month", is_default=True, position=1),
+            ]
+        )
+        await async_session.commit()
+
+        # List itself doesn't resolve defaults, but the default endpoint heals them.
+        await client.get("/api/v1/dashboards/default")
+
+        async_session.expire_all()
+        result = await async_session.execute(select(Dashboard).where(Dashboard.is_default.is_(True)))
+        assert len(list(result.scalars().all())) == 1

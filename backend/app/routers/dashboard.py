@@ -18,10 +18,44 @@ from app.schemas import DashboardLayoutUpdate, DashboardWidgetCreate, DashboardW
 from app.errors import ErrorCode, not_found, bad_request
 
 
+async def _resolve_default_dashboard(session: AsyncSession) -> Dashboard | None:
+    """Return the canonical default dashboard, healing duplicate defaults.
+
+    Uses ``scalars().all()`` (never ``scalar_one_or_none``) so a state with
+    more than one ``is_default=True`` row does not raise MultipleResultsFound.
+    When duplicates are found, the lowest position/id wins and the rest have
+    their default flag cleared so subsequent reads are unambiguous.
+    """
+    result = await session.execute(
+        select(Dashboard)
+        .where(Dashboard.is_default.is_(True))
+        .order_by(Dashboard.position, Dashboard.id)
+    )
+    defaults = list(result.scalars().all())
+
+    if not defaults:
+        return None
+
+    canonical = defaults[0]
+    if len(defaults) > 1:
+        # Self-heal: keep only the canonical dashboard as default.
+        for extra in defaults[1:]:
+            extra.is_default = False
+        await session.commit()
+        await session.refresh(canonical)
+
+    return canonical
+
+
 async def get_default_dashboard_id(session: AsyncSession) -> int:
-    """Get the default dashboard ID, creating one with widgets if needed."""
-    result = await session.execute(select(Dashboard).where(Dashboard.is_default.is_(True)))
-    dashboard = result.scalar_one_or_none()
+    """Get the default dashboard ID, creating one with widgets if needed.
+
+    Tolerates a corrupted state where multiple dashboards are flagged as
+    default (which concurrent/interleaved writes can produce). In that case
+    the lowest-position/id dashboard is chosen deterministically and the
+    extra default flags are cleared so the state self-heals.
+    """
+    dashboard = await _resolve_default_dashboard(session)
 
     if not dashboard:
         # Create default dashboard
