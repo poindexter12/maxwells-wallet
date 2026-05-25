@@ -435,9 +435,29 @@ async def seed_budgets(session: AsyncSession):
 
 async def seed_dashboards(session: AsyncSession):
     """Create dashboards with widgets."""
-    from sqlalchemy import insert
+    from sqlalchemy import insert, func
 
     print("Seeding dashboards...")
+
+    # The alembic migration that introduces multi-dashboard support inserts an
+    # empty "Default" dashboard (no widgets). When seeding on top of a freshly
+    # migrated database, that placeholder would otherwise remain flagged as the
+    # default *and* sort ahead of our seeded dashboard, so the app would load an
+    # empty dashboard with no Summary widget. Clear any existing default flags and
+    # drop the empty placeholder so our widget-rich dashboard becomes the canonical
+    # default (and we never leave two is_default rows behind).
+    existing_result = await session.execute(select(Dashboard))
+    for existing in existing_result.scalars().all():
+        widget_count = await session.scalar(
+            select(func.count())
+            .select_from(DashboardWidget)
+            .where(DashboardWidget.dashboard_id == existing.id)
+        )
+        if widget_count == 0:
+            await session.delete(existing)
+        else:
+            existing.is_default = False
+    await session.commit()
 
     # Default dashboard - Month to Date
     default_dashboard = Dashboard(
