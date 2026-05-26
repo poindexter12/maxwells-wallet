@@ -5,9 +5,12 @@ name: Crowdin Sync
 # pinned, and debuggable.
 #
 #   - On push to main that touches en-US.json (the only source file), we push
-#     the updated source strings up to Crowdin.
-#   - On a weekly schedule (and on-demand via "Run workflow"), we pull completed
-#     translations down and open a PR onto main.
+#     the updated source strings up to Crowdin. A Crowdin project Automation
+#     ("Pre-translate via MT/AI" on source update) then translates them async.
+#   - On a daily schedule (and on-demand via "Run workflow"), we pull completed
+#     translations down and open a PR onto main, which Crowdin Auto-merge lands.
+#     So adding a source string flows to translated locales hands-free within a
+#     day, no manual step.
 #
 # Config (file mapping, project id) lives in crowdin.yaml at the repo root.
 # Secret: CROWDIN_PERSONAL_TOKEN (already set in repo secrets).
@@ -20,8 +23,10 @@ name: Crowdin Sync
       - frontend/src/messages/en-US.json
       - crowdin.yaml
   schedule:
-    # Mondays 06:00 UTC — pull whatever translations are ready and open a PR.
-    - cron: "0 6 * * 1"
+    # Daily 06:00 UTC — pull whatever translations are ready and open a PR.
+    # Daily (vs. weekly) so a merged source-string change reaches translated
+    # locales within a day once the Crowdin pre-translate Automation has run.
+    - cron: "0 6 * * *"
   workflow_dispatch:
     # Manual trigger. Use this for the first sync after enabling the Action.
     inputs:
