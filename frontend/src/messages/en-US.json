@@ -55,7 +55,8 @@
     "organize": "Organize",
     "tools": "Tools",
     "admin": "Admin",
-    "import": "Import CSV"
+    "import": "Import CSV",
+    "assistant": "Assistant"
   },
   "settings": {
     "title": "Settings",
@@ -977,7 +978,45 @@
       "SETUP_ALREADY_COMPLETE": "Account already exists. Please sign in.",
       "INVALID_PASSWORD": "Current password is incorrect",
       "LOGIN_FAILED": "Login failed. Please try again.",
-      "SETUP_FAILED": "Setup failed. Please try again."
+      "SETUP_FAILED": "Setup failed. Please try again.",
+      "ASSISTANT_NOT_CONFIGURED": "The assistant isn't set up yet. Add a provider and API key below.",
+      "ASSISTANT_PROVIDER_ERROR": "The AI provider returned an error. Check your API key and model.",
+      "ASSISTANT_PROPOSAL_NOT_FOUND": "That proposal expired. Ask the assistant again.",
+      "ASSISTANT_ACTION_NOT_ALLOWED": "That action isn't allowed."
+    }
+  },
+  "assistant": {
+    "title": "Assistant",
+    "subtitle": "Ask about your money. It can propose budgets, categorization, and dashboards for you to approve.",
+    "placeholder": "Ask about your spending, budgets, or dashboards…",
+    "send": "Send",
+    "thinking": "Thinking…",
+    "emptyState": "Ask a question to get started — for example, “How much did I spend on groceries last month?”",
+    "privacyNote": "Account, merchant, and people's names are pseudonymized before anything is sent to the AI provider.",
+    "youLabel": "You",
+    "assistantLabel": "Assistant",
+    "proposal": {
+      "title": "Proposed changes",
+      "description": "The assistant proposes these changes. Nothing happens until you approve.",
+      "execute": "Execute",
+      "cancel": "Dismiss",
+      "executing": "Executing…",
+      "done": "Done — {count} change(s) applied.",
+      "failed": "Couldn't apply the changes."
+    },
+    "settings": {
+      "title": "AI provider",
+      "configured": "Configured",
+      "notConfigured": "Not configured",
+      "provider": "Provider",
+      "model": "Model",
+      "apiKey": "API key",
+      "apiKeyStored": "A key is saved. Leave blank to keep it.",
+      "apiKeyPlaceholder": "Paste your API key",
+      "save": "Save",
+      "saved": "Saved.",
+      "clearKey": "Remove saved key",
+      "keyNeverShown": "Your key is stored on the server and never shown again or sent to the browser."
     }
   }
 }

@@ -61,6 +61,9 @@ export function NavBar() {
               <Link href="/admin" className={linkClass('/admin')} data-chaos-target="nav-admin">
                 {t('admin')}
               </Link>
+              <Link href="/assistant" className={linkClass('/assistant')} data-chaos-target="nav-assistant">
+                {t('assistant')}
+              </Link>
             </div>
           </div>
           <div className="flex items-center gap-2">
