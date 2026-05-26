@@ -29,6 +29,13 @@ services:
       - DATABASE_URL=sqlite+aiosqlite:////data/wallet.db
       - DEMO_MODE=${DEMO_MODE:-false}
       - DEMO_RESET_INTERVAL_HOURS=${DEMO_RESET_INTERVAL_HOURS:-1}
+      # AI assistant — configured only via env, nothing persisted. Provide a key
+      # for the provider you want; provider auto-detects from the key present, or
+      # set ASSISTANT_PROVIDER / ASSISTANT_MODEL to override.
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ASSISTANT_PROVIDER=${ASSISTANT_PROVIDER:-}
+      - ASSISTANT_MODEL=${ASSISTANT_MODEL:-}
       # Observability
       - OTEL_ENABLED=true
       - OTEL_METRICS_ENABLED=true

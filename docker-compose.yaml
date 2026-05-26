@@ -21,6 +21,13 @@ services:
       - wallet-data:/data
     environment:
       - DATABASE_URL=sqlite+aiosqlite:////data/wallet.db
+      # AI assistant (optional) — configured only via env, nothing persisted.
+      # Provide a key for the provider you want; provider auto-detects from the
+      # key present, or set ASSISTANT_PROVIDER / ASSISTANT_MODEL to override.
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ASSISTANT_PROVIDER=${ASSISTANT_PROVIDER:-}
+      - ASSISTANT_MODEL=${ASSISTANT_MODEL:-}
     restart: unless-stopped
 
 volumes:

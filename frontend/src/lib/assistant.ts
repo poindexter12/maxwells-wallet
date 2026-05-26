@@ -12,16 +12,11 @@ export interface AssistantConfig {
   provider: string | null
   model: string | null
   configured: boolean
-  key_stored: boolean
+  // How it's configured. Always "env" — keys live only in the server
+  // environment, never the database or the browser.
+  source: string
   available_providers: string[]
   default_models: Record<string, string>
-}
-
-export interface AssistantConfigUpdate {
-  provider?: string
-  model?: string
-  api_key?: string
-  clear_api_key?: boolean
 }
 
 export interface ProposedAction {
@@ -77,10 +72,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function getAssistantConfig(): Promise<AssistantConfig> {
   return request<AssistantConfig>('/config')
-}
-
-export function updateAssistantConfig(update: AssistantConfigUpdate): Promise<AssistantConfig> {
-  return request<AssistantConfig>('/config', { method: 'PUT', body: JSON.stringify(update) })
 }
 
 export function sendChat(message: string, conversationId: string | null): Promise<ChatResponse> {

@@ -452,13 +452,8 @@ class AppSettings(TimestampMixin, Base):
     language: Mapped[str] = mapped_column(
         String, default=LanguagePreference.browser.value
     )
-
-    # AI assistant configuration (bring-your-own-key).
-    # provider is "anthropic" or "openai"; the API key is write-only and is
-    # never returned to the client (see the assistant settings endpoints).
-    assistant_provider: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    assistant_model: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    assistant_api_key: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    # NOTE: AI assistant config (provider/model/key) is intentionally NOT stored
+    # here — it is provided only via environment at startup (see app.config).
 
 
 class User(TimestampMixin, Base):
