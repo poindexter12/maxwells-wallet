@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any, Awaitable, Callable, Literal, Optional
 
-from sqlalchemy import func, select
+from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.errors import ErrorCode, bad_request, not_found
@@ -97,9 +97,9 @@ def _parse_date(value: Optional[str]) -> Optional[date]:
         raise bad_request(ErrorCode.VALIDATION_ERROR, f"Invalid date '{value}', expected YYYY-MM-DD.")
 
 
-def _spending_filters(start: Optional[date], end: Optional[date]):
+def _spending_filters(start: Optional[date], end: Optional[date]) -> list[ColumnElement[bool]]:
     """Common WHERE clauses for spending: in range and not a transfer."""
-    clauses = [Transaction.is_transfer.is_(False)]
+    clauses: list[ColumnElement[bool]] = [Transaction.is_transfer.is_(False)]
     if start is not None:
         clauses.append(Transaction.date >= start)
     if end is not None:
@@ -173,11 +173,11 @@ async def _read_spending_by_bucket(ctx: AssistantContext, args: dict) -> Any:
         entry = breakdown.setdefault(bucket, {"amount": 0.0, "count": 0})
         entry["amount"] += abs(t.amount)
         entry["count"] += 1
-    ranked = sorted(
-        ({"bucket": k, "amount": round(v["amount"], 2), "count": int(v["count"])} for k, v in breakdown.items()),
-        key=lambda x: x["amount"],
-        reverse=True,
-    )
+    # Sort the (typed) breakdown by amount first, then shape the response dicts.
+    ranked = [
+        {"bucket": k, "amount": round(v["amount"], 2), "count": int(v["count"])}
+        for k, v in sorted(breakdown.items(), key=lambda kv: kv[1]["amount"], reverse=True)
+    ]
     return {"by_bucket": ranked}
 
 
@@ -200,7 +200,7 @@ async def _read_top_merchants(ctx: AssistantContext, args: dict) -> Any:
 async def _read_list_transactions(ctx: AssistantContext, args: dict) -> Any:
     start, end = _parse_date(args.get("start_date")), _parse_date(args.get("end_date"))
     limit = min(int(args.get("limit", 50) or 50), 200)
-    clauses = []
+    clauses: list[ColumnElement[bool]] = []
     if start is not None:
         clauses.append(Transaction.date >= start)
     if end is not None:
