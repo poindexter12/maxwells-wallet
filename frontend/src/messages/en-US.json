@@ -1010,13 +1010,8 @@
       "notConfigured": "Not configured",
       "provider": "Provider",
       "model": "Model",
-      "apiKey": "API key",
-      "apiKeyStored": "A key is saved. Leave blank to keep it.",
-      "apiKeyPlaceholder": "Paste your API key",
-      "save": "Save",
-      "saved": "Saved.",
-      "clearKey": "Remove saved key",
-      "keyNeverShown": "Your key is stored on the server and never shown again or sent to the browser."
+      "notConfiguredHelp": "Set ANTHROPIC_API_KEY or OPENAI_API_KEY in the server environment to enable the assistant.",
+      "envManaged": "Configured on the server via environment variables. No keys are stored or entered here."
     }
   }
 }

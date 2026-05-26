@@ -36,11 +36,15 @@ class AppSettings(BaseSettings):
     # CORS settings - comma-separated list of allowed origins
     cors_origins: str = "http://localhost:3000"
 
-    # AI assistant: optional API keys via environment. These are used as a
-    # fallback when no key is stored in app_settings, so a key never has to
-    # touch the database if the operator prefers env-only provisioning.
+    # AI assistant: configured entirely via environment (e.g. Docker Compose).
+    # Nothing assistant-related is persisted to the database. Provide a key for
+    # whichever provider you want; the provider auto-detects from the present
+    # key, or set assistant_provider explicitly. assistant_model is optional and
+    # defaults per provider.
     anthropic_api_key: str = ""
     openai_api_key: str = ""
+    assistant_provider: str = ""  # "anthropic" | "openai" | "" (auto-detect)
+    assistant_model: str = ""  # optional override; defaults per provider
 
     @property
     def cors_origins_list(self) -> List[str]:

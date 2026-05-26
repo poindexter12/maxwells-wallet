@@ -84,15 +84,7 @@ export default function AssistantPage() {
         </button>
       </header>
 
-      {showSettings && config && (
-        <AssistantSettings
-          config={config}
-          onSaved={(c) => {
-            setConfig(c)
-            if (c.configured) setShowSettings(false)
-          }}
-        />
-      )}
+      {showSettings && config && <AssistantSettings config={config} />}
 
       {config && !config.configured && !showSettings && (
         <p data-testid={TEST_IDS.ASSISTANT_NOT_CONFIGURED} className="text-sm text-amber-700 dark:text-amber-400">

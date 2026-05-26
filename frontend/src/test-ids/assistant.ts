@@ -15,10 +15,7 @@ export const ASSISTANT_IDS = {
   ASSISTANT_PROPOSAL_EXECUTE: 'assistant-proposal-execute',
   ASSISTANT_PROPOSAL_CANCEL: 'assistant-proposal-cancel',
 
-  // Settings (provider / model / key)
+  // Settings (read-only status; configured via server env)
   ASSISTANT_SETTINGS_TOGGLE: 'assistant-settings-toggle',
-  ASSISTANT_PROVIDER_SELECT: 'assistant-provider-select',
-  ASSISTANT_MODEL_INPUT: 'assistant-model-input',
-  ASSISTANT_KEY_INPUT: 'assistant-key-input',
-  ASSISTANT_SETTINGS_SAVE: 'assistant-settings-save',
+  ASSISTANT_SETTINGS_STATUS: 'assistant-settings-status',
 } as const;

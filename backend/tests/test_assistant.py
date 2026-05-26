@@ -13,7 +13,9 @@ from sqlalchemy import func, select
 from app.orm import Budget, Transaction, User
 from app.utils.auth import create_access_token, hash_password
 
+from app.config import settings as app_config
 from app.services.assistant.agent import Agent
+from app.services.assistant.env_config import resolve_assistant_config
 from app.services.assistant.prompts import build_system_prompt, language_directive
 from app.services.assistant.providers import AssistantTurn, LLMProvider, ToolCall
 from app.services.assistant.store import Proposal, ProposedAction, proposals
@@ -258,40 +260,60 @@ class TestExecuteEndpoint:
 
 
 # ---------------------------------------------------------------------------
-# Config endpoint: key is write-only, provider validated, auth required
+# Env-only configuration: resolver + read-only status endpoint
 # ---------------------------------------------------------------------------
+
+
+def _set_env(monkeypatch, *, anthropic="", openai="", provider="", model=""):
+    monkeypatch.setattr(app_config, "anthropic_api_key", anthropic)
+    monkeypatch.setattr(app_config, "openai_api_key", openai)
+    monkeypatch.setattr(app_config, "assistant_provider", provider)
+    monkeypatch.setattr(app_config, "assistant_model", model)
+
+
+class TestEnvConfig:
+    def test_unconfigured_when_no_keys(self, monkeypatch):
+        _set_env(monkeypatch)
+        cfg = resolve_assistant_config()
+        assert cfg.configured is False
+        assert cfg.provider is None
+
+    def test_autodetects_anthropic_with_default_model(self, monkeypatch):
+        _set_env(monkeypatch, anthropic="sk-a")
+        cfg = resolve_assistant_config()
+        assert cfg.configured is True
+        assert cfg.provider == "anthropic"
+        assert cfg.model == "claude-sonnet-4-6"
+
+    def test_explicit_provider_and_model_override(self, monkeypatch):
+        _set_env(monkeypatch, openai="sk-o", provider="openai", model="gpt-4.1")
+        cfg = resolve_assistant_config()
+        assert cfg.provider == "openai"
+        assert cfg.model == "gpt-4.1"
 
 
 class TestConfigEndpoint:
     async def test_requires_auth(self, client):
         assert (await client.get("/api/v1/assistant/config")).status_code == 401
 
-    async def test_set_key_is_write_only(self, client, auth_headers):
-        resp = await client.put(
-            "/api/v1/assistant/config",
-            json={"provider": "anthropic", "api_key": "sk-secret-123", "model": "claude-sonnet-4-6"},
-            headers=auth_headers,
-        )
-        assert resp.status_code == 200, resp.text
-        body = resp.json()
-        assert body["configured"] is True
-        assert body["key_stored"] is True
-        # The key must never be echoed back anywhere in the payload.
-        assert "sk-secret-123" not in json.dumps(body)
-        assert "api_key" not in body
-
+    async def test_reports_status_from_env_without_leaking_key(self, client, auth_headers, monkeypatch):
+        _set_env(monkeypatch, anthropic="sk-secret-123")
         got = (await client.get("/api/v1/assistant/config", headers=auth_headers)).json()
+        assert got["configured"] is True
         assert got["provider"] == "anthropic"
+        assert got["source"] == "env"
+        # The key must never appear anywhere in the payload.
         assert "sk-secret-123" not in json.dumps(got)
+        assert "api_key" not in json.dumps(got)
 
-    async def test_invalid_provider_rejected(self, client, auth_headers):
-        resp = await client.put(
-            "/api/v1/assistant/config", json={"provider": "bogus"}, headers=auth_headers
-        )
-        assert resp.status_code == 400
+    async def test_reports_not_configured(self, client, auth_headers, monkeypatch):
+        _set_env(monkeypatch)
+        got = (await client.get("/api/v1/assistant/config", headers=auth_headers)).json()
+        assert got["configured"] is False
 
-    async def test_chat_requires_configuration(self, client, auth_headers):
-        """With no provider/key configured, chat returns a clear 'not configured' error."""
+    async def test_chat_requires_configuration(self, client, auth_headers, monkeypatch):
+        """With nothing in the environment, chat returns a clear 'not configured' error."""
+        _set_env(monkeypatch)
         resp = await client.post(
             "/api/v1/assistant/chat", json={"message": "hi"}, headers=auth_headers
         )

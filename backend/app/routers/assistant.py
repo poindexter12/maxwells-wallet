@@ -1,9 +1,10 @@
-"""AI assistant router: configuration, chat, and approved-action execution.
+"""AI assistant router: configuration status, chat, and approved-action execution.
 
 Security posture:
 - All endpoints require an authenticated user.
-- The API key is write-only: it can be set but is never returned (the config
-  endpoint reports only whether a key is configured).
+- API keys and provider/model are configured ONLY via the server environment
+  (e.g. Docker Compose) and are never persisted or returned. The config
+  endpoint reports read-only status (provider/model/configured), never a key.
 - Chat runs read tools automatically; writes are returned as a proposal and
   only run via /execute after explicit user approval.
 """
@@ -15,7 +16,6 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings as app_config
 from app.database import get_session
 from app.errors import ErrorCode, bad_request, not_found
 from app.orm import AppSettings, LanguagePreference, User
@@ -23,6 +23,7 @@ from app.routers.auth import get_current_user
 from app.routers.settings import parse_accept_language
 from app.services.assistant import DEFAULT_MODELS, SUPPORTED_PROVIDERS
 from app.services.assistant.agent import Agent
+from app.services.assistant.env_config import resolve_assistant_config
 from app.services.assistant.providers import build_provider
 from app.services.assistant.store import (
     Conversation,
@@ -42,30 +43,16 @@ router = APIRouter(prefix="/api/v1/assistant", tags=["assistant"])
 
 
 class AssistantConfigResponse(BaseModel):
-    """Assistant configuration as seen by the client. Never includes the key."""
+    """Read-only assistant status. Reflects the server environment; no key."""
 
     provider: Optional[str] = None
     model: Optional[str] = None
-    # True when a usable key exists (stored in the DB or supplied via env).
     configured: bool = False
-    # Whether a key is present specifically in the DB (vs. env-only).
-    key_stored: bool = False
+    # How the assistant is configured. Always "env" — keys live only in the
+    # server environment, never the database or the browser.
+    source: str = "env"
     available_providers: list[str] = Field(default_factory=lambda: list(SUPPORTED_PROVIDERS))
     default_models: dict[str, str] = Field(default_factory=lambda: dict(DEFAULT_MODELS))
-
-
-class AssistantConfigUpdate(BaseModel):
-    """Update assistant configuration.
-
-    - Set ``api_key`` to a non-empty string to store a new key.
-    - Set ``clear_api_key=True`` to remove the stored key.
-    - Omitted fields are left unchanged.
-    """
-
-    provider: Optional[str] = None
-    model: Optional[str] = None
-    api_key: Optional[str] = Field(default=None, repr=False)
-    clear_api_key: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -74,6 +61,7 @@ class AssistantConfigUpdate(BaseModel):
 
 
 async def _get_or_create_settings(session: AsyncSession) -> AppSettings:
+    """App settings row — used here only to read the language preference."""
     result = await session.execute(select(AppSettings))
     settings = result.scalar_one_or_none()
     if settings is None:
@@ -84,31 +72,6 @@ async def _get_or_create_settings(session: AsyncSession) -> AppSettings:
     return settings
 
 
-def _env_key_for(provider: Optional[str]) -> str:
-    """API key supplied via environment for the given provider, if any."""
-    if provider == "anthropic":
-        return app_config.anthropic_api_key
-    if provider == "openai":
-        return app_config.openai_api_key
-    return ""
-
-
-def resolve_api_key(settings: AppSettings) -> str:
-    """Effective API key: stored key wins, else the env fallback. Never returned to clients."""
-    return settings.assistant_api_key or _env_key_for(settings.assistant_provider)
-
-
-def _to_response(settings: AppSettings) -> AssistantConfigResponse:
-    key_stored = bool(settings.assistant_api_key)
-    configured = bool(resolve_api_key(settings)) and bool(settings.assistant_provider)
-    return AssistantConfigResponse(
-        provider=settings.assistant_provider,
-        model=settings.assistant_model,
-        configured=configured,
-        key_stored=key_stored,
-    )
-
-
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -117,45 +80,14 @@ def _to_response(settings: AppSettings) -> AssistantConfigResponse:
 @router.get("/config", response_model=AssistantConfigResponse)
 async def get_config(
     _user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_session),
 ) -> AssistantConfigResponse:
-    """Return assistant configuration status. Never returns the API key."""
-    settings = await _get_or_create_settings(session)
-    return _to_response(settings)
-
-
-@router.put("/config", response_model=AssistantConfigResponse)
-async def update_config(
-    updates: AssistantConfigUpdate,
-    _user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_session),
-) -> AssistantConfigResponse:
-    """Update provider, model, and/or API key. The key is write-only."""
-    settings = await _get_or_create_settings(session)
-
-    if updates.provider is not None:
-        if updates.provider not in SUPPORTED_PROVIDERS:
-            raise bad_request(
-                ErrorCode.VALIDATION_ERROR,
-                f"Unsupported provider '{updates.provider}'. "
-                f"Choose one of: {', '.join(SUPPORTED_PROVIDERS)}.",
-            )
-        settings.assistant_provider = updates.provider
-        # Default the model when switching providers and none is set/given.
-        if updates.model is None and not settings.assistant_model:
-            settings.assistant_model = DEFAULT_MODELS.get(updates.provider)
-
-    if updates.model is not None:
-        settings.assistant_model = updates.model or None
-
-    if updates.clear_api_key:
-        settings.assistant_api_key = None
-    elif updates.api_key:
-        settings.assistant_api_key = updates.api_key
-
-    await session.commit()
-    await session.refresh(settings)
-    return _to_response(settings)
+    """Report assistant status as derived from the server environment."""
+    cfg = resolve_assistant_config()
+    return AssistantConfigResponse(
+        provider=cfg.provider,
+        model=cfg.model,
+        configured=cfg.configured,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -221,14 +153,15 @@ async def chat(
     session: AsyncSession = Depends(get_session),
 ) -> ChatResponse:
     """Send a message. Read tools run automatically; writes come back as a proposal."""
-    settings = await _get_or_create_settings(session)
-    api_key = resolve_api_key(settings)
-    if not settings.assistant_provider or not api_key:
+    cfg = resolve_assistant_config()
+    if cfg.provider is None or cfg.api_key is None:
         raise bad_request(
             ErrorCode.ASSISTANT_NOT_CONFIGURED,
-            "The assistant is not configured. Set a provider and API key first.",
+            "The assistant is not configured. Set ANTHROPIC_API_KEY or OPENAI_API_KEY "
+            "in the server environment.",
         )
-    provider = build_provider(settings.assistant_provider, api_key, settings.assistant_model)
+    provider = build_provider(cfg.provider, cfg.api_key, cfg.model)
+    settings = await _get_or_create_settings(session)  # for language preference only
     locale = _resolve_locale(settings, request)
 
     # Restore (or start) the conversation; the tokenizer lives server-side so the
