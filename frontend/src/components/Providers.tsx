@@ -7,6 +7,7 @@ import { DashboardProvider } from '@/contexts/DashboardContext'
 import { DemoModeProvider } from '@/contexts/DemoModeContext'
 import { defaultLocale, Locale, isValidLocale } from '@/i18n'
 import universal from '@/messages/universal.json'
+import enUS from '@/messages/en-US.json'
 
 // Deep merge objects (universal strings override locale strings)
 function deepMerge(base: Record<string, unknown>, override: Record<string, unknown>): Record<string, unknown> {
@@ -32,9 +33,14 @@ async function loadMessages(locale: string): Promise<Record<string, unknown>> {
   // skip the universal merge for pseudo.
   const mergeUniversal = (msgs: Record<string, unknown>) =>
     locale === 'pseudo' ? msgs : deepMerge(msgs, universal)
+  // Layer en-US underneath so any key a locale is missing falls back to English
+  // at runtime instead of rendering the raw key path. Skip pseudo (it must stay
+  // fully transformed for the coverage tests).
+  const withEnglishBase = (msgs: Record<string, unknown>) =>
+    locale === 'pseudo' ? msgs : deepMerge(enUS as Record<string, unknown>, msgs)
   try {
     const localeMessages = (await import(`@/messages/${locale}.json`)).default
-    return mergeUniversal(localeMessages)
+    return mergeUniversal(withEnglishBase(localeMessages))
   } catch {
     // Fallback to default locale if message file not found
     console.warn(`Messages for locale "${locale}" not found, falling back to ${defaultLocale}`)

@@ -154,6 +154,24 @@ function findPlaceholderMismatches(
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const UNIVERSAL_STRINGS = new Set(getAllKeys(universal as Record<string, unknown>))
 
+/**
+ * Whether missing-key completeness is a HARD failure.
+ *
+ * Runtime safety no longer depends on locale completeness: the app layers en-US
+ * underneath every locale (see Providers/ProtectedProviders), so a missing key
+ * renders in English rather than breaking. Completeness is therefore a
+ * translation-quality gate, not a correctness gate.
+ *
+ * We enforce it strictly only where it must hold — the Crowdin sync PR
+ * (head ref `l10n/crowdin`), which is the change that's supposed to deliver
+ * complete translations — or when explicitly requested via I18N_STRICT=1.
+ * On ordinary feature PRs (which legitimately add en-US strings ahead of
+ * translation) it's a non-blocking warning, so adding a string never turns a
+ * code PR red. Placeholder integrity (below) is always a hard failure.
+ */
+const STRICT_I18N =
+  process.env.I18N_STRICT === '1' || process.env.GITHUB_HEAD_REF === 'l10n/crowdin'
+
 
 describe('i18n translations', () => {
   const sourceKeys = new Set(getAllKeys(enUS))
@@ -180,11 +198,16 @@ describe('i18n translations', () => {
       it(`${locale}: has every key from en-US.json`, () => {
         const missing = [...sourceKeys].filter((key) => !localeKeys.has(key))
         if (missing.length > 0) {
-          throw new Error(
+          const message =
             `${locale}.json is missing ${missing.length} key(s) from en-US.json ` +
             `(run the Crowdin Sync workflow to pull translations):\n` +
             missing.map((k) => `  - ${k}`).join('\n')
-          )
+          if (STRICT_I18N) {
+            throw new Error(message)
+          }
+          // Non-blocking on code PRs: en-US fallback covers these at runtime;
+          // the Crowdin sync PR (l10n/crowdin) enforces completeness strictly.
+          console.warn(`[i18n] ${message}`)
         }
       })
 
