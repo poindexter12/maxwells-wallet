@@ -13,7 +13,17 @@ WORKDIR /app/frontend
 # Install production dependencies only (skip devDependencies like crowdin-context-harvester
 # which pulls vscode-ripgrep that downloads binaries from GitHub CDN - often flaky)
 COPY frontend/package.json frontend/package-lock.json* ./
-RUN npm ci --omit=dev
+# `npm ci` can miss the platform-specific @next/swc native binary, because a
+# package-lock.json generated on one OS/arch may not record optional deps for
+# others. Next 16's Turbopack build *requires* the native binding (it rejects
+# the WASM fallback), so explicitly install the one matching THIS build arch.
+# node's process.arch ("x64"/"arm64") maps directly to the @next/swc suffix;
+# node:22-slim is glibc (Debian), hence the "-gnu" variant. Builds natively on
+# both linux/amd64 and linux/arm64 — no emulation needed.
+RUN npm ci --omit=dev \
+    && SWC_ARCH="$(node -p process.arch)" \
+    && NEXT_VER="$(node -p "require('next/package.json').version")" \
+    && npm install --no-save "@next/swc-linux-${SWC_ARCH}-gnu@${NEXT_VER}"
 
 # Copy frontend source and build
 COPY frontend/ ./
