@@ -24,6 +24,7 @@ from app.routers import (
     test,
     settings,
     auth,
+    assistant,
 )
 from app.observability import setup_observability
 from app.services.scheduler import scheduler_service
@@ -73,6 +74,7 @@ tags_metadata = [
     {"name": "test", "description": "Test utilities (seeding, clearing) - dev only"},
     {"name": "settings", "description": "Application settings including i18n preferences"},
     {"name": "auth", "description": "Authentication (login, setup, password management)"},
+    {"name": "assistant", "description": "AI assistant with reversible PII tokenization (bring-your-own-key)"},
 ]
 
 app = FastAPI(
@@ -143,6 +145,7 @@ app.include_router(dashboards.router)
 app.include_router(test.router)
 app.include_router(settings.router)
 app.include_router(auth.router)
+app.include_router(assistant.router)
 
 
 @app.get("/", tags=["health"])

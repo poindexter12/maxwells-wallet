@@ -34,6 +34,7 @@ import { BUDGETS_IDS } from './budgets';
 import { ADMIN_IDS } from './admin';
 import { WIDGETS_IDS } from './widgets';
 import { AUTH_IDS } from './auth';
+import { ASSISTANT_IDS } from './assistant';
 import { CHAOS_EXCLUDED_IDS, getChaosExcludeSelectors } from './chaos-excluded';
 
 /**
@@ -50,6 +51,7 @@ export const TEST_IDS = {
   ...ADMIN_IDS,
   ...WIDGETS_IDS,
   ...AUTH_IDS,
+  ...ASSISTANT_IDS,
 } as const;
 
 // Re-export chaos-excluded for destructive actions
@@ -65,6 +67,7 @@ export { BUDGETS_IDS } from './budgets';
 export { ADMIN_IDS } from './admin';
 export { WIDGETS_IDS } from './widgets';
 export { AUTH_IDS } from './auth';
+export { ASSISTANT_IDS } from './assistant';
 
 // Type for regular test ID values
 export type TestId = (typeof TEST_IDS)[keyof typeof TEST_IDS];

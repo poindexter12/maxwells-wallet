@@ -36,6 +36,12 @@ class AppSettings(BaseSettings):
     # CORS settings - comma-separated list of allowed origins
     cors_origins: str = "http://localhost:3000"
 
+    # AI assistant: optional API keys via environment. These are used as a
+    # fallback when no key is stored in app_settings, so a key never has to
+    # touch the database if the operator prefers env-only provisioning.
+    anthropic_api_key: str = ""
+    openai_api_key: str = ""
+
     @property
     def cors_origins_list(self) -> List[str]:
         """Parse CORS_ORIGINS environment variable into a list."""

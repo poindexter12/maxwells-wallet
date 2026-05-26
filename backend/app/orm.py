@@ -453,6 +453,13 @@ class AppSettings(TimestampMixin, Base):
         String, default=LanguagePreference.browser.value
     )
 
+    # AI assistant configuration (bring-your-own-key).
+    # provider is "anthropic" or "openai"; the API key is write-only and is
+    # never returned to the client (see the assistant settings endpoints).
+    assistant_provider: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    assistant_model: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    assistant_api_key: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
 
 class User(TimestampMixin, Base):
     """User account for authentication."""
