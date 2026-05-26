@@ -16,7 +16,7 @@
   "dependencies": {
     "@swc/helpers": "^0.5.17",
     "@tailwindcss/postcss": "^4.1.18",
-    "@tanstack/react-virtual": "^3.13.18",
+    "@tanstack/react-virtual": "^3.13.26",
     "date-fns": "^4.1.0",
     "next": "^16.1.5",
     "next-intl": "^4.7.0",
