@@ -10,7 +10,7 @@ from datetime import date
 import pytest
 from sqlalchemy import func, select
 
-from app.orm import Budget, Tag, Transaction, User
+from app.orm import Budget, Transaction, User
 from app.utils.auth import create_access_token, hash_password
 
 from app.services.assistant.agent import Agent
