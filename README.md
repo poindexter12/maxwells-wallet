@@ -13,9 +13,9 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 
 **[Documentation](https://docs.maxwellswallet.com)** · **[Requirements](docs/requirements/)**
 
-## What's New in v1.0
+## What's New in v1.3
 
-Maxwell's Wallet 1.0 is the first stable release, bringing the full feature set together: CSV/QFX/QIF import, transactions, budgets, dashboards, analytics, recurring detection, transfers, tagging, single-user auth, 10-language i18n, observability — and the new AI Assistant.
+Maxwell's Wallet 1.3 is headlined by the new AI Assistant, on top of the full feature set: CSV/QFX/QIF import, transactions, budgets, dashboards, analytics, recurring detection, transfers, tagging, single-user auth, 10-language i18n, and observability.
 
 ### AI Assistant (Bring Your Own Key)
 - **In-App Chat** - Ask questions about your finances and get answers powered by Anthropic (Claude) or OpenAI

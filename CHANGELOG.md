@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-05-26
+## [1.3.0] - 2026-05-26
 
-First stable release. Maxwell's Wallet 1.0 ships the full feature set: CSV/QFX/QIF import, transaction management, budgets, customizable dashboards, analytics, recurring detection, transfer detection, tagging, single-user authentication, the new AI assistant, 10-language internationalization, and built-in observability.
+Headlined by the new AI assistant. Maxwell's Wallet now spans the full feature set: CSV/QFX/QIF import, transaction management, budgets, customizable dashboards, analytics, recurring detection, transfer detection, tagging, single-user authentication, the AI assistant, 10-language internationalization, and built-in observability.
 
 ### Added
 - **AI Assistant (bring-your-own-key)** - In-app chat assistant backed by Anthropic (Claude) or OpenAI, configured entirely via server environment variables (`ANTHROPIC_API_KEY`/`OPENAI_API_KEY`, optional `ASSISTANT_PROVIDER`/`ASSISTANT_MODEL`) — nothing is persisted (PRs #335, #338)
