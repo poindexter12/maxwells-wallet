@@ -28,18 +28,15 @@ just dev::dev
 ```bash
 cd backend
 
-# Create virtual environment
-uv venv
-source .venv/bin/activate
+# Install dependencies (uv sync creates the .venv for you)
+uv sync --all-extras
 
-# Install dependencies
-uv pip install -e .
+# Create tables, then seed sample data
+uv run python -c "import asyncio; from app.database import init_db; asyncio.run(init_db())"
+uv run python -m scripts.seed
 
-# Seed database
-uv run python -m app.seed
-
-# Start server
-uv run uvicorn app.main:app --reload --port 8000
+# Start server (backend listens on port 3001)
+uv run uvicorn app.main:app --reload --port 3001
 ```
 
 ### Frontend
@@ -65,6 +62,15 @@ just utils::status      # Check if servers running
 ```
 
 ## Database Migrations
+
+Prefer the `just` recipes, which handle paths and environment setup:
+
+```bash
+just db::migrate MESSAGE="description"  # Create a new migration
+just db::upgrade                        # Apply migrations
+```
+
+Equivalent manual commands:
 
 ```bash
 cd backend

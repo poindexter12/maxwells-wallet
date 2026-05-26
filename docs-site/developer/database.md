@@ -8,7 +8,7 @@ Database schema is managed with [Alembic](https://alembic.sqlalchemy.org/) migra
 
 ### Creating Migrations
 
-When you modify models in `backend/app/models.py`:
+When you modify ORM models in `backend/app/orm.py`:
 
 ```bash
 cd backend
@@ -47,22 +47,24 @@ Populate the database with sample transactions:
 just db::seed
 ```
 
-This imports sample CSV files from `/samples/` and creates default categories.
+This generates a set of realistic randomized transactions, accounts, and default
+buckets (via `backend/scripts/seed.py`) — no external files required.
 
 ### Reset Database
 
-To start fresh:
+To delete and recreate the database (init + seed), use the recipe, which prompts
+for confirmation:
 
 ```bash
 just db::reset
 ```
 
-Or manually:
+Equivalent manual steps:
 
 ```bash
-cd backend
-rm wallet.db
-uv run python -m app.seed
+rm -f backend/wallet.db
+just db::init   # create tables
+just db::seed   # generate sample data
 ```
 
 ## Database Location

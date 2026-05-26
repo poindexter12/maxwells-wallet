@@ -21,7 +21,6 @@ No manual format selection required for supported formats.
 | Bank of America (Checking) | "Running Bal." column |
 | Bank of America (Credit Card) | "Posted Date" + "Reference Number" |
 | American Express | "Card Member" + "Account #" |
-| Chase | Chase-specific headers |
 | Venmo | Venmo-specific headers |
 | Inspira HSA | Inspira-specific headers |
 | Custom CSV | User-defined column mapping |

@@ -34,6 +34,7 @@ nav:
   - Home: index.md
   - Getting Started:
     - Quick Start: getting-started/quickstart.md
+    - Authentication: getting-started/authentication.md
     - Docker Setup: getting-started/docker.md
     - Development Setup: getting-started/development.md
   - Features:
@@ -42,6 +43,7 @@ nav:
     - Budgets: features/budgets.md
     - Dashboards: features/dashboards.md
     - Analytics: features/analytics.md
+    - Assistant: features/assistant.md
   - API Reference:
     - Overview: api/overview.md
     - Transactions: api/transactions.md
@@ -50,6 +52,7 @@ nav:
   - Developer Guide:
     - Architecture: developer/architecture.md
     - Database: developer/database.md
+    - Internationalization: developer/i18n.md
     - Observability: developer/observability.md
     - Testing: developer/testing.md
   - Domain Model: domain-model.md

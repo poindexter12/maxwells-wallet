@@ -83,4 +83,5 @@ Content-Type: multipart/form-data
 | `venmo` | Venmo export |
 | `inspira_hsa` | Inspira HSA |
 | `qif` | Quicken Interchange Format |
-| `ofx` | Open Financial Exchange |
+| `qfx` | Quicken QFX / Open Financial Exchange (OFX) |
+| `custom` | User-defined CSV column mapping |

@@ -5,22 +5,17 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 [![CI](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yaml/badge.svg)](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yaml)
 [![Release](https://img.shields.io/github/v/release/poindexter12/maxwells-wallet?label=release)](https://github.com/poindexter12/maxwells-wallet/releases)
 
-## What's New in v0.11
+## What's New in 1.0.0
 
-### SQLAlchemy 2.0 Migration
-- **ORM Upgrade** - Migrated from SQLModel to SQLAlchemy 2.0 + Pydantic for improved type safety and performance
+### AI Assistant
+- **Natural-Language Assistant** - Ask about your finances and propose changes in plain language; reads run automatically while writes require explicit approval. See the [Assistant](features/assistant.md) guide.
 
-### Performance & Stability
-- **Transactions Page** - Debouncing and request cancellation prevent UI lag
-- **Chaos Tests** - Viewport-based demon mode for reliable stress testing
-
-### v0.10 Highlights
-- **Single-User Auth** - Password protection with JWT tokens and first-run setup
+### Foundations
+- **Single-User Auth** - Password protection with JWT tokens and a first-run `/setup` flow. See [Authentication](getting-started/authentication.md).
+- **SQLAlchemy 2.0** - ORM built on SQLAlchemy 2.0 + Pydantic for type safety and performance
 - **Demo Mode** - Public demo instances with restricted operations and auto-reset
 - **Backup System** - SQLite backup/restore with GFS retention and scheduled backups
-
-### v0.9 Highlights
-- **9 Locales** - Full i18n support with locale-aware date and currency formatting
+- **10 Locales** - Full i18n support (managed via Crowdin) with locale-aware date and currency formatting
 
 ## Features
 
@@ -43,6 +38,10 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 - **Saved Filters**: Save and reuse complex filter combinations
 - **CSV Export**: Export filtered transactions
 - **Dynamic Thresholds**: "Large" personalized to your spending
+
+### AI Assistant & Security
+- **AI Assistant**: Ask questions about your spending in plain language; writes require approval
+- **Single-User Auth**: Password-protected access with JWT sessions and first-run setup
 
 ## Quick Start
 

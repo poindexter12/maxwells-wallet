@@ -52,10 +52,11 @@ Spending limits with tracking.
 
 | Field | Description |
 |-------|-------------|
-| `tag_namespace` | Which namespace to track (bucket, occasion, account) |
-| `tag_value` | Which tag value |
+| `tag` | Tag to track, as `namespace:value` (e.g. `bucket:groceries`) |
 | `amount` | Spending limit |
 | `period` | monthly or yearly |
+| `start_date` / `end_date` | Optional bounds for the budget window |
+| `rollover_enabled` | Carry unused amount into the next period |
 
 ### Dashboard
 

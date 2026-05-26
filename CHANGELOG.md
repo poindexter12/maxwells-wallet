@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-05-26
+
+First stable release. Maxwell's Wallet 1.0 ships the full feature set: CSV/QFX/QIF import, transaction management, budgets, customizable dashboards, analytics, recurring detection, transfer detection, tagging, single-user authentication, the new AI assistant, 10-language internationalization, and built-in observability.
+
+### Added
+- **AI Assistant (bring-your-own-key)** - In-app chat assistant backed by Anthropic (Claude) or OpenAI, configured entirely via server environment variables (`ANTHROPIC_API_KEY`/`OPENAI_API_KEY`, optional `ASSISTANT_PROVIDER`/`ASSISTANT_MODEL`) — nothing is persisted (PRs #335, #338)
+  - **Privacy-preserving** - Reversible PII tokenization so account, merchant, and person names never leave the machine
+  - **Read-only insights** - Answers questions about your finances without modifying data
+  - **Propose-and-approve** - Proposes changes you approve before they run, limited to budgets, categorization (tags), and dashboards; it cannot touch transactions, transfers, imports, accounts, or settings
+  - **Localized replies** - Responds in your selected language
+
+### Changed
+- **i18n Resilience** - Per-key English fallback so a missing translation renders in English instead of breaking the UI; Crowdin translations are now pulled daily instead of weekly (#339, #340)
+- **Docker Multi-Arch Builds** - Docker image now builds natively on both linux/arm64 and linux/amd64 by installing the arch-matched `@next/swc` binding so Next 16's Turbopack build works on each platform (#341)
+- **CI Multi-Arch Coverage** - CI now also builds the image on arm64, so arch-specific build breaks fail CI instead of slipping through (#342)
+
+### Fixed
+- **Locale Completeness Gate** - The locale-completeness CI gate is now non-blocking on code PRs and strict only on the Crowdin sync PR, so missing in-progress translations no longer block unrelated work (#339, #340)
+
 ## [0.11.0] - 2026-01-03
 
 ### Changed
