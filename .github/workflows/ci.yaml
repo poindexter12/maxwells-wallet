@@ -253,3 +253,39 @@ jobs:
           '
         cache-from: type=gha
         cache-to: type=gha,mode=max
+  docker-arm64:
+    name: Docker Build (arm64)
+    runs-on: ubuntu-24.04-arm
+    needs:
+    - changes
+    - frontend
+    - backend
+    - e2e
+    timeout-minutes: 30
+    # Mirrors the (amd64) docker job's gate so arm64 is built wherever amd64 is.
+    # Without this, an arch-specific build break (e.g. a missing native
+    # @next/swc binding for Turbopack) only surfaces on a developer's Apple
+    # Silicon machine, never in CI.
+    if: 'always() &&
+
+      (needs.changes.outputs.docker == ''true'' || github.ref == ''refs/heads/main'') &&
+
+      (needs.frontend.result == ''success'' || needs.frontend.result == ''skipped'') &&
+
+      (needs.backend.result == ''success'' || needs.backend.result == ''skipped'') &&
+
+      (needs.e2e.result == ''success'' || needs.e2e.result == ''skipped'')
+
+      '
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    - name: Setup mise
+      uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+      with:
+        install: true
+    - name: Build all-in-one image (native arm64)
+      # Native arm64 runner (no QEMU). A build failure here means the image
+      # won't build on Apple Silicon — exactly the case that slipped through before.
+      run: just docker::build
