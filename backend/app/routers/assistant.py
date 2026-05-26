@@ -10,7 +10,7 @@ Security posture:
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,8 +18,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings as app_config
 from app.database import get_session
 from app.errors import ErrorCode, bad_request, not_found
-from app.orm import AppSettings, User
+from app.orm import AppSettings, LanguagePreference, User
 from app.routers.auth import get_current_user
+from app.routers.settings import parse_accept_language
 from app.services.assistant import DEFAULT_MODELS, SUPPORTED_PROVIDERS
 from app.services.assistant.agent import Agent
 from app.services.assistant.providers import build_provider
@@ -201,8 +202,25 @@ class ExecuteResponse(BaseModel):
     executed: list[ExecutedAction]
 
 
-async def _build_agent_provider(session: AsyncSession):
-    """Resolve assistant config into a ready provider, or 400 if not configured."""
+def _resolve_locale(settings: AppSettings, request: Request) -> str:
+    """The user's effective UI locale, so the assistant replies in their language.
+
+    Uses the stored language preference; when it's 'browser', falls back to the
+    request's Accept-Language header (same resolution the settings endpoint uses).
+    """
+    if settings.language == LanguagePreference.browser.value:
+        return parse_accept_language(request.headers.get("Accept-Language", ""))
+    return settings.language
+
+
+@router.post("/chat", response_model=ChatResponse)
+async def chat(
+    req: ChatRequest,
+    request: Request,
+    _user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> ChatResponse:
+    """Send a message. Read tools run automatically; writes come back as a proposal."""
     settings = await _get_or_create_settings(session)
     api_key = resolve_api_key(settings)
     if not settings.assistant_provider or not api_key:
@@ -210,17 +228,8 @@ async def _build_agent_provider(session: AsyncSession):
             ErrorCode.ASSISTANT_NOT_CONFIGURED,
             "The assistant is not configured. Set a provider and API key first.",
         )
-    return build_provider(settings.assistant_provider, api_key, settings.assistant_model)
-
-
-@router.post("/chat", response_model=ChatResponse)
-async def chat(
-    req: ChatRequest,
-    _user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_session),
-) -> ChatResponse:
-    """Send a message. Read tools run automatically; writes come back as a proposal."""
-    provider = await _build_agent_provider(session)
+    provider = build_provider(settings.assistant_provider, api_key, settings.assistant_model)
+    locale = _resolve_locale(settings, request)
 
     # Restore (or start) the conversation; the tokenizer lives server-side so the
     # model never re-sees real names across turns.
@@ -233,7 +242,7 @@ async def chat(
     history.append({"role": "user", "content": req.message})
 
     ctx = AssistantContext(session=session, tokenizer=tokenizer)
-    result = await Agent(provider, ctx).run(history)
+    result = await Agent(provider, ctx, locale=locale).run(history)
 
     # Persist tokenized history + tokenizer for the next turn.
     convo.history = result.history

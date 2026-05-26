@@ -14,6 +14,7 @@ from app.orm import Budget, Tag, Transaction, User
 from app.utils.auth import create_access_token, hash_password
 
 from app.services.assistant.agent import Agent
+from app.services.assistant.prompts import build_system_prompt, language_directive
 from app.services.assistant.providers import AssistantTurn, LLMProvider, ToolCall
 from app.services.assistant.store import Proposal, ProposedAction, proposals
 from app.services.assistant.tokenizer import Tokenizer
@@ -176,6 +177,49 @@ class TestAgentLoop:
         # reply detokenized to a real merchant name (not the token)
         assert "Merchant 1" not in res.reply
         assert "Trader Joes" in res.reply
+
+
+# ---------------------------------------------------------------------------
+# Prompts + language directive
+# ---------------------------------------------------------------------------
+
+
+class TestPrompts:
+    def test_core_sections_present(self):
+        p = build_system_prompt(today="2026-05-25")
+        assert "Maxwell's Wallet" in p
+        assert "TOOLS" in p and "RULES" in p and "PRIVACY" in p
+        assert "2026-05-25" in p
+        assert "LANGUAGE" not in p  # English default needs no directive
+
+    def test_directive_for_non_english_locales(self):
+        assert language_directive("es-ES").startswith("LANGUAGE")
+        assert "Spanish" in language_directive("es-ES")
+        p = build_system_prompt(today="2026-05-25", locale="fr-FR")
+        assert "LANGUAGE" in p and "French" in p
+
+    def test_no_directive_for_english_or_unknown(self):
+        for loc in ("en-US", "en-GB", "pseudo", None, "zz-ZZ"):
+            assert language_directive(loc) == ""
+
+    async def test_locale_reaches_system_prompt(self, async_session):
+        captured: dict = {}
+
+        class CapturingProvider(LLMProvider):
+            name = "cap"
+
+            def __init__(self):
+                pass
+
+            async def complete(self, *, system, history, tools):
+                captured["system"] = system
+                return AssistantTurn(text="Hola", tool_calls=[])
+
+        ctx = AssistantContext(session=async_session, tokenizer=Tokenizer())
+        await Agent(CapturingProvider(), ctx, locale="es-ES").run(
+            [{"role": "user", "content": "hola"}]
+        )
+        assert "Spanish" in captured["system"]
 
 
 # ---------------------------------------------------------------------------

@@ -20,28 +20,11 @@ from typing import Any
 from app.errors import AppException
 
 from . import MAX_AGENT_ITERATIONS
+from .prompts import build_system_prompt
 from .providers import LLMProvider, ToolCall
 from .store import ProposedAction
 from .tokenizer import Tokenizer
 from .tools import AssistantContext, get_tool, tool_schemas
-
-_SYSTEM_PROMPT = """You are the assistant for Maxwell's Wallet, a personal finance app. Today is {today}.
-
-You help the user understand their money and can PROPOSE constructive changes for them to approve.
-You have read-only tools (spending, budgets, transactions, dashboards) that run automatically, and
-proposal tools for three areas ONLY: budgets, categorization (applying bucket tags to transactions),
-and dashboards.
-
-Rules:
-- You can NEVER create, edit, or delete transactions, move money, import data, or change accounts or
-  settings — no such tools exist. Do not claim you can.
-- Calling a write tool does NOT perform the action. It queues a proposal the user must approve.
-  Describe what you've proposed; never say it's done.
-- Privacy: account, merchant, and person names appear to you as tokens like "Merchant 1" or
-  "Account 2". Use them naturally — the user sees the real names. Amounts, dates, and ids are real.
-- When proposing categorization or an update, use the ids returned by the read tools.
-- Be concise and concrete. Prefer calling a tool over guessing.
-"""
 
 
 @dataclass
@@ -49,10 +32,6 @@ class AgentResult:
     reply: str
     proposed_actions: list[ProposedAction]
     history: list[dict]
-
-
-def _system_prompt() -> str:
-    return _SYSTEM_PROMPT.format(today=date.today().isoformat())
 
 
 def _detokenize_args(tokenizer: Tokenizer, args: dict) -> dict:
@@ -74,10 +53,12 @@ class Agent:
         provider: LLMProvider,
         ctx: AssistantContext,
         max_iterations: int = MAX_AGENT_ITERATIONS,
+        locale: str | None = None,
     ) -> None:
         self.provider = provider
         self.ctx = ctx
         self.max_iterations = max_iterations
+        self.locale = locale
 
     async def _run_tool(self, call: ToolCall, proposed: list[ProposedAction]) -> str:
         """Execute a read tool (returns tokenized JSON) or record a write proposal."""
@@ -106,7 +87,7 @@ class Agent:
 
     async def run(self, history: list[dict]) -> AgentResult:
         """Drive the tool-use loop. ``history`` already includes the new user message."""
-        system = _system_prompt()
+        system = build_system_prompt(today=date.today().isoformat(), locale=self.locale)
         proposed: list[ProposedAction] = []
         tools = tool_schemas()
         last_text = ""
