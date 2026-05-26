@@ -5,7 +5,7 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 [![CI](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yaml/badge.svg)](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yaml)
 [![Release](https://img.shields.io/github/v/release/poindexter12/maxwells-wallet?label=release)](https://github.com/poindexter12/maxwells-wallet/releases)
 
-## What's New in 1.0.0
+## What's New in 1.3.0
 
 ### AI Assistant
 - **Natural-Language Assistant** - Ask about your finances and propose changes in plain language; reads run automatically while writes require explicit approval. See the [Assistant](features/assistant.md) guide.
