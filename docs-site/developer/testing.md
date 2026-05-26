@@ -69,14 +69,12 @@ just test::quality    # Full quality checks (lint + typecheck + vulture)
 
 ## Test Data
 
-### Quick Samples
+### Seeded Sample Data
 
-The `/samples/` directory contains sample CSV files for database seeding:
-
-- `bofa.csv` - Bank of America checking format
-- `amex.csv` - American Express format
-
-These are imported when running `just db::seed`.
+`just db::seed` generates realistic randomized transactions, accounts, and
+default buckets programmatically (via `backend/scripts/seed.py`). No external CSV
+files are required — running the recipe is enough to populate a local database
+for development and manual testing.
 
 ### Anonymizing Real Data
 

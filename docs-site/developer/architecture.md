@@ -9,7 +9,7 @@ Maxwell's Wallet is a full-stack application with a Python backend and TypeScrip
 | Frontend | Next.js 16 + TypeScript + Tailwind CSS 4 |
 | Backend | FastAPI + Python 3.11+ (async) |
 | Database | SQLite (dev) / PostgreSQL (prod) |
-| ORM | SQLModel (Pydantic + SQLAlchemy) |
+| ORM | SQLAlchemy 2.0 (async) + Pydantic schemas |
 | Charts | Recharts |
 | Package Management | npm (frontend), uv (backend) |
 
@@ -20,7 +20,9 @@ maxwells-wallet/
 ├── backend/                 # FastAPI backend
 │   ├── app/
 │   │   ├── main.py         # FastAPI app entry point
-│   │   ├── models.py       # SQLModel database models
+│   │   ├── orm.py          # SQLAlchemy 2.0 ORM models
+│   │   ├── schemas.py      # Pydantic request/response schemas
+│   │   ├── config.py       # Settings (env-driven AppSettings)
 │   │   ├── database.py     # Database configuration
 │   │   ├── tag_inference.py # Bucket tag inference
 │   │   ├── parsers/        # CSV/QIF/QFX parsing
@@ -36,6 +38,9 @@ maxwells-wallet/
 │   │   │   ├── middleware.py # Request instrumentation
 │   │   │   └── alerting.py # Webhook notifications
 │   │   └── routers/        # API route handlers
+│   │       ├── auth.py          # Setup, login, password
+│   │       ├── assistant.py     # AI assistant chat/execute
+│   │       ├── settings.py      # App settings, locale, backup schedule
 │   │       ├── transactions.py
 │   │       ├── tags.py
 │   │       ├── import_router.py
@@ -89,7 +94,8 @@ maxwells-wallet/
 The backend follows a router-based architecture with FastAPI:
 
 - **Routers** handle HTTP endpoints, grouped by domain
-- **Models** define SQLModel entities (Pydantic + SQLAlchemy hybrid)
+- **ORM models** (`orm.py`) define SQLAlchemy 2.0 entities
+- **Schemas** (`schemas.py`) define Pydantic request/response models
 - **Parsers** handle file format detection and parsing
 - **Utils** contain shared utilities (hashing, etc.)
 
@@ -97,6 +103,9 @@ The backend follows a router-based architecture with FastAPI:
 
 | Router | Purpose |
 |--------|---------|
+| `auth.py` | First-run setup, login, password management (JWT) |
+| `assistant.py` | AI assistant chat and approved-action execution |
+| `settings.py` | App settings, locale resolution, backup schedule |
 | `transactions.py` | Transaction CRUD, search, splits |
 | `dashboards.py` | Multi-dashboard management |
 | `dashboard.py` | Widget CRUD and layout |
@@ -112,8 +121,9 @@ The backend follows a router-based architecture with FastAPI:
 ### Key Patterns
 
 - **Async everywhere**: All database operations use async/await
-- **SQLModel**: Single model definitions serve as both Pydantic schemas and SQLAlchemy ORM models
+- **SQLAlchemy 2.0 + Pydantic**: ORM models in `orm.py`, separate Pydantic schemas in `schemas.py` for request/response validation
 - **Alembic**: Database migrations for schema changes
+- **JWT auth**: Single-user authentication via a Bearer token on every request
 - **Content hashing**: Dual-hash deduplication for reliable import
 
 ### Observability

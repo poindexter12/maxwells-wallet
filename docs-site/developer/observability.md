@@ -25,7 +25,7 @@ OTEL_METRICS_ENABLED=true
 
 # Logging
 OTEL_LOG_LEVEL=INFO
-OTEL_LOG_FORMAT=console  # or "json" for structured logs
+OTEL_LOG_FORMAT=json  # structured logs (default); use "console" for human-readable
 
 # Slow query detection threshold in milliseconds
 OTEL_SLOW_QUERY_THRESHOLD_MS=100

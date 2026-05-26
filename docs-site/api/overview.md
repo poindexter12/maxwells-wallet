@@ -16,26 +16,38 @@ All API endpoints are prefixed with `/api/v1/`.
 
 ## Authentication
 
-The API uses JWT-based authentication. On first run, you'll create a user account. All API requests require a valid Bearer token in the Authorization header.
+The API uses JWT-based authentication. On first run, you'll create a user
+account at `/setup`. After that, every request (except the auth and health
+endpoints) must include a valid Bearer token in the `Authorization` header:
 
-See the [Authentication](/api/auth) section for login endpoints and token management.
+```
+Authorization: Bearer <token>
+```
+
+Obtain a token from `POST /api/v1/auth/login`. See
+[Authentication](../getting-started/authentication.md) for the full login flow,
+password reset, and token configuration.
 
 ## Endpoint Groups
 
 | Group | Prefix | Description |
 |-------|--------|-------------|
+| Auth | `/api/v1/auth` | Setup, login, password, current user |
 | Transactions | `/api/v1/transactions` | CRUD operations, filtering, tagging |
 | Import | `/api/v1/import` | Import from CSV, QIF, QFX, OFX |
 | Reports | `/api/v1/reports` | Analytics, summaries, insights |
 | Budgets | `/api/v1/budgets` | Budget limits and tracking |
 | Recurring | `/api/v1/recurring` | Recurring transaction detection |
 | Tags | `/api/v1/tags` | Tag management (buckets, occasions, accounts) |
-| Category Rules | `/api/v1/category-rules` | Automated categorization |
+| Tag Rules | `/api/v1/tag-rules` | Automated categorization rules |
 | Transfers | `/api/v1/transfers` | Transfer detection and linking |
-| Merchants | `/api/v1/merchant-aliases` | Merchant name normalization |
+| Merchants | `/api/v1/merchants` | Merchant name normalization |
 | Accounts | `/api/v1/accounts` | Account management |
 | Filters | `/api/v1/filters` | Saved search filters |
-| Admin | `/api/v1/admin` | Data management |
+| Dashboards | `/api/v1/dashboards` | Multi-dashboard management |
+| Settings | `/api/v1/settings` | App settings, locale, backup schedule |
+| Assistant | `/api/v1/assistant` | AI assistant chat and approved actions |
+| Admin | `/api/v1/admin` | Data management and backups |
 
 ## Common Response Patterns
 

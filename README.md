@@ -13,15 +13,20 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 
 **[Documentation](https://docs.maxwellswallet.com)** · **[Requirements](docs/requirements/)**
 
-## What's New in v0.11
+## What's New in v1.0
 
-### SQLAlchemy 2.0 Migration
-- **ORM Upgrade** - Migrated from SQLModel to SQLAlchemy 2.0 + Pydantic for improved type safety and performance
+Maxwell's Wallet 1.0 is the first stable release, bringing the full feature set together: CSV/QFX/QIF import, transactions, budgets, dashboards, analytics, recurring detection, transfers, tagging, single-user auth, 10-language i18n, observability — and the new AI Assistant.
 
-### Performance & Stability
-- **Transactions Page** - Debouncing and request cancellation prevent UI lag during rapid filtering
-- **Chaos Tests** - Viewport-based demon mode interactions for reliable stress testing
-- **Docker Builds** - Skip devDependencies to avoid flaky downloads
+### AI Assistant (Bring Your Own Key)
+- **In-App Chat** - Ask questions about your finances and get answers powered by Anthropic (Claude) or OpenAI
+- **Privacy-Preserving** - Reversible PII tokenization keeps account, merchant, and person names on your machine
+- **Propose-and-Approve** - The assistant proposes changes you approve before they run, limited to budgets, categorization, and dashboards (never transactions, transfers, imports, accounts, or settings)
+- **Configured via Environment** - Bring your own key; nothing is stored
+- **Speaks Your Language** - Replies in your selected locale
+
+### Reliability
+- **i18n Fallback** - Missing translations render in English instead of breaking the UI; Crowdin translations now sync daily
+- **Multi-Arch Docker** - Image builds natively on both linux/arm64 and linux/amd64, with arm64 now covered in CI
 
 See [CHANGELOG.md](CHANGELOG.md) for full release history.
 
@@ -40,6 +45,11 @@ See [CHANGELOG.md](CHANGELOG.md) for full release history.
 - **Anomaly Detection**: Flag unusual purchases, new merchants, and budget leaks
 - **Month-over-Month**: Track spending changes with category-level breakdown
 - **Daily Burn Rate**: Know early if you're on track to overspend
+
+### AI Assistant
+- **Bring Your Own Key**: In-app chat backed by Anthropic (Claude) or OpenAI, configured via environment variables (keys are never stored)
+- **Privacy-Preserving**: Reversible PII tokenization keeps account, merchant, and person names on your machine
+- **Propose-and-Approve**: Read-only insights plus changes you approve before they run, limited to budgets, categorization, and dashboards
 
 ### Search & Filtering
 - **Quick Filters**: One-click buttons for This Month, Last Month, Large, Unreconciled
@@ -114,6 +124,25 @@ Set `SECRET_KEY` in production for JWT signing (defaults to dev key):
 ```bash
 docker run -d -p 3000:3000 -p 3001:3001 \
   -e SECRET_KEY="your-secure-random-string" \
+  -v /path/to/data:/data \
+  ghcr.io/poindexter12/maxwells-wallet
+```
+
+### AI Assistant (Optional)
+
+The AI Assistant uses your own API key, supplied via environment variables. Keys are read from the environment only and are never stored.
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `ANTHROPIC_API_KEY` | One of these | API key for Anthropic (Claude) |
+| `OPENAI_API_KEY` | One of these | API key for OpenAI |
+| `ASSISTANT_PROVIDER` | Optional | Provider to use (`anthropic` or `openai`) |
+| `ASSISTANT_MODEL` | Optional | Override the default model |
+
+```bash
+docker run -d -p 3000:3000 -p 3001:3001 \
+  -e SECRET_KEY="your-secure-random-string" \
+  -e ANTHROPIC_API_KEY="sk-ant-..." \
   -v /path/to/data:/data \
   ghcr.io/poindexter12/maxwells-wallet
 ```

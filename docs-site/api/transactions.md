@@ -40,7 +40,7 @@ GET /api/v1/transactions?skip=0&limit=100
 | `amount_min` | float | Minimum amount |
 | `amount_max` | float | Maximum amount |
 | `is_transfer` | bool | Filter by transfer status |
-| `reconciliation_status` | string | unreconciled, matched, ignored |
+| `reconciliation_status` | string | unreconciled, matched, manually_entered, ignored |
 
 ### Response
 
