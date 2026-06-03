@@ -1,7 +1,7 @@
 # All-in-One Dockerfile for Maxwell's Wallet
 # Runs both FastAPI backend and Next.js frontend in a single container
 
-FROM node:22-slim@sha256:7af03b14a13c8cdd38e45058fd957bf00a72bbe17feac43b1c15a689c029c732 AS frontend-builder
+FROM node:24-slim@sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf AS frontend-builder
 
 # Build args
 ARG ENABLE_PSEUDO=false
