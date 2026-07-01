@@ -55,7 +55,8 @@
     "organize": "Organiseren",
     "tools": "Tools",
     "admin": "Beheer",
-    "import": "CSV Importeren"
+    "import": "CSV Importeren",
+    "assistant": "Assistant"
   },
   "settings": {
     "title": "Instellingen",
@@ -977,7 +978,40 @@
       "SETUP_ALREADY_COMPLETE": "Account bestaat al. Gelieve in te loggen.",
       "INVALID_PASSWORD": "Huidig wachtwoord is onjuist",
       "LOGIN_FAILED": "Inloggen mislukt. Probeer opnieuw.",
-      "SETUP_FAILED": "Installatie mislukt. Probeer opnieuw."
+      "SETUP_FAILED": "Installatie mislukt. Probeer opnieuw.",
+      "ASSISTANT_NOT_CONFIGURED": "The assistant isn't set up yet. Add a provider and API key below.",
+      "ASSISTANT_PROVIDER_ERROR": "The AI provider returned an error. Check your API key and model.",
+      "ASSISTANT_PROPOSAL_NOT_FOUND": "That proposal expired. Ask the assistant again.",
+      "ASSISTANT_ACTION_NOT_ALLOWED": "That action isn't allowed."
+    }
+  },
+  "assistant": {
+    "title": "Assistant",
+    "subtitle": "Ask about your money. It can propose budgets, categorization, and dashboards for you to approve.",
+    "placeholder": "Ask about your spending, budgets, or dashboards…",
+    "send": "Send",
+    "thinking": "Thinking…",
+    "emptyState": "Ask a question to get started — for example, “How much did I spend on groceries last month?”",
+    "privacyNote": "Account, merchant, and people's names are pseudonymized before anything is sent to the AI provider.",
+    "youLabel": "You",
+    "assistantLabel": "Assistant",
+    "proposal": {
+      "title": "Proposed changes",
+      "description": "The assistant proposes these changes. Nothing happens until you approve.",
+      "execute": "Execute",
+      "cancel": "Sluiten",
+      "executing": "Executing…",
+      "done": "Done — {count} change(s) applied.",
+      "failed": "Couldn't apply the changes."
+    },
+    "settings": {
+      "title": "AI provider",
+      "configured": "Configured",
+      "notConfigured": "Not configured",
+      "provider": "Provider",
+      "model": "Model",
+      "notConfiguredHelp": "Set ANTHROPIC_API_KEY or OPENAI_API_KEY in the server environment to enable the assistant.",
+      "envManaged": "Configured on the server via environment variables. No keys are stored or entered here."
     }
   }
 }
