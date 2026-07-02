@@ -17,6 +17,10 @@ gum = "latest"                 # Terminal UI toolkit
 _.file = ".env"
 # Development defaults
 NODE_ENV = "development"
+# Network registry (jacaranda-inventory) identity for this app
+REGISTRY_ROOT = "{{ config_root }}/../jacaranda-inventory"
+REGISTRY_OWNER = "ghcr.io/poindexter12/maxwells-wallet"
+REGISTRY_SERVICE = "maxwells-wallet"
 
 [settings]
 # Auto-install missing tools when entering directory
