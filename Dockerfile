@@ -1,7 +1,7 @@
 # All-in-One Dockerfile for Maxwell's Wallet
 # Runs both FastAPI backend and Next.js frontend in a single container
 
-FROM node:24-slim@sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc AS frontend-builder
+FROM node:24-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e AS frontend-builder
 
 # Build args
 ARG ENABLE_PSEUDO=false
@@ -45,7 +45,7 @@ ENV NEXT_PUBLIC_ENABLE_PSEUDO=$ENABLE_PSEUDO
 RUN echo "==> Building Next.js with NEXT_PUBLIC_ENABLE_PSEUDO=$ENABLE_PSEUDO" && npm run build
 
 # Final stage: Python + Node runtime
-FROM python:3.14-slim@sha256:b877e50bd90de10af8d82c57a022fc2e0dc731c5320d762a27986facfc3355c1
+FROM python:3.14-slim@sha256:656d12e70054d5fda18a045e2494c96701e9792dd1445f95b3d038df954f57e9
 
 # Re-declare build args for this stage
 ARG APP_VERSION=unknown
