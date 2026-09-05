@@ -51,6 +51,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Generate pseudo-locale for i18n E2E tests
+        run: just i18n::pseudo
+
       - name: Install Playwright browsers
         working-directory: frontend
         run: |
