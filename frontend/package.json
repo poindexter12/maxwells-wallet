@@ -51,7 +51,7 @@
     "pseudo-localization": "^2.4.0",
     "tailwindcss": "^4.1.18",
     "typescript": "^6.0.3",
-    "vitest": "^4.0.14"
+    "vitest": "^4.1.11"
   },
   "overrides": {
     "vscode-ripgrep": "npm:@vscode/ripgrep@^1.17.0",
