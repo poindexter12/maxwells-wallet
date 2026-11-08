@@ -42,19 +42,19 @@ This repository includes a devcontainer configuration for VS Code. To use it:
 
 The devcontainer provides:
 - Node.js 22 (frontend)
-- Python 3.11 + uv (backend)
+- Python 3.14 + uv (backend)
 - SQLite (database)
 - Pre-configured VS Code extensions (Python, ESLint, Prettier, Tailwind CSS, Playwright, Ruff)
 - Automatic formatting on save
 
 ## Available Agent
 
-- **@techlead** (`.claude/agents/techlead.mdc`): Repo-aware technical lead. Reads `CLAUDE.md` and the per-topic skills in `.claude/skills/`, builds a short plan for non-trivial tasks, prefers `just` recipes, and enforces the stack-specific skills.
-- **@frontend-lead** (`.claude/agents/frontend-lead.mdc`): Leads frontend/UI changes. Applies Next.js and TypeScript skills; prefers `just dev::frontend`/`just dev::dev`.
-- **@backend-lead** (`.claude/agents/backend-lead.mdc`): Leads backend/API work. Applies FastAPI, Python, and Postgres skills; prefers `just dev::backend`/`just test::backend`; defaults to read/EXPLAIN posture for DB.
-- **@db-lead** (`.claude/agents/db-lead.mdc`): Leads database design/migrations/query review. Applies Postgres and DB-design skills; favors additive, reversible migrations and explicit EXPLAIN-before-write.
-- **@testlead** (`.claude/agents/testlead.mdc`): Leads testing strategy/implementation. Applies frontend, backend, and Python testing skills; prefers `just test::` recipes; keeps tests deterministic and isolated.
-- **@i18n-lead** (`.claude/agents/i18n-lead.mdc`): Leads internationalization work. Manages Crowdin workflow, enforces translation best practices. **Use this agent when adding/modifying translatable strings.**
+- **@techlead** (`.claude/agents/techlead.md`): Repo-aware technical lead. Reads `CLAUDE.md` and the per-topic skills in `.claude/skills/`, builds a short plan for non-trivial tasks, prefers `just` recipes, and enforces the stack-specific skills.
+- **@frontend-lead** (`.claude/agents/frontend-lead.md`): Leads frontend/UI changes. Applies Next.js and TypeScript skills; prefers `just dev::frontend`/`just dev::dev`.
+- **@backend-lead** (`.claude/agents/backend-lead.md`): Leads backend/API work. Applies FastAPI, Python, and Postgres skills; prefers `just dev::backend`/`just test::backend`; defaults to read/EXPLAIN posture for DB.
+- **@db-lead** (`.claude/agents/db-lead.md`): Leads database design/migrations/query review. Applies Postgres and DB-design skills; favors additive, reversible migrations and explicit EXPLAIN-before-write.
+- **@testlead** (`.claude/agents/testlead.md`): Leads testing strategy/implementation. Applies frontend, backend, and Python testing skills; prefers `just test::` recipes; keeps tests deterministic and isolated.
+- **@i18n-lead** (`.claude/agents/i18n-lead.md`): Leads internationalization work. Manages Crowdin workflow, enforces translation best practices. **Use this agent when adding/modifying translatable strings.**
 
 ## Development Commands
 
@@ -172,7 +172,7 @@ When preparing a release (including betas):
 
 ## Agent Skills and Tooling Guidance
 
-Use this section for quick reference. Canonical skill cards live in `.claude/skills/` (one per topic). If only one agent needs custom rules, add them in `.claude/agents/*.mdc`.
+Use this section for quick reference. Canonical skill cards live in `.claude/skills/` (one per topic). If only one agent needs custom rules, add them in `.claude/agents/*.md`.
 
 ### Next.js (TypeScript, App Router)
 - Default to server components; use client components only for event-heavy UI.

@@ -1,13 +1,6 @@
 ---
-id: skill-db-design
-name: DB Design / T-SQL Skill
-description: "Database design and T-SQL guidance."
-role: system
-color: gray
-tags:
-  - skill
-  - database
-  - tsql
+name: db-design
+description: Use when designing relational schemas, constraints, migrations, indexes, or SQL data models for this repository.
 ---
 
 - Normalize first (3NF), then denormalize intentionally; document trade-offs. Name tables/columns predictably; timestamps are UTC (`created_at`, `updated_at`).

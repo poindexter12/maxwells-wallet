@@ -1,12 +1,6 @@
 ---
-id: skill-postgres
-name: Postgres Skill
-description: "Safety, schema, and query guidance for Postgres targets."
-role: system
-color: purple
-tags:
-  - skill
-  - postgres
+name: postgres
+description: Use when designing or reviewing Postgres-ready schemas, queries, indexes, migrations, transactions, or query performance.
 ---
 
 - Safety-first: default to read/EXPLAIN; parameterize queries; no string-concatenated SQL. Use transactions for multi-step writes.

@@ -1,13 +1,6 @@
 ---
-id: skill-testing-backend
-name: Backend Testing Skill
-description: "Testing guidance for FastAPI/Postgres backend."
-role: system
-color: orange
-tags:
-  - skill
-  - testing
-  - backend
+name: testing-backend
+description: Use when adding or reviewing FastAPI, service, persistence, or API-contract tests under backend/.
 ---
 
 - Use async-friendly clients (httpx AsyncClient) against FastAPI app instances; avoid hitting real external services.
