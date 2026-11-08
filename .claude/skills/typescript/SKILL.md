@@ -1,12 +1,6 @@
 ---
-id: skill-typescript
-name: TypeScript Skill
-description: "Strict TypeScript patterns for frontend/shared code."
-role: system
-color: blue
-tags:
-  - skill
-  - typescript
+name: typescript
+description: Use when editing TypeScript 6 frontend or shared code, especially types, API contracts, server actions, and error handling.
 ---
 
 - Stay strict: avoid `any` and unsafe `as`; derive types from data (`as const`, `satisfies`) to prevent drift.

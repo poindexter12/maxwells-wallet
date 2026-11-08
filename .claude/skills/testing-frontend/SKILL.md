@@ -1,13 +1,6 @@
 ---
-id: skill-testing-frontend
-name: Frontend Testing Skill
-description: "Testing guidance for Next.js/TypeScript frontend."
-role: system
-color: teal
-tags:
-  - skill
-  - testing
-  - frontend
+name: testing-frontend
+description: Use when adding or reviewing React, Next.js, component, integration, or Playwright frontend tests under frontend/.
 ---
 
 - Prefer React Testing Library for component/integration tests; focus on user-observable behavior over implementation details.

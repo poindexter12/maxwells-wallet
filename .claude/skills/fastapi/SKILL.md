@@ -1,12 +1,6 @@
 ---
-id: skill-fastapi
-name: FastAPI Skill
-description: "Async FastAPI patterns and safety for this repo."
-role: system
-color: orange
-tags:
-  - skill
-  - fastapi
+name: fastapi
+description: Use when editing FastAPI routers, services, dependencies, request or response models, and async backend behavior under backend/.
 ---
 
 - Handlers stay async end-to-end; avoid blocking calls in request paths.

@@ -1,13 +1,6 @@
 ---
-id: skill-testing-python
-name: Python Testing Skill
-description: "Testing guidance for Python/FastAPI code."
-role: system
-color: yellow
-tags:
-  - skill
-  - testing
-  - python
+name: testing-python
+description: Use when adding or reviewing pytest coverage for Python and FastAPI code under backend/.
 ---
 
 - Use `pytest` with clear fixtures; avoid global state. Prefer async-capable clients for FastAPI (e.g., httpx AsyncClient).

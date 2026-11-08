@@ -1,12 +1,6 @@
 ---
-id: skill-python
-name: Python Skill
-description: "Python quality patterns for this repo (FastAPI + tooling)."
-role: system
-color: yellow
-tags:
-  - skill
-  - python
+name: python
+description: Use when editing Python 3.14 application, service, test, or tooling code, especially asynchronous FastAPI-adjacent code.
 ---
 
 - Type-hint everything (including dependency returns); avoid mutable default args.

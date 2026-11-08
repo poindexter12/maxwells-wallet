@@ -1,12 +1,6 @@
 ---
-id: skill-nextjs
-name: Next.js Skill
-description: "Guidance for Next.js 14 App Router work in this repo."
-role: system
-color: teal
-tags:
-  - skill
-  - nextjs
+name: nextjs
+description: Use when editing Next.js 16 App Router pages, layouts, components, server actions, route handlers, or frontend data fetching under frontend/.
 ---
 
 - Default to server components; mark client components only for interactivity or browser-only APIs.
