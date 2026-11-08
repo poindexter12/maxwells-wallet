@@ -225,10 +225,10 @@ async def apply_aliases(
         return {"message": "No aliases defined", "updated_count": 0, "updates": []}
 
     # Get transactions with descriptions that might need aliasing
-    result = await session.execute(
+    txn_result = await session.execute(
         select(Transaction.id, Transaction.description, Transaction.merchant).where(Transaction.description.isnot(None))
     )
-    transactions = result.all()
+    transactions = txn_result.all()
 
     updates = []
     alias_match_counts = {a.id: 0 for a in aliases}

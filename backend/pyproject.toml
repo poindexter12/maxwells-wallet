@@ -102,7 +102,7 @@ warn_return_any = true
 warn_unused_ignores = true
 disallow_untyped_defs = false  # Too strict for existing codebase
 check_untyped_defs = true
-plugins = ["sqlalchemy.ext.mypy.plugin"]
+# SQLAlchemy 2.1 removed sqlalchemy.ext.mypy; native Mapped[] annotations replace it.
 
 # Ignore third-party packages without stubs
 [[tool.mypy.overrides]]
