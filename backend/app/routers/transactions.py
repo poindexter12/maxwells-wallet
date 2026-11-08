@@ -598,7 +598,8 @@ async def get_transaction_splits(transaction_id: int, session: AsyncSession = De
     )
     rows = result.all()
 
-    splits = [SplitItem(tag=f"bucket:{row[0].value}", amount=row[1]) for row in rows]
+    # The query filters out NULL amounts; restate it so the Optional narrows.
+    splits = [SplitItem(tag=f"bucket:{row[0].value}", amount=row[1]) for row in rows if row[1] is not None]
 
     total_allocated = sum(s.amount for s in splits)
     unallocated = abs(transaction.amount) - total_allocated
