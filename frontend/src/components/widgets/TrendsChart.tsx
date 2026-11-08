@@ -40,7 +40,13 @@ export function TrendsChart({ widget: _widget, data, isMonthlyScale: _isMonthlyS
           <YAxis tickFormatter={(value) => formatCompactCurrency(value)} />
           <Tooltip
             formatter={(value) => formatCurrency(value as number)}
-            labelFormatter={(label) => isWeekly ? `Week ${label.split('-')[1]?.replace('W', '') || label}` : formatPeriodLabel(label)}
+            labelFormatter={(label) => {
+              // recharts >=3.10 types this as ReactNode, so narrow to string first
+              const period = String(label ?? '')
+              return isWeekly
+                ? `Week ${period.split('-')[1]?.replace('W', '') || period}`
+                : formatPeriodLabel(period)
+            }}
           />
           <Legend />
           <Line type="monotone" dataKey="income" stroke="#10b981" name={t('income')} />
