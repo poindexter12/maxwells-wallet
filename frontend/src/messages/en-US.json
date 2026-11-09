@@ -64,7 +64,45 @@
     "languageDescription": "Choose your preferred language for the interface",
     "browserDefault": "Auto (Browser)",
     "saved": "Settings saved",
-    "theme": "Theme"
+    "theme": "Theme",
+    "apiTokens": {
+      "title": "API tokens",
+      "description": "Create tokens to connect MCP clients to your wallet.",
+      "empty": "No API tokens yet. Create one to connect an MCP client.",
+      "name": "Token name",
+      "scope": "Access",
+      "expiry": "Expires",
+      "create": "Create token",
+      "createdWarning": "Copy this token now. You will not see it again.",
+      "tokenValue": "API token",
+      "connectionSnippet": "MCP connection",
+      "dismiss": "I copied the token",
+      "revoke": "Revoke",
+      "revoked": "Revoked",
+      "active": "Active",
+      "never": "Never",
+      "loadError": "Unable to load API tokens.",
+      "createError": "Unable to create API token.",
+      "revokeError": "Unable to revoke API token.",
+      "scopes": {
+        "read": "Read only",
+        "readWrite": "Read and write"
+      },
+      "expiries": {
+        "never": "Never",
+        "days": "{count} days"
+      },
+      "columns": {
+        "name": "Name",
+        "prefix": "Prefix",
+        "scopes": "Scopes",
+        "created": "Created",
+        "lastUsed": "Last used",
+        "expires": "Expires",
+        "status": "Status",
+        "actions": "Actions"
+      }
+    }
   },
   "transactions": {
     "title": "Transactions",

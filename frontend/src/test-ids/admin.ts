@@ -33,4 +33,21 @@ export const ADMIN_IDS = {
   BACKUP_SCHEDULE_INTERVAL: 'backup-schedule-interval',
   BACKUP_LOADING: 'backup-loading',
   BACKUP_EMPTY: 'backup-empty',
+
+  // API tokens
+  API_TOKENS_SECTION: 'api-tokens-section',
+  API_TOKENS_LIST: 'api-tokens-list',
+  API_TOKENS_EMPTY: 'api-tokens-empty',
+  API_TOKEN_NAME_INPUT: 'api-token-name-input',
+  API_TOKEN_SCOPE_SELECT: 'api-token-scope-select',
+  API_TOKEN_EXPIRY_SELECT: 'api-token-expiry-select',
+  API_TOKEN_CREATE_BUTTON: 'api-token-create-button',
+  API_TOKEN_ERROR: 'api-token-error',
+  API_TOKEN_CREATED_NOTICE: 'api-token-created-notice',
+  API_TOKEN_VALUE: 'api-token-value',
+  API_TOKEN_CONNECTION_SNIPPET: 'api-token-connection-snippet',
+  API_TOKEN_COPY_BUTTON: 'api-token-copy-button',
+  API_TOKEN_DISMISS_BUTTON: 'api-token-dismiss-button',
+  API_TOKEN_REVOKE_CONFIRM_BUTTON: 'api-token-revoke-confirm-button',
+  API_TOKEN_REVOKE_CANCEL_BUTTON: 'api-token-revoke-cancel-button',
 } as const;
