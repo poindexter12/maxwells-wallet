@@ -65,7 +65,7 @@ jobs:
           failures=$(jq -r '
             .[]
             | select(.workflow != "Dependabot Auto-Merge")
-            | select(.state != "SUCCESS" and .state != "SKIPPING")
+            | select(.state as $s | ["SUCCESS","SKIPPED","SKIPPING","NEUTRAL"] | index($s) | not)
             | "\(.workflow // "unknown"): \(.name) (\(.state))"
           ' <<<"$checks")
           if [ -n "$failures" ]; then
