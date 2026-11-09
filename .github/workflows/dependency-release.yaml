@@ -1,0 +1,118 @@
+name: Weekly Dependency Release
+
+on:
+  schedule:
+    # Dependabot's Monday schedule defaults to 05:00 UTC; run after it.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    outputs:
+      has_updates: ${{ steps.dependabot.outputs.has_updates }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Find Dependabot changes since the latest release
+        id: dependabot
+        run: |
+          nearest_tag=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true)
+          latest_tag=$(git tag --merged HEAD --list 'v[0-9]*' --sort=-v:refname \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          if [ -z "$latest_tag" ]; then
+            echo "No full semantic-version release tag found (nearest tag: $nearest_tag)."
+            exit 1
+          fi
+
+          commits=$(git log "$latest_tag"..HEAD --author='dependabot\[bot\]' --format='%s')
+          if [ -z "$commits" ]; then
+            echo "has_updates=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          {
+            echo "has_updates=true"
+            echo "commits<<EOF"
+            echo "$commits"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Calculate next patch version
+        id: version
+        if: steps.dependabot.outputs.has_updates == 'true'
+        run: |
+          current=$(node -p "require('./frontend/package.json').version")
+          IFS=. read -r major minor patch <<< "$current"
+          echo "version=$major.$minor.$((patch + 1))" >> "$GITHUB_OUTPUT"
+
+      - name: Update release files and changelog
+        if: steps.dependabot.outputs.has_updates == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          COMMITS: ${{ steps.dependabot.outputs.commits }}
+        run: |
+          python3 - "$VERSION" "$COMMITS" <<'PY'
+          import json
+          import re
+          import sys
+          from datetime import date
+          from pathlib import Path
+
+          version, commits = sys.argv[1:]
+          package_path = Path("frontend/package.json")
+          package = json.loads(package_path.read_text())
+          package["version"] = version
+          package_path.write_text(json.dumps(package, indent=2) + "\n")
+
+          lock_path = Path("frontend/package-lock.json")
+          lock = json.loads(lock_path.read_text())
+          lock["version"] = version
+          lock["packages"][""]["version"] = version
+          lock_path.write_text(json.dumps(lock, indent=2) + "\n")
+
+          pyproject_path = Path("backend/pyproject.toml")
+          pyproject = pyproject_path.read_text()
+          pyproject_path.write_text(re.sub(r'(?m)^version = "[^"]+"$', f'version = "{version}"', pyproject, count=1))
+
+          lock_path = Path("backend/uv.lock")
+          lock = lock_path.read_text()
+          lock_path.write_text(re.sub(
+              r'(name = "maxwells-wallet-backend"\nversion = ")[^"]+(" )?',
+              rf'\g<1>{version}\2',
+              lock,
+              count=1,
+          ))
+
+          changelog_path = Path("CHANGELOG.md")
+          changelog = changelog_path.read_text()
+          section = f"## [{version}] - {date.today():%Y-%m-%d}\n\n### Changed\n"
+          section += "\n".join(f"- Dependency update: {subject}" for subject in commits.splitlines())
+          section += "\n\n"
+          changelog_path.write_text(changelog.replace("## [Unreleased]\n\n", f"## [Unreleased]\n\n{section}", 1))
+          PY
+
+      - name: Commit and tag weekly release
+        if: steps.dependabot.outputs.has_updates == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add CHANGELOG.md frontend/package.json frontend/package-lock.json backend/pyproject.toml backend/uv.lock
+          git commit -m "chore(release): v$VERSION"
+          git tag "v$VERSION"
+          git push origin HEAD:main "v$VERSION"
+
+  publish-release:
+    needs: prepare-release
+    if: needs.prepare-release.outputs.has_updates == 'true'
+    uses: ./.github/workflows/release.yaml
+    with:
+      version: ${{ needs.prepare-release.outputs.version }}

@@ -196,6 +196,10 @@ GitHub Actions will then:
 2. Build Docker image
 3. Push to `ghcr.io/poindexter12/maxwells-wallet:<version>`
 
+### Dependency updates
+
+Dependabot pull requests, including major-version updates, merge only after the `CI` workflow succeeds and every applicable pull-request check is green. The weekly dependency-release workflow runs each Monday at 06:00 UTC, after Dependabot's default Monday schedule. When Dependabot commits have landed since the latest full semantic-version tag, it batches them into one patch release, updates the version files and changelog, tags the release, and invokes the reusable release workflow.
+
 ---
 
 ## Utilities
