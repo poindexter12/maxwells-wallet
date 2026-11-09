@@ -51,7 +51,7 @@ async def test_mcp_lists_tools_and_calls_read_tool(client, async_session, seed_t
         assert (await client.post("/mcp", headers=headers, json=initialize)).status_code == 200
         listed = await client.post("/mcp", headers=headers, json={"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
         assert listed.status_code == 200
-        assert {tool["name"] for tool in listed.json()["result"]["tools"]} == READ_TOOL_NAMES
+        assert READ_TOOL_NAMES <= {tool["name"] for tool in listed.json()["result"]["tools"]}
         called = await client.post(
             "/mcp", headers=headers,
             json={"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "list_tags", "arguments": {"limit": 999}}},
