@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 import structlog
 from mcp.server.mcpserver.exceptions import ToolError
@@ -61,7 +61,7 @@ async def _tag(session: Any, tag_string: str) -> Tag:
     ).scalar_one_or_none()
     if tag is None:
         raise ToolError(f"Tag '{tag_string}' does not exist; use create_tag first.")
-    return tag
+    return cast(Tag, tag)
 
 
 async def _transactions(session: Any, ids: list[int]) -> tuple[dict[int, Transaction], list[int]]:
