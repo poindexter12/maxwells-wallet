@@ -36,6 +36,11 @@ class AppSettings(BaseSettings):
     # CORS settings - comma-separated list of allowed origins
     cors_origins: str = "http://localhost:3000"
 
+    # MCP Streamable HTTP settings. MCP_ALLOWED_HOSTS permits reverse-proxy and
+    # tunnel Host headers while retaining SDK DNS-rebinding protection.
+    mcp_enabled: bool = True
+    mcp_allowed_hosts: str = "localhost,localhost:*,127.0.0.1,127.0.0.1:*,test"
+
     # AI assistant: configured entirely via environment (e.g. Docker Compose).
     # Nothing assistant-related is persisted to the database. Provide a key for
     # whichever provider you want; the provider auto-detects from the present
@@ -55,6 +60,11 @@ class AppSettings(BaseSettings):
     def cors_origins_list(self) -> List[str]:
         """Parse CORS_ORIGINS environment variable into a list."""
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @property
+    def mcp_allowed_hosts_list(self) -> List[str]:
+        """Parse MCP_ALLOWED_HOSTS for SDK DNS-rebinding validation."""
+        return [host.strip() for host in self.mcp_allowed_hosts.split(",") if host.strip()]
 
 
 settings = AppSettings()

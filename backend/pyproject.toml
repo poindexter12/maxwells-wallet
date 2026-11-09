@@ -29,6 +29,7 @@ dependencies = [
     # Authentication
     "bcrypt>=5.0.0",
     "PyJWT>=2.8.0",
+    "mcp>=2.3.0",
 ]
 
 [build-system]
