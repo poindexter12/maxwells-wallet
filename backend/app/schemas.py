@@ -8,7 +8,7 @@ ORM models are in orm.py - these are separate for proper type checking.
 from datetime import datetime, date as date_type
 from typing import Optional, List
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # Import enums from orm (shared between ORM and schemas)
 from app.orm import (
@@ -568,6 +568,35 @@ class UserResponse(BaseResponse):
     id: int
     username: str
     created_at: datetime
+
+
+class ApiTokenCreate(BaseModel):
+    name: str
+    scopes: List[str] = ["read"]
+    expires_in_days: Optional[int] = Field(None, ge=1, le=3650)
+
+    @field_validator("scopes")
+    @classmethod
+    def validate_scopes(cls, scopes: List[str]) -> List[str]:
+        if not scopes or not set(scopes).issubset({"read", "write"}):
+            raise ValueError("Scopes must be a non-empty subset of read and write")
+        return scopes
+
+
+class ApiTokenResponse(BaseResponse):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    name: str
+    token_prefix: str
+    scopes: List[str]
+    expires_at: Optional[datetime] = None
+    revoked_at: Optional[datetime] = None
+    last_used_at: Optional[datetime] = None
+
+
+class ApiTokenCreatedResponse(ApiTokenResponse):
+    token: str
 
 
 class PasswordChange(BaseModel):
