@@ -51,6 +51,9 @@ See [CHANGELOG.md](CHANGELOG.md) for full release history.
 - **Privacy-Preserving**: Reversible PII tokenization keeps account, merchant, and person names on your machine
 - **Propose-and-Approve**: Read-only insights plus changes you approve before they run, limited to budgets, categorization, and dashboards
 
+### MCP Integration
+- **Self-Hosted Connections**: Connect Claude Code or a claude.ai custom connector to the authenticated [MCP server](docs/mcp.md) for analysis, classification, tagging, rules, and new dashboards
+
 ### Search & Filtering
 - **Quick Filters**: One-click buttons for This Month, Last Month, Large, Unreconciled
 - **Saved Filters**: Save and reuse complex filter combinations

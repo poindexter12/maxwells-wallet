@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **MCP server** - Authenticated Streamable HTTP access for Claude Code and claude.ai, with read-only analysis, classification suggestions, controlled tagging and rules, and new dashboards. See [the MCP guide](docs/mcp.md).
+
 ## [1.3.0] - 2026-07-02
 
 Headlined by the new AI assistant. Maxwell's Wallet now spans the full feature set: CSV/QFX/QIF import, transaction management, budgets, customizable dashboards, analytics, recurring detection, transfer detection, tagging, single-user authentication, the AI assistant, 10-language internationalization, and built-in observability.
