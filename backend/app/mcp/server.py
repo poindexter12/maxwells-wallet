@@ -16,6 +16,7 @@ mcp_server = MCPServer("maxwells-wallet", title="Maxwell's Wallet")
 # tools_write and tools_classify here.
 from app.mcp import tools_classify as _tools_classify  # noqa: E402, F401
 from app.mcp import tools_read as _tools_read  # noqa: E402, F401
+from app.mcp import tools_write as _tools_write  # noqa: E402, F401
 
 
 def mcp_asgi_app():
