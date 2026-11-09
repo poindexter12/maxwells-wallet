@@ -113,7 +113,7 @@ The default `local` provider uses the existing bucket-tag inference and enabled 
 
 The optional `jev` provider is selected with `CLASSIFIER_PROVIDER=jev` and requires `JEV_API_KEY`. It sends merchant, description, amount, date, and account source to TypeSafe AI's Jev System One API. It does not send transaction IDs. `JEV_BASE_URL` controls the service base URL and defaults to `https://api.typesafe.ai`.
 
-The Jev adapter targets `POST /v1/systemone`. Its module documentation says the public documentation does not establish API rate limits, data retention, or a feedback API. The adapter therefore remains opt-in and confines wire assumptions to its request and response parsing. With no key, the provider falls back to local and reports that in `classifier_status`.
+The Jev adapter targets `POST /v1/systemone`. Its module documentation says the public documentation does not establish API rate limits, data retention, or a feedback API. The adapter therefore remains opt-in and confines wire assumptions to its request and response parsing. The adapter has not been run against the live service, so treat it as an unverified integration until you have tested it with your own key. With no key, the provider falls back to local and reports that in `classifier_status`.
 
 ## Suggested workflows
 
