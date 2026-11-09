@@ -15,6 +15,7 @@ mcp_server = MCPServer("maxwells-wallet", title="Maxwell's Wallet")
 # Register the read-only surface. Future tickets add one import each for
 # tools_write and tools_classify here.
 from app.mcp import tools_read as _tools_read  # noqa: E402, F401
+from app.mcp import tools_write as _tools_write  # noqa: E402, F401
 
 
 def mcp_asgi_app():
