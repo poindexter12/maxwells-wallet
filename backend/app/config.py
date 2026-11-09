@@ -46,6 +46,11 @@ class AppSettings(BaseSettings):
     assistant_provider: str = ""  # "anthropic" | "openai" | "" (auto-detect)
     assistant_model: str = ""  # optional override; defaults per provider
 
+    # Classifier: the optional Jev provider is configured only by environment.
+    classifier_provider: str = "local"
+    jev_api_key: str = ""
+    jev_base_url: str = "https://api.typesafe.ai"
+
     @property
     def cors_origins_list(self) -> List[str]:
         """Parse CORS_ORIGINS environment variable into a list."""
