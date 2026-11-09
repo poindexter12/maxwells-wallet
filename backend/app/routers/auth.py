@@ -2,17 +2,26 @@
 Authentication router for user login, setup, and password management.
 """
 
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.database import get_session
-from app.errors import ErrorCode, bad_request, conflict, unauthorized
-from app.orm import User
-from app.schemas import UserCreate, UserResponse, PasswordChange
+from app.errors import ErrorCode, bad_request, conflict, not_found, unauthorized
+from app.orm import ApiToken, User
+from app.schemas import (
+    ApiTokenCreate,
+    ApiTokenCreatedResponse,
+    ApiTokenResponse,
+    PasswordChange,
+    UserCreate,
+    UserResponse,
+)
+from app.services.api_tokens import create_api_token, revoke_api_token
 from app.utils.auth import hash_password, verify_password, create_access_token, verify_token
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
@@ -169,6 +178,78 @@ async def change_password(
     await session.commit()
 
     return {"message": "Password changed successfully"}
+
+
+@router.post("/tokens", response_model=ApiTokenCreatedResponse, status_code=201)
+async def create_personal_api_token(
+    data: ApiTokenCreate,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Create a personal API token and return its raw value exactly once."""
+    scopes = set(data.scopes)
+    if not scopes or not scopes.issubset({"read", "write"}):
+        raise bad_request(ErrorCode.INVALID_TOKEN, "Scopes must be a non-empty subset of read and write")
+    expires_at = (
+        datetime.now(timezone.utc) + timedelta(days=data.expires_in_days)
+        if data.expires_in_days is not None
+        else None
+    )
+    token, raw_token = await create_api_token(
+        session,
+        user_id=user.id,
+        name=data.name,
+        scopes=scopes,
+        expires_at=expires_at,
+    )
+    return ApiTokenCreatedResponse(
+        id=token.id,
+        name=token.name,
+        token_prefix=token.token_prefix,
+        scopes=token.scopes.split(","),
+        expires_at=token.expires_at,
+        revoked_at=token.revoked_at,
+        last_used_at=token.last_used_at,
+        created_at=token.created_at,
+        updated_at=token.updated_at,
+        token=raw_token,
+    )
+
+
+@router.get("/tokens", response_model=list[ApiTokenResponse])
+async def list_personal_api_tokens(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """List the caller's personal API tokens without secret material."""
+    result = await session.execute(select(ApiToken).where(ApiToken.user_id == user.id))
+    tokens = result.scalars().all()
+    return [
+        ApiTokenResponse(
+            id=token.id,
+            name=token.name,
+            token_prefix=token.token_prefix,
+            scopes=token.scopes.split(","),
+            expires_at=token.expires_at,
+            revoked_at=token.revoked_at,
+            last_used_at=token.last_used_at,
+            created_at=token.created_at,
+            updated_at=token.updated_at,
+        )
+        for token in tokens
+    ]
+
+
+@router.delete("/tokens/{token_id}", status_code=204)
+async def revoke_personal_api_token(
+    token_id: int,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> Response:
+    """Soft-revoke one of the caller's personal API tokens."""
+    if not await revoke_api_token(session, user_id=user.id, token_id=token_id):
+        raise not_found(ErrorCode.API_TOKEN_NOT_FOUND)
+    return Response(status_code=204)
 
 
 @router.delete("/test-reset")
