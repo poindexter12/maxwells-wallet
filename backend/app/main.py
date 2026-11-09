@@ -31,6 +31,7 @@ from app.services.scheduler import scheduler_service
 from app.middleware import SecurityHeadersMiddleware, add_demo_mode_middleware
 from app.version import get_version, get_version_info
 from app.config import settings as app_settings
+from app.mcp.server import mcp_asgi_app, mcp_server
 
 logger = logging.getLogger(__name__)
 
@@ -51,9 +52,15 @@ async def lifespan(app: FastAPI):
         logger.info("   Use this to detect N+1 patterns and missing indexes")
 
     scheduler_service.start()
-    yield
-    # Shutdown
-    scheduler_service.stop()
+    try:
+        if app_settings.mcp_enabled:
+            async with mcp_server.session_manager.run():
+                yield
+        else:
+            yield
+    finally:
+        # Shutdown
+        scheduler_service.stop()
 
 
 tags_metadata = [
@@ -124,6 +131,11 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 # Demo mode middleware (blocks restricted operations when DEMO_MODE=true)
 add_demo_mode_middleware(app)
+
+# MCP is isolated behind token auth and can be disabled for deployments that do
+# not expose a tool endpoint. The SDK session manager runs in this app lifespan.
+if app_settings.mcp_enabled:
+    app.mount("/mcp", mcp_asgi_app())
 
 # Include routers
 app.include_router(transactions.router)
