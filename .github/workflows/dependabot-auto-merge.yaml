@@ -1,44 +1,96 @@
 name: Dependabot Auto-Merge
 
 on:
-  pull_request_target:
-    types: [opened, synchronize, reopened]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   auto-merge:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_branch, 'dependabot/')
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
-    if: github.actor == 'dependabot[bot]'
     steps:
-      - name: Dependabot metadata
-        id: metadata
-        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
-        with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-
-      - name: Approve patch and minor updates
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
-        run: gh pr review --approve "$PR_URL"
+      - name: Resolve and validate Dependabot pull request
+        id: pr
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
-
-      - name: Enable auto-merge for patch and minor updates
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
-        run: gh pr merge --auto --squash "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Comment on major updates
-        if: steps.metadata.outputs.update-type == 'version-update:semver-major'
+          GH_TOKEN: ${{ github.token }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          RUN_ACTOR: ${{ github.event.workflow_run.actor.login }}
+          RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
-          gh pr comment "$PR_URL" --body "This is a **major version update**. Please review the changelog and merge manually if everything looks good."
+          pr=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$HEAD_BRANCH" --state open \
+            --json number,url,headRefOid,author --limit 1)
+          if [ "$pr" = "[]" ]; then
+            echo "No open pull request for $HEAD_BRANCH."
+            exit 0
+          fi
+
+          number=$(jq -r '.[0].number' <<<"$pr")
+          url=$(jq -r '.[0].url' <<<"$pr")
+          head_sha=$(jq -r '.[0].headRefOid' <<<"$pr")
+          author=$(jq -r '.[0].author.login' <<<"$pr")
+          if [ "$RUN_ACTOR" != 'dependabot[bot]' ] && [ "$author" != 'dependabot[bot]' ]; then
+            echo "Pull request #$number is not Dependabot-authored."
+            exit 0
+          fi
+          if [ "$head_sha" != "$RUN_HEAD_SHA" ]; then
+            echo "Pull request #$number has newer commits than this CI run."
+            exit 0
+          fi
+
+          {
+            echo "eligible=true"
+            echo "number=$number"
+            echo "url=$url"
+            echo "head_sha=$head_sha"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Require all pull request checks to pass
+        if: steps.pr.outputs.eligible == 'true'
         env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          checks=$(gh pr checks "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
+            --json name,state,workflow 2>/dev/null || true)
+          failures=$(jq -r '
+            .[]
+            | select(.workflow != "Dependabot Auto-Merge")
+            | select(.state != "SUCCESS" and .state != "SKIPPING")
+            | "\(.workflow // "unknown"): \(.name) (\(.state))"
+          ' <<<"$checks")
+          if [ -n "$failures" ]; then
+            echo "Pull request checks are not all green:"
+            echo "$failures"
+            exit 1
+          fi
+
+      - name: Approve pull request when needed
+        if: steps.pr.outputs.eligible == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+        run: |
+          approvals=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
+            --json reviews --jq '[.reviews[] | select(.author.login == "github-actions[bot]" and .state == "APPROVED")] | length')
+          if [ "$approvals" -eq 0 ]; then
+            gh pr review --approve "$PR_URL"
+          fi
+
+      - name: Squash merge verified pull request
+        if: steps.pr.outputs.eligible == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+          PR_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+        run: gh pr merge --squash --delete-branch --match-head-commit "$PR_HEAD_SHA" "$PR_URL"
