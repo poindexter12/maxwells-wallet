@@ -98,7 +98,7 @@ These are read-only and require `read`. They never write suggestions to the data
 | Tool | Scope | Purpose | Key parameters and limits |
 |---|---|---|---|
 | `suggest_tags` | `read` | Suggest bucket tags for selected or uncategorized transactions. | `transaction_ids` max 100, or `limit` max 100; `min_confidence` 0–1 |
-| `suggest_rules` | `read` | Mine repeatable conditions from uncategorized merchants. | `min_support` max 100; `limit` max 100 |
+| `suggest_rules` | `read` | Mine repeatable conditions from the 5,000 most recent uncategorized transactions. | `min_support` max 100; `limit` max 100 |
 | `classifier_status` | `read` | Report provider selection and whether data leaves the instance. | No parameters; never exposes the API key |
 
 ## Safety and auditability

@@ -1,8 +1,10 @@
 """Contract tests for the authenticated Streamable HTTP MCP mount."""
 
+from datetime import date
+
 import pytest
 
-from app.orm import User
+from app.orm import Transaction, User
 from app.services.api_tokens import create_api_token
 from app.utils.auth import create_access_token, hash_password
 
@@ -37,6 +39,34 @@ async def test_mcp_rejects_missing_login_and_revoked_tokens(client, async_sessio
     token_row.revoked_at = token_row.created_at
     await async_session.commit()
     assert (await client.post("/mcp", headers={"Authorization": f"Bearer {revoked_raw}"}, json={})).status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_spending_summary_caps_grouped_merchants(client, async_session, mcp_running):
+    raw = await _token(async_session)
+    async_session.add_all(
+        Transaction(
+            date=date(2025, 1, 1), amount=-(index + 1), description=f"Merchant {index}",
+            merchant=f"Merchant {index}", account_source="test",
+        )
+        for index in range(201)
+    )
+    await async_session.commit()
+    headers = {"Authorization": f"Bearer {raw}", "Accept": "application/json, text/event-stream"}
+    initialize = {
+        "jsonrpc": "2.0", "id": 1, "method": "initialize",
+        "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "pytest", "version": "1"}},
+    }
+    async with mcp_running():
+        assert (await client.post("/mcp", headers=headers, json=initialize)).status_code == 200
+        called = await client.post(
+            "/mcp", headers=headers,
+            json={"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "spending_summary", "arguments": {"group_by": "merchant"}}},
+        )
+    result = called.json()["result"]["structuredContent"]
+    assert len(result["groups"]) == 200
+    assert result["total_groups"] == 201
+    assert result["truncated"] is True
 
 
 @pytest.mark.asyncio

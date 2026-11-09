@@ -157,8 +157,16 @@ async def spending_summary(
             keys = [f"{tag.namespace}:{tag.value}" for tag in transaction.tags] or ["Untagged"]
         for key in keys:
             totals[key] = totals.get(key, 0.0) + abs(transaction.amount)
-    groups = [{"group": key, "amount": round(amount, 2)} for key, amount in sorted(totals.items(), key=lambda item: -item[1])]
-    return {"start_date": start_date, "end_date": end_date, "group_by": group_by, "groups": groups}
+    all_groups = [{"group": key, "amount": round(amount, 2)} for key, amount in sorted(totals.items(), key=lambda item: -item[1])]
+    groups = all_groups[:200]
+    return {
+        "start_date": start_date,
+        "end_date": end_date,
+        "group_by": group_by,
+        "groups": groups,
+        "total_groups": len(all_groups),
+        "truncated": len(all_groups) > len(groups),
+    }
 
 
 @mcp_server.tool()
@@ -212,9 +220,11 @@ async def preview_rule(
             select(Transaction).options(selectinload(Transaction.tags)).order_by(Transaction.date.desc(), Transaction.id.desc())
         )).scalars().all()
     matches = [transaction for transaction in transactions if match_rule(transaction, rule)]
+    sample = [_transaction_data(transaction) for transaction in matches[:_limit(limit, 20)]]
     return {
         "match_count": len(matches),
-        "sample": [_transaction_data(transaction) for transaction in matches[:_limit(limit, 20)]],
+        "sample": sample,
+        "truncated": len(matches) > len(sample),
     }
 
 

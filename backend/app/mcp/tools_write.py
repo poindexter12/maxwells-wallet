@@ -311,7 +311,7 @@ async def delete_rule(rule_id: int) -> dict[str, Any]:
 
 @mcp_server.tool()
 async def apply_rules(rule_id: int | None = None, dry_run: bool = False) -> dict[str, Any]:
-    """Apply enabled rules using existing match and bucket-link semantics."""
+    """Apply enabled rules; global application skips categorised transactions."""
     principal = _guard()
     async with tool_session() as session:
         stmt = select(TagRule).where(TagRule.enabled.is_(True)).order_by(TagRule.priority.desc(), TagRule.created_at)
@@ -321,29 +321,49 @@ async def apply_rules(rule_id: int | None = None, dry_run: bool = False) -> dict
         if rule_id is not None and not rules:
             raise ToolError(f"Enabled rule {rule_id} was not found.")
         txns = (await session.execute(select(Transaction))).scalars().all()
-        stats = []
+        stats: list[dict[str, Any]] = []
         changed = unchanged = 0
-        for rule in rules:
-            count = 0
-            for txn in txns:
+        for txn in txns:
+            if rule_id is None:
+                current_bucket = (
+                    await session.execute(
+                        select(Tag)
+                        .join(TransactionTag)
+                        .where(and_(TransactionTag.transaction_id == txn.id, Tag.namespace == "bucket"))
+                    )
+                ).scalar_one_or_none()
+                if current_bucket and current_bucket.value != "none":
+                    continue
+            for rule in rules:
                 if not match_rule(txn, rule):
                     continue
-                exists = await _has_link(session, txn.id, (await _tag(session, rule.tag)).id)
-                if exists:
+                tag = await _tag(session, rule.tag)
+                namespace, _ = parse_tag_string(rule.tag)
+                exists = await _has_link(session, txn.id, tag.id)
+                would_apply = not exists or (rule_id is not None and namespace == "bucket")
+                if not would_apply:
                     unchanged += 1
-                    continue
-                count += 1
-                changed += 1
-                if not dry_run:
-                    await apply_tag_to_transaction(session, txn.id, rule.tag)
-                    rule.match_count += 1
-                    rule.last_matched_date = datetime.now(UTC)
-            stats.append({"rule_id": rule.id, "rule_name": rule.name, "matches": count})
+                else:
+                    applied = True if dry_run else await apply_tag_to_transaction(session, txn.id, rule.tag)
+                    if applied:
+                        changed += 1
+                        stat = next((item for item in stats if item["rule_id"] == rule.id), None)
+                        if stat is None:
+                            stat = {"rule_id": rule.id, "rule_name": rule.name, "matches": 0}
+                            stats.append(stat)
+                        stat["matches"] += 1
+                        if not dry_run:
+                            rule.match_count += 1
+                            rule.last_matched_date = datetime.now(UTC)
+                    else:
+                        unchanged += 1
+                if rule_id is None and namespace == "bucket":
+                    break
         if not dry_run:
             await session.commit()
     counts = {"changed": changed, "unchanged": unchanged, "not_found": 0}
     _audit("apply_rules", principal, counts, dry_run)
-    return {"rules": stats, "counts": counts, "dry_run": dry_run}
+    return {"rules": stats[:200], "truncated": len(stats) > 200, "counts": counts, "dry_run": dry_run}
 
 
 @mcp_server.tool()
