@@ -9,6 +9,7 @@ import { ImportsTab } from '@/components/admin/ImportsTab'
 import { HealthTab } from '@/components/admin/HealthTab'
 import { BackupsTab } from '@/components/admin/BackupsTab'
 import { PasswordChangeTab } from '@/components/admin/PasswordChangeTab'
+import { ApiTokensSection } from '@/components/admin/ApiTokensSection'
 import { TagsTab } from '@/components/admin/TagsTab'
 import { CreateTagModal, EditTagModal } from '@/components/admin/TagModal'
 import {
@@ -367,7 +368,12 @@ export default function AdminPage() {
 
       {activeTab === 'backups' && <BackupsTab />}
 
-      {activeTab === 'security' && <PasswordChangeTab />}
+      {activeTab === 'security' && (
+        <div className="space-y-6">
+          <PasswordChangeTab />
+          <ApiTokensSection />
+        </div>
+      )}
 
       {currentTagTab && (
         <TagsTab

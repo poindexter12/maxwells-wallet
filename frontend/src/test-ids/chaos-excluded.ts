@@ -22,6 +22,9 @@ export const CHAOS_EXCLUDED_IDS = {
   // Backup operations (destructive)
   BACKUP_RESTORE: 'backup-restore', // Overwrites current database
   BACKUP_DELETE: 'backup-delete', // Deletes a backup file
+
+  // API tokens
+  API_TOKEN_REVOKE: 'api-token-revoke', // Revokes an API credential
 } as const;
 
 /**
