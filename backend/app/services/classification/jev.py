@@ -77,7 +77,10 @@ class JevClassifier:
             )
             questions[question] = {
                 "type": "choice",
-                "instructions": "Choose the best existing wallet label for this transaction.",
+                "instructions": (
+                    f"The state is a JSON array of transactions. Choose the best existing "
+                    f"wallet label for the transaction at zero-based index {index}."
+                ),
                 "criteria": criteria,
             }
 
