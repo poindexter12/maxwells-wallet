@@ -111,7 +111,7 @@ async def suggest_tags(
 
 @mcp_server.tool()
 async def suggest_rules(min_support: int = 3, limit: int = 20) -> dict[str, Any]:
-    """Mine repeatable rule conditions without writing.
+    """Mine repeatable rule conditions without writing from the 5,000 most recent uncategorized transactions.
 
     Show proposals to the user, then use preview_rule to confirm matches, create_rule,
     apply_rules(dry_run=True), and finally apply_rules after approval.
@@ -123,6 +123,7 @@ async def suggest_rules(min_support: int = 3, limit: int = 20) -> dict[str, Any]
             .options(selectinload(Transaction.tags))
             .where(~Transaction.tags.any(Tag.namespace == "bucket"))
             .order_by(Transaction.date.desc(), Transaction.id.desc())
+            .limit(5000)
         )).scalars().all()
         candidate_merchants = {transaction.merchant for transaction in uncategorized if transaction.merchant}
         tagged_transactions: Sequence[Transaction] = []
@@ -135,6 +136,7 @@ async def suggest_rules(min_support: int = 3, limit: int = 20) -> dict[str, Any]
             )).scalars().all()
         rules = (await session.execute(select(TagRule))).scalars().all()
     return {
+        "scanned": len(uncategorized),
         "suggestions": mine_rule_suggestions(
             uncategorized,
             rules,
