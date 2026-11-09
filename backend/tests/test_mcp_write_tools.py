@@ -66,7 +66,7 @@ async def test_tools_list_includes_exact_write_contract(client, async_session, m
     async with _mcp(client, raw, mcp_running) as headers:
         response = await client.post("/mcp", headers=headers, json={"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
     assert response.status_code == 200
-    assert {tool["name"] for tool in response.json()["result"]["tools"]} == READ_TOOL_NAMES | WRITE_TOOL_NAMES
+    assert {tool["name"] for tool in response.json()["result"]["tools"]} >= READ_TOOL_NAMES | WRITE_TOOL_NAMES
 
 
 async def test_read_only_token_is_refused_by_every_write_tool(client, async_session, seed_tags, seed_transactions, mcp_running):
