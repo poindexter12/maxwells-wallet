@@ -2,7 +2,6 @@
 
 import pytest
 
-from app.mcp.server import mcp_server
 from app.orm import User
 from app.services.api_tokens import create_api_token
 from app.utils.auth import create_access_token, hash_password
@@ -41,14 +40,14 @@ async def test_mcp_rejects_missing_login_and_revoked_tokens(client, async_sessio
 
 
 @pytest.mark.asyncio
-async def test_mcp_lists_tools_and_calls_read_tool(client, async_session, seed_tags):
+async def test_mcp_lists_tools_and_calls_read_tool(client, async_session, seed_tags, mcp_running):
     raw = await _token(async_session)
     headers = {"Authorization": f"Bearer {raw}", "Accept": "application/json, text/event-stream"}
     initialize = {
         "jsonrpc": "2.0", "id": 1, "method": "initialize",
         "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "pytest", "version": "1"}},
     }
-    async with mcp_server.session_manager.run():
+    async with mcp_running():
         assert (await client.post("/mcp", headers=headers, json=initialize)).status_code == 200
         listed = await client.post("/mcp", headers=headers, json={"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
         assert listed.status_code == 200
