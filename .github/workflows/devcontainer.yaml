@@ -6,11 +6,13 @@ on:
     paths:
       - '.devcontainer/**'
       - '.mise.toml'
+      - '.github/workflows/devcontainer.yaml'
   pull_request:
     branches: [main]
     paths:
       - '.devcontainer/**'
       - '.mise.toml'
+      - '.github/workflows/devcontainer.yaml'
 
 permissions:
   contents: read
@@ -46,11 +48,29 @@ jobs:
           echo "Testing mise..."
           dexec mise --version || { echo "mise not found"; exit 1; }
 
-          echo "Testing Node.js..."
-          dexec mise exec -- node --version | grep -q "v22" || { echo "Node.js v22 not found"; exit 1; }
+          # Expected versions come from .mise.toml, the single source of truth.
+          # Hardcoding them here let the pins drift apart and fail this job
+          # whenever .mise.toml was bumped (e.g. node 22 -> 26).
+          NODE_WANT=$(sed -nE 's/^node[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' .mise.toml)
+          PY_WANT=$(sed -nE 's/^python[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' .mise.toml)
+          [ -n "$NODE_WANT" ] || { echo "node pin not found in .mise.toml"; exit 1; }
+          [ -n "$PY_WANT" ] || { echo "python pin not found in .mise.toml"; exit 1; }
 
-          echo "Testing Python..."
-          dexec mise exec -- python --version | grep -q "3.14" || { echo "Python 3.14 not found"; exit 1; }
+          echo "Testing Node.js (want $NODE_WANT from .mise.toml)..."
+          NODE_GOT=$(dexec mise exec -- node --version) || { echo "node not found"; exit 1; }
+          echo "$NODE_GOT"
+          case "$NODE_GOT" in
+            "v$NODE_WANT"|"v$NODE_WANT".*) ;;
+            *) echo "Node.js $NODE_WANT expected, got $NODE_GOT"; exit 1 ;;
+          esac
+
+          echo "Testing Python (want $PY_WANT from .mise.toml)..."
+          PY_GOT=$(dexec mise exec -- python --version) || { echo "python not found"; exit 1; }
+          echo "$PY_GOT"
+          case "$PY_GOT" in
+            "Python $PY_WANT"|"Python $PY_WANT".*) ;;
+            *) echo "Python $PY_WANT expected, got $PY_GOT"; exit 1 ;;
+          esac
 
           echo "Testing uv..."
           dexec mise exec -- uv --version || { echo "uv not found"; exit 1; }
