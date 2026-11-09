@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, Sequence
 
 from mcp.server.mcpserver.exceptions import ToolError
 from sqlalchemy import select
@@ -125,7 +125,7 @@ async def suggest_rules(min_support: int = 3, limit: int = 20) -> dict[str, Any]
             .order_by(Transaction.date.desc(), Transaction.id.desc())
         )).scalars().all()
         candidate_merchants = {transaction.merchant for transaction in uncategorized if transaction.merchant}
-        tagged_transactions: list[Transaction] = []
+        tagged_transactions: Sequence[Transaction] = []
         if candidate_merchants:
             tagged_transactions = (await session.execute(
                 select(Transaction)
