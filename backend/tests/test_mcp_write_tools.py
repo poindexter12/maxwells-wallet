@@ -9,7 +9,7 @@ from typing import Any
 from sqlalchemy import select
 
 from app.config import settings
-from app.orm import Transaction, User
+from app.orm import Tag, Transaction, TransactionTag, User
 from app.services.api_tokens import create_api_token
 from app.utils.auth import hash_password
 
@@ -176,6 +176,32 @@ async def test_rules_and_dashboards_support_happy_paths_and_dry_runs(client, asy
         deleted = await _call(client, headers, 9, "delete_rule", {"rule_id": rule_id})
     assert invalid["isError"] is True
     assert deleted["structuredContent"]["counts"]["changed"] == 1
+
+
+async def test_global_apply_rules_preserves_existing_bucket_and_applies_to_uncategorized(client, async_session, seed_tags, seed_transactions, mcp_running):
+    raw = await _token(async_session, ["read", "write"])
+    categorized, uncategorized = seed_transactions[1], seed_transactions[2]
+    uncategorized.merchant = categorized.merchant
+    await async_session.commit()
+    async with _mcp(client, raw, mcp_running) as headers:
+        await _call(client, headers, 2, "set_bucket", {"transaction_ids": [uncategorized.id], "bucket": "bucket:none"})
+        created = await _call(
+            client, headers, 3, "create_rule",
+            {"name": "Whole Foods dining", "tag": "bucket:dining", "merchant_pattern": categorized.merchant},
+        )
+        assert created["structuredContent"]["rule"]["id"]
+        dry_run = await _call(client, headers, 4, "apply_rules", {"dry_run": True})
+        assert dry_run["structuredContent"]["counts"]["changed"] == 1
+        applied = await _call(client, headers, 5, "apply_rules", {})
+        assert applied["structuredContent"]["counts"]["changed"] == 1
+    buckets = dict(
+        (await async_session.execute(
+            select(TransactionTag.transaction_id, Tag.value)
+            .join(Tag, TransactionTag.tag_id == Tag.id)
+            .where(TransactionTag.transaction_id.in_([categorized.id, uncategorized.id]), Tag.namespace == "bucket")
+        )).all()
+    )
+    assert buckets == {categorized.id: "groceries", uncategorized.id: "dining"}
 
 
 async def test_every_registered_write_tool_preserves_transaction_rows(client, async_session, seed_tags, seed_transactions, mcp_running):
