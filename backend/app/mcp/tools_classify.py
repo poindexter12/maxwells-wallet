@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from mcp.server.mcpserver.exceptions import ToolError
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+from app.config import settings
 from app.mcp.context import require_scope, tool_session
 from app.mcp.server import mcp_server
 from app.orm import Tag, TagRule, Transaction
@@ -40,26 +42,34 @@ def _features(transaction: Transaction) -> TxnFeatures:
 async def suggest_tags(
     transaction_ids: list[int] | None = None, limit: int = 50, min_confidence: float = 0.0
 ) -> dict[str, Any]:
-    """Suggest bucket tags without writing. Show suggestions to the user, then use add_tag_to_transactions with dry_run before applying; use apply_rules only after user approval."""
+    """Suggest bucket tags without writing.
+
+    Show suggestions to the user, then use add_tag_to_transactions or set_bucket with
+    dry_run=True before applying for real. With the jev provider, merchant, description,
+    and amount are sent to a third party.
+    """
     require_scope("read")
     if transaction_ids is not None and len(transaction_ids) > 100:
         raise ToolError("transaction_ids may contain at most 100 IDs.")
+    requested_ids = list(dict.fromkeys(transaction_ids or []))
     selected_limit = _clamp(limit, 50, 100)
     threshold = max(0.0, min(min_confidence, 1.0))
     async with tool_session() as session:
         transaction_stmt = select(Transaction).options(selectinload(Transaction.tags))
         if transaction_ids is not None:
-            transaction_stmt = transaction_stmt.where(Transaction.id.in_(transaction_ids))
+            transaction_stmt = transaction_stmt.where(Transaction.id.in_(requested_ids))
         else:
-            transaction_stmt = transaction_stmt.where(~Transaction.tags.any(Tag.namespace == "bucket"))
+            transaction_stmt = transaction_stmt.where(~Transaction.tags.any(Tag.namespace == "bucket")).limit(selected_limit)
         transactions = (await session.execute(
-            transaction_stmt.order_by(Transaction.date.desc(), Transaction.id.desc()).limit(selected_limit)
+            transaction_stmt.order_by(Transaction.date.desc(), Transaction.id.desc())
         )).scalars().all()
         labels = [
             f"bucket:{tag.value}"
             for tag in (await session.execute(select(Tag).where(Tag.namespace == "bucket"))).scalars().all()
         ]
         rules = (await session.execute(select(TagRule).where(TagRule.enabled.is_(True)))).scalars().all()
+    if not labels:
+        raise ToolError("No bucket tags exist. Create bucket tags before requesting classification suggestions.")
 
     classifier = get_classifier()
     if isinstance(classifier, LocalClassifier):
@@ -90,34 +100,62 @@ async def suggest_tags(
                 "rationale": suggestion.rationale,
             }
         )
+    found_ids = set(transaction_by_id)
     return {
         "provider": classifier.name,
         "suggestions": suggestions,
         "unclassified_ids": [transaction.id for transaction in transactions if transaction.id not in suggested_ids],
+        "not_found_ids": [transaction_id for transaction_id in requested_ids if transaction_id not in found_ids],
     }
 
 
 @mcp_server.tool()
 async def suggest_rules(min_support: int = 3, limit: int = 20) -> dict[str, Any]:
-    """Mine repeatable tag-rule conditions without writing. Show proposals to the user, then use create_rule with dry_run first and apply_rules only after approval."""
+    """Mine repeatable rule conditions without writing.
+
+    Show proposals to the user, then use preview_rule to confirm matches, create_rule,
+    apply_rules(dry_run=True), and finally apply_rules after approval.
+    """
     require_scope("read")
     async with tool_session() as session:
-        transactions = (await session.execute(
-            select(Transaction).options(selectinload(Transaction.tags)).order_by(Transaction.date.desc(), Transaction.id.desc())
+        uncategorized = (await session.execute(
+            select(Transaction)
+            .options(selectinload(Transaction.tags))
+            .where(~Transaction.tags.any(Tag.namespace == "bucket"))
+            .order_by(Transaction.date.desc(), Transaction.id.desc())
         )).scalars().all()
+        candidate_merchants = {transaction.merchant for transaction in uncategorized if transaction.merchant}
+        tagged_transactions: list[Transaction] = []
+        if candidate_merchants:
+            tagged_transactions = (await session.execute(
+                select(Transaction)
+                .options(selectinload(Transaction.tags))
+                .where(Transaction.merchant.in_(candidate_merchants))
+                .where(Transaction.tags.any(Tag.namespace == "bucket"))
+            )).scalars().all()
         rules = (await session.execute(select(TagRule))).scalars().all()
     return {
         "suggestions": mine_rule_suggestions(
-            transactions,
+            uncategorized,
             rules,
             min_support=_clamp(min_support, 3, 100),
             limit=_clamp(limit, 20, 100),
+            tagged_transactions=tagged_transactions,
         )
     }
 
 
 @mcp_server.tool()
-async def classifier_status() -> dict[str, str]:
-    """Show classifier availability without writing. After suggesting tags or rules, show the user and dry-run any write before applying rules."""
+async def classifier_status() -> dict[str, Any]:
+    """Show classifier availability without writing or exposing credentials."""
     require_scope("read")
-    return {"status": service_classifier_status()}
+    requested_provider = os.getenv("CLASSIFIER_PROVIDER", settings.classifier_provider).strip().lower()
+    jev_configured = bool(os.getenv("JEV_API_KEY", settings.jev_api_key).strip())
+    classifier = get_classifier()
+    return {
+        "provider": classifier.name,
+        "requested_provider": requested_provider,
+        "jev_configured": jev_configured,
+        "detail": service_classifier_status(),
+        "sends_data_to_third_party": classifier.name == "jev",
+    }
