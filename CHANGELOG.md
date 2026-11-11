@@ -7,8 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-11
+
 ### Added
 - **MCP server** - Authenticated Streamable HTTP access for Claude Code and claude.ai, with read-only analysis, classification suggestions, controlled tagging and rules, and new dashboards. See [the MCP guide](docs/mcp.md).
+- **Personal API tokens** - Create and revoke scoped `read`/`write` tokens from the admin page; tokens are stored as keyed HMAC-SHA-256 hashes, so rotating `SECRET_KEY` invalidates them.
+- **Classifier seam** - Local rule-mining suggestions by default, with an optional jev adapter that is off unless configured.
+
+### Changed
+- Frontend, docs and Docker base-image dependency updates; TypeScript stays on 6 and `@vitest/coverage-v8` on 4.
+- PR E2E tests run on the CI runner's preinstalled Chrome; scheduled workflows bound the Playwright browser install with a timeout and retry.
 
 ## [1.3.0] - 2026-07-02
 

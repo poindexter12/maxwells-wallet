@@ -13,9 +13,14 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 
 **[Documentation](https://docs.maxwellswallet.com)** · **[Requirements](docs/requirements/)**
 
-## What's New in v1.3
+## What's New in v1.4
 
-Maxwell's Wallet 1.3 is headlined by the new AI Assistant, on top of the full feature set: CSV/QFX/QIF import, transactions, budgets, dashboards, analytics, recurring detection, transfers, tagging, single-user auth, 10-language i18n, and observability.
+Maxwell's Wallet 1.4 adds an MCP server alongside the AI Assistant, on top of the full feature set: CSV/QFX/QIF import, transactions, budgets, dashboards, analytics, recurring detection, transfers, tagging, single-user auth, 10-language i18n, and observability.
+
+### MCP Server
+- **Connect Claude Code or claude.ai** - Authenticated Streamable HTTP endpoint at `/mcp` for analysis, dashboards, tagging and rules; see [the MCP guide](docs/mcp.md)
+- **Scoped API Tokens** - Personal `read`/`write` tokens created and revoked in the admin page
+- **Transactions Stay Read-Only** - Writes are limited to tags, rules and new dashboards
 
 ### AI Assistant (Bring Your Own Key)
 - **In-App Chat** - Ask questions about your finances and get answers powered by Anthropic (Claude) or OpenAI

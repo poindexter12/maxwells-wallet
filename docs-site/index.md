@@ -5,7 +5,10 @@ Personal finance tracker with CSV import, smart categorization, and spending tre
 [![CI](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yaml/badge.svg)](https://github.com/poindexter12/maxwells-wallet/actions/workflows/ci.yaml)
 [![Release](https://img.shields.io/github/v/release/poindexter12/maxwells-wallet?label=release)](https://github.com/poindexter12/maxwells-wallet/releases)
 
-## What's New in 1.3.0
+## What's New in 1.4.0
+
+### MCP Server
+- **Connect Claude Code or claude.ai** - Authenticated Streamable HTTP endpoint at `/mcp` for analysis, dashboards, tagging and rules, using scoped personal API tokens. Transactions stay read-only. See the [MCP guide](https://github.com/poindexter12/maxwells-wallet/blob/main/docs/mcp.md).
 
 ### AI Assistant
 - **Natural-Language Assistant** - Ask about your finances and propose changes in plain language; reads run automatically while writes require explicit approval. See the [Assistant](features/assistant.md) guide.
