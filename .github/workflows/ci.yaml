@@ -41,7 +41,26 @@ jobs:
       uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
       with:
         install: true
+    # mise-action caches tools (node, uv, just), not packages. These three
+    # caches cover the package layers it leaves cold.
+    - name: Cache npm download cache
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm-
+    - name: Cache frontend node_modules
+      id: node-modules
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: frontend/node_modules
+        # No restore-keys on purpose: a partially-matching node_modules tree is
+        # worse than an empty one, so only an exact lockfile match may skip the
+        # install below.
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('frontend/package-lock.json') }}
     - name: Install dependencies
+      if: steps.node-modules.outputs.cache-hit != 'true'
       run: just install-frontend
     - name: Generate pseudo-locale for i18n tests
       run: just i18n::pseudo
@@ -49,6 +68,14 @@ jobs:
       run: just test::lint-frontend
     - name: Run tests
       run: cd frontend && npm run test:run
+    - name: Cache Next.js build cache
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: frontend/.next/cache
+        key: ${{ runner.os }}-next-${{ hashFiles('frontend/package-lock.json') }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-next-${{ hashFiles('frontend/package-lock.json') }}-
+          ${{ runner.os }}-next-
     - name: Build
       run: just dev::build-frontend
   backend:
@@ -62,6 +89,13 @@ jobs:
       uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
       with:
         install: true
+    - name: Cache uv download cache
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ hashFiles('backend/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-
     - name: Install dependencies
       run: just install-backend
     - name: Run linter (ruff)
@@ -102,8 +136,35 @@ jobs:
       uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
       with:
         install: true
-    - name: Install dependencies
-      run: just install
+    - name: Cache npm download cache
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm-
+    # Same key as the frontend job, which runs first via `needs`, so a warm
+    # run restores the tree that job just saved.
+    - name: Cache frontend node_modules
+      id: node-modules
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: frontend/node_modules
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('frontend/package-lock.json') }}
+    - name: Cache uv download cache
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ hashFiles('backend/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-
+    # Split out of the single `just install` step: the frontend half is the
+    # part a cache hit can skip, and one combined step cannot be half-skipped.
+    - name: Install backend dependencies
+      run: just install-backend
+    - name: Install frontend dependencies
+      if: steps.node-modules.outputs.cache-hit != 'true'
+      run: just install-frontend
     - name: Create data directory
       run: mkdir -p backend/data
     - name: Initialize database schema
@@ -154,6 +215,13 @@ jobs:
       uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
       with:
         install: true
+    - name: Cache uv download cache
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ hashFiles('backend/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-
     - name: Install backend dependencies
       run: just install-backend
     - name: Run performance tests
