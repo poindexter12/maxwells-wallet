@@ -116,14 +116,18 @@ jobs:
         DATABASE_URL: sqlite+aiosqlite:///./data/wallet.db
     - name: Generate pseudo-locale for i18n E2E tests
       run: just i18n::pseudo
-    - name: Install Playwright browsers
-      working-directory: frontend
-      run: npx playwright install --with-deps chromium
+    - name: Verify system Chrome
+      run: |
+        if ! google-chrome --version; then
+          echo "Google Chrome is not installed on this runner; ubuntu-latest must provide it for PR E2E tests."
+          exit 1
+        fi
     - name: Run E2E tests
       working-directory: frontend
       run: npx playwright test --grep "@e2e" --project=chromium
       env:
         CI: true
+        PLAYWRIGHT_USE_SYSTEM_CHROME: '1'
     - name: Upload Playwright report
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       if: failure()

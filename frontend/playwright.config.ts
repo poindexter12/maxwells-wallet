@@ -32,6 +32,9 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
+        ...(process.env.PLAYWRIGHT_USE_SYSTEM_CHROME === '1'
+          ? { channel: 'chrome' }
+          : {}),
         storageState: 'e2e/.auth/user.json',
       },
       dependencies: ['setup'],
