@@ -27,11 +27,19 @@ export default defineConfig({
       name: 'setup',
       testMatch: /auth\.setup\.ts/,
       timeout: 60000, // Give more time for auth setup
+      // Setup launches Chromium too, so it must follow the same channel as the chromium project.
+      use:
+        process.env.PLAYWRIGHT_USE_SYSTEM_CHROME === '1'
+          ? { channel: 'chrome' }
+          : {},
     },
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
+        ...(process.env.PLAYWRIGHT_USE_SYSTEM_CHROME === '1'
+          ? { channel: 'chrome' }
+          : {}),
         storageState: 'e2e/.auth/user.json',
       },
       dependencies: ['setup'],

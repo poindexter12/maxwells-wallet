@@ -1,6 +1,6 @@
 # E2E Testing Guide
 
-End-to-end tests using Playwright for Maxwell's Wallet.
+End-to-end tests using Playwright for Maxwell's Wallet. PR CI runs against the runner's system Chrome through `PLAYWRIGHT_USE_SYSTEM_CHROME=1`; nightly workflows continue to use Playwright's bundled browsers.
 
 ## Running Tests
 
