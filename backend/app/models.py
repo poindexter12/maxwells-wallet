@@ -37,6 +37,7 @@ from app.orm import (
     DashboardWidget,
     AppSettings,
     User,
+    ApiToken,
 )
 
 # Re-export all Pydantic schemas
@@ -105,6 +106,9 @@ from app.schemas import (
     # User/auth schemas
     UserCreate,
     UserResponse,
+    ApiTokenCreate,
+    ApiTokenResponse,
+    ApiTokenCreatedResponse,
     PasswordChange,
 )
 
@@ -143,6 +147,7 @@ __all__ = [
     "DashboardWidget",
     "AppSettings",
     "User",
+    "ApiToken",
     # Pydantic Schemas
     "BaseResponse",
     "TimestampResponse",
@@ -192,5 +197,8 @@ __all__ = [
     "AppSettingsResponse",
     "UserCreate",
     "UserResponse",
+    "ApiTokenCreate",
+    "ApiTokenResponse",
+    "ApiTokenCreatedResponse",
     "PasswordChange",
 ]

@@ -229,3 +229,28 @@ async def seed_transactions(async_session: AsyncSession, seed_categories):
 
     await async_session.commit()
     return created_transactions
+
+
+@pytest.fixture
+def mcp_running():
+    """Return an async context manager that runs the MCP session manager.
+
+    Use it inside the test body: `async with mcp_running(): ...`. The app
+    lifespan normally starts the manager, but the test client does not run the
+    lifespan. The SDK allows `run()` once per manager instance and the mounted
+    ASGI app holds that instance, so the one-shot flag is reset on each entry.
+    It must be entered in the test task itself: an anyio task group cannot be
+    opened in fixture setup and closed in fixture teardown.
+    """
+    from contextlib import asynccontextmanager
+
+    from app.mcp.server import mcp_server
+
+    @asynccontextmanager
+    async def _run() -> AsyncGenerator[None, None]:
+        manager = mcp_server.session_manager
+        manager._has_started = False
+        async with manager.run():
+            yield
+
+    return _run
