@@ -103,6 +103,9 @@ These are read-only and require `read`. They never write suggestions to the data
 
 ## Safety and auditability
 
+Stored tokens are HMAC-SHA-256 digests keyed from `SECRET_KEY`, so the database alone cannot be used to check a token. Set `SECRET_KEY` to a long random value, and note that rotating it invalidates every issued token.
+
+
 MCP cannot create or delete transactions or change their amount, date, merchant, description, account, hash, or reconciliation fields. Its transaction writes only add or remove tag links, or replace bucket tag links. It can create, update, delete, and apply tag rules. It can create dashboards and add widgets, but cannot edit or delete existing dashboards or widgets. It cannot write budgets.
 
 Use `dry_run=true` on bulk tag, bucket, and rule-application tools to inspect counts before committing. Write tools refuse all writes in demo mode. Every write tool logs the structured `mcp_write_tool` event with the tool name, token ID, user ID, change counts, and `dry_run` state. The raw token is never logged.

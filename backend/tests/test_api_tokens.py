@@ -97,3 +97,32 @@ async def test_token_scope_validation(client, user_headers):
             "/api/v1/auth/tokens", headers=user_headers, json={"name": "bad", "scopes": scopes}
         )
         assert response.status_code == 422
+
+
+def test_stored_hash_is_keyed_by_the_app_secret(monkeypatch):
+    from hashlib import sha256
+
+    from app.config import settings
+    from app.services.api_tokens import hash_token
+
+    raw_token = "mw_pat_example"
+    keyed = hash_token(raw_token)
+
+    assert keyed == hash_token(raw_token)
+    assert keyed != sha256(raw_token.encode()).hexdigest()
+
+    monkeypatch.setattr(settings, "secret_key", "a-different-secret")
+    assert hash_token(raw_token) != keyed
+
+
+@pytest.mark.asyncio
+async def test_token_stops_authenticating_when_the_app_secret_changes(async_session, user, monkeypatch):
+    from app.config import settings
+
+    _, raw_token = await create_api_token(
+        async_session, user_id=user.id, name="rotation", scopes=["read"], expires_at=None
+    )
+    assert await authenticate_api_token(async_session, raw_token) is not None
+
+    monkeypatch.setattr(settings, "secret_key", "rotated-secret")
+    assert await authenticate_api_token(async_session, raw_token) is None

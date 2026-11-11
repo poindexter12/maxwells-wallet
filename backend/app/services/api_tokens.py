@@ -3,15 +3,38 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
+import hmac
 import secrets
 from typing import Iterable
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.orm import ApiToken, User
 
 TOKEN_PREFIX = "mw_pat_"
+_HASH_KEY_CONTEXT = b"maxwells-wallet/api-token-hash/v1"
+
+
+def _hash_key() -> bytes:
+    """Derive the token-hash key from the app secret.
+
+    The context string keeps this key distinct from the one that signs login
+    JWTs, so neither use can stand in for the other.
+    """
+    return hmac.new(settings.secret_key.encode(), _HASH_KEY_CONTEXT, sha256).digest()
+
+
+def hash_token(raw_token: str) -> str:
+    """Return the keyed digest stored for a raw token.
+
+    Tokens carry 256 bits of randomness, so a slow password hash would add
+    nothing. Keying the digest with a server-side secret means a leaked
+    database alone cannot be used to test candidate tokens. Rotating
+    SECRET_KEY therefore invalidates every issued token.
+    """
+    return hmac.new(_hash_key(), raw_token.encode(), sha256).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -24,7 +47,7 @@ class TokenPrincipal:
 def generate_token() -> tuple[str, str, str]:
     """Generate a raw token and its display prefix and database hash."""
     raw_token = f"{TOKEN_PREFIX}{secrets.token_urlsafe(32)}"
-    return raw_token, raw_token[:16], sha256(raw_token.encode()).hexdigest()
+    return raw_token, raw_token[:16], hash_token(raw_token)
 
 
 async def create_api_token(
@@ -57,7 +80,7 @@ async def authenticate_api_token(
     """Validate a raw personal token, throttling its last-used write to once a minute."""
     if not raw_token.startswith(TOKEN_PREFIX):
         return None
-    token_hash = sha256(raw_token.encode()).hexdigest()
+    token_hash = hash_token(raw_token)
     result = await session.execute(
         select(ApiToken, User)
         .join(User, User.id == ApiToken.user_id)
