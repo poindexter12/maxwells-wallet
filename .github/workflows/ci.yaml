@@ -21,7 +21,11 @@ jobs:
     - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
       id: filter
       with:
-        filters: "frontend:\n  - 'frontend/**'\nbackend:\n  - 'backend/**'\ndocker:\n  - 'Dockerfile'\n  - 'docker-compose*.yaml'\n"
+        # The build-system files are listed under both frontend and backend
+        # because they define how those jobs install and run. Without them a PR
+        # that only edits an install recipe, a tool version, or a job definition
+        # skips the very jobs it changes, and the breakage first appears on main.
+        filters: "frontend:\n  - 'frontend/**'\n  - 'justfile'\n  - '.just/**'\n  - '.mise.toml'\n  - '.github/workflows/ci.yaml'\nbackend:\n  - 'backend/**'\n  - 'justfile'\n  - '.just/**'\n  - '.mise.toml'\n  - '.github/workflows/ci.yaml'\ndocker:\n  - 'Dockerfile'\n  - 'docker-compose*.yaml'\n"
   security:
     name: Security Scans
     uses: ./.github/workflows/security.yaml

@@ -51,6 +51,19 @@ and reuses what still matches. It is saved before `Build` runs, which is what
 makes the entry a restore of the *previous* run's cache rather than a no-op
 save of this run's.
 
+## The paths filter has to include the build system
+
+`dorny/paths-filter` decides whether the frontend and backend jobs run at all.
+Those filters originally listed only `frontend/**` and `backend/**`, which meant a
+PR editing `justfile`, `.just/**`, `.mise.toml` or `ci.yaml` itself skipped both
+jobs — including a PR that changes how they install their dependencies. The
+breakage then surfaced on the push to main, where the `|| github.ref ==
+'refs/heads/main'` clause forces the jobs to run.
+
+This caching work found that the practical way: the first run of the branch
+skipped Frontend and Backend entirely. The build-system paths are now listed
+under both filters.
+
 ## npm install vs npm ci
 
 `just install-frontend` runs `npm install` locally and `npm ci` when `CI` is set.
