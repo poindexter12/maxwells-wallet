@@ -6,6 +6,14 @@ name: CI
   pull_request:
     branches:
     - main
+  # Manual escape hatch: run with no_cache checked to install uncached, e.g. to
+  # time a cold install or to rule the caches out while debugging a failure.
+  workflow_dispatch:
+    inputs:
+      no_cache:
+        description: Skip all dependency caches for this run
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -21,7 +29,11 @@ jobs:
     - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
       id: filter
       with:
-        filters: "frontend:\n  - 'frontend/**'\nbackend:\n  - 'backend/**'\ndocker:\n  - 'Dockerfile'\n  - 'docker-compose*.yaml'\n"
+        # The build-system files are listed under both frontend and backend
+        # because they define how those jobs install and run. Without them a PR
+        # that only edits an install recipe, a tool version, or a job definition
+        # skips the very jobs it changes, and the breakage first appears on main.
+        filters: "frontend:\n  - 'frontend/**'\n  - 'justfile'\n  - '.just/**'\n  - '.mise.toml'\n  - '.github/workflows/ci.yaml'\nbackend:\n  - 'backend/**'\n  - 'justfile'\n  - '.just/**'\n  - '.mise.toml'\n  - '.github/workflows/ci.yaml'\ndocker:\n  - 'Dockerfile'\n  - 'docker-compose*.yaml'\n"
   security:
     name: Security Scans
     uses: ./.github/workflows/security.yaml
@@ -34,14 +46,39 @@ jobs:
     name: Frontend Build & Test
     runs-on: ubuntu-latest
     needs: changes
+    # workflow_dispatch is included because paths-filter has no base commit to
+    # diff on a manual run, so it reports no changes and would skip this job —
+    # which would make a no_cache dispatch install nothing.
     if: needs.changes.outputs.frontend == 'true' || github.ref == 'refs/heads/main'
+      || github.event_name == 'workflow_dispatch'
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
     - name: Setup mise
       uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
       with:
         install: true
+    # mise-action caches tools (node, uv, just), not packages. These three
+    # caches cover the package layers it leaves cold.
+    - name: Cache npm download cache
+      if: inputs.no_cache != true
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-${{ vars.CI_CACHE_VERSION || 'v1' }}-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm-${{ vars.CI_CACHE_VERSION || 'v1' }}-
+    - name: Cache frontend node_modules
+      id: node-modules
+      if: inputs.no_cache != true
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: frontend/node_modules
+        # No restore-keys on purpose: a partially-matching node_modules tree is
+        # worse than an empty one, so only an exact lockfile match may skip the
+        # install below.
+        key: ${{ runner.os }}-node-modules-${{ vars.CI_CACHE_VERSION || 'v1' }}-${{ hashFiles('frontend/package-lock.json') }}
     - name: Install dependencies
+      if: steps.node-modules.outputs.cache-hit != 'true'
       run: just install-frontend
     - name: Generate pseudo-locale for i18n tests
       run: just i18n::pseudo
@@ -49,19 +86,38 @@ jobs:
       run: just test::lint-frontend
     - name: Run tests
       run: cd frontend && npm run test:run
+    - name: Cache Next.js build cache
+      if: inputs.no_cache != true
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: frontend/.next/cache
+        key: ${{ runner.os }}-next-${{ vars.CI_CACHE_VERSION || 'v1' }}-${{ hashFiles('frontend/package-lock.json') }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-next-${{ vars.CI_CACHE_VERSION || 'v1' }}-${{ hashFiles('frontend/package-lock.json') }}-
+          ${{ runner.os }}-next-${{ vars.CI_CACHE_VERSION || 'v1' }}-
     - name: Build
       run: just dev::build-frontend
   backend:
     name: Backend Build & Test
     runs-on: ubuntu-latest
     needs: changes
+    # See the frontend job: a manual dispatch must not be skipped by paths-filter.
     if: needs.changes.outputs.backend == 'true' || github.ref == 'refs/heads/main'
+      || github.event_name == 'workflow_dispatch'
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
     - name: Setup mise
       uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
       with:
         install: true
+    - name: Cache uv download cache
+      if: inputs.no_cache != true
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ vars.CI_CACHE_VERSION || 'v1' }}-${{ hashFiles('backend/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-${{ vars.CI_CACHE_VERSION || 'v1' }}-
     - name: Install dependencies
       run: just install-backend
     - name: Run linter (ruff)
@@ -102,8 +158,38 @@ jobs:
       uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
       with:
         install: true
-    - name: Install dependencies
-      run: just install
+    - name: Cache npm download cache
+      if: inputs.no_cache != true
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-${{ vars.CI_CACHE_VERSION || 'v1' }}-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm-${{ vars.CI_CACHE_VERSION || 'v1' }}-
+    # Same key as the frontend job, which runs first via `needs`, so a warm
+    # run restores the tree that job just saved.
+    - name: Cache frontend node_modules
+      id: node-modules
+      if: inputs.no_cache != true
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: frontend/node_modules
+        key: ${{ runner.os }}-node-modules-${{ vars.CI_CACHE_VERSION || 'v1' }}-${{ hashFiles('frontend/package-lock.json') }}
+    - name: Cache uv download cache
+      if: inputs.no_cache != true
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ vars.CI_CACHE_VERSION || 'v1' }}-${{ hashFiles('backend/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-${{ vars.CI_CACHE_VERSION || 'v1' }}-
+    # Split out of the single `just install` step: the frontend half is the
+    # part a cache hit can skip, and one combined step cannot be half-skipped.
+    - name: Install backend dependencies
+      run: just install-backend
+    - name: Install frontend dependencies
+      if: steps.node-modules.outputs.cache-hit != 'true'
+      run: just install-frontend
     - name: Create data directory
       run: mkdir -p backend/data
     - name: Initialize database schema
@@ -154,6 +240,14 @@ jobs:
       uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
       with:
         install: true
+    - name: Cache uv download cache
+      if: inputs.no_cache != true
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ vars.CI_CACHE_VERSION || 'v1' }}-${{ hashFiles('backend/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-${{ vars.CI_CACHE_VERSION || 'v1' }}-
     - name: Install backend dependencies
       run: just install-backend
     - name: Run performance tests
