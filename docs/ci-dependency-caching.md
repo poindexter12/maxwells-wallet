@@ -51,6 +51,42 @@ and reuses what still matches. It is saved before `Build` runs, which is what
 makes the entry a restore of the *previous* run's cache rather than a no-op
 save of this run's.
 
+## Busting the caches
+
+Every key carries a version segment, `${{ vars.CI_CACHE_VERSION || 'v1' }}`:
+
+```
+Linux-npm-v1-<hash(frontend/package-lock.json)>
+```
+
+To invalidate every cache at once, set or bump the repository variable
+`CI_CACHE_VERSION` (Settings -> Secrets and variables -> Actions -> Variables),
+e.g. to `v2`. Nothing needs committing, and the next run of every job misses on
+every key and repopulates. The variable does not have to exist: unset, the
+expression falls back to `v1`. Reach for this when a cache has gone bad in a way
+the lockfile hash cannot see, such as a corrupted entry or a change in runner
+image that invalidates a native build.
+
+The `restore-keys` prefixes include the version segment too, so a bump is not
+quietly undone by a prefix match against the old generation.
+
+## Ignoring the caches for one run
+
+The workflow also accepts a manual `workflow_dispatch` with a `no_cache`
+boolean. Run CI from the Actions tab with it checked and every cache step is
+skipped (`if: inputs.no_cache != true`), so the installs run uncached. Use it to
+time a cold install, or to rule the caches out while debugging a failure, without
+touching the repository variable and without affecting anyone else's runs.
+
+Two details make this work. The install steps gate on
+`steps.node-modules.outputs.cache-hit != 'true'`, and a skipped cache step
+produces no output, so the empty value correctly reads as "not cached" and the
+install runs. And the frontend and backend jobs add
+`|| github.event_name == 'workflow_dispatch'` to their conditions, because
+`paths-filter` has no base commit to diff against on a manual run and reports no
+changes — without that clause a `no_cache` dispatch would skip the very jobs it
+is meant to time.
+
 ## The paths filter has to include the build system
 
 `dorny/paths-filter` decides whether the frontend and backend jobs run at all.
