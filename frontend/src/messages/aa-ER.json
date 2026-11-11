@@ -55,7 +55,8 @@
     "organize": "crwdns3103:0crwdne3103:0",
     "tools": "crwdns3105:0crwdne3105:0",
     "admin": "crwdns3107:0crwdne3107:0",
-    "import": "crwdns3109:0crwdne3109:0"
+    "import": "crwdns3109:0crwdne3109:0",
+    "assistant": "crwdns4593:0crwdne4593:0"
   },
   "settings": {
     "title": "crwdns3111:0crwdne3111:0",
@@ -63,7 +64,45 @@
     "languageDescription": "crwdns3115:0crwdne3115:0",
     "browserDefault": "crwdns3117:0crwdne3117:0",
     "saved": "crwdns3119:0crwdne3119:0",
-    "theme": "crwdns3121:0crwdne3121:0"
+    "theme": "crwdns3121:0crwdne3121:0",
+    "apiTokens": {
+      "title": "crwdns4663:0crwdne4663:0",
+      "description": "crwdns4665:0crwdne4665:0",
+      "empty": "crwdns4667:0crwdne4667:0",
+      "name": "crwdns4669:0crwdne4669:0",
+      "scope": "crwdns4671:0crwdne4671:0",
+      "expiry": "crwdns4673:0crwdne4673:0",
+      "create": "crwdns4675:0crwdne4675:0",
+      "createdWarning": "crwdns4677:0crwdne4677:0",
+      "tokenValue": "crwdns4679:0crwdne4679:0",
+      "connectionSnippet": "crwdns4681:0crwdne4681:0",
+      "dismiss": "crwdns4683:0crwdne4683:0",
+      "revoke": "crwdns4685:0crwdne4685:0",
+      "revoked": "crwdns4687:0crwdne4687:0",
+      "active": "crwdns4689:0crwdne4689:0",
+      "never": "crwdns4691:0crwdne4691:0",
+      "loadError": "crwdns4693:0crwdne4693:0",
+      "createError": "crwdns4695:0crwdne4695:0",
+      "revokeError": "crwdns4697:0crwdne4697:0",
+      "scopes": {
+        "read": "crwdns4699:0crwdne4699:0",
+        "readWrite": "crwdns4701:0crwdne4701:0"
+      },
+      "expiries": {
+        "never": "crwdns4703:0crwdne4703:0",
+        "days": "crwdns4705:0{count}crwdne4705:0"
+      },
+      "columns": {
+        "name": "crwdns4707:0crwdne4707:0",
+        "prefix": "crwdns4709:0crwdne4709:0",
+        "scopes": "crwdns4711:0crwdne4711:0",
+        "created": "crwdns4713:0crwdne4713:0",
+        "lastUsed": "crwdns4715:0crwdne4715:0",
+        "expires": "crwdns4717:0crwdne4717:0",
+        "status": "crwdns4719:0crwdne4719:0",
+        "actions": "crwdns4721:0crwdne4721:0"
+      }
+    }
   },
   "transactions": {
     "title": "crwdns3123:0crwdne3123:0",
@@ -977,7 +1016,40 @@
       "SETUP_ALREADY_COMPLETE": "crwdns4585:0crwdne4585:0",
       "INVALID_PASSWORD": "crwdns4587:0crwdne4587:0",
       "LOGIN_FAILED": "crwdns4589:0crwdne4589:0",
-      "SETUP_FAILED": "crwdns4591:0crwdne4591:0"
+      "SETUP_FAILED": "crwdns4591:0crwdne4591:0",
+      "ASSISTANT_NOT_CONFIGURED": "crwdns4595:0crwdne4595:0",
+      "ASSISTANT_PROVIDER_ERROR": "crwdns4597:0crwdne4597:0",
+      "ASSISTANT_PROPOSAL_NOT_FOUND": "crwdns4599:0crwdne4599:0",
+      "ASSISTANT_ACTION_NOT_ALLOWED": "crwdns4601:0crwdne4601:0"
+    }
+  },
+  "assistant": {
+    "title": "crwdns4603:0crwdne4603:0",
+    "subtitle": "crwdns4605:0crwdne4605:0",
+    "placeholder": "crwdns4607:0crwdne4607:0",
+    "send": "crwdns4609:0crwdne4609:0",
+    "thinking": "crwdns4611:0crwdne4611:0",
+    "emptyState": "crwdns4613:0crwdne4613:0",
+    "privacyNote": "crwdns4615:0crwdne4615:0",
+    "youLabel": "crwdns4617:0crwdne4617:0",
+    "assistantLabel": "crwdns4619:0crwdne4619:0",
+    "proposal": {
+      "title": "crwdns4621:0crwdne4621:0",
+      "description": "crwdns4623:0crwdne4623:0",
+      "execute": "crwdns4625:0crwdne4625:0",
+      "cancel": "crwdns4627:0crwdne4627:0",
+      "executing": "crwdns4629:0crwdne4629:0",
+      "done": "crwdns4631:0{count}crwdne4631:0",
+      "failed": "crwdns4633:0crwdne4633:0"
+    },
+    "settings": {
+      "title": "crwdns4635:0crwdne4635:0",
+      "configured": "crwdns4637:0crwdne4637:0",
+      "notConfigured": "crwdns4639:0crwdne4639:0",
+      "provider": "crwdns4641:0crwdne4641:0",
+      "model": "crwdns4643:0crwdne4643:0",
+      "notConfiguredHelp": "crwdns4659:0crwdne4659:0",
+      "envManaged": "crwdns4661:0crwdne4661:0"
     }
   }
 }
