@@ -124,7 +124,7 @@ release VERSION="":
             style 12 "Creating release v$VERSION..."
             sed -i '' "s/^version = \".*\"/version = \"$VERSION\"/" backend/pyproject.toml
             sed -i '' "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" frontend/package.json
-            git add -A
+            git add CHANGELOG.md README.md docs-site/index.md backend/pyproject.toml backend/uv.lock frontend/package.json frontend/package-lock.json
             git commit -m "chore: release v$VERSION"
             git tag "v$VERSION"
             style 12 "Pushing to GitHub..."
